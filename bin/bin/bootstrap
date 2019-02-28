@@ -1,0 +1,34 @@
+#!/bin/bash
+# install.sh
+
+
+# >> Hostname
+
+MY_NAME="OliverMarshall"
+sudo scutil --set ComputerName "$MY_NAME" && \
+sudo scutil --set HostName "$MY_NAME" && \
+sudo scutil --set LocalHostName "$MY_NAME" && \
+sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName -string "$MY_NAME"
+
+
+
+# >> Install xcode command line tools
+
+xcode-select --install
+
+
+
+# >> brew
+
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+
+
+# >> Update bash
+
+brew install bash
+
+echo '/usr/local/bin/bash' | sudo tee -a /etc/shells
+
+chsh -s /usr/local/bin/bash
+

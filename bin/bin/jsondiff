@@ -1,0 +1,69 @@
+#!/bin/bash
+# jsondiff
+
+
+# >> Usage
+
+function usage() {
+    cat << USAGE
+[usage] jsondiff [[-h|--help]|[--no-sort]] left-file right-file
+USAGE
+}
+
+
+
+# >> Cli args
+
+DIFF_PARAMS="-aur --color=auto"
+sort=1
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -h | --help )        usage
+                             exit
+                             ;;
+        --no-sort )          sort=0
+                             ;;
+        * )                  break
+    esac
+    shift
+done
+
+json1="$1"
+json2="$2"
+stat "$json1" > /dev/null || exit $?
+stat "$json2" > /dev/null || exit $?
+
+
+
+# >> Precondition check
+
+which jq > /dev/null || (echo "jq is required" && exit 1)
+
+
+
+# >> Main
+
+jsonname1=$(basename $json1)
+jsonname2=$(basename $json2)
+
+outfile1=$(mktemp /tmp/${jsonname1%.*}.XXXXXX)
+outfile2=$(mktemp /tmp/${jsonname2%.*}.XXXXXX)
+
+
+if [ "$sort" = "1" ]; then
+    jq -S . "$json1" > "$outfile1"
+    jq -S . "$json2" > "$outfile2"
+else
+    jq . "$json1" > "$outfile1"
+    jq . "$json2" > "$outfile2"
+fi
+
+vim -d "$outfile1" "$outfile2"
+
+
+
+# >> Tear down
+
+rm "$outfile1"
+rm "$outfile2"

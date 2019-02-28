@@ -1,0 +1,12 @@
+#!/bin/bash
+
+list_name=file-list-for-ffmpeg.txt
+
+# pipe the current into a file, replacing the beginning and the end of each line
+# also removes the last line which is the newly created 'file-list-for-ffmpeg.txt'
+ls | sed -e "s/^/file '.\//" -e "s/$/'/" -e "/$list_name/d" > $list_name
+
+output_file_name=${1:-output.mp3}
+
+ffmpeg -f concat -safe 0 -i $list_name -c copy $output_file_name
+rm $list_name

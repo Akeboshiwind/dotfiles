@@ -1,0 +1,6 @@
+[user]
+	name = Oliver Marshall
+	email = olivershawmarshall@gmail.com
+
+[includeIf "gitdir:~/prog/work/"]
+    path = ~/work.gitignore

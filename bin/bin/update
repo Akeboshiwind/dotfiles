@@ -1,0 +1,309 @@
+#!/usr/local/bin/bash
+# update.sh
+
+
+# >> TODO:
+
+# - Better variable names
+
+
+
+# >> CLI args
+
+usage() {
+    echo "[usage] update [[--defaults]|[-h|--help]"
+}
+
+update_defaults=
+update_spacemacs=
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --defaults )   update_defaults=1
+                       ;;
+        --spacemacs )  update_spacemacs=1
+                       ;;
+        -h | --help )  usage
+                       exit
+                       ;;
+        * )            usage
+                       exit 1
+    esac
+    shift
+done
+
+
+
+# >> Environment setup
+
+# Remove undesirable side effects of CDPATH variable
+unset CDPATH
+# Change current working directory to the directory that contains this script
+cd "$( dirname "${BASH_SOURCE[0]}" )"
+
+
+
+# >> Bashbooster
+
+# Initialize Bash Booster
+source ./lib/bashbooster.sh
+
+
+
+# >> List packages
+
+# Normal packages from brew
+declare -a packages
+packages=( \
+    bash \
+    bash-completion \
+    coreutils \
+    git \
+    tmux \
+    clojure \
+    leiningen \
+    ispell \
+    the_silver_searcher \
+    tree \
+    rename \
+    jq \
+    pass \
+    gnupg \
+    pinentry-mac \
+    ffmpeg \
+    stow \
+    node \
+    z \
+    v \
+    asdf \
+)
+
+# Packages used for work
+declare -a workpackages
+workpackages=( \
+    terraform \
+    awscli \
+    packer \
+    parquet-tools \
+    avro-tools \
+    kubernetes-cli \
+)
+
+# Combine both brew packages arrays
+declare -a allpackages
+allpackages=( "${packages[@]}" "${workpackages[@]}" )
+
+# Normal brew cask packages
+declare -a caskpackages
+caskpackages=( \
+    iterm2\
+    emacs \
+    controlplane \
+    docker \
+    discord \
+    font-source-code-pro \
+    mumble \
+    spotify \
+    telegram \
+    transmission \
+    vlc \
+    java \
+)
+
+# Brew cask packages used for work
+declare -a workcaskpackages
+workcaskpackages=( \
+    dotnet-sdk\
+)
+
+# Combine tothether both cask package arrays
+declare -a allcaskpackages
+allcaskpackages=( "${caskpackages[@]}" "${workcaskpackages[@]}" )
+
+
+
+# >> Update Homebrew
+
+
+bb-log-info "Updating Homebrew"
+bb-brew-update
+
+
+
+# >> Install packages
+
+# Brew packages
+bb-log-info "Installing packages"
+
+# Find only packages that are not installed
+declare -a allpackagesnotinstalled
+readarray -t allpackagesnotinstalled \
+    <<<"$(comm -23 <(printf '%s\n' "${allpackages[@]}" | sort) <(brew ls --full-name | sort))"
+
+# Remove empty strings from array
+for i in "${!allpackagesnotinstalled[@]}"; do
+    [ -n "${allpackagesnotinstalled[$i]}" ] || unset "allpackagesnotinstalled[$i]"
+done
+bb-brew-install "${allpackagesnotinstalled[@]}"
+
+
+# Cask packages
+bb-log-info "Installing cask packages"
+
+# Find only packages that are not installed
+declare -a allcaskpackagesnotinstalled
+readarray -t allcaskpackagesnotinstalled \
+    <<<"$(comm -23 <(printf '%s\n' "${allcaskpackages[@]}" | sort) <(brew cask ls --full-name | sort))"
+
+# Remove empty strings from array
+for i in "${!allcaskpackagesnotinstalled[@]}"; do
+    [ -n "${allcaskpackagesnotinstalled[$i]}" ] || unset "allcaskpackagesnotinstalled[$i]"
+done
+
+bb-brew-cask-install "${allcaskpackagesnotinstalled[@]}"
+
+
+
+# >> Remove old packages
+
+# Brew packages
+bb-log-info "Removing old packages"
+
+declare -a packagestouninstall
+while : ; do
+    readarray -t packagestouninstall <<< \
+              "$(comm -13 <(printf '%s\n' ${allpackages[@]} | sort) <(brew leaves | sort))"
+    # No packages to uninstall, so stop
+    if [ -z "$packagestouninstall" ]; then
+        bb-log-info "No more packages to uninstall"
+        break
+    fi
+    brew rm "${packagestouninstall[@]/#/}"
+done
+
+
+# Cask packages
+bb-log-info "Removing old cask packages"
+
+declare -a caskpackagestouninstall
+while : ; do
+    readarray -t caskpackagestouninstall <<< \
+              "$(comm -13 <(printf '%s\n' ${allcaskpackages[@]} | sort) <(brew cask ls | sort))"
+    # No packages to uninstall, so stop
+    if [ -z "$caskpackagestouninstall" ]; then
+        bb-log-info "No more packages to uninstall"
+        break
+    fi
+    brew cask rm "${caskpackagestouninstall[@]/#/}"
+done
+
+
+
+# >> Update pacakges
+bb-log-info "Update outdated packages"
+brew upgrade
+brew cask upgrade
+
+
+
+# >> Defaults
+
+if [ "$update_defaults" = "1" ]; then
+    bb-flag-unset update-defaults-set
+else
+    bb-log-info "Not applying 'defaults', use the --defaults flag to apply"
+fi
+
+if ! bb-flag? update-defaults-set; then
+
+    # Expand save panel by default
+    defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
+    defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode2 -bool true
+
+    # Disable the “Are you sure you want to open this application?” dialog
+    defaults write com.apple.LaunchServices LSQuarantine -bool false
+
+    # Require password immediately after sleep or screen saver begins
+    defaults write com.apple.screensaver askForPassword -int 1
+    defaults write com.apple.screensaver askForPasswordDelay -int 0
+
+    # Automatically hide and show the Dock
+    defaults write com.apple.dock autohide -bool true
+
+    ## Finder settings
+    # Set Home as the default location for new Finder windows
+    # For other paths, use `PfLo` and `file:///full/path/here/`
+    defaults write com.apple.finder NewWindowTarget -string "PfDe"
+    defaults write com.apple.finder NewWindowTargetPath -string "file://${HOME}/"
+
+    # Show hidden files by default
+    defaults write com.apple.finder AppleShowAllFiles -bool true
+
+    # Show all filename extensions
+    defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+
+    # Show path bar
+    defaults write com.apple.finder ShowPathbar -bool true
+
+    # Allow text selection in Quick Look
+    defaults write com.apple.finder QLEnableTextSelection -bool true
+
+    # Disable the warning when changing a file extension
+    defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
+
+    # Always open everything in Finder's column view.
+    defaults write com.apple.finder FXPreferredViewStyle -string "clmv"
+
+    # Show the ~/Library folder.
+    chflags nohidden ~/Library
+
+    bb-log-info "Restarting affected apps, some might require a logout/restart"
+    for app in "cfprefsd" "Finder" "SystemUIServer"; do
+        killall "${app}" > /dev/null 2>&1
+    done
+
+    bb-flag-set update-defaults-set
+fi
+
+
+
+# >> Spacemacs
+
+if [ "$update_spacemacs" = "1" ]; then
+    bb-flag-unset update-spacemacs-set
+else
+    bb-log-info "Not updating spacemacs, use the --spacemacs flag to force an update"
+fi
+
+if ! bb-flag? update-spacemacs-set; then
+
+    bb-log-info "Setting up spacemacs"
+    git clone https://github.com/syl20bnr/spacemacs ~/.emacs.d
+    if bb-error?; then
+        bb-log-info "Spacemacs already installed, updating instead"
+        git -C ~/.emacs.d pull
+    fi
+
+    bb-flag-set update-spacemacs-set
+fi
+
+
+
+# >> Manual Todo List:
+
+if ! bb-flag? printed-todo-list; then
+    echo '
+There are still a few tasks for you to do manually:
+
+- Give iTerm2 full disk access
+    - System Preferences -> Security & Privacy -> Full Disk Access
+- Stop OSX automatically rearranging spaces
+    - System Preferences -> Mission Control
+    - Untick 'Automatically rearrange Spaces based on most recent use'
+- Setup ControlPlane
+- Set input language to Australian
+  - This makes it so that you can type the '#' symbol with shift-3
+
+'
+    bb-flag-set printed-todo-list
+fi

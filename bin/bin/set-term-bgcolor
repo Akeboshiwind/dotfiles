@@ -1,0 +1,24 @@
+#!/usr/local/bin/bash
+# set-term-bgcolor
+
+
+# >> Calculate colours
+
+R=$(($1 * 256))
+G=$(($2 * 256))
+B=$(($3 * 256))
+
+
+
+# >> Set terminal background colour
+
+/usr/bin/osascript -e '
+  tell application "iTerm"
+       tell current window
+            tell current tab
+                 tell current session
+                      set background color to {'$R', '$G', '$B'}
+                 end tell
+            end tell
+       end tell
+   end tell'

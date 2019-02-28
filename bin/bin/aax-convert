@@ -1,0 +1,45 @@
+#!/usr/local/bin/bash
+# aax-convert
+
+
+# >> CLI args
+
+usage() {
+    echo "usage: ./aax-convert <input-file>"
+}
+
+input_file=$1
+output_file=${2:-output.mp4}
+
+if [ -z "$input_file" ]; then
+    usage
+    exit 1
+fi
+
+
+
+# >> Bashbooster
+
+# Initialize Bash Booster
+source ~/bin/lib/bashbooster.sh
+
+
+
+# >> Extract activation bytes
+
+bb-log-info "Extracting activation byes from passwordstore"
+activation_bytes="$(pass show personal/amazon.co.uk | sed -n 's/^activation-bytes:\(.*\)\n*$/\1/p')"
+
+# Notes:
+# The activation bytes can be found using the following tool:
+# https://github.com/inAudible-NG/audible-activator
+# The tool only needs to be used once then the activation-bytes can be saved somewhere (lika a password manager)
+# and used in this script
+
+
+
+# >> Extract activation bytes
+
+bb-log-info "Decoding the DRM protected file to an unprotected file"
+ffmpeg -activation_bytes $activation_bytes -i $input_file -vn -c:a copy $output_file
+

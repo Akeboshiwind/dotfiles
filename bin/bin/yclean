@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+keyid=0x849895A8DD8B6A30
+gpgconf --kill gpg-agent
+cd "$(gpgconf --list-dirs homedir)/private-keys-v1.d"
+gpg -K --with-keygrip --with-colons "$keyid" | \
+	awk -F: '/^grp/ { print $10".key"; }' | \
+	xargs rm -vf
