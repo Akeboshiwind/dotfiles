@@ -5,7 +5,7 @@
 # >> CLI args
 
 usage() {
-    echo "usage: ./aax-convert <input-file>"
+    echo "usage: ./aax-convert input-file [output-file]"
 }
 
 input_file=$1
