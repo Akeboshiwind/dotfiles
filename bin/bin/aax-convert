@@ -2,11 +2,25 @@
 # aax-convert
 
 
-# >> CLI args
+# >> Usage
 
 usage() {
-    echo "usage: ./aax-convert input-file [output-file]"
+    echo "usage: ./aax-convert [-h|--help] input-file [output-file]"
 }
+
+
+
+# >> Cli args
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -h | --help )        usage
+                             exit
+                             ;;
+        * )                  break
+    esac
+    shift
+done
 
 input_file=$1
 output_file=${2:-output.mp4}
