@@ -2,6 +2,49 @@
 # bootstrap
 
 
+# >> Utils
+
+usage() {
+    cat << USAGE
+Usage: bootstrap [OPTIONS]
+
+Options:
+    -h, --help  Display this help and exit
+    --version   Output the version information and exit
+
+Report bugs to <olivershawmarshall+dotfiles@gmail.com>.
+USAGE
+}
+
+version() {
+    cat << VERSION
+bootstrap 1.0
+
+Copyright (C) 2019 Oliver Marshall
+
+Written by Oliver Marshall.
+VERSION
+}
+
+
+
+# >> Cli args
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -h | --help )        usage
+                             exit
+                             ;;
+        --version )          version
+                             exit
+                             ;;
+        * )                  break
+    esac
+    shift
+done
+
+
+
 # >> Hostname
 
 MY_NAME="OliverMarshall"
@@ -31,4 +74,3 @@ brew install bash
 echo '/usr/local/bin/bash' | sudo tee -a /etc/shells
 
 chsh -s /usr/local/bin/bash
-

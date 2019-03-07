@@ -1,12 +1,91 @@
 #!/usr/bin/env bash
+# ffmerge
+# TODO:
+# - Customizable file filtering
+# - Customizable sorting?
 
-list_name=file-list-for-ffmpeg.txt
 
-# pipe the current into a file, replacing the beginning and the end of each line
-# also removes the last line which is the newly created 'file-list-for-ffmpeg.txt'
-ls | sed -e "s/^/file '.\//" -e "s/$/'/" -e "/$list_name/d" > $list_name
+# >> Utils
+
+usage() {
+    cat << USAGE
+Usage: ffmerge [OPTIONS] [output-file]
+
+Options:
+    --target-dir                        Set the target dir.
+                                        Defaults to the current working directory
+
+    -h, --help                          Display this help and exit
+    --version                           Output the version information and exit
+
+Examples:
+    ffmerge                             Output 'output.mp3'
+    ffmerge foo.mp4                     Output 'foo.mp4'
+    ffmerge --target-dir ~/Music/album  Runs 'ffmerge' in ~/Music/album
+
+Report bugs to <olivershawmarshall+dotfiles@gmail.com>.
+USAGE
+}
+
+version() {
+    cat << VERSION
+ffmerge 1.0
+
+Copyright (C) 2019 Oliver Marshall
+
+Written by Oliver Marshall.
+VERSION
+}
+
+
+
+# >> Cli args
+
+target_dir=$(pwd)
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --target-dir )       shift
+                             target_dir="$1"
+                             ;;
+        -h | --help )        usage
+                             exit
+                             ;;
+        --version )          version
+                             exit
+                             ;;
+        * )                  break
+    esac
+    shift
+done
 
 output_file_name=${1:-output.mp3}
+list_name=$(mktemp /tmp/ffmerge.XXXXXX)
 
-ffmpeg -f concat -safe 0 -i $list_name -c copy $output_file_name
-rm $list_name
+
+
+# >> Prepare arguments
+
+# Strip of ending '/'
+target_dir=${target_dir%/}
+
+# Escape for use in sed
+clean_target_dir=$(sed 's/[&/\]/\\&/g' <<<"$target_dir")
+
+
+
+# >> Create list of files for ffmpeg to merge
+
+ls "$target_dir" | sed -e "s/^/file '$clean_target_dir\//" -e "s/$/'/" > "$list_name"
+
+
+
+# >> Merge the files into the output file
+
+ffmpeg -f concat -safe 0 -i "$list_name" -c copy "$output_file_name"
+
+
+
+# >> Clean up
+
+rm "$list_name"

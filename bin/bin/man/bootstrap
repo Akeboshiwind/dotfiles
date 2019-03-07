@@ -1,0 +1,4 @@
+[description]
+\'bootstrap\' prepares an osx system for general install. \'bootstrap\' is intended
+to be run once at system start after which \'update\' can be run as many times as
+needed to fully prepare a new osx install.

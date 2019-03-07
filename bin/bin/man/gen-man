@@ -1,0 +1,11 @@
+[description]
+\'gen-man\' uses \'help2man\' to generate a manpage output to stdout. Looks in
+~/bin/man for files to include using the -i option in \'help2man\'. If no file
+is found then the standard \'help2man\' output is generated.
+.br
+Depends on \'help2man\'.
+
+Notes:
+.br
+Included files must end in a newline if you dont want two sections to merge
+unexpectedly

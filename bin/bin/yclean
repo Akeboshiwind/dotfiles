@@ -1,7 +1,65 @@
 #!/usr/bin/env bash
+# yclean
+
+
+# >> Utils
+
+usage() {
+    cat << USAGE
+Usage: yclean [OPTIONS]
+
+Options:
+    -h, --help  Display this help and exit
+    --version   Output the version information and exit
+
+Examples:
+    yclean      Clear keys with with keygrip specified
+
+Report bugs to <olivershawmarshall+dotfiles@gmail.com>.
+USAGE
+}
+
+version() {
+    cat << VERSION
+yclean 1.0
+
+Copyright (C) 2019 Oliver Marshall
+
+Written by Oliver Marshall.
+VERSION
+}
+
+
+
+# >> Cli args
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -h | --help )        usage
+                             exit
+                             ;;
+        --version )          version
+                             exit
+                             ;;
+        * )                  break
+    esac
+    shift
+done
+
+
+
+# >> Config
+
 keyid=0x849895A8DD8B6A30
+
+
+
+# >> Clear GPG of keys related to the input keyid
+
 gpgconf --kill gpg-agent
+
 cd "$(gpgconf --list-dirs homedir)/private-keys-v1.d"
+
 gpg -K --with-keygrip --with-colons "$keyid" | \
 	awk -F: '/^grp/ { print $10".key"; }' | \
 	xargs rm -vf

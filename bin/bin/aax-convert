@@ -2,10 +2,32 @@
 # aax-convert
 
 
-# >> Usage
+# >> Utils
 
 usage() {
-    echo "usage: ./aax-convert [-h|--help] input-file [output-file]"
+    cat << USAGE
+Usage: aax-convert [OPTIONS] input-file [output-file]
+
+Options:
+    -h, --help                   Display this help and exit
+    --version                    Output the version information and exit
+
+Examples:
+    aax-convert foo.aax          Output 'output.mp4'
+    aax-convert foo.aax foo.mp4  Output 'foo.mp4'
+
+Report bugs to <olivershawmarshall+dotfiles@gmail.com>.
+USAGE
+}
+
+version() {
+    cat << VERSION
+aax-convert 1.0
+
+Copyright (C) 2019 Oliver Marshall
+
+Written by Oliver Marshall.
+VERSION
 }
 
 
@@ -17,6 +39,9 @@ while [ "$1" != "" ]; do
         -h | --help )        usage
                              exit
                              ;;
+        --version )          version
+                             exit
+                             ;;
         * )                  break
     esac
     shift
@@ -24,11 +49,6 @@ done
 
 input_file=$1
 output_file=${2:-output.mp4}
-
-if [ -z "$input_file" ]; then
-    usage
-    exit 1
-fi
 
 
 
@@ -39,16 +59,22 @@ source ~/bin/lib/bashbooster.sh
 
 
 
+# >> Validate input
+
+if [ -z "$input_file" ]; then
+    bb-log-error "No input file supplied"
+    echo
+    usage
+    exit 1
+fi
+
+
+
 # >> Extract activation bytes
 
+# See help message on where to get your 'activation bytes'
 bb-log-info "Extracting activation byes from passwordstore"
 activation_bytes="$(pass show personal/amazon.co.uk | sed -n 's/^activation-bytes:\(.*\)\n*$/\1/p')"
-
-# Notes:
-# The activation bytes can be found using the following tool:
-# https://github.com/inAudible-NG/audible-activator
-# The tool only needs to be used once then the activation-bytes can be saved somewhere (lika a password manager)
-# and used in this script
 
 
 
@@ -56,4 +82,3 @@ activation_bytes="$(pass show personal/amazon.co.uk | sed -n 's/^activation-byte
 
 bb-log-info "Decoding the DRM protected file to an unprotected file"
 ffmpeg -activation_bytes $activation_bytes -i $input_file -vn -c:a copy $output_file
-

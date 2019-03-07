@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# gen-man
+
+
+# >> Utils
+
+usage() {
+    cat << USAGE
+Usage: gen-man [OPTIONS] executable
+
+Options:
+    -h, --help           Display this help and exit
+    --version            Output the version information and exit
+
+Examples:
+    gen-man gen-man      Generate the manpage for this script
+    gen-man aax-convert  Generate the manpage for aax-convert
+
+Report bugs to <olivershawmarshall+dotfiles@gmail.com>.
+USAGE
+}
+
+version() {
+    cat << VERSION
+gen-man 1.0
+
+Copyright (C) 2019 Oliver Marshall
+
+Written by Oliver Marshall.
+VERSION
+}
+
+
+
+# >> Cli args
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -h | --help )        usage
+                             exit
+                             ;;
+        --version )          version
+                             exit
+                             ;;
+        * )                  break
+    esac
+    shift
+done
+
+exe=$1
+
+if [ "$exe" = "" ]; then
+    echo -e "Error: No executable supplied\n"
+    usage
+    exit 1
+fi
+
+
+
+# >> Find include file
+
+include_path=~/bin/man/$exe
+opt_arg=()
+
+if [ -f $include_path ]; then
+    opt_arg=("-i $include_path")
+fi
+
+
+
+# >> Generate man file
+
+help2man --no-info "${opt_arg[@]}" "$exe"

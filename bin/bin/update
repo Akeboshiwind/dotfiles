@@ -1,21 +1,50 @@
 #!/usr/bin/env bash
-# update.sh
-
-
-# >> TODO:
-
+# update
+# TODO:
 # - Better variable names
+# - Support reading from a file to get a list of temporary packages to install
+#   (not committed)
 
 
-
-# >> CLI args
+# >> Utils
 
 usage() {
-    echo "[usage] update [[--defaults]|[-h|--help]"
+    cat << USAGE
+Usage: update [OPTIONS]
+
+Options:
+    --defaults   Forces the script to re-run the defaults
+    --spacemacs  Forces the script to pull down the latest spacemacs changes
+    --man-files  Forces the script to generate man files for the commands defined in ~/bin/man
+
+    -h, --help   Display this help and exit
+    --version    Output the version information and exit
+
+Examples:
+    update       Runs the script...
+                 Amazing
+
+Report bugs to <olivershawmarshall+dotfiles@gmail.com>.
+USAGE
 }
+
+version() {
+    cat << VERSION
+update 1.0
+
+Copyright (C) 2019 Oliver Marshall
+
+Written by Oliver Marshall.
+VERSION
+}
+
+
+
+# >> Cli args
 
 update_defaults=
 update_spacemacs=
+update_man_files=
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -23,7 +52,12 @@ while [ "$1" != "" ]; do
                        ;;
         --spacemacs )  update_spacemacs=1
                        ;;
+        --man-files )  update_man_files=1
+                       ;;
         -h | --help )  usage
+                       exit
+                       ;;
+        --version )    version
                        exit
                        ;;
         * )            usage
@@ -76,6 +110,7 @@ packages=( \
     z \
     v \
     asdf \
+    help2man \
 )
 
 # Packages used for work
@@ -285,6 +320,28 @@ if ! bb-flag? update-spacemacs-set; then
     fi
 
     bb-flag-set update-spacemacs-set
+fi
+
+
+
+# >> Generate man files
+
+if [ "$update_man_files" = "1" ]; then
+    bb-flag-unset update-man-files-set
+else
+    bb-log-info "Not updating man files, use the --man-files flag to force an update"
+fi
+
+if ! bb-flag? update-man-files-set; then
+
+    bb-log-info "Setting up man files for scripts"
+    for filename in ~/bin/man/*; do
+        base="$(basename $filename)"
+        bb-log-info "Generating man files for $base"
+        gen-man $base > /usr/local/share/man/man1/$base.1
+    done
+
+    bb-flag-set update-man-files-set
 fi
 
 
