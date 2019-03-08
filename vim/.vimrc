@@ -25,6 +25,13 @@ call plug#end()
 
 
 
+" >> Keybinds
+
+imap fd <Esc>
+set timeoutlen=200
+
+
+
 " >> Appearance
 
 colorscheme wal
