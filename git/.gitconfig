@@ -3,4 +3,4 @@
 	email = olivershawmarshall@gmail.com
 
 [includeIf "gitdir:~/prog/work/"]
-    path = ~/work.gitignore
+    path = ~/work.gitconfig
