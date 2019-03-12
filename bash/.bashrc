@@ -10,12 +10,13 @@
 
 # >> History
 
-HISTCONTROL=ignoreboth
+export HISTCONTROL=ignoreboth
 
 shopt -s histappend
 
-HISTSIZE=1000
-HISTFILESIZE=2000
+export HISTSIZE=
+export HISTFILESIZE=
+export HISTFILE=~/.bash_eternal_history
 
 export PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND$'\n'}history -a; history -c; history -r"
 
@@ -136,6 +137,21 @@ for f in ~/bin/sources/*; do source $f; done
 
 # >> asdf
 
-export ASDF_DATA_DIR=`brew --prefix asdf`
+# Retrieve the variable from the cache
+asdf_dir_cache=~/.local/cache/asdf-dir
+asdf_dir=$(head -n 1 $asdf_dir_cache 2>/dev/null)
+
+# Chech if the cache is correct
+if [ -z "$asdf_dir" ] || [ ! -d "$asdf_dir" ]; then
+    # Ensure cache exists
+    mkdir -p '$(dirname "$asdf_dir_cache")'
+    touch "$asdf_dir_cache"
+
+    # Cache the variable
+    asdf_dir=`brew --prefix asdf`
+    echo "$asdf_dir" > "$asdf_dir_cache"
+fi
+
+export ASDF_DATA_DIR="$asdf_dir"
 source $ASDF_DATA_DIR/asdf.sh
 
