@@ -2,3 +2,7 @@
 \'update\' is an idempotent script which installs a list of packages and
 uninstalls those that aren\'t on the list. On first run spacemacs will be
 installed as well as defaults for osx will be set.
+.br
+Searches for packages to install in \'~/bin/pkgs/brew\' for brew and
+\'~/bin/pkgs/cask\' for cask, these can be overidden with the options
+\'--brew-pkgs-folder\' and \'--cask-pkgs-folder\' respectively.

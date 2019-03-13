@@ -13,16 +13,18 @@ usage() {
 Usage: update [OPTIONS]
 
 Options:
-    --defaults   Forces the script to re-run the defaults
-    --spacemacs  Forces the script to pull down the latest spacemacs changes
-    --man-files  Forces the script to generate man files for the commands defined in ~/bin/man
+    --defaults         Forces the script to re-run the defaults
+    --spacemacs        Forces the script to pull down the latest spacemacs changes
+    --man-files        Forces the script to generate man files for the commands defined in ~/bin/man
+    --brew-pkg-folder  Set's the folder to look for package lists for brew. Defaults to ~/bin/pkgs/brew
+    --cask-pkg-folder  Set's the folder to look for package lists for brew cask. Defaults to ~/bin/pkgs/cask
 
-    -h, --help   Display this help and exit
-    --version    Output the version information and exit
+    -h, --help         Display this help and exit
+    --version          Output the version information and exit
 
 Examples:
-    update       Runs the script...
-                 Amazing
+    update             Runs the script...
+                       Amazing
 
 Report bugs to <olivershawmarshall+dotfiles@gmail.com>.
 USAGE
@@ -45,23 +47,31 @@ VERSION
 update_defaults=
 update_spacemacs=
 update_man_files=
+brew_pkg_folder=~/bin/pkgs/brew
+cask_pkg_folder=~/bin/pkgs/cask
 
 while [ "$1" != "" ]; do
     case $1 in
-        --defaults )   update_defaults=1
-                       ;;
-        --spacemacs )  update_spacemacs=1
-                       ;;
-        --man-files )  update_man_files=1
-                       ;;
-        -h | --help )  usage
-                       exit
-                       ;;
-        --version )    version
-                       exit
-                       ;;
-        * )            usage
-                       exit 1
+        --defaults )        update_defaults=1
+                            ;;
+        --spacemacs )       update_spacemacs=1
+                            ;;
+        --man-files )       update_man_files=1
+                            ;;
+        --brew-pkg-folder )  shift
+                            brew_pkg_folder="$1"
+                            ;;
+        --cask-pkg-folder )  shift
+                            cask_pkg_folder="$1"
+                            ;;
+        -h | --help )       usage
+                            exit
+                            ;;
+        --version )         version
+                            exit
+                            ;;
+        * )                 usage
+                            exit 1
     esac
     shift
 done
@@ -84,118 +94,49 @@ source ./lib/bashbooster.sh
 
 
 
-# >> List packages
-
-# Normal packages from brew
-declare -a packages
-packages=( \
-    bash \
-    bash-completion \
-    coreutils \
-    git \
-    tmux \
-    clojure \
-    leiningen \
-    ispell \
-    the_silver_searcher \
-    tree \
-    rename \
-    jq \
-    pass \
-    gnupg \
-    pinentry-mac \
-    ffmpeg \
-    stow \
-    node \
-    z \
-    v \
-    asdf \
-    help2man \
-)
-
-# Packages used for work
-declare -a workpackages
-workpackages=( \
-    terraform \
-    awscli \
-    packer \
-    parquet-tools \
-    avro-tools \
-    kubernetes-cli \
-)
-
-# Combine both brew packages arrays
-declare -a allpackages
-allpackages=( "${packages[@]}" "${workpackages[@]}" )
-
-# Normal brew cask packages
-declare -a caskpackages
-caskpackages=( \
-    iterm2\
-    emacs \
-    controlplane \
-    docker \
-    discord \
-    font-source-code-pro \
-    mumble \
-    spotify \
-    telegram \
-    transmission \
-    vlc \
-    java \
-)
-
-# Brew cask packages used for work
-declare -a workcaskpackages
-workcaskpackages=( \
-    dotnet-sdk\
-)
-
-# Combine tothether both cask package arrays
-declare -a allcaskpackages
-allcaskpackages=( "${caskpackages[@]}" "${workcaskpackages[@]}" )
-
-
-
 # >> Update Homebrew
-
 
 bb-log-info "Updating Homebrew"
 bb-brew-update
 
 
 
+# >> List packages
+
+# Brew packages
+brew_pkgs=$(sed '/^[[:space:]]*$/d' $brew_pkg_folder/* | sort | uniq)
+
+# Cask packages
+cask_pkgs=$(sed '/^[[:space:]]*$/d' $cask_pkg_folder/* | sort | uniq)
+
+
+
 # >> Install packages
 
 # Brew packages
-bb-log-info "Installing packages"
+bb-log-info "Installing new packages"
 
-# Find only packages that are not installed
-declare -a allpackagesnotinstalled
-readarray -t allpackagesnotinstalled \
-    <<<"$(comm -23 <(printf '%s\n' "${allpackages[@]}" | sort) <(brew ls --full-name | sort))"
+new_brew_pkgs=$(comm -23 <(printf '%s\n' "${brew_pkgs[@]}") <(brew ls --full-name | sort))
 
-# Remove empty strings from array
-for i in "${!allpackagesnotinstalled[@]}"; do
-    [ -n "${allpackagesnotinstalled[$i]}" ] || unset "allpackagesnotinstalled[$i]"
-done
-bb-brew-install "${allpackagesnotinstalled[@]}"
+if [ -z "${new_brew_pkgs[@]}" ]; then
+    bb-log-info "No new brew packages to install"
+else
+    bb-log-info "Installing new brew packages"
 
+    bb-brew-install "${new_brew_pkgs[@]}"
+fi
 
 # Cask packages
-bb-log-info "Installing cask packages"
 
-# Find only packages that are not installed
-declare -a allcaskpackagesnotinstalled
-readarray -t allcaskpackagesnotinstalled \
-    <<<"$(comm -23 <(printf '%s\n' "${allcaskpackages[@]}" | sort) <(brew cask ls --full-name | sort))"
+new_cask_pkgs=$(comm -23 <(printf '%s\n' "${cask_pkgs[@]}") <(brew cask ls --full-name | sort))
 
-# Remove empty strings from array
-for i in "${!allcaskpackagesnotinstalled[@]}"; do
-    [ -n "${allcaskpackagesnotinstalled[$i]}" ] || unset "allcaskpackagesnotinstalled[$i]"
-done
+if [ -z "${new_cask_pkgs[@]}" ]; then
+    bb-log-info "No new cask packages to install"
+else
+    bb-log-info "Installing new cask packages"
 
-bb-brew-cask-install "${allcaskpackagesnotinstalled[@]}"
+    bb-brew-cask-install "${new_cask_pkgs[@]}"
+fi
 
 
 
@@ -204,32 +145,43 @@ bb-brew-cask-install "${allcaskpackagesnotinstalled[@]}"
 # Brew packages
 bb-log-info "Removing old packages"
 
-declare -a packagestouninstall
+looped=0
 while : ; do
-    readarray -t packagestouninstall <<< \
-              "$(comm -13 <(printf '%s\n' ${allpackages[@]} | sort) <(brew leaves | sort))"
-    # No packages to uninstall, so stop
-    if [ -z "$packagestouninstall" ]; then
-        bb-log-info "No more packages to uninstall"
+    old_brew_pkgs=$(comm -13 <(printf '%s\n' "${brew_pkgs[@]}") <(brew leaves | sort))
+
+    if [ -z "$old_brew_pkgs" ]; then
+        if [ "$looped" -eq "1" ]; then
+            bb-log-info "No more brew packages to uninstall"
+        else
+            bb-log-info "No brew packages to uninstall"
+        fi
         break
     fi
-    brew rm "${packagestouninstall[@]/#/}"
-done
 
+    looped=1
+
+    brew rm "${old_brew_pkgs[@]}"
+done
 
 # Cask packages
 bb-log-info "Removing old cask packages"
 
-declare -a caskpackagestouninstall
+looped=0
 while : ; do
-    readarray -t caskpackagestouninstall <<< \
-              "$(comm -13 <(printf '%s\n' ${allcaskpackages[@]} | sort) <(brew cask ls | sort))"
-    # No packages to uninstall, so stop
-    if [ -z "$caskpackagestouninstall" ]; then
-        bb-log-info "No more packages to uninstall"
+    old_cask_pkgs=$(comm -13 <(printf '%s\n' "${cask_pkgs[@]}") <(brew cask ls --full-name | sort))
+
+    if [ -z "$old_cask_pkgs" ]; then
+        if [ "$looped" -eq "1" ]; then
+            bb-log-info "No more cask packages to uninstall"
+        else
+            bb-log-info "No cask packages to uninstall"
+        fi
         break
     fi
-    brew cask rm "${caskpackagestouninstall[@]/#/}"
+
+    looped=1
+
+    brew cask rm "${old_cask_pkgs[@]}"
 done
 
 
