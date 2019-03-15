@@ -160,7 +160,7 @@ while : ; do
 
     looped=1
 
-    brew rm "${old_brew_pkgs[@]}"
+    echo "${old_brew_pkgs[@]}" | xargs brew rm
 done
 
 # Cask packages
@@ -181,7 +181,7 @@ while : ; do
 
     looped=1
 
-    brew cask rm "${old_cask_pkgs[@]}"
+    echo "${old_cask_pkgs[@]}" | xargs brew cask rm
 done
 
 
