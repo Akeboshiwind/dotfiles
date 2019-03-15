@@ -117,8 +117,9 @@ cask_pkgs=$(sed '/^[[:space:]]*$/d' $cask_pkg_folder/* | sort | uniq)
 bb-log-info "Installing new packages"
 
 new_brew_pkgs=$(comm -23 <(printf '%s\n' "${brew_pkgs[@]}") <(brew ls --full-name | sort))
+readarray -t new_brew_pkgs <<< "$new_brew_pkgs"
 
-if [ -z "${new_brew_pkgs[@]}" ]; then
+if [ ${#new_brew_pkgs[@]} -eq 0 ]; then
     bb-log-info "No new brew packages to install"
 else
     bb-log-info "Installing new brew packages"
@@ -129,8 +130,9 @@ fi
 # Cask packages
 
 new_cask_pkgs=$(comm -23 <(printf '%s\n' "${cask_pkgs[@]}") <(brew cask ls --full-name | sort))
+readarray -t new_cask_pkgs <<< "$new_cask_pkgs"
 
-if [ -z "${new_cask_pkgs[@]}" ]; then
+if [ ${#new_cask_pgks[@]} -eq 0 ]; then
     bb-log-info "No new cask packages to install"
 else
     bb-log-info "Installing new cask packages"
