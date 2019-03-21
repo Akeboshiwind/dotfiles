@@ -114,7 +114,7 @@ cask_pkgs=$(sed '/^[[:space:]]*$/d' $cask_pkg_folder/* | sort | uniq)
 # >> Install packages
 
 # Brew packages
-bb-log-info "Installing new packages"
+bb-log-info "Checking for new packages"
 
 new_brew_pkgs=$(comm -23 <(printf '%s\n' "${brew_pkgs[@]}") <(brew ls --full-name | sort))
 readarray -t new_brew_pkgs <<< "$new_brew_pkgs"
@@ -145,7 +145,7 @@ fi
 # >> Remove old packages
 
 # Brew packages
-bb-log-info "Removing old packages"
+bb-log-info "Removing any old packages"
 
 looped=0
 while : ; do
