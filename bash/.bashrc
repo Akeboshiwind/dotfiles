@@ -77,9 +77,9 @@ esac
 
 # >> Aliases
 
-if [[ -f ~/.bash_aliases && "$(uname -s)" != "Darwin" ]]; then
-    . ~/.bash_aliases
-fi
+for filename in ~/.bash_aliases/*; do
+    . $filename
+done
 
 
 
@@ -154,4 +154,3 @@ fi
 
 export ASDF_DATA_DIR="$asdf_dir"
 source $ASDF_DATA_DIR/asdf.sh
-
