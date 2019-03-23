@@ -1,4 +1,5 @@
 # colored-man-pages.zsh
+# soure: https://github.com/imkira/dotfiles/blob/master/.zsh/colored-man-pages.zsh
 
 
 # >> Config
