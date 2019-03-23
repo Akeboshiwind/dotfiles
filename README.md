@@ -8,6 +8,18 @@ A dotfile repo managed by [stow](https://www.gnu.org/software/stow/)
 2. Clone this repo
 3. Install whatever configs you want using `stow <folder-name>`
 
+### Bare Essentials:
+
+`stow -v bin zsh gpg tmux gitssh vim`
+
+### Useful Stuff:
+
+`stow -v spacemacs docker`
+
+### OSX Specific
+
+`stow -v iterm2`
+
 ## Bootstrap
 
 In the `bin` package there is a `bootstrap.sh` script that installs the basics
