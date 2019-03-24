@@ -3,7 +3,7 @@
 
 # >> Path
 
-export PATH=$PATH:/usr/local/bin:/usr/local/share/dotnet:~/dotnet/tools:~/bin
+export PATH=/usr/local/bin:/usr/local/share/dotnet:~/dotnet/tools:~/bin:$PATH
 
 
 
