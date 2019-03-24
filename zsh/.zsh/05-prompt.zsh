@@ -89,13 +89,44 @@ local git_branch='$(git_prompt)%{%f%}'
 
 
 
+# >> AWS
+
+aws_prompt() {
+
+    case "$AWS_PROFILE" in
+        data)    color='%F{blue}'
+                 ;;
+        prod)    color='%F{red}'
+                 ;;
+        staging) color='%F{magenta}'
+                 ;;
+        cluster) color='%F{green}'
+                 ;;
+        sandbox) color='%F{cyan}'
+                 ;;
+        nft)     color='%F{yellow}'
+                 ;;
+        *)       color='%F{white}'
+                 ;;
+    esac
+
+    if [[ -n "$AWS_PROFILE" && `pwd` =~ '/env/' && ! `pwd` =~ "/env/$AWS_PROFILE" ]]; then
+        color='%F{red}'
+    fi
+
+    echo "$color$AWS_PROFILE%f"
+}
+
+local aws_profile='$(aws_prompt)'
+
+
+
 # >> Prompt
 
 case "$PROMPT_STYLE" in
     bira)  PROMPT="
-${USER_COLOR}╭─ ${COLOR_NORMAL} ${current_dir} ${git_branch}${USER_COLOR}
+${USER_COLOR}╭─ ${COLOR_NORMAL} ${current_dir} ${aws_profile} ${git_branch}${USER_COLOR}
 ╰─%B${USER_SYMBOL}%b ${COLOR_NORMAL}"
         RPS1="%B${return_code}%b"
         ;;
 esac
-
