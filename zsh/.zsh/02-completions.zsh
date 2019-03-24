@@ -2,6 +2,7 @@
 
 # >> Basic Setup
 
+setopt BRACE_CCL
 fpath=(~/.zsh/completion $fpath)
 autoload -Uz compinit
 compinit -u
