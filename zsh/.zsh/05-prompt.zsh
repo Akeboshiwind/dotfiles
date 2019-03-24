@@ -92,7 +92,8 @@ local git_branch='$(git_prompt)%{%f%}'
 # >> Prompt
 
 case "$PROMPT_STYLE" in
-    bira)  PROMPT="${USER_COLOR}╭─${COLOR_NORMAL} ${current_dir} ${git_branch}${USER_COLOR}
+    bira)  PROMPT="
+${USER_COLOR}╭─ ${COLOR_NORMAL} ${current_dir} ${git_branch}${USER_COLOR}
 ╰─%B${USER_SYMBOL}%b ${COLOR_NORMAL}"
         RPS1="%B${return_code}%b"
         ;;
