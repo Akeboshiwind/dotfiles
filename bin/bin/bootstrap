@@ -67,10 +67,13 @@ xcode-select --install
 
 
 
-# >> Update bash
+# >> Install shells
 
 brew install bash
+brew install zsh
 
 echo '/usr/local/bin/bash' | sudo tee -a /etc/shells
+echo '/usr/local/bin/zsh' | sudo tee -a /etc/shells
 
-chsh -s /usr/local/bin/bash
+chsh -s /usr/local/bin/zsh
+
