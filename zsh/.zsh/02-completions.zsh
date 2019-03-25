@@ -9,6 +9,13 @@ compinit -u
 
 
 
+# >> Applications
+
+# kubectl
+if [ $commands[kubectl] ]; then source <(kubectl completion zsh); fi
+
+
+
 # >> Styling
 
 zstyle ':completion:*' auto-description 'specify: %d'
