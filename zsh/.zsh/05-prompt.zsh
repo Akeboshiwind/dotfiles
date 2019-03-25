@@ -122,11 +122,21 @@ local aws_profile='$(aws_prompt)'
 
 
 
+# >> Kubernetes
+
+. ~/.zsh/prompt/kube-ps1.sh
+
+KUBE_PS1_SYMBOL_ENABLE=false
+KUBE_PS1_PREFIX=
+KUBE_PS1_SUFFIX=
+local kube_prompt='$(kube_ps1)'
+
+
 # >> Prompt
 
 case "$PROMPT_STYLE" in
     bira)  PROMPT="
-${USER_COLOR}╭─ ${COLOR_NORMAL} ${current_dir} ${aws_profile} ${git_branch}${USER_COLOR}
+${USER_COLOR}╭─ ${COLOR_NORMAL} ${current_dir} ${aws_profile} ${kube_prompt} ${git_branch} ${USER_COLOR}
 ╰─%B${USER_SYMBOL}%b ${COLOR_NORMAL}"
         RPS1="%B${return_code}%b"
         ;;
