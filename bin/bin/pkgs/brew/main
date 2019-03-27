@@ -1,7 +1,6 @@
 bash
 coreutils
 git
-tmux
 clojure
 leiningen
 ispell
