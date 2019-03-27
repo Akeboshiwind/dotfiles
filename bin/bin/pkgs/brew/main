@@ -9,8 +9,6 @@ tree
 rename
 jq
 pass
-gnupg
-pinentry-mac
 ffmpeg
 stow
 node
