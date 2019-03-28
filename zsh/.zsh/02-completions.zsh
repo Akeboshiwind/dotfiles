@@ -6,6 +6,9 @@ setopt BRACE_CCL
 fpath=(~/.zsh/completion $fpath)
 autoload -Uz compinit
 compinit -u
+# Fixes error 'zsh: no matches found'
+# E.g. of command that would produce error: `curl google.com/search?q=`
+unsetopt nomatch
 
 
 
