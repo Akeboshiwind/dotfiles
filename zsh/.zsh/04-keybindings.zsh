@@ -39,3 +39,6 @@ bindkey '^w' backward-kill-word
 
 # Rebind ctrl-r for searching history
 bindkey '^r' history-incremental-search-backward
+
+# Make shift-Tab go up in the selection menu
+bindkey '^[[Z' reverse-menu-complete
