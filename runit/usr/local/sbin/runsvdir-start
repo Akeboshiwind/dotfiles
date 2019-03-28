@@ -1,0 +1,8 @@
+#!/bin/sh
+
+mkdir -p /service
+
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+exec env - PATH=$PATH \
+    /usr/local/bin/runsvdir /service 'log:....................................................................................'
+
