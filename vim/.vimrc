@@ -19,8 +19,6 @@ Plug 'stephpy/vim-yaml'
 
 Plug 'gurpreetatwal/vim-avro'
 
-Plug 'darfink/vim-plist'
-
 call plug#end()
 
 
