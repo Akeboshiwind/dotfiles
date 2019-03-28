@@ -1,0 +1,4 @@
+#!/bin/sh
+echo "CONTROLPLANE Starting"
+
+exec /Applications/ControlPlane.app/Contents/MacOS/ControlPlane
