@@ -18,6 +18,7 @@ Options:
     --man-files        Forces the script to generate man files for the commands defined in ~/bin/man
     --brew-pkg-folder  Set's the folder to look for package lists for brew. Defaults to ~/bin/pkgs/brew
     --cask-pkg-folder  Set's the folder to look for package lists for brew cask. Defaults to ~/bin/pkgs/cask
+    --dry-run          Prints instead of actually doing the update
 
     -h, --help         Display this help and exit
     --version          Output the version information and exit
@@ -49,6 +50,7 @@ update_spacemacs=
 update_man_files=
 brew_pkg_folder=~/bin/pkgs/brew
 cask_pkg_folder=~/bin/pkgs/cask
+dry_run=
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -61,8 +63,11 @@ while [ "$1" != "" ]; do
         --brew-pkg-folder )  shift
                             brew_pkg_folder="$1"
                             ;;
-        --cask-pkg-folder )  shift
+        --cask-pkg-folder ) shift
                             cask_pkg_folder="$1"
+                            ;;
+        --dry-run )         shift
+                            dry_run=1
                             ;;
         -h | --help )       usage
                             exit
@@ -97,7 +102,11 @@ source ./lib/bashbooster.sh
 # >> Update Homebrew
 
 bb-log-info "Updating Homebrew"
-bb-brew-update
+if [ -z "$dry_run" ]; then
+    bb-brew-update
+else
+    echo "TODO: --dry-run for homebrew update"
+fi
 
 
 
@@ -124,7 +133,12 @@ if [ -z "${new_brew_pkgs[@]}" ]; then
 else
     bb-log-info "Installing new brew packages"
 
-    bb-brew-install "${new_brew_pkgs[@]}"
+    if [ -z "$dry_run" ]; then
+        bb-brew-install "${new_brew_pkgs[@]}"
+    else
+        bb-log-info "Brew packages that would be installed:"
+        printf '%s\n' "${new_brew_pkgs[@]}"
+    fi
 fi
 
 # Cask packages
@@ -137,7 +151,12 @@ if [ -z "${new_cask_pgks[@]}" ]; then
 else
     bb-log-info "Installing new cask packages"
 
-    bb-brew-cask-install "${new_cask_pkgs[@]}"
+    if [ -z "$dry_run" ]; then
+        bb-brew-cask-install "${new_cask_pkgs[@]}"
+    else
+        bb-log-info "Cask packages that would be installed:"
+        printf '%s\n' "${new_cask_pkgs[@]}"
+    fi
 fi
 
 
@@ -147,51 +166,66 @@ fi
 # Brew packages
 bb-log-info "Removing any old packages"
 
-looped=0
-while : ; do
-    old_brew_pkgs=$(comm -13 <(printf '%s\n' "${brew_pkgs[@]}") <(brew leaves | sort))
+if [ -z "$dry_run" ]; then
+    looped=0
+    while : ; do
+        old_brew_pkgs=$(comm -13 <(printf '%s\n' "${brew_pkgs[@]}") <(brew leaves | sort))
 
-    if [ -z "$old_brew_pkgs" ]; then
-        if [ "$looped" -eq "1" ]; then
-            bb-log-info "No more brew packages to uninstall"
-        else
-            bb-log-info "No brew packages to uninstall"
+        if [ -z "$old_brew_pkgs" ]; then
+            if [ "$looped" -eq "1" ]; then
+                bb-log-info "No more brew packages to uninstall"
+            else
+                bb-log-info "No brew packages to uninstall"
+            fi
+            break
         fi
-        break
-    fi
 
-    looped=1
+        looped=1
 
-    echo "${old_brew_pkgs[@]}" | xargs brew rm
-done
+        echo "${old_brew_pkgs[@]}" | xargs brew rm
+    done
+else
+    bb-log-info "Brew packages that would be removed:"
+    printf '%s\n' "${old_brew_pkgs[@]}"
+fi
 
 # Cask packages
 bb-log-info "Removing old cask packages"
 
-looped=0
-while : ; do
-    old_cask_pkgs=$(comm -13 <(printf '%s\n' "${cask_pkgs[@]}") <(brew cask ls --full-name | sort))
+if [ -z "$dry_run" ]; then
+    looped=0
+    while : ; do
+        old_cask_pkgs=$(comm -13 <(printf '%s\n' "${cask_pkgs[@]}") <(brew cask ls --full-name | sort))
 
-    if [ -z "$old_cask_pkgs" ]; then
-        if [ "$looped" -eq "1" ]; then
-            bb-log-info "No more cask packages to uninstall"
-        else
-            bb-log-info "No cask packages to uninstall"
+        if [ -z "$old_cask_pkgs" ]; then
+            if [ "$looped" -eq "1" ]; then
+                bb-log-info "No more cask packages to uninstall"
+            else
+                bb-log-info "No cask packages to uninstall"
+            fi
+            break
         fi
-        break
-    fi
 
-    looped=1
+        looped=1
 
-    echo "${old_cask_pkgs[@]}" | xargs brew cask rm
-done
+        echo "${old_cask_pkgs[@]}" | xargs brew cask rm
+    done
+else
+    bb-log-info "Brew packages that would be removed:"
+    printf '%s\n' "${old_cask_pkgs[@]}"
+fi
 
 
 
 # >> Update pacakges
 bb-log-info "Update outdated packages"
-brew upgrade
-brew cask upgrade
+
+if [ -z "$dry_run" ]; then
+    brew upgrade
+    brew cask upgrade
+else
+    echo "TODO: --dry-run for brew upgrade"
+fi
 
 
 
