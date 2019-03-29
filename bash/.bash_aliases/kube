@@ -1,0 +1,19 @@
+# bash alias file
+
+# >> kubernetes
+
+# kubectl
+alias k='kubectl'
+
+# kubectl get
+alias kg='kubectl get'
+alias kga='kubectl get all'
+
+# kubectl describe
+alias kd='kubectl describe'
+
+# kubectl logs
+alias kl='kubectl logs -f'
+
+# kubectl exec
+alias ke='kubectl exec'
