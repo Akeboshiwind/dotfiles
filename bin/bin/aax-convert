@@ -22,7 +22,7 @@ USAGE
 
 version() {
     cat << VERSION
-aax-convert 1.0
+aax-convert 1.1
 
 Copyright (C) 2019 Oliver Marshall
 
@@ -81,4 +81,4 @@ activation_bytes="$(pass show personal/amazon.co.uk | sed -n 's/^activation-byte
 # >> Extract activation bytes
 
 bb-log-info "Decoding the DRM protected file to an unprotected file"
-ffmpeg -activation_bytes $activation_bytes -i $input_file -vn -c:a copy $output_file
+ffmpeg -activation_bytes $activation_bytes -i $input_file -c copy $output_file
