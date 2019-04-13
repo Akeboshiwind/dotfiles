@@ -115,8 +115,18 @@ fi
 # Brew packages
 brew_pkgs=$(sed '/^[[:space:]]*$/d' $brew_pkg_folder/* | sort | uniq)
 
+if [ ! -z "$dry_run" ]; then
+    bb-log-info "Brew packages listed to remain installed:"
+    printf '%s\n' "${brew_pkgs[@]}"
+fi
+
 # Cask packages
 cask_pkgs=$(sed '/^[[:space:]]*$/d' $cask_pkg_folder/* | sort | uniq)
+
+if [ ! -z "$dry_run" ]; then
+    bb-log-info "Cask packages listed to remain installed:"
+    printf '%s\n' "${cask_pkgs[@]}"
+fi
 
 
 
