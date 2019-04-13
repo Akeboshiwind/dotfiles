@@ -356,6 +356,7 @@ There are still a few tasks for you to do manually:
     - System Preferences -> Mission Control
     - Untick 'Automatically rearrange Spaces based on most recent use'
 - Setup ControlPlane
+- Setup browserpass
 - Set input language to Australian
   - This makes it so that you can type the '#' symbol with shift-3
 
