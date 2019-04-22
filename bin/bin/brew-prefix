@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# brew-prefix
+
+
+# >> Utils
+
+usage() {
+    cat << USAGE
+Usage: brew-prefix [formula]
+
+Examples:
+    brew-prefix asdf             /usr/local/opt/asdf
+
+Report bugs to <olivershawmarshall+dotfiles@gmail.com>.
+USAGE
+}
+
+version() {
+    cat << VERSION
+brew-prefix 1.0
+
+Copyright (C) 2019 Oliver Marshall
+
+Written by Oliver Marshall.
+VERSION
+}
+
+
+
+# >> Cli args
+
+formula=$1
+
+
+
+# >> Setup cache
+
+cache_dir=~/.cache/brew-prefix/$formula
+cache_file=$cache_dir/prefix
+
+mkdir -p $cache_dir
+
+
+
+# >> Get prefix
+
+prefix=
+if [ -r $cache_file ]; then
+    prefix=$(< $cache_file)
+fi
+
+
+
+# >> Validate prefix exists
+
+# Not cached or doesn't exist so fetch from brew
+if [ -z "$prefix" ] || [ ! -d "$prefix" ]; then
+
+    prefix="$(brew --prefix $formula)"
+
+    echo "$prefix" > $cache_file
+fi
+
+
+
+# >> Return prefix
+
+echo $prefix
