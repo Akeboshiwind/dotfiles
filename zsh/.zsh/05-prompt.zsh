@@ -41,7 +41,7 @@ fi
 
 # >> Current dir
 
-local current_dir="%{%B%F{blue}%}%~%{%f%b%}"
+local current_dir="%{%B%F{blue}%}%~%{%f%b%} "
 
 
 
@@ -80,7 +80,7 @@ git_prompt() {
     esac
 
     case "$PROMPT_STYLE" in
-        *)  echo "%B%F{white}${ref}${dirty}${stat}%f%b"
+        *)  echo "%B%F{white}${ref}${dirty}${stat}%f%b "
             ;;
     esac
 }
@@ -115,7 +115,9 @@ aws_prompt() {
         suffix='!%f%b'
     fi
 
-    echo "$prefix$AWS_PROFILE$suffix"
+    if [ ! -z "$AWS_PROFILE" ]; then
+        echo "$prefix$AWS_PROFILE$suffix "
+    fi
 }
 
 local aws_profile='$(aws_prompt)'
@@ -136,7 +138,7 @@ local kube_prompt='$(kube_ps1)'
 
 case "$PROMPT_STYLE" in
     bira)  PROMPT="
-${USER_COLOR}╭─${COLOR_NORMAL} ${current_dir} ${aws_profile} ${kube_prompt} ${git_branch} ${USER_COLOR}
+${USER_COLOR}╭─ ${COLOR_NORMAL}${current_dir}${aws_profile}${kube_prompt}${git_branch}${USER_COLOR}
 ╰─%B${USER_SYMBOL}%b ${COLOR_NORMAL}"
         RPS1="%B${return_code}%b"
         ;;
