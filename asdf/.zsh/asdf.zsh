@@ -1,2 +1,4 @@
-. $(brew --prefix asdf)/asdf.sh
-. $(brew --prefix asdf)/etc/bash_completion.d/asdf.bash
+prefix=$(brew-prefix asdf)
+
+. $prefix/asdf.sh
+. $prefix/etc/bash_completion.d/asdf.bash
