@@ -1,0 +1,3 @@
+#!/bin/sh
+mkdir -p /var/log/jupyter-clj
+exec svlogd -ttt /var/log/jupyter-clj
