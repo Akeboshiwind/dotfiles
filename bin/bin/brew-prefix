@@ -6,7 +6,7 @@
 
 usage() {
     cat << USAGE
-Usage: brew-prefix [formula]
+Usage: brew-prefix [-h|--help] [formula]
 
 Examples:
     brew-prefix asdf             /usr/local/opt/asdf
@@ -17,7 +17,7 @@ USAGE
 
 version() {
     cat << VERSION
-brew-prefix 1.0
+brew-prefix 1.1
 
 Copyright (C) 2019 Oliver Marshall
 
@@ -28,6 +28,16 @@ VERSION
 
 
 # >> Cli args
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -h | --help )        usage
+                             exit
+                             ;;
+        * )                  break
+    esac
+    shift
+done
 
 formula=$1
 
