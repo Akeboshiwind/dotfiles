@@ -93,22 +93,8 @@ local git_branch='$(git_prompt)%{%f%}'
 
 aws_prompt() {
 
-    prefix='%B%F{white}'
+    prefix='%B%F{green}'
     suffix='%f%b'
-    case "$AWS_PROFILE" in
-        data)    prefix='%B%F{blue}'
-                 ;;
-        prod)    prefix='%B%F{red}'
-                 ;;
-        staging) prefix='%B%F{magenta}'
-                 ;;
-        cluster) prefix='%B%F{green}'
-                 ;;
-        sandbox) prefix='%B%F{cyan}'
-                 ;;
-        nft)     prefix='%B%F{yellow}'
-                 ;;
-    esac
 
     if [[ -n "$AWS_PROFILE" && `pwd` =~ '/env/' && ! `pwd` =~ "/env/$AWS_PROFILE" ]]; then
         prefix='%B%F{red}'
