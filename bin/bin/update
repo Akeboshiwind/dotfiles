@@ -113,10 +113,8 @@ fi
 # >> List packages
 
 # Brew packages
-brew_pkgs=$(sed -e '/^[[:blank:]]*#/d;s/#.*//' \
-                -e '/^[[:space:]]*$/d'  $brew_pkg_folder/* \
-                | awk '{$1=$1};1' \
-                | sort | uniq)
+brew_pkgs=$(clean-config $brew_pkg_folder/* \
+            | sort | uniq)
 
 if [ ! -z "$dry_run" ]; then
     bb-log-info "Brew packages listed to remain installed:"
@@ -124,10 +122,8 @@ if [ ! -z "$dry_run" ]; then
 fi
 
 # Cask packages
-cask_pkgs=$(sed -e '/^[[:blank:]]*#/d;s/#.*//' \
-                -e '/^[[:space:]]*$/d'  $cask_pkg_folder/* \
-                | awk '{$1=$1};1' \
-                | sort | uniq)
+cask_pkgs=$(clean-config $cask_pkg_folder/* \
+            | sort | uniq)
 
 if [ ! -z "$dry_run" ]; then
     bb-log-info "Cask packages listed to remain installed:"
