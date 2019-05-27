@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 # update
-# TODO:
-# - Better variable names
-# - Support reading from a file to get a list of temporary packages to install
-#   (not committed)
 
 
 # >> Utils
