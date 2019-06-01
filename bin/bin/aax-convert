@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # aax-convert
 
 
@@ -22,7 +22,7 @@ USAGE
 
 version() {
     cat << VERSION
-aax-convert 1.1
+aax-convert 1.2
 
 Copyright (C) 2019 Oliver Marshall
 
@@ -52,18 +52,10 @@ output_file=${2:-output.mp4}
 
 
 
-# >> Bashbooster
-
-# Initialize Bash Booster
-source ~/bin/lib/bashbooster.sh
-
-
-
 # >> Validate input
 
 if [ -z "$input_file" ]; then
-    bb-log-error "No input file supplied"
-    echo
+    echo "ERROR: No input file supplied\n"
     usage
     exit 1
 fi
@@ -73,12 +65,12 @@ fi
 # >> Extract activation bytes
 
 # See help message on where to get your 'activation bytes'
-bb-log-info "Extracting activation byes from passwordstore"
+echo "INFO: Extracting activation byes from passwordstore"
 activation_bytes="$(pass show personal/amazon.co.uk | sed -n 's/^activation-bytes:\(.*\)\n*$/\1/p')"
 
 
 
 # >> Extract activation bytes
 
-bb-log-info "Decoding the DRM protected file to an unprotected file"
+echo "INFO: Decoding the DRM protected file to an unprotected file"
 ffmpeg -activation_bytes $activation_bytes -i $input_file -c copy $output_file
