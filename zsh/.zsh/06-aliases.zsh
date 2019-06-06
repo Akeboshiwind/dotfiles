@@ -27,10 +27,5 @@ alias tfp="terraform plan"
 alias tfa="terraform apply"
 
 
-# >> Kubernetes
 
-alias k="kubectl"
-
-alias h="helm"
-alias ht="helm --tiller-namespace turing"
 
