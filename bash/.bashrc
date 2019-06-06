@@ -154,3 +154,5 @@ fi
 
 export ASDF_DATA_DIR="$asdf_dir"
 source $ASDF_DATA_DIR/asdf.sh
+
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
