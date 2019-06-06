@@ -4,7 +4,6 @@
 # >> General
 
 alias mkdir="mkdir -p"
-alias fuck='sudo $(fc -ln -1)'
 
 
 
