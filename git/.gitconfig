@@ -2,5 +2,11 @@
 	name = Oliver Marshall
 	email = olivershawmarshall@gmail.com
 
+[sendemail]
+    smtpserver = smtp.gmail.com
+    smtpuser = olivershawmarshall@gmail.com
+    smtpencryption = tls
+    smtpserverport = 587
+
 [includeIf "gitdir:~/prog/work/"]
     path = ~/work.gitconfig
