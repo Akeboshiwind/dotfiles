@@ -1,14 +1,12 @@
+# Command line tools
 bash
 coreutils
 git
-clojure
-leiningen
 ispell
 the_silver_searcher
 tree
 rename
 jq
-pass
 ffmpeg
 stow
 node
@@ -18,4 +16,12 @@ help2man
 nmap
 htop
 runit
+mtr
+
+# pass
+gopass
 amar1729/formulae/browserpass
+
+# Languages
+clojure
+leiningen
