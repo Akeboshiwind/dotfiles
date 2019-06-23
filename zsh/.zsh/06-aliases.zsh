@@ -11,11 +11,15 @@ alias mkdir="mkdir -p"
 
 alias g="git"
 alias ga="git add"
-alias gc="git commit -m"
+alias gc="git commit"
+alias gco="git checkout"
 alias gs="git status"
 alias gd="git diff"
+alias gdf="git diff"
 alias gps="git push"
+alias gpsh="git push"
 alias gpl="git pull"
+alias gsm='git send-email --smtp-pass=\"$(pass show --password personal/google.com)\"'
 
 
 
