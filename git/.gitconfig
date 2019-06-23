@@ -1,3 +1,6 @@
+[core]
+    editor = vim
+
 [user]
 	name = Oliver Marshall
 	email = olivershawmarshall@gmail.com
