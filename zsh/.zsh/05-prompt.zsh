@@ -66,7 +66,7 @@ git_prompt() {
 
     ref=$(git name-rev --name-only HEAD 2> /dev/null | sed 's!remotes/!!;s!undefined!merging!' 2> /dev/null)
     dirty="" && [[ $(git diff --shortstat 2> /dev/null | tail -n1) != "" ]] && dirty=$ICO_DIRTY
-    stat=$(git status | sed -n 2p)
+    stat=$(git status 2> /dev/null | sed -n 2p)
 
     case "$stat" in
         *ahead*)    stat=$ICO_AHEAD
