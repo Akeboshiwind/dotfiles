@@ -64,7 +64,7 @@ git_prompt() {
         return
     fi
 
-    ref=$(git name-rev --name-only HEAD | sed 's!remotes/!!;s!undefined!merging!' 2> /dev/null)
+    ref=$(git name-rev --name-only HEAD 2> /dev/null | sed 's!remotes/!!;s!undefined!merging!' 2> /dev/null)
     dirty="" && [[ $(git diff --shortstat 2> /dev/null | tail -n1) != "" ]] && dirty=$ICO_DIRTY
     stat=$(git status | sed -n 2p)
 
