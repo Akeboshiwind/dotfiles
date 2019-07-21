@@ -32,4 +32,6 @@ alias tfa="terraform apply"
 
 
 
+# pass
 
+alias pass="gopass"
