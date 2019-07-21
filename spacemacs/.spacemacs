@@ -30,19 +30,23 @@ values."
    dotspacemacs-configuration-layer-path '()
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(rust
+   '(go
+     rust
      shell-scripts
      ;; Languages
      (clojure :variables
               clojure-enable-clj-refactor t)
 
      javascript
-     java
+     (java :variables
+           java-backend 'ensime)
      python
      vimscript
      windows-scripts
      sql
      emacs-lisp
+     asm
+     d
 
      ;; Filetypes
      html
@@ -68,13 +72,14 @@ values."
      floobits
      docker
      (treemacs :variables
-               treemacs-lock-width t))
+               treemacs-lock-width t)
+     syntax-checking)
 
    ;; List of additional packages that will be installed without being
    ;; wrapped in a layer. If you need some configuration for these
    ;; packages, then consider creating a layer. You can also put the
    ;; configuration in `dotspacemacs/user-config'.
-   dotspacemacs-additional-packages '()
+   dotspacemacs-additional-packages '(flycheck-joker)
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
    ;; A list of packages that will not be installed and loaded.
@@ -363,7 +368,13 @@ you should place your code here."
 
   ;; Setup NeoTree VC integration
   (setq neo-vc-integration '(face))
-  )
+
+  ;; Setup joker
+  (require 'flycheck-joker)
+
+  ;; Setup intel x86 manuals
+  (setq x86-lookup-pdf "~/325462-sdm-vol-1-2abcd-3abcd.pdf"))
+
 (defun dotspacemacs/emacs-custom-settings ()
   "Emacs custom settings.
 This is an auto-generated function, do not modify its content directly, use
@@ -376,7 +387,7 @@ This function is called at the very end of Spacemacs initialization."
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (mvn meghanada maven-test-mode groovy-mode groovy-imports pcache gradle-mode ensime sbt-mode scala-mode company-emacs-eclim eclim clj-refactor inflections edn peg yasnippet-snippets winum wgrep web-mode vimrc-mode toc-org sql-indent request racer pyvenv powershell orgit org-ref pdf-tools helm-bibtex parsebib org-projectile org-download org-brain live-py-mode json-navigator ivy-hydra hl-todo highlight-indentation helm-make helm helm-core google-translate git-timemachine flyspell-correct-ivy flyspell-correct eyebrowse evil-visual-mark-mode evil-surround evil-nerd-commenter evil-matchit evil-magit evil-goggles editorconfig dumb-jump doom-modeline eldoc-eval docker json-mode tablist define-word cython-mode counsel-projectile cider-eval-sexp-fu eval-sexp-fu cider sesman clojure-mode centered-cursor-mode auto-yasnippet auto-compile aggressive-indent ace-link rust-mode anaconda-mode tern company counsel swiper iedit smartparens flycheck window-purpose imenu-list ivy magit magit-popup git-commit with-editor markdown-mode simple-httpd spaceline powerline treemacs ace-window f avy dash projectile visual-fill-column which-key use-package async org-plus-contrib hydra evil goto-chg yapfify yaml-mode ws-butler writeroom-mode web-beautify volatile-highlights vi-tilde-fringe uuidgen undo-tree treepy treemacs-projectile treemacs-evil toml-mode tagedit symon string-inflection spaceline-all-the-icons smex smeargle slim-mode shrink-path scss-mode sass-mode restart-emacs rainbow-delimiters queue pytest pyenv-mode py-isort pug-mode prettier-js pos-tip popwin pippel pipenv pip-requirements pfuture persp-mode pcre2el password-generator parinfer paradox packed ox-twbs ox-gfm overseer origami org-present org-pomodoro org-mime org-category-capture org-bullets open-junk-file nginx-mode nameless move-text monokai-theme mmm-mode markdown-toc magit-svn magit-gitflow macrostep lorem-ipsum livid-mode link-hint key-chord json-snatcher json-reformat js2-refactor js-doc ivy-yasnippet ivy-xref ivy-purpose insert-shebang indent-guide importmagic impatient-mode hungry-delete ht highlight-parentheses highlight-numbers hierarchy graphql golden-ratio gnuplot gitignore-templates gitignore-mode gitconfig-mode gitattributes-mode git-messenger git-link gh-md fuzzy font-lock+ flycheck-bashate flx-ido floobits fish-mode fill-column-indicator fancy-battery expand-region evil-visualstar evil-unimpaired evil-tutor evil-org evil-numbers evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu emmet-mode elisp-slime-nav dotenv-mode dockerfile-mode docker-tramp diminish dactyl-mode csv-mode counsel-css company-web company-terraform company-tern company-statistics company-shell company-auctex company-anaconda column-enforce-mode clojure-snippets clean-aindent-mode cargo bind-key biblio auto-highlight-symbol auto-dictionary ac-ispell))))
+    (d-mode company-dcd flycheck-dmd-dub helm-gtags godoctor go-tag go-rename go-impl go-guru go-gen-test go-fill-struct go-eldoc ggtags flycheck-gometalinter flycheck-golangci-lint counsel-gtags company-go go-mode x86-lookup nasm-mode flycheck-rust flycheck-pos-tip flycheck-joker mvn meghanada maven-test-mode groovy-mode groovy-imports pcache gradle-mode ensime sbt-mode scala-mode company-emacs-eclim eclim clj-refactor inflections edn peg yasnippet-snippets winum wgrep web-mode vimrc-mode toc-org sql-indent request racer pyvenv powershell orgit org-ref pdf-tools helm-bibtex parsebib org-projectile org-download org-brain live-py-mode json-navigator ivy-hydra hl-todo highlight-indentation helm-make helm helm-core google-translate git-timemachine flyspell-correct-ivy flyspell-correct eyebrowse evil-visual-mark-mode evil-surround evil-nerd-commenter evil-matchit evil-magit evil-goggles editorconfig dumb-jump doom-modeline eldoc-eval docker json-mode tablist define-word cython-mode counsel-projectile cider-eval-sexp-fu eval-sexp-fu cider sesman clojure-mode centered-cursor-mode auto-yasnippet auto-compile aggressive-indent ace-link rust-mode anaconda-mode tern company counsel swiper iedit smartparens flycheck window-purpose imenu-list ivy magit magit-popup git-commit with-editor markdown-mode simple-httpd spaceline powerline treemacs ace-window f avy dash projectile visual-fill-column which-key use-package async org-plus-contrib hydra evil goto-chg yapfify yaml-mode ws-butler writeroom-mode web-beautify volatile-highlights vi-tilde-fringe uuidgen undo-tree treepy treemacs-projectile treemacs-evil toml-mode tagedit symon string-inflection spaceline-all-the-icons smex smeargle slim-mode shrink-path scss-mode sass-mode restart-emacs rainbow-delimiters queue pytest pyenv-mode py-isort pug-mode prettier-js pos-tip popwin pippel pipenv pip-requirements pfuture persp-mode pcre2el password-generator parinfer paradox packed ox-twbs ox-gfm overseer origami org-present org-pomodoro org-mime org-category-capture org-bullets open-junk-file nginx-mode nameless move-text monokai-theme mmm-mode markdown-toc magit-svn magit-gitflow macrostep lorem-ipsum livid-mode link-hint key-chord json-snatcher json-reformat js2-refactor js-doc ivy-yasnippet ivy-xref ivy-purpose insert-shebang indent-guide importmagic impatient-mode hungry-delete ht highlight-parentheses highlight-numbers hierarchy graphql golden-ratio gnuplot gitignore-templates gitignore-mode gitconfig-mode gitattributes-mode git-messenger git-link gh-md fuzzy font-lock+ flycheck-bashate flx-ido floobits fish-mode fill-column-indicator fancy-battery expand-region evil-visualstar evil-unimpaired evil-tutor evil-org evil-numbers evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu emmet-mode elisp-slime-nav dotenv-mode dockerfile-mode docker-tramp diminish dactyl-mode csv-mode counsel-css company-web company-terraform company-tern company-statistics company-shell company-auctex company-anaconda column-enforce-mode clojure-snippets clean-aindent-mode cargo bind-key biblio auto-highlight-symbol auto-dictionary ac-ispell))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
