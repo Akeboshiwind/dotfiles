@@ -73,4 +73,4 @@ activation_bytes="$(gopass show personal/amazon.co.uk activation-bytes)"
 # >> Extract activation bytes
 
 echo "INFO: Decoding the DRM protected file to an unprotected file"
-ffmpeg -activation_bytes $activation_bytes -i $input_file -c copy $output_file
+ffmpeg -activation_bytes $activation_bytes -i $input_file -map 0 -c copy $output_file
