@@ -1,9 +1,22 @@
 # 01-environment.zsh
 
 
-# >> Path
+# >> Manpath
 
-export PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/local/share/dotnet:~/dotnet/tools:~/go/bin:~/bin:$PATH
+export MANPATH=":"
+
+
+
+# >> Path
+# (Maybe remove once settled in with nix?)
+
+export PATH=$PATH:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:$HOME/bin
+
+# dotnet
+export PATH=$PATH:/usr/local/share/dotnet:~/dotnet/tools
+
+# go
+export PATH=$PATH:~/go/bin:~/bin:$PATH
 
 
 
