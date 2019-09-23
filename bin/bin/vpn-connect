@@ -62,7 +62,7 @@ fi
 
 # >> Get correct config for target
 
-config_command="pass show"
+config_command="gopass show"
 config_location=
 
 case $target in
