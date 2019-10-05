@@ -63,3 +63,13 @@ cd "$(gpgconf --list-dirs homedir)/private-keys-v1.d"
 gpg -K --with-keygrip --with-colons "$keyid" | \
 	awk -F: '/^grp/ { print $10".key"; }' | \
 	xargs rm -vf
+
+
+
+# >> Open gpg to load the new cards details
+
+gpg --card-edit &
+PID=$!
+sleep 0.3
+kill $PID
+
