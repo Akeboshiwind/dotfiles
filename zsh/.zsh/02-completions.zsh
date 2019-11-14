@@ -16,7 +16,7 @@ unsetopt nomatch
 # >> Applications
 
 # kubectl
-if [ $commands[kubectl] ]; then source <(kubectl completion zsh); fi
+# if [ $commands[kubectl] ]; then source <(kubectl completion zsh); fi
 
 
 
