@@ -18,13 +18,3 @@ Plug 'christoomey/vim-tmux-navigator'
 " Fzf <3 vim
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
-
-" Terraform
-Plug 'hashivim/vim-terraform'
-
-" YAML
-Plug 'stephpy/vim-yaml'
-
-" Avro
-Plug 'gurpreetatwal/vim-avro'
-
