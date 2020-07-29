@@ -91,6 +91,38 @@ local git_branch='$(git_prompt)%{%f%}'
 
 # >> AWS
 
+# Accepts a time delta in seconds and creates a pretty string output
+pretty_delta() {
+    delta=$1
+    days="$(($delta/(60*60*24)))"
+
+    delta="$(($delta - $days*60*60*24))"
+    hours="$(($delta/(60*60)))"
+
+    delta="$(($delta - $hours*60*60))"
+    minutes="$(($delta/60))"
+
+    seconds="$(($delta - $minutes*60))"
+
+    delta_str=""
+    if [ "$days" -gt "0" ]; then
+        # We always want to display smaller times so put a space
+        delta_str="${days}d "
+    fi
+
+    if [ "$days" -gt "0" ] || [ "$hours" -gt "0" ]; then
+        delta_str="$delta_str${hours}h "
+    fi
+
+    if [ "$days" -gt "0" ] || [ "$hours" -gt "0" ] || [ "$minutes" -gt "0" ]; then
+        delta_str="$delta_str${minutes}m "
+    fi
+
+    delta_str="$delta_str${seconds}s"
+
+    echo "$delta_str"
+}
+
 aws_prompt() {
 
     prefix='%B%F{green}'
@@ -102,7 +134,20 @@ aws_prompt() {
     fi
 
     if [ ! -z "$AWS_PROFILE" ]; then
-        echo "$prefix$AWS_PROFILE$suffix "
+
+        delta_str=""
+        if [ ! -z "$AWS_SESSION_END" ]; then
+            delta="$(($AWS_SESSION_END - $(date +%s)))"
+            if [ "$delta" -gt "0" ]; then
+                delta_str="$(pretty_delta $delta)"
+            else
+                delta_str="✘"
+            fi
+
+            delta_str="($delta_str)"
+        fi
+
+        echo "$prefix$AWS_PROFILE$delta_str$suffix "
     fi
 }
 
