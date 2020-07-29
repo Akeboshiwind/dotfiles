@@ -1,10 +1,15 @@
-" _base/core.vim
+" post-install.vim
 
 
 " >> Keybinds
 
+let mapleader = ","
 imap fd <Esc>
-set timeoutlen=200
+set timeoutlen=400
+
+" Search for the word currently under the cursor
+nnoremap <silent><leader>ag :Ag <C-R><C-W><CR>
+nnoremap <silent><leader>rg :Rg <C-R><C-W><CR>
 
 
 
@@ -12,6 +17,8 @@ set timeoutlen=200
 
 set ignorecase
 set smartcase
+set splitright
+set inccommand=nosplit
 
 
 

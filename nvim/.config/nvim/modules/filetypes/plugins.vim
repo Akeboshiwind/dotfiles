@@ -1,4 +1,4 @@
-" filetypes/plugins.vim
+" plugins.vim
 
 
 " >> Plugins

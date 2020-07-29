@@ -1,8 +1,12 @@
-" theme/core.vim
+" post-install.vim
 
 
 " >> Theme
-colorscheme wal
+
+set t_Co=256
+
+set background=light
+colorscheme gruvbox8_hard
 
 
 

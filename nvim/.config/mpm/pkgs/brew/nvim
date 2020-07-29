@@ -1,1 +1,7 @@
 neovim
+
+# For CoC
+node
+
+# For fuzzy searching
+ripgrep

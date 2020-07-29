@@ -1,7 +1,11 @@
-" theme/plugins.vim
+" plugins.vim
 
 
 " >> Plugins
 
-" A colorscheme for use with wal
-Plug 'dylanaraps/wal.vim'
+Plug 'joshdick/onedark.vim'
+
+Plug 'NLKNguyen/papercolor-theme'
+
+Plug 'lifepillar/vim-gruvbox8'
+
