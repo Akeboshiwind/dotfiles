@@ -4,7 +4,7 @@ echo "JUPYTER-CLJ Starting"
 # Setting the java version to 8
 export PATH=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home/bin:$PATH
 
-notebook_dir=~/prog/notebook/
+notebook_dir=~/prog/prog/notebook/
 cd $notebook_dir
 exec 2>&1
 
