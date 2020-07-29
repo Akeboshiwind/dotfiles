@@ -6,15 +6,15 @@
 
 usage() {
     cat << USAGE
-Usage: aax-convert [OPTIONS] input-file [output-file]
+Usage: aax-convert [OPTIONS] input-file
 
 Options:
     -h, --help                   Display this help and exit
     --version                    Output the version information and exit
 
 Examples:
-    aax-convert foo.aax          Output 'output.mp4'
-    aax-convert foo.aax foo.mp4  Output 'foo.mp4'
+    aax-convert foo.aax          Output 'output.opus'
+    aax-convert foo.aax out.opus Output 'out.opus'
 
 Report bugs to <olivershawmarshall+dotfiles@gmail.com>.
 USAGE
@@ -22,7 +22,7 @@ USAGE
 
 version() {
     cat << VERSION
-aax-convert 1.2
+aax-convert 2.0
 
 Copyright (C) 2019 Oliver Marshall
 
@@ -47,8 +47,17 @@ while [ "$1" != "" ]; do
     shift
 done
 
-input_file=$1
-output_file=${2:-output.mp4}
+input_file="$1"
+output_file="output.opus"
+# if [ "$2" = "" ]; then
+#     output_file="${1%.*}.opus"
+# else
+#     output_file="$2"
+#     if [ "${output_file##*.}" != "opus" ]; then
+#         echo "The output file must be an .opus file."
+#         exit 1
+#     fi
+# fi
 
 
 
@@ -70,7 +79,28 @@ activation_bytes="$(gopass show personal/amazon.co.uk activation-bytes)"
 
 
 
-# >> Extract activation bytes
+# >> Re-encode Audio
 
 echo "INFO: Decoding the DRM protected file to an unprotected file"
-ffmpeg -activation_bytes $activation_bytes -i $input_file -map 0 -c copy $output_file
+#ffmpeg -activation_bytes $activation_bytes \
+#    -i $input_file \
+#    -map 0 \
+#    -c copy \
+#    $output_file
+
+ffmpeg -activation_bytes $activation_bytes \
+    -i $input_file \
+    -c:a libopus \
+    -b:a 32k \
+    -map_metadata 0 \
+    $output_file
+
+
+
+# >> Extract Cover Art
+
+ffmpeg -i $input_file \
+    -an \
+    -vcodec copy \
+    cover.jpg
+
