@@ -26,6 +26,16 @@ let &t_EI = "\<Esc>[2 q"         " Block shape in normal mode
 
 function! StatuslineCwd()
     let l:relativePath = expand('%')
+
+    " If there's no '/' in the path, just return early
+    if l:relativePath == ""
+        " We're in an unnamed buffer, so just default the file name
+        return "[unnamed]"
+    elseif stridx(l:relativePath, '/') == -1
+        " The path contains no '/', so just return the relativePath
+        return l:relativePath
+    endif
+
     let l:parts = split(l:relativePath, '/')
 
     " Shorten parent folders to be l:n characters
