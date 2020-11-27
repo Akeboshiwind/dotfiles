@@ -45,7 +45,14 @@ function! StatuslineCwd()
         let l:parts[idx]=l:parts[idx][0:n-1]
     endfor
 
-    return join(l:parts, '/')
+    let l:shortPath = join(l:parts, '/')
+
+    " If the path isn't relative, add back in the beginning slash
+    if l:relativePath[0] == '/'
+        let l:shortPath = '/' . l:shortPath
+    endif
+
+    return l:shortPath
 endfunction
 
 set statusline=
