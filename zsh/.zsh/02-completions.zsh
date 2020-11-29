@@ -4,7 +4,8 @@
 # >> Basic Setup
 
 setopt BRACE_CCL
-fpath=(~/.zsh/completion $fpath)
+export COMPLETION_PATH=~/.zsh/completion
+fpath=($COMPLETION_PATH $fpath)
 autoload -Uz compinit
 compinit -u
 # Fixes error 'zsh: no matches found'
