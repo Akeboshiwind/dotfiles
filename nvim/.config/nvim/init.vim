@@ -46,7 +46,8 @@ endfunction
 
 " >> Pre-Install scripts
 
-for pre_install_file in split(glob(Dot("modules/*/pre-install.vim")), "\n")
+" Sorted alphabetically, numbers first
+for pre_install_file in sort(split(glob(Dot("modules/*/pre-install.vim")), "\n"))
     " `execute` actually resolves the variable
     execute "source" pre_install_file
 endfor
