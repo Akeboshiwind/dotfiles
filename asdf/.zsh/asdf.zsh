@@ -1,4 +1,4 @@
 prefix=$(brew-prefix asdf)
 
 . $prefix/asdf.sh
-. $prefix/etc/bash_completion.d/asdf.bash
+. $prefix/share/zsh/site-functions/_asdf
