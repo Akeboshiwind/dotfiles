@@ -24,19 +24,15 @@ let &t_EI = "\<Esc>[2 q"         " Block shape in normal mode
 " >> Statusline
 " see :help statusline for more info on the codes here
 
-function! StatuslineCwd()
-    let l:relativePath = expand('%')
-
-    " If there's no '/' in the path, just return early
-    if l:relativePath == ""
-        " We're in an unnamed buffer, so just default the file name
-        return "[unnamed]"
-    elseif stridx(l:relativePath, '/') == -1
-        " The path contains no '/', so just return the relativePath
-        return l:relativePath
+function! ShortPath(path)
+    " If the path is empty or doesn't look like a path, return early
+    if a:path == ""
+        return ""
+    elseif stridx(a:path, '/') == -1
+        return a:path
     endif
 
-    let l:parts = split(l:relativePath, '/')
+    let l:parts = split(a:path, '/')
 
     " Shorten parent folders to be l:n characters
     " Keep the filename the same length
@@ -48,11 +44,22 @@ function! StatuslineCwd()
     let l:shortPath = join(l:parts, '/')
 
     " If the path isn't relative, add back in the beginning slash
-    if l:relativePath[0] == '/'
-        let l:shortPath = '/' . l:shortPath
+    if a:path[0] == '/'
+        return '/' . l:shortPath
+    else
+        return l:shortPath
     endif
+endfunction
 
-    return l:shortPath
+function! StatuslineCwd()
+    let l:relativePath = expand('%')
+
+    if l:relativePath == ""
+        " We're in an unnamed buffer, so just default the file name
+        return "[unnamed]"
+    else
+        return ShortPath(l:relativePath)
+    endif
 endfunction
 
 set statusline=
