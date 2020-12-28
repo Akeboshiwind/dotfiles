@@ -3,5 +3,8 @@ neovim
 # For CoC
 node
 
+# For Parinfer-rust in Clojure config
+rustup-init
+
 # For fuzzy searching
 ripgrep
