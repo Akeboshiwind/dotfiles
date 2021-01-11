@@ -12,6 +12,9 @@ Plug 'farmergreg/vim-lastplace'
 " Seamless navigation between tmux panes and vim splits
 Plug 'christoomey/vim-tmux-navigator'
 
+" Automatically create paths that don't exist on buffer save
+Plug 'arp242/auto_mkdir2.vim'
+
 " Git plugin
 Plug 'tpope/vim-fugitive'
 
