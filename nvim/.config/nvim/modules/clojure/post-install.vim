@@ -9,4 +9,4 @@ call coc#add_extension('coc-conjure')
 
 " >> Config
 
-let g:conjure#config#mapping#prefix = "<leader>"
+let g:conjure#mapping#prefix = "<leader>"
