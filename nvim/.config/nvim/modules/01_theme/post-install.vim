@@ -3,10 +3,21 @@
 
 " >> Theme
 
-set t_Co=256
+syntax enable
 
-set background=light
-colorscheme gruvbox8_hard
+if exists('+termguicolors')
+    " Not sure what these bits do tbh
+    let &t_8f="\<Esc>[38;2;%lu;%lu;%lum"
+    let &t_8b="\<Esc>[48;2;%lu;%lu;%lum"
+    " Tell nvim that terminal support truecolor
+    " Can test using the truecolor-test script in bin or at:
+    " https://gist.github.com/XVilka/8346728
+    set termguicolors
+endif
+
+set background=dark
+" High contrast is best contrast
+colorscheme solarized8_high
 
 
 

@@ -5,7 +5,4 @@
 
 Plug 'joshdick/onedark.vim'
 
-Plug 'NLKNguyen/papercolor-theme'
-
-Plug 'lifepillar/vim-gruvbox8'
-
+Plug 'lifepillar/vim-solarized8'
