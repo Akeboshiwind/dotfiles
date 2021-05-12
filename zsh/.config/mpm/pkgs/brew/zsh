@@ -4,4 +4,4 @@ zsh-syntax-highlighting
 
 # Addons
 fzf
-thefuck
+zoxide
