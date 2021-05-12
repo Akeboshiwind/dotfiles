@@ -2,5 +2,7 @@
    "languageserver": {
   },
   "coc.preferences.formatOnSaveFiletypes": ["rust"],
-  "rust-analyzer.checkOnSave.command": "clippy"
+  "codeLens.enable": true,
+  "rust-analyzer.checkOnSave.command": "clippy",
+  "rust-analyzer.lens.methodReferences": true
 }
