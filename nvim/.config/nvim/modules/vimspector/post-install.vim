@@ -44,12 +44,12 @@ let g:which_key_map['d'] = {
                 \ 'b': 'breakpoint',
                 \ 'c': 'conditional-breakpoint',
                 \ 'a': 'add-function-breakpoint',
-                \ }
+                \ },
             \ 's': {
                 \ 'name': '+step',
                 \ 'r': 'run-to-cursor',
                 \ 'i': 'into',
                 \ 'o': 'out',
                 \ 'v': 'over',
-                \ }
+                \ },
             \ }

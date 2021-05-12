@@ -275,9 +275,7 @@ let g:which_key_map['g'] = {
             \ }
 
 let g:which_key_map['rn'] = 'rename-symbol'
-let g:which_key_map['r'] = {
-            \'name': 'which_key_ignore',
-            \'n': 'rename symbol',
-            \}
+" Map defined in 00_base
+let g:which_key_map['r']['n'] = 'rename-symbol'
 
 let g:which_key_map['f'] = 'format-selected'
