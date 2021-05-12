@@ -3,7 +3,7 @@
 
 " >> Config
 
-let g:coc_config_home="$HOME/.config/nvim/modules/coc/"
+let g:coc_config_home=expand("$HOME/.config/nvim/modules/coc/")
 
 
 
