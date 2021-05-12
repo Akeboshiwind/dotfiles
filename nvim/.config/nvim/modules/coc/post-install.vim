@@ -230,8 +230,8 @@ command! -nargs=0 OR   :call     CocAction('runCommand', 'editor.action.organize
 
 " >> Which Key Mappings
 
-let g:which_key_map['a'] = 'code action'
-let g:which_key_map['ac'] = 'code action for buffer'
+let g:which_key_map['a'] = 'code-action'
+let g:which_key_map['ac'] = 'buffer-code-action'
 
 let g:which_key_map['qf'] = 'quickfix'
 " Hide group, but show docname if prompted
@@ -269,15 +269,15 @@ let g:which_key_map['d'] = {
 let g:which_key_map['g'] = {
             \ 'name': '+goto',
             \ 'd': 'definition',
-            \ 'y': 'type definition',
+            \ 'y': 'type-definition',
             \ 'i': 'implementation',
             \ 'r': 'references',
             \ }
 
-let g:which_key_map['rn'] = 'rename symbol'
+let g:which_key_map['rn'] = 'rename-symbol'
 let g:which_key_map['r'] = {
             \'name': 'which_key_ignore',
             \'n': 'rename symbol',
             \}
 
-let g:which_key_map['f'] = 'format selected'
+let g:which_key_map['f'] = 'format-selected'
