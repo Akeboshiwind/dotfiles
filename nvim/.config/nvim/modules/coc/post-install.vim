@@ -3,11 +3,15 @@
 
 " >> Config
 
+" Setup the config to be inside the module
 let g:coc_config_home=expand("$HOME/.config/nvim/modules/coc/")
 
 
 
 " >> Vim Settings
+" NOTE: The below is mostly copied from the readme of CoC
+"       Make sure to do a diff before overwriting as there are some elements
+"       that are customized
 
 " TextEdit might fail if hidden is not set.
 set hidden
