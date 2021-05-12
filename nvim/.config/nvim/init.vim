@@ -25,6 +25,14 @@
 
 
 
+" >> Config
+
+" Set to 1 to enable some printing
+let g:config_verbose=0
+
+
+
+
 " >> Auto Install vim-plug
 
 if empty(glob('~/.local/share/nvim/site/autoload/plug.vim'))
@@ -48,6 +56,9 @@ endfunction
 
 " Sorted alphabetically, numbers first
 for pre_install_file in sort(split(glob(Dot("modules/*/pre-install.vim")), "\n"))
+    if g:config_verbose
+        echom "Running Pre-install: " pre_install_file
+    endif
     " `execute` actually resolves the variable
     execute "source" pre_install_file
 endfor
@@ -59,6 +70,9 @@ endfor
 call plug#begin(stdpath('data') . '/plugged')
 
 for plugins_file in split(glob(Dot("modules/*/plugins.vim")), "\n")
+    if g:config_verbose
+        echom "Installing plugins: " plugins_file
+    endif
     execute "source" plugins_file
 endfor
 
@@ -69,5 +83,8 @@ call plug#end()
 " >> Post-Install scripts
 
 for post_install_file in split(glob(Dot("modules/*/post-install.vim")), "\n")
+    if g:config_verbose
+        echom "Running Post-install:" post_install_file
+    endif
     execute "source" post_install_file
 endfor
