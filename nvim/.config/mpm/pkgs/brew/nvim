@@ -1,4 +1,7 @@
-neovim
+neovim --HEAD
+
+# Hidden dependency?
+luarocks
 
 # For CoC
 node
