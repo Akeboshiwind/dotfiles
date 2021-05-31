@@ -123,6 +123,7 @@ augroup end
 
 lua << EOF
 local wk = require("which-key")
+local telescope = require('telescope')
 
 wk.register({
     -- >> Visual selections
@@ -149,16 +150,20 @@ wk.register({
 
 
     -- >> Selection
+    -- TODO: Move back
+    -- TODO: Ask for "force"?
 
     -- NOTE: Requires 'textDocument/selectionRange' support from
     --       the language server.
-    --       coc-tsserver, coc-python are the examples of servers that support it.
+    --       coc-tsserver, coc-python are the examples of servers that support it
     ["<TAB>"] = { "<Plug>(coc-range-select)", "Select range" },
     ["<TAB>"] = { "<Plug>(coc-range-select)", "Select range", mode = "x" },
 
 
 
     -- >> Selection
+    -- TODO: Move back
+    -- TODO: Ask for "force"?
 
     K = { show_documentation, "Show documentation" },
 
@@ -196,13 +201,24 @@ wk.register({
         -- >> List Commands
         l = {
             name = "list",
-            d = { ":<C-u>CocList diagnostics<cr>", "Diagnostics" },
+            c = { telescope.extensions.coc.commands, "Commands" },
+            s = { function() telescope.extensions.coc.document_symbols({}) end,
+                  "Document Symbols" },
+            S = { function() telescope.extensions.coc.workspace_symbols({}) end,
+                  "Workspace Symbols" },
+            a = { telescope.extensions.coc.line_code_actions,
+                  "Code Actions on Line" },
+            b = { telescope.extensions.coc.file_code_actions,
+                  "Code Actions in Buffer" },
+            d = { telescope.extensions.coc.diagnostics, "Diagnostics" },
+            D = { telescope.extensions.coc.workspace_diagnostics,
+                  "Workspace Diagnostics" },
+
+            -- TODO: Ask for telescope support
             e = { ":<C-u>CocList extensions<cr>", "Extensions" },
-            c = { ":<C-u>CocList commands<cr>", "Commands" },
-            o = { ":<C-u>CocList outline<cr>", "Outline" },
-            s = { ":<C-u>CocList -I symbols<cr>", "Symbols" },
+
+            -- Remove these when swapping to Telescope?
             p = { ":<C-u>CocListResume<cr>", "Resume List" },
-            -- Remove these when swapping to Telescope
             j = { ":<C-u>CocNext<cr>", "Next" },
             k = { ":<C-u>CocPrev<cr>", "Previous" },
         }, 
