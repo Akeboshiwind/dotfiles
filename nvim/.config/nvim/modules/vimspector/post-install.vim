@@ -8,48 +8,40 @@ let g:vimspector_base_dir=expand('$HOME/.config/nvim/modules/vimspector/config/'
 
 
 
-" >> Keybinds
+" >> Mappings
 
-nmap <leader>db :echom "Just setup a breakpoint then run the code"<CR>
+lua << EOF
+local wk = require("which-key")
 
-nmap <leader>dc <Plug>VimspectorContinue
-nmap <leader>dq <Plug>VimspectorStop
-nmap <leader>dr <Plug>VimspectorRestart
-nmap <leader>dp <Plug>VimspectorPause
-nmap <leader>de <Plug>VimspectorBalloonEval
+wk.register({
+    d = {
+        name = "debug",
 
-nmap <leader>dtb <Plug>VimspectorToggleBreakpoint
-nmap <leader>dtc <Plug>VimspectorToggleConditionalBreakpoint
-nmap <leader>dta <Plug>VimspectorAddFunctionBreakpoint
+        b = { [[:echom "Just setup a breakpoint then run the code"<CR>]],
+              "Show Reminder" },
 
-nmap <leader>dsr <Plug>VimspectorRunToCursor
-nmap <leader>dsi <Plug>VimspectorStepInto
-nmap <leader>dso <Plug>VimspectorStepOut
-nmap <leader>dsv <Plug>VimspectorStepOver
+        c = { "<Plug>VimspectorContinue", "Continue" },
+        q = { "<Plug>VimspectorStop", "Stop" },
+        r = { "<Plug>VimspectorRestart", "Restart" },
+        p = { "<Plug>VimspectorPause", "Pause" },
+        e = { "<Plug>VimspectorBalloonEval", "Eval Selection" },
 
+        t = {
+            name = "toggle",
+            b = { "<Plug>VimspectorToggleBreakpoint", "Breakpoint" },
+            c = { "<Plug>VimspectorToggleConditionalBreakpoint",
+                  "Conditional Breakpoint" },
+            a = { "<Plug>VimspectorAddFunctionBreakpoint",
+                  "Add Function Breakpoint" },
+        }, 
 
-
-" >> Which Key Mappings
-
-let g:which_key_map['d'] = {
-            \ 'name': '+debug',
-            \ 'b': 'show-reminder',
-            \ 'c': 'continue',
-            \ 'q': 'stop',
-            \ 'r': 'restart',
-            \ 'p': 'pause',
-            \ 'e': 'eval-selection',
-            \ 't': {
-                \ 'name': '+toggle',
-                \ 'b': 'breakpoint',
-                \ 'c': 'conditional-breakpoint',
-                \ 'a': 'add-function-breakpoint',
-                \ },
-            \ 's': {
-                \ 'name': '+step',
-                \ 'r': 'run-to-cursor',
-                \ 'i': 'into',
-                \ 'o': 'out',
-                \ 'v': 'over',
-                \ },
-            \ }
+        c = {
+            name = "step",
+            r = { "<Plug>VimspectorRunToCursor", "Run to Cursor" },
+            i = { "<Plug>VimspectorStepInto", "Into" },
+            o = { "<Plug>VimspectorStepOut", "Out" },
+            v = { "<Plug>VimspectorStepOver", "Over" },
+        }, 
+    },
+}, { prefix = "<leader>" })
+EOF
