@@ -1,12 +1,15 @@
 " post-install.vim
 
 
-" >> Setup
+" >> Configure
 
 lua << EOF
+local telescope = require('telescope')
 local actions = require('telescope.actions')
 
-require('telescope').setup{
+
+-- >> Setup telescope
+telescope.setup{
     defaults = {
         mappings = {
             i = {
@@ -20,15 +23,27 @@ require('telescope').setup{
         }
     }
 }
-require('telescope').load_extension('fzy_native')
-require('telescope').load_extension('coc')
+
+
+
+-- >> Add Telescope Extensions
+
+telescope.load_extension('fzy_native')
+telescope.load_extension('coc')
+
+
+
+-- >> Mappings
+local wk = require("which-key")
+local builtin = require('telescope.builtin')
+
+wk.register({
+    f = {
+        name = "file",
+        f = { builtin.find_files, "Search local files"},
+        g = { builtin.git_files, "Search files in current git repo"},
+        b = { builtin.buffers, "Search buffers"},
+        h = { builtin.help_tags, "Search help"},
+    },
+}, { prefix = "<leader>", })
 EOF
-
-
-
-" >> Mappings
-
-nnoremap <leader>ff <cmd>lua require('telescope.builtin').find_files()<cr>
-nnoremap <leader>fg <cmd>lua require('telescope.builtin').git_files()<cr>
-nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
-nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
