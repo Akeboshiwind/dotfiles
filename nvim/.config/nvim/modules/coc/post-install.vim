@@ -70,22 +70,8 @@ inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
 
 
 
-" >> Visual selections
-
-" Map function and class text objects
-" NOTE: Requires 'textDocument.documentSymbol' support from the language server.
-xmap if <Plug>(coc-funcobj-i)
-omap if <Plug>(coc-funcobj-i)
-xmap af <Plug>(coc-funcobj-a)
-omap af <Plug>(coc-funcobj-a)
-xmap ic <Plug>(coc-classobj-i)
-omap ic <Plug>(coc-classobj-i)
-xmap ac <Plug>(coc-classobj-a)
-omap ac <Plug>(coc-classobj-a)
-
-
-
 " >> Scrolling for popups
+" TODO: Move to WhichKey?
 
 " Remap <C-f> and <C-b> for scroll float windows/popups.
 if has('nvim-0.4.0') || has('patch-8.2.0750')
@@ -106,20 +92,7 @@ autocmd CursorHold * silent call CocActionAsync('highlight')
 
 
 
-" >> Selection
-
-" Use <TAB> for selections ranges.
-" NOTE: Requires 'textDocument/selectionRange' support from the language server.
-" coc-tsserver, coc-python are the examples of servers that support it.
-nmap <silent> <TAB> <Plug>(coc-range-select)
-xmap <silent> <TAB> <Plug>(coc-range-select)
-
-
-
 " >> Docs
-
-" Use K to show documentation in preview window.
-nnoremap <silent> K :call <SID>show_documentation()<CR>
 
 function! s:show_documentation()
   if (index(['vim','help'], &filetype) >= 0)
@@ -133,77 +106,8 @@ endfunction
 
 
 
-" >> Actions
-
-" Applying codeAction to the selected region.
-" Example: `<leader>aap` for current paragraph
-xmap <leader>a  <Plug>(coc-codeaction-selected)
-nmap <leader>a  <Plug>(coc-codeaction-selected)
-
-" Remap keys for applying codeAction to the current buffer.
-nmap <leader>ac  <Plug>(coc-codeaction)
-" Apply AutoFix to problem on the current line.
-nmap <leader>qf  <Plug>(coc-fix-current)
-
-" Trigger for code actions
-" Make sure `"codeLens.enable": true` is set in your coc config
-nnoremap <leader>cl :<C-u>call CocActionAsync('codeLensAction')<CR>
-
-
-
-" >> List Commands
-
-" Show all diagnostics.
-nnoremap <silent> <leader>ld :<C-u>CocList diagnostics<cr>
-" Manage extensions.
-nnoremap <silent> <leader>le  :<C-u>CocList extensions<cr>
-" Show commands.
-nnoremap <silent> <leader>lc  :<C-u>CocList commands<cr>
-" Find symbol of current document.
-nnoremap <silent> <leader>lo  :<C-u>CocList outline<cr>
-" Search workspace symbols.
-nnoremap <silent> <leader>ls  :<C-u>CocList -I symbols<cr>
-" Do default action for next item.
-nnoremap <silent> <leader>lj  :<C-u>CocNext<CR>
-" Do default action for previous item.
-nnoremap <silent> <leader>lk  :<C-u>CocPrev<CR>
-" Resume latest coc list.
-nnoremap <silent> <leader>lp  :<C-u>CocListResume<CR>
-
-
-
-" >> Diagnostics
-
-" Show all diagnostics.
-nnoremap <silent> <leader>dl :<C-u>CocList diagnostics<cr>
-
-nmap <silent> <leader>dp <Plug>(coc-diagnostic-prev)
-nmap <silent> <leader>dn <Plug>(coc-diagnostic-next)
-
-
-
-" >> Goto code navigation
-
-nmap <silent> <leader>gd <Plug>(coc-definition)
-nmap <silent> <leader>gy <Plug>(coc-type-definition)
-nmap <silent> <leader>gi <Plug>(coc-implementation)
-nmap <silent> <leader>gr <Plug>(coc-references)
-
-
-
-" >> Renaming
-
-" Symbol renaming.
-nmap <leader>rn <Plug>(coc-rename)
-
-
-
 " >> Formatting
-
-" Formatting selected code.
-xmap <leader>f  <Plug>(coc-format-selected)
-nmap <leader>f  <Plug>(coc-format-selected)
-
+" TODO: Find out what this actually does
 
 augroup mygroup
   autocmd!
@@ -215,67 +119,116 @@ augroup end
 
 
 
-" >> Commands
+" >> Mappings
 
-" Add `:Format` command to format current buffer.
-command! -nargs=0 Format :call CocAction('format')
+lua << EOF
+local wk = require("which-key")
 
-" Add `:Fold` command to fold current buffer.
-command! -nargs=? Fold :call     CocAction('fold', <f-args>)
+wk.register({
+    -- >> Visual selections
 
-" Add `:OR` command for organize imports of the current buffer.
-command! -nargs=0 OR   :call     CocAction('runCommand', 'editor.action.organizeImport')
-
-
-
-" >> Which Key Mappings
-
-let g:which_key_map['a'] = 'code-action'
-let g:which_key_map['ac'] = 'buffer-code-action'
-
-let g:which_key_map['qf'] = 'quickfix'
-" Hide group, but show docname if prompted
-let g:which_key_map['q'] = {
-            \'name': 'which_key_ignore',
-            \'f': 'quickfix',
-            \}
-
-let g:which_key_map['cl'] = 'codeLens'
-let g:which_key_map['c'] = {
-            \'name': 'which_key_ignore',
-            \'l': 'codeLens',
-            \}
-
-let g:which_key_map['l'] = {
-            \ 'name': '+list',
-            \ 'd': 'diagnostics',
-            \ 'e': 'extensions',
-            \ 'c': 'commands',
-            \ 'o': 'outline',
-            \ 's': 'symbols',
-            \ 'j': 'next',
-            \ 'k': 'prev',
-            \ 'p': 'resume',
-            \ }
+    -- NOTE: Requires 'textDocument.documentSymbol' support from
+    --       the language server.
+    ["if"] = { "<Plug>(coc-funcobj-i)", "Inside function", mode = "x" },
+    ["if"] = { "<Plug>(coc-funcobj-i)", "Inside function", mode = "o" },
+    af = { "<Plug>(coc-funcobj-a)", "Around function", mode = "x" },
+    af = { "<Plug>(coc-funcobj-a)", "Around function", mode = "o" },
+    ic = { "<Plug>(coc-classobj-i)",
+           "Inside class/struct/interface",
+           mode = "x" },
+    ic = { "<Plug>(coc-classobj-i)",
+           "Inside class/struct/interface",
+           mode = "o" },
+    ac = { "<Plug>(coc-classobj-a)",
+           "Around class/struct/interface",
+           mode = "x" },
+    ac = { "<Plug>(coc-classobj-a)",
+           "Around class/struct/interface",
+           mode = "o" },
 
 
-let g:which_key_map['d'] = {
-            \ 'name': '+diagnostics',
-            \ 'l': 'list',
-            \ 'p': 'prev',
-            \ 'n': 'next',
-            \ }
 
-let g:which_key_map['g'] = {
-            \ 'name': '+goto',
-            \ 'd': 'definition',
-            \ 'y': 'type-definition',
-            \ 'i': 'implementation',
-            \ 'r': 'references',
-            \ }
+    -- >> Selection
 
-let g:which_key_map['rn'] = 'rename-symbol'
-" Map defined in 00_base
-let g:which_key_map['r']['n'] = 'rename-symbol'
+    -- NOTE: Requires 'textDocument/selectionRange' support from
+    --       the language server.
+    --       coc-tsserver, coc-python are the examples of servers that support it.
+    ["<TAB>"] = { "<Plug>(coc-range-select)", "Select range" },
+    ["<TAB>"] = { "<Plug>(coc-range-select)", "Select range", mode = "x" },
 
-let g:which_key_map['f'] = 'format-selected'
+
+
+    -- >> Selection
+
+    K = { show_documentation, "Show documentation" },
+
+
+
+    -- >> Organised stuff
+    -- TODO: Split appart?
+
+    ["<leader>l"] = {
+        name = "LSP",
+
+        -- >> Code Actions
+        -- Example: `<leader>laap` for current paragraph
+        a = {
+            name = "action",
+            a = { "<Plug>(coc-codeaction-selected)",
+                  "Apply code action for region" },
+            a = { "<Plug>(coc-codeaction-selected)",
+                  "Apply code action for region",
+                  mode = "x", },
+            c = { "<Plug>(coc-codeaction)", "Apply code action for buffer" },
+        }, 
+
+        -- TODO: Figure out how to not have a folder
+        qf = { "<Plug>(coc-fix-current)", "Apply AutoFix to current line" },
+
+        -- >> Code Lens
+        -- Make sure `"codeLens.enable": true` is set in your coc config
+        c = {
+            name = "code-lens",
+            l = { ":<C-u>call CocActionAsync('codeLensAction')<CR>",
+                  "Apply code action for region" },
+        }, 
+
+        -- >> List Commands
+        l = {
+            name = "list",
+            d = { ":<C-u>CocList diagnostics<cr>", "Diagnostics" },
+            e = { ":<C-u>CocList extensions<cr>", "Extensions" },
+            c = { ":<C-u>CocList commands<cr>", "Commands" },
+            o = { ":<C-u>CocList outline<cr>", "Outline" },
+            s = { ":<C-u>CocList -I symbols<cr>", "Symbols" },
+            p = { ":<C-u>CocListResume<cr>", "Resume List" },
+            -- Remove these when swapping to Telescope
+            j = { ":<C-u>CocNext<cr>", "Next" },
+            k = { ":<C-u>CocPrev<cr>", "Previous" },
+        }, 
+
+        -- >> Diagnostics
+        -- Remove these when swapping to Telescope?
+        d = {
+            name = "diagnostics",
+            l = { ":<C-u>CocList diagnostics<cr>", "List" },
+            n = { "<Plug>(coc-diagnostic-next)", "Next" },
+            p = { "<Plug>(coc-diagnostic-prev)", "Previous" },
+        }, 
+
+        -- >> Goto code navigation
+        g = {
+            name = "goto",
+            d = { "<Plug>(coc-definition)", "Definition" },
+            y = { "<Plug>(coc-type-definition)", "Type Definition" },
+            i = { "<Plug>(coc-implementation)", "Implementation" },
+            r = { "<Plug>(coc-references)", "References" },
+        }, 
+
+        rn = { "<Plug>(coc-rename)", "Rename symbol under cursor" },
+
+        f = { "<Plug>(coc-format-selected)", "Fomat selected code" },
+        f = { "<Plug>(coc-format-selected)", "Fomat selected code", mode = "x" },
+    },
+}, {})
+EOF
