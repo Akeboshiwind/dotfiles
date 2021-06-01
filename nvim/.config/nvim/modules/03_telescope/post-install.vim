@@ -41,7 +41,7 @@ local builtin = require('telescope.builtin')
 wk.register({
     f = {
         name = "find",
-        f = { builtin.file_browser, "Browse local files"},
+        f = { builtin.find_files, "Browse local files"},
         g = { builtin.git_files, "Current repo files"},
         o = { builtin.oldfiles, "Recently opened files"},
         s = { builtin.live_grep, "Search file contents"},
