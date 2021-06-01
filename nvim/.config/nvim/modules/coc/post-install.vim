@@ -172,9 +172,7 @@ wk.register({
     -- >> Organised stuff
     -- TODO: Split appart?
 
-    ["<leader>l"] = {
-        name = "LSP",
-
+    ["<leader>"] = {
         -- >> Code Actions
         -- Example: `<leader>laap` for current paragraph
         a = {
@@ -185,17 +183,6 @@ wk.register({
                   "Apply code action for region",
                   mode = "x", },
             c = { "<Plug>(coc-codeaction)", "Apply code action for buffer" },
-        }, 
-
-        -- TODO: Figure out how to not have a folder
-        qf = { "<Plug>(coc-fix-current)", "Apply AutoFix to current line" },
-
-        -- >> Code Lens
-        -- Make sure `"codeLens.enable": true` is set in your coc config
-        c = {
-            name = "code-lens",
-            l = { ":<C-u>call CocActionAsync('codeLensAction')<CR>",
-                  "Apply code action for region" },
         }, 
 
         -- >> List Commands
@@ -225,7 +212,7 @@ wk.register({
 
         -- >> Diagnostics
         -- Remove these when swapping to Telescope?
-        d = {
+        D = {
             name = "diagnostics",
             l = { ":<C-u>CocList diagnostics<cr>", "List" },
             n = { "<Plug>(coc-diagnostic-next)", "Next" },
@@ -241,10 +228,24 @@ wk.register({
             r = { "<Plug>(coc-references)", "References" },
         }, 
 
-        rn = { "<Plug>(coc-rename)", "Rename symbol under cursor" },
+        -- >> Things that don't fit elsewhere
+        r = {
+            name = "run",
 
-        f = { "<Plug>(coc-format-selected)", "Fomat selected code" },
-        f = { "<Plug>(coc-format-selected)", "Fomat selected code", mode = "x" },
+            n = { "<Plug>(coc-rename)", "Rename symbol under cursor" },
+            f = { "<Plug>(coc-format-selected)", "Fomat selected code" },
+            f = { "<Plug>(coc-format-selected)",
+                  "Fomat selected code",
+                  mode = "x" },
+
+            q = { "<Plug>(coc-fix-current)", "Apply AutoFix to current line" },
+
+            -- >> Code Lens
+            -- Make sure `"codeLens.enable": true` is set in your coc config
+            l = { ":<C-u>call CocActionAsync('codeLensAction')<CR>",
+                  "Apply code action for region" },
+        },
+
     },
 }, {})
 EOF
