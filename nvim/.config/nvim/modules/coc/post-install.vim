@@ -125,6 +125,7 @@ lua << EOF
 local wk = require("which-key")
 local telescope = require('telescope')
 
+-- TODO: Register only when coc startsup
 wk.register({
     -- >> Visual selections
 
