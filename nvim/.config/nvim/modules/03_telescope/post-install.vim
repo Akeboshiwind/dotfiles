@@ -46,6 +46,7 @@ wk.register({
         o = { builtin.oldfiles, "Recently opened files"},
         s = { builtin.live_grep, "Search file contents"},
         r = { builtin.grep_string, "Search for word under cursor"},
+        ["/"] = { builtin.current_buffer_fuzzy_find, "Fuzzy find in the current buffer"},
 
         b = { builtin.buffers, "Buffers"},
         h = { builtin.help_tags, "Help tags"},
