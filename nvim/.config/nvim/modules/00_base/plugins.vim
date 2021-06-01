@@ -17,7 +17,3 @@ Plug 'arp242/auto_mkdir2.vim'
 
 " Git plugin
 Plug 'tpope/vim-fugitive'
-
-" Fzf <3 vim
-Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
-Plug 'junegunn/fzf.vim'
