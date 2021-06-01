@@ -120,12 +120,16 @@ augroup end
 
 
 " >> Mappings
+" TODO: Register only when coc startsup
 
 lua << EOF
 local wk = require("which-key")
 local telescope = require('telescope')
 
--- TODO: Register only when coc startsup
+
+
+-- >> Non prefixed mappings
+
 wk.register({
     -- >> Visual selections
 
@@ -162,91 +166,99 @@ wk.register({
 
 
 
-    -- >> Selection
+    -- >> Documentation
     -- TODO: Move back
     -- TODO: Ask for "force"?
 
     K = { show_documentation, "Show documentation" },
-
-
-
-    -- >> Organised stuff
-    -- TODO: Split appart?
-
-    ["<leader>"] = {
-        -- >> Code Actions
-        -- Example: `<leader>laap` for current paragraph
-        a = {
-            name = "action",
-            a = { "<Plug>(coc-codeaction-selected)",
-                  "Apply code action for region" },
-            a = { "<Plug>(coc-codeaction-selected)",
-                  "Apply code action for region",
-                  mode = "x", },
-            c = { "<Plug>(coc-codeaction)", "Apply code action for buffer" },
-        }, 
-
-        -- >> List Commands
-        l = {
-            name = "list",
-            c = { telescope.extensions.coc.commands, "Commands" },
-            s = { function() telescope.extensions.coc.document_symbols({}) end,
-                  "Document Symbols" },
-            S = { function() telescope.extensions.coc.workspace_symbols({}) end,
-                  "Workspace Symbols" },
-            a = { telescope.extensions.coc.line_code_actions,
-                  "Code Actions on Line" },
-            b = { telescope.extensions.coc.file_code_actions,
-                  "Code Actions in Buffer" },
-            d = { telescope.extensions.coc.diagnostics, "Diagnostics" },
-            D = { telescope.extensions.coc.workspace_diagnostics,
-                  "Workspace Diagnostics" },
-
-            -- TODO: Ask for telescope support
-            e = { ":<C-u>CocList extensions<cr>", "Extensions" },
-
-            -- Remove these when swapping to Telescope?
-            p = { ":<C-u>CocListResume<cr>", "Resume List" },
-            j = { ":<C-u>CocNext<cr>", "Next" },
-            k = { ":<C-u>CocPrev<cr>", "Previous" },
-        }, 
-
-        -- >> Diagnostics
-        -- Remove these when swapping to Telescope?
-        D = {
-            name = "diagnostics",
-            l = { ":<C-u>CocList diagnostics<cr>", "List" },
-            n = { "<Plug>(coc-diagnostic-next)", "Next" },
-            p = { "<Plug>(coc-diagnostic-prev)", "Previous" },
-        }, 
-
-        -- >> Goto code navigation
-        g = {
-            name = "goto",
-            d = { "<Plug>(coc-definition)", "Definition" },
-            y = { "<Plug>(coc-type-definition)", "Type Definition" },
-            i = { "<Plug>(coc-implementation)", "Implementation" },
-            r = { "<Plug>(coc-references)", "References" },
-        }, 
-
-        -- >> Things that don't fit elsewhere
-        r = {
-            name = "run",
-
-            n = { "<Plug>(coc-rename)", "Rename symbol under cursor" },
-            f = { "<Plug>(coc-format-selected)", "Fomat selected code" },
-            f = { "<Plug>(coc-format-selected)",
-                  "Fomat selected code",
-                  mode = "x" },
-
-            q = { "<Plug>(coc-fix-current)", "Apply AutoFix to current line" },
-
-            -- >> Code Lens
-            -- Make sure `"codeLens.enable": true` is set in your coc config
-            l = { ":<C-u>call CocActionAsync('codeLensAction')<CR>",
-                  "Apply code action for region" },
-        },
-
-    },
 }, {})
+
+
+
+-- >> Prefixed mappings
+
+wk.register({
+    -- >> Code Actions
+    -- Example: `<leader>laap` for current paragraph
+    a = {
+        name = "action",
+        a = { "<Plug>(coc-codeaction-selected)",
+              "Apply code action for region" },
+        a = { "<Plug>(coc-codeaction-selected)",
+              "Apply code action for region",
+              mode = "x", },
+        c = { "<Plug>(coc-codeaction)", "Apply code action for buffer" },
+    }, 
+
+
+
+    -- >> List Commands
+    l = {
+        name = "list",
+        c = { telescope.extensions.coc.commands, "Commands" },
+        s = { function() telescope.extensions.coc.document_symbols({}) end,
+              "Document Symbols" },
+        S = { function() telescope.extensions.coc.workspace_symbols({}) end,
+              "Workspace Symbols" },
+        a = { telescope.extensions.coc.line_code_actions,
+              "Code Actions on Line" },
+        b = { telescope.extensions.coc.file_code_actions,
+              "Code Actions in Buffer" },
+        d = { telescope.extensions.coc.diagnostics, "Diagnostics" },
+        D = { telescope.extensions.coc.workspace_diagnostics,
+              "Workspace Diagnostics" },
+
+        -- TODO: Ask for telescope support
+        e = { ":<C-u>CocList extensions<cr>", "Extensions" },
+
+        -- Remove these when swapping to Telescope?
+        p = { ":<C-u>CocListResume<cr>", "Resume List" },
+        j = { ":<C-u>CocNext<cr>", "Next" },
+        k = { ":<C-u>CocPrev<cr>", "Previous" },
+    }, 
+
+
+
+    -- >> Diagnostics
+    -- Remove these when swapping to Telescope?
+    D = {
+        name = "diagnostics",
+        l = { ":<C-u>CocList diagnostics<cr>", "List" },
+        n = { "<Plug>(coc-diagnostic-next)", "Next" },
+        p = { "<Plug>(coc-diagnostic-prev)", "Previous" },
+    }, 
+
+
+
+    -- >> Goto code navigation
+    g = {
+        name = "goto",
+        d = { "<Plug>(coc-definition)", "Definition" },
+        y = { "<Plug>(coc-type-definition)", "Type Definition" },
+        i = { "<Plug>(coc-implementation)", "Implementation" },
+        r = { "<Plug>(coc-references)", "References" },
+    }, 
+
+
+
+    -- >> Things that don't fit elsewhere
+    r = {
+        name = "run",
+
+        n = { "<Plug>(coc-rename)", "Rename symbol under cursor" },
+        f = { "<Plug>(coc-format-selected)", "Fomat selected code" },
+        f = { "<Plug>(coc-format-selected)",
+              "Fomat selected code",
+              mode = "x" },
+
+        q = { "<Plug>(coc-fix-current)", "Apply AutoFix to current line" },
+
+
+
+        -- >> Code Lens
+        -- Make sure `"codeLens.enable": true` is set in your coc config
+        l = { ":<C-u>call CocActionAsync('codeLensAction')<CR>",
+              "Apply code action for region" },
+    },
+}, { prefix = "<leader>" })
 EOF
