@@ -44,14 +44,28 @@ wk.register({
         f = { builtin.find_files, "Browse local files"},
         g = { builtin.git_files, "Current repo files"},
         o = { builtin.oldfiles, "Recently opened files"},
+        ["."] = { function()
+            builtin.git_files({
+                cwd = "~/dotfiles",
+            })
+        end, "Dotfiles"},
+        c = { function()
+            -- % get's the current buffer's path
+            -- :h get's the full path
+            local buffer_relative_path = vim.call("expand", "%:h")
+            builtin.file_browser({
+                cwd = buffer_relative_path,
+            })
+        end, "Browse relative to buffer"},
+
         s = { builtin.live_grep, "Search file contents"},
-        r = { builtin.grep_string, "Search for word under cursor"},
+        ["*"] = { builtin.grep_string, "Search for word under cursor"},
         ["/"] = { builtin.current_buffer_fuzzy_find, "Fuzzy find in the current buffer"},
 
         b = { builtin.buffers, "Buffers"},
         h = { builtin.help_tags, "Help tags"},
-        t = { builtin.filetypes, "File types"},
-        c = { builtin.colorscheme, "Colorschemes"},
+        y = { builtin.filetypes, "File types"},
+        C = { builtin.colorscheme, "Colorschemes"},
         m = { builtin.keymaps, "Mappings"},
 
         B = { builtin.builtin, "Builtins"},
