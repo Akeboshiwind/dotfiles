@@ -14,4 +14,13 @@ wk.setup {
         i = { "f" },
     }
 }
+
+
+
+-- >> Mappings
+
+wk.register({
+    x = { "<cmd>source %<CR>", "Source buffer" }
+}, { prefix = "<leader>" })
+
 EOF
