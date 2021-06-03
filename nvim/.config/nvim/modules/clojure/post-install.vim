@@ -1,13 +1,12 @@
 " post-install.vim
 
 
-" >> CoC Extensions
-
-call coc#add_extension('coc-conjure')
-
-
-
 " >> Config
 
 let g:conjure#mapping#prefix = "<leader>"
-" TODO: Add mappings to vim-which-key
+
+" Breifly highlight evaluated forms
+let g:conjure#highlight#enabled = v:true
+
+" >> Document Mappings
+" TODO: This 😛
