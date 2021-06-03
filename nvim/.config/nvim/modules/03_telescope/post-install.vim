@@ -82,6 +82,11 @@ wk.register({
                 cwd = "~/dotfiles",
             })
         end, "Dotfiles"},
+        p = { function()
+            builtin.find_files({
+                cwd = "~/.local/share/nvim/plugged/",
+            })
+        end, "Plugin source files"},
         c = { function()
             -- % get's the current buffer's path
             -- :h get's the full path
