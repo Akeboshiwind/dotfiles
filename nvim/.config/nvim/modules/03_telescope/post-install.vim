@@ -95,7 +95,11 @@ wk.register({
         ["*"] = { builtin.grep_string, "Search for word under cursor"},
         ["/"] = { builtin.current_buffer_fuzzy_find, "Fuzzy find in the current buffer"},
 
-        b = { builtin.buffers, "Buffers"},
+        b = { function()
+            builtin.buffers({
+                sort_lastused = true,
+            })
+        end, "Buffers"},
         h = { builtin.help_tags, "Help tags"},
         y = { builtin.filetypes, "File types"},
         C = { builtin.colorscheme, "Colorschemes"},
