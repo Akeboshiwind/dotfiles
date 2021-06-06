@@ -84,10 +84,15 @@ wk.register({
         end, "Dotfiles"},
         p = { function()
             builtin.find_files({
+                cwd = "~/prog/",
+            })
+        end, "~/prog"},
+        P = { function()
+            builtin.find_files({
                 cwd = "~/.local/share/nvim/plugged/",
             })
         end, "Plugin source files"},
-        c = { function()
+        r = { function()
             -- % get's the current buffer's path
             -- :h get's the full path
             local buffer_relative_path = vim.call("expand", "%:h")
@@ -95,10 +100,6 @@ wk.register({
                 cwd = buffer_relative_path,
             })
         end, "Browse relative to buffer"},
-
-        s = { builtin.live_grep, "Search file contents"},
-        ["*"] = { builtin.grep_string, "Search for word under cursor"},
-        ["/"] = { builtin.current_buffer_fuzzy_find, "Fuzzy find in the current buffer"},
 
         b = { function()
             builtin.buffers({
@@ -111,6 +112,21 @@ wk.register({
         m = { builtin.keymaps, "Mappings"},
 
         B = { builtin.builtin, "Builtins"},
+    },
+    s = {
+        name = "search",
+        s = { builtin.live_grep, "Search project file contents"},
+        r = { function()
+            -- % get's the current buffer's path
+            -- :h get's the full path
+            local buffer_relative_path = vim.call("expand", "%:h")
+            builtin.live_grep({
+                cwd = buffer_relative_path,
+            })
+        end, "Search relative to buffer"},
+        ["*"] = { builtin.grep_string, "Search for word under cursor"},
+        ["/"] = { builtin.current_buffer_fuzzy_find, "Fuzzy find in the current buffer"},
+
     },
     G = {
         name = "git",
