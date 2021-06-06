@@ -108,7 +108,7 @@ wk.register({
         end, "Buffers"},
         h = { builtin.help_tags, "Help tags"},
         y = { builtin.filetypes, "File types"},
-        C = { builtin.colorscheme, "Colorschemes"},
+        c = { builtin.colorscheme, "Colorschemes"},
         m = { builtin.keymaps, "Mappings"},
 
         B = { builtin.builtin, "Builtins"},
