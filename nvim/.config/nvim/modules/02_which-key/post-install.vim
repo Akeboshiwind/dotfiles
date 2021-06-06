@@ -20,7 +20,11 @@ wk.setup {
 -- >> Mappings
 
 wk.register({
-    x = { "<cmd>source %<CR>", "Source buffer" }
+    x = { "<cmd>source %<CR>", "Source buffer" },
 }, { prefix = "<leader>" })
+
+wk.register({
+    ["<C-Space>"] = { "<cmd>:WhichKey ''<CR>", "Show base commands" },
+}, {})
 
 EOF
