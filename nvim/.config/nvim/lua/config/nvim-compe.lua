@@ -1,11 +1,17 @@
-" post-install.vim
+-- config/nvim-compe.lua
+
+local opt = vim.opt
 
 
-" >> Setup
+-- >> Prerequisites
 
-lua << EOF
+opt.completeopt = { "menuone", "noselect" }
 
-require'compe'.setup {
+
+
+-- >> Setup
+
+require('compe').setup {
   enabled = true,
   documentation = true,
 
@@ -22,13 +28,9 @@ require'compe'.setup {
   },
 }
 
-EOF
 
 
-
-" >> Mappings
-
-lua << EOF
+-- >> Mappings
 
 local wk = require("which-key")
 
@@ -43,6 +45,7 @@ wk.register({
     ["<TAB>"] = { [[pumvisible() ? "\<C-n>" : "\<TAB>"]], "Next completion item" },
     ["<S-TAB>"] = { [[pumvisible() ? "\<C-p>" : "\<S-TAB>"]],
                     "Prev completion item" }
-}, { mode = 'i', expr = true })
-
-EOF
+}, {
+    mode = 'i',
+    expr = true
+})

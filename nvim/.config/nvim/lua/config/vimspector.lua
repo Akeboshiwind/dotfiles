@@ -1,20 +1,22 @@
-" post-install.vim
+-- config/vimspector.lua
+
+local g = vim.g
+local fn = vim.fn
 
 
-" >> Vimspector config
+-- >> Vimspector config
 
-" Set the basedir to look for all configs to inside the module
-let g:vimspector_base_dir=expand('$HOME/.config/nvim/modules/vimspector/config/')
+-- Set the basedir to look for all configs in the right place
+g.vimspector_base_dir = fn.expand('$HOME/.config/nvim/config/vimspector/')
 
 
 
-" >> Mappings
+-- >> Mappings
 
-lua << EOF
 local wk = require("which-key")
 
 wk.register({
-    d = {
+    D = {
         name = "debug",
 
         b = { [[:echom "Just setup a breakpoint then run the code"<CR>]],
@@ -44,4 +46,3 @@ wk.register({
         }, 
     },
 }, { prefix = "<leader>" })
-EOF

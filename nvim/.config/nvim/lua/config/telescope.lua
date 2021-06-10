@@ -1,9 +1,5 @@
-" post-install.vim
+-- config/telescope.lua
 
-
-" >> Configure
-
-lua << EOF
 local telescope = require('telescope')
 local actions = require('telescope.actions')
 
@@ -33,15 +29,16 @@ end
 
 -- >> Setup telescope
 
-telescope.setup{
+telescope.setup {
     defaults = {
         buffer_previewer_maker = truncate_large_files,
         mappings = {
             i = {
-                -- Skip normal mode
+                -- Normally when you press <esc> it puts you in normal mode in
+                -- telescope. This binding skips that to just exit.
                 ["<esc>"] = actions.close,
 
-                -- Add my own movement keys
+                -- Add easier movement keys
                 ["<C-j>"] = actions.move_selection_next,
                 ["<C-k>"] = actions.move_selection_previous,
             }
@@ -135,4 +132,3 @@ wk.register({
         b = { builtin.git_branches, "Branches"},
     },
 }, { prefix = "<leader>", })
-EOF
