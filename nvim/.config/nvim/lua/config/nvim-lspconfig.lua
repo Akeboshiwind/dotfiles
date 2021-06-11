@@ -5,11 +5,10 @@ local lsp = {}
 
 -- >> Generic keybinds for lsp servers
 
-local neovim_lsp = require('lspconfig')
-local wk = require("which-key")
-local builtin = require('telescope.builtin')
-
 function lsp.setup_mappings()
+    local wk = require("which-key")
+    local builtin = require('telescope.builtin')
+
 
     -- >> Mappings
 
