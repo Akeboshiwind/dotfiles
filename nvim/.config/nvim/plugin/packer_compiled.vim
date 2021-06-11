@@ -96,8 +96,14 @@ _G.packer_plugins = {
     after = { "compe-conjure" },
     only_config = true
   },
+  ["nvim-lsp-installer"] = {
+    load_after = {},
+    loaded = false,
+    needs_bufread = false,
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/nvim-lsp-installer"
+  },
   ["nvim-lspconfig"] = {
-    after = { "rust-tools.nvim" },
+    after = { "rust-tools.nvim", "nvim-lsp-installer" },
     load_after = {},
     loaded = false,
     needs_bufread = false,
@@ -143,7 +149,7 @@ _G.packer_plugins = {
     path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/telescope-fzf-native.nvim"
   },
   ["telescope.nvim"] = {
-    after = { "nvim-lspconfig", "rust-tools.nvim" },
+    after = { "rust-tools.nvim", "nvim-lspconfig" },
     config = { "require('config.telescope')" },
     load_after = {},
     loaded = false,
@@ -193,28 +199,50 @@ _G.packer_plugins = {
     path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/vimspector"
   },
   ["which-key.nvim"] = {
-    after = { "vimspector", "telescope.nvim", "nvim-lspconfig", "rust-tools.nvim" },
+    after = { "rust-tools.nvim", "vimspector", "nvim-lspconfig", "telescope.nvim" },
     only_config = true
   }
 }
 
 time("Defining packer_plugins", false)
+local module_lazy_loads = {
+  ["^nvim%-lsp%-installer"] = "nvim-lsp-installer"
+}
+local lazy_load_called = {['packer.load'] = true}
+local function lazy_load_module(module_name)
+  local to_load = {}
+  if lazy_load_called[module_name] then return nil end
+  lazy_load_called[module_name] = true
+  for module_pat, plugin_name in pairs(module_lazy_loads) do
+    if not _G.packer_plugins[plugin_name].loaded and string.match(module_name, module_pat)then
+      to_load[#to_load + 1] = plugin_name
+    end
+  end
+
+  require('packer.load')(to_load, {module = module_name}, _G.packer_plugins)
+end
+
+if not vim.g.packer_custom_loader_enabled then
+  table.insert(package.loaders, 1, lazy_load_module)
+  vim.g.packer_custom_loader_enabled = true
+end
+
 -- Config for: nvim-treesitter
 time("Config for nvim-treesitter", true)
 require('config.nvim-treesitter')
 time("Config for nvim-treesitter", false)
--- Config for: vim-solarized8
-time("Config for vim-solarized8", true)
-require('config.theme.vim-solarized8')
-time("Config for vim-solarized8", false)
--- Config for: which-key.nvim
-time("Config for which-key.nvim", true)
-require('config.which-key')
-time("Config for which-key.nvim", false)
 -- Config for: nvim-compe
 time("Config for nvim-compe", true)
 require('config.nvim-compe')
 time("Config for nvim-compe", false)
+-- Config for: which-key.nvim
+time("Config for which-key.nvim", true)
+require('config.which-key')
+time("Config for which-key.nvim", false)
+-- Config for: vim-solarized8
+time("Config for vim-solarized8", true)
+require('config.theme.vim-solarized8')
+time("Config for vim-solarized8", false)
 -- Load plugins in order defined by `after`
 time("Sequenced loading", true)
 vim.cmd [[ packadd telescope.nvim ]]
@@ -228,10 +256,10 @@ time("Sequenced loading", false)
 -- Command lazy-loads
 time("Defining lazy-load commands", true)
 vim.cmd [[command! -nargs=* -range -bang -complete=file TSPlaygroundToggle lua require("packer.load")({'playground'}, { cmd = "TSPlaygroundToggle", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args> }, _G.packer_plugins)]]
-vim.cmd [[command! -nargs=* -range -bang -complete=file TSHighlightCapturesUnderCursor lua require("packer.load")({'playground'}, { cmd = "TSHighlightCapturesUnderCursor", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args> }, _G.packer_plugins)]]
+vim.cmd [[command! -nargs=* -range -bang -complete=file G lua require("packer.load")({'vim-fugitive'}, { cmd = "G", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args> }, _G.packer_plugins)]]
 vim.cmd [[command! -nargs=* -range -bang -complete=file Git lua require("packer.load")({'vim-fugitive'}, { cmd = "Git", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args> }, _G.packer_plugins)]]
 vim.cmd [[command! -nargs=* -range -bang -complete=file Gclog lua require("packer.load")({'vim-fugitive'}, { cmd = "Gclog", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args> }, _G.packer_plugins)]]
-vim.cmd [[command! -nargs=* -range -bang -complete=file G lua require("packer.load")({'vim-fugitive'}, { cmd = "G", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args> }, _G.packer_plugins)]]
+vim.cmd [[command! -nargs=* -range -bang -complete=file TSHighlightCapturesUnderCursor lua require("packer.load")({'playground'}, { cmd = "TSHighlightCapturesUnderCursor", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args> }, _G.packer_plugins)]]
 time("Defining lazy-load commands", false)
 
 -- Keymap lazy-loads
@@ -243,11 +271,11 @@ vim.cmd [[augroup packer_load_aucmds]]
 vim.cmd [[au!]]
   -- Filetype lazy-loads
 time("Defining lazy-load filetype autocommands", true)
-vim.cmd [[au FileType avro ++once lua require("packer.load")({'vim-avro'}, { ft = "avro" }, _G.packer_plugins)]]
 vim.cmd [[au FileType avdl ++once lua require("packer.load")({'vim-avro'}, { ft = "avdl" }, _G.packer_plugins)]]
 vim.cmd [[au FileType rust ++once lua require("packer.load")({'rust-tools.nvim'}, { ft = "rust" }, _G.packer_plugins)]]
 vim.cmd [[au FileType terraform ++once lua require("packer.load")({'vim-terraform'}, { ft = "terraform" }, _G.packer_plugins)]]
 vim.cmd [[au FileType clojure ++once lua require("packer.load")({'conjure'}, { ft = "clojure" }, _G.packer_plugins)]]
+vim.cmd [[au FileType avro ++once lua require("packer.load")({'vim-avro'}, { ft = "avro" }, _G.packer_plugins)]]
 time("Defining lazy-load filetype autocommands", false)
 vim.cmd("augroup END")
 vim.cmd [[augroup filetypedetect]]

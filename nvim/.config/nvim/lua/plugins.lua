@@ -140,17 +140,18 @@ local function init()
 
     -- >> 05-LSP
 
-    -- TODO: Module lazy loading?
+    -- TODO: Maybe lazyload?
+    -- Might just cause a loop though 🤔
     use {
         'neovim/nvim-lspconfig',
         after = { 'which-key.nvim', 'telescope.nvim' },
     }
 
-    -- TODO: Lazy loading
     use {
         'williamboman/nvim-lsp-installer',
+        run = [[require('config/nvim-lsp-installer').update_installed()]],
         after = 'nvim-lspconfig',
-        disable = true,
+        module = 'nvim-lsp-installer',
     }
 
 
