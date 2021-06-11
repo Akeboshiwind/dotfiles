@@ -1,14 +1,26 @@
 -- config/rust-tools.lua
 
+local lsp_installer = require('config.nvim-lsp-installer')
 
--- >> Config
 
-local wk = require("which-key")
+-- >> Install server
+
+local server = lsp_installer.get_server("rust_analyzer")
+
+if not server.is_installed() then
+    server.install()
+end
+
+
+
+-- >> Configure
 
 require('rust-tools').setup {
-    server = {
+    server = vim.tbl_deep_extend("keep", {
         on_attach = function()
-            _G.lsp.setup_mappings()
+            require('config.nvim-lspconfig').setup_mappings()
+
+            local wk = require("which-key")
 
             -- TODO: Add mappings for rust-tools specific behavior
             -- TODO: Document any mappings added by rust-tools
@@ -18,5 +30,5 @@ require('rust-tools').setup {
                 buffer = 0,
             })
         end,
-    },
+    }, server._default_options),
 }
