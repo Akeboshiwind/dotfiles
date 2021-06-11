@@ -8,6 +8,7 @@ local lsp_installer = require('config.nvim-lsp-installer')
 local server = lsp_installer.get_server("rust_analyzer")
 
 if not server.is_installed() then
+    print("Installing LSP server")
     server.install()
 end
 
