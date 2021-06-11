@@ -74,7 +74,7 @@ local function init()
         'tpope/vim-fugitive',
         cmd = {
             'G', 'Git', 'Gclog'
-        }
+        },
     }
 
 
@@ -85,19 +85,19 @@ local function init()
 
     use {
         'lifepillar/vim-solarized8',
-        config = [[require('config.theme.vim-solarized8')]]
+        config = [[require('config.theme.vim-solarized8')]],
     }
 
     use {
         'shaunsingh/moonlight.nvim',
         config = [[require('config.theme.moonlight')]],
-        disable = true
+        disable = true,
     }
 
     use {
         'folke/tokyonight.nvim',
         config = [[require('config.theme.tokyonight')]],
-        disable = true
+        disable = true,
     }
 
     --use 'shaunsingh/solarized.nvim'
@@ -109,7 +109,7 @@ local function init()
 
     use {
         'folke/which-key.nvim',
-        config = [[require('config.which-key')]]
+        config = [[require('config.which-key')]],
     }
 
 
@@ -149,6 +149,7 @@ local function init()
     -- TODO: Lazy loading
     use {
         'williamboman/nvim-lsp-installer',
+        after = 'nvim-lspconfig',
         disable = true,
     }
 
@@ -160,12 +161,12 @@ local function init()
     --     'nvim-treesitter/nvim-treesitter',
         '~/prog/prog/assorted/nvim-treesitter',
         run = ':TSUpdate',
-        config = [[require('config.nvim-treesitter')]]
+        config = [[require('config.nvim-treesitter')]],
     }
 
     use {
         'nvim-treesitter/playground',
-        cmd = { 'TSPlaygroundToggle', 'TSHighlightCapturesUnderCursor' }
+        cmd = { 'TSPlaygroundToggle', 'TSHighlightCapturesUnderCursor' },
     }
 
 
@@ -175,12 +176,12 @@ local function init()
     use {
         'hashivim/vim-terraform',
         ft = 'terraform',
-        config = [[require('config.vim-terraform')]]
+        config = [[require('config.vim-terraform')]],
     }
 
     use {
         'gurpreetatwal/vim-avro',
-        ft = { 'avro', 'avdl' }
+        ft = { 'avro', 'avdl' },
     }
 
 
@@ -191,17 +192,17 @@ local function init()
         'Olical/conjure',
         tag = 'v4.20.0',
         ft = 'clojure',
-        config = [[require('config.conjure')]]
+        config = [[require('config.conjure')]],
     }
 
     use {
         'tami5/compe-conjure',
-        after = { 'nvim-compe', 'conjure' }
+        after = { 'nvim-compe', 'conjure' },
     }
 
     use {
         'eraserhd/parinfer-rust',
-        run = 'cargo build --release'
+        run = 'cargo build --release',
     }
 
 
@@ -212,7 +213,7 @@ local function init()
         'simrat39/rust-tools.nvim',
         after = { 'which-key.nvim', 'nvim-lspconfig', 'telescope.nvim' },
         ft = 'rust',
-        config = [[require('config.rust-tools')]]
+        config = [[require('config.rust-tools')]],
     }
 
 
@@ -222,7 +223,7 @@ local function init()
         'puremourning/vimspector',
         keys = ',D',
         after = { 'which-key.nvim' },
-        config = [[require('config.vimspector')]]
+        config = [[require('config.vimspector')]],
     }
 end
 
