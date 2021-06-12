@@ -11,7 +11,7 @@ lsp_installer = require('nvim-lsp-installer')
 -- Run this when the plugin updates
 function config.update_installed()
     local installed = lsp_installer.get_installed_servers()
-    for server in installed do
+    for _, server in pairs(installed) do
         server.install()
     end
 end
@@ -28,3 +28,5 @@ function config.get_server(server_name)
 
     return server
 end
+
+return config
