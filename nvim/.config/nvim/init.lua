@@ -81,6 +81,14 @@ cmd [[command! PackerCompile packadd packer.nvim | lua require('plugins').compil
 
 
 
+-- >> Utils
+
+function _G.P(...)
+    print(vim.inspect(...))
+end
+
+
+
 -- >> Usability
 
 opt.ignorecase = true      -- In searches, ignore the case
