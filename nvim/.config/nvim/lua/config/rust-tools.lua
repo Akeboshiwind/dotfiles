@@ -1,6 +1,7 @@
 -- config/rust-tools.lua
 
 local lsp_installer = require('config.nvim-lsp-installer')
+local lsp_config = require('config.nvim-lspconfig')
 
 
 -- >> Install server
@@ -17,10 +18,8 @@ end
 -- >> Configure
 
 require('rust-tools').setup {
-    server = vim.tbl_deep_extend("keep", {
-        on_attach = function()
-            require('config.nvim-lspconfig').setup_mappings()
-
+    server = lsp_config.compose_config({
+        on_attach = function(_client, bufnr)
             local wk = require("which-key")
 
             -- TODO: Add mappings for rust-tools specific behavior
@@ -28,7 +27,7 @@ require('rust-tools').setup {
             wk.register({
             }, {
                 prefix = "<leader>",
-                buffer = 0,
+                buffer = bufnr,
             })
         end,
     }, server:get_default_options()),

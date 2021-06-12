@@ -5,29 +5,16 @@ local lsp = {}
 
 -- >> Generic keybinds for lsp servers
 
-function lsp.setup_mappings()
+function lsp.setup_mappings(bufnr)
     local wk = require("which-key")
     local builtin = require('telescope.builtin')
 
 
     -- >> Mappings
 
-    -- Docs
+    -- Non-Prefixed
     wk.register({
-        -- TODO: Will this actually overwrite the top level symbol?
         K = { vim.lsp.buf.hover, "Document symbol" },
-    }, {
-        -- Buffer local mappings
-        buffer = 0,
-    })
-
-    -- leader mappings
-    wk.register({
-        -- TODO: Other useful lsp mappings?
-        -- TODO: Telescope mappings?
-        -- TODO: Better mnumonics?
-
-        -- TODO: Change gotos to non-prefixed?
         g = {
             name = "goto",
             D = { vim.lsp.buf.declaration, "Declaration" },
@@ -36,11 +23,20 @@ function lsp.setup_mappings()
             y = { vim.lsp.buf.type_definition, "Type definition" },
             r = { builtin.lsp_references, "References" },
 
-            -- Are these `find` related?
             s = { builtin.lsp_document_symbols, "Document Symbols" },
-            --S = { builtin.lsp_workspace_symbols, "Workspace Symbols" },
-            --S = { builtin.lsp_dynamic_workspace_symbols, "Workspace Symbols" },
+            S = { builtin.lsp_workspace_symbols, "Workspace Symbols" },
         },
+    }, {
+        buffer = bufnr,
+    })
+
+    -- Leader
+    wk.register({
+        -- TODO: Other useful lsp mappings?
+        -- TODO: Telescope mappings?
+        -- TODO: Better mnumonics?
+
+        -- TODO: Change gotos to non-prefixed?
 
         w = {
             name = "workspace",
@@ -77,10 +73,10 @@ function lsp.setup_mappings()
         --                opts)
     }, {
         prefix = "<leader>",
-        -- Buffer local mappings
-        buffer = 0,
+        buffer = bufnr,
     })
 
+    -- Visual
     wk.register({
         a = {
             name = "action",
@@ -92,8 +88,63 @@ function lsp.setup_mappings()
     }, {
         prefix = "<leader>",
         mode = 'v',
-        buffer = 0,
+        buffer = bufnr,
     })
 end
+
+
+
+-- >> Default LSP config w/ overrides
+
+local lsp_status = require('lsp-status')
+
+local default_config = {
+    on_attach = function(client, bufnr)
+        -- Status messages
+        lsp_status.on_attach(client, bufnr)
+
+        -- Setup
+        lsp.setup_mappings(bufnr)
+    end,
+    capabilities = lsp_status.capabilities,
+}
+
+-- Compose together multiple configs
+--
+-- Configs are composed in reverse order
+-- So `compose_config({a = 1}, {a = 2})` would get:
+-- => `{a = 1}`
+--
+-- A default_config is always used as the base to compose the other configs
+-- onto
+--
+-- The first config supplied is assumed to be the user_config
+--
+-- When composing the default_config with the user_config the on_attach
+-- functions are combined so that the default on_attach is run, and then the
+-- user on_attach
+function lsp.compose_config(config, ...)
+    -- Compose together the on_attach functions
+    local override = {}
+    if config.on_attach then
+        local user_on_attach = config.on_attach
+        override.on_attach = function(client, bufnr)
+            default_config.on_attach(client, bufnr)
+
+            -- We use the user one after so we can override things
+            user_on_attach(client, bufnr)
+        end
+    end
+
+    local others = vim.fn.reverse({...})
+
+    return vim.tbl_deep_extend("force",
+        default_config,
+        unpack(others),
+        config,
+        override)
+end
+
+
 
 return lsp

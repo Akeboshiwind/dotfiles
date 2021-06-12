@@ -140,16 +140,21 @@ local function init()
 
     -- >> 05-LSP
 
+    use {
+        'nvim-lua/lsp-status.nvim',
+        config = [[require('config.lsp-status')]],
+    }
+
     -- TODO: Maybe lazyload?
     -- Might just cause a loop though 🤔
     use {
         'neovim/nvim-lspconfig',
-        after = { 'which-key.nvim', 'telescope.nvim' },
+        after = { 'lsp-status.nvim', 'which-key.nvim', 'telescope.nvim' },
     }
 
     use {
         'williamboman/nvim-lsp-installer',
-        run = [[require('config/nvim-lsp-installer').update_installed()]],
+        run = [[require('config.nvim-lsp-installer').update_installed()]],
         after = 'nvim-lspconfig',
         module = 'nvim-lsp-installer',
     }
