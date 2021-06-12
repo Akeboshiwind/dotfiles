@@ -22,9 +22,28 @@ require('rust-tools').setup {
         on_attach = function(_client, bufnr)
             local wk = require("which-key")
 
-            -- TODO: Add mappings for rust-tools specific behavior
-            -- TODO: Document any mappings added by rust-tools
+            -- Non-Prefixed
             wk.register({
+                K = { require('rust-tools.hover_actions').hover_actions,
+                       "Hover actions" },
+                g = {
+                    c = { require('rust-tools.open_cargo_toml').open_cargo_toml,
+                          "Cargo toml file" },
+                    p = { require('rust-tools.parent_module').parent_module,
+                          "Parent module" },
+                },
+            }, {
+                buffer = bufnr,
+            })
+
+            -- Leader
+            wk.register({
+                r = {
+                    r = { require('rust-tools.runnables').runnables,
+                          "Show Runnables" },
+                },
+                me = { require('rust-tools.expand_macro').expand_macro,
+                       "Macroexpand" },
             }, {
                 prefix = "<leader>",
                 buffer = bufnr,

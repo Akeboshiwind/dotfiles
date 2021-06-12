@@ -33,10 +33,9 @@ function lsp.setup_mappings(bufnr)
     -- Leader
     wk.register({
         -- TODO: Other useful lsp mappings?
-        -- TODO: Telescope mappings?
         -- TODO: Better mnumonics?
-
-        -- TODO: Change gotos to non-prefixed?
+        -- TODO: Convert some functions into telescope functions
+        --       - List workspace folders
 
         w = {
             name = "workspace",
