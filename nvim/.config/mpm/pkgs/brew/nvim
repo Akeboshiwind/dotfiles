@@ -3,11 +3,13 @@ neovim --HEAD
 # Hidden dependency?
 luarocks
 
-# For CoC
-node
 
 # For Parinfer-rust in Clojure config
 rustup-init
 
 # For fuzzy searching
 ripgrep
+
+# For installing LSPs with nvim-lsp-installer
+node
+wget

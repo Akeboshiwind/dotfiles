@@ -7,9 +7,9 @@ local lsp_installer = require('config.nvim-lsp-installer')
 
 local server = lsp_installer.get_server("rust_analyzer")
 
-if not server.is_installed() then
+if not server:is_installed() then
     print("Installing LSP server")
-    server.install()
+    server:install()
 end
 
 
@@ -31,5 +31,5 @@ require('rust-tools').setup {
                 buffer = 0,
             })
         end,
-    }, server.get_default_options()),
+    }, server:get_default_options()),
 }

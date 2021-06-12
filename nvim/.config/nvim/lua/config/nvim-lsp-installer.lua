@@ -12,7 +12,7 @@ lsp_installer = require('nvim-lsp-installer')
 function config.update_installed()
     local installed = lsp_installer.get_installed_servers()
     for _, server in pairs(installed) do
-        server.install()
+        server:install()
     end
 end
 
