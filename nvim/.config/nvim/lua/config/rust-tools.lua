@@ -31,5 +31,5 @@ require('rust-tools').setup {
                 buffer = 0,
             })
         end,
-    }, server._default_options),
+    }, server.get_default_options()),
 }

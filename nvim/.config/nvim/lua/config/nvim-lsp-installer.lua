@@ -20,7 +20,7 @@ end
 --
 -- If it doesn't exist, throws an error to the user
 function config.get_server(server_name)
-    local ok, server = pcall(require, 'nvim-lsp-installer.servers.'..server_name)
+    local ok, server = lsp_installer.get_server(server_name)
 
     if not ok then
         error(string.format("LSP server not found: %s", server_name))
