@@ -11,7 +11,6 @@ lsp_status.config {
     indicator_warnings = 'W',
     indicator_info = 'i',
     indicator_hint = '?',
-    indicator_ok = 'Ok',
     indicator_separator = ':',
 }
 
