@@ -142,7 +142,7 @@ local function init()
 
     use {
         'nvim-lua/lsp-status.nvim',
-        config = [[require('config.lsp-status')]],
+        config = [[require('config.lsp-status') require('config.theme.statusline')]],
     }
 
     -- TODO: Maybe lazyload?

@@ -107,7 +107,7 @@ _G.packer_plugins = {
     path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/nvim-lsp-installer"
   },
   ["nvim-lspconfig"] = {
-    after = { "rust-tools.nvim", "nvim-lsp-installer" },
+    after = { "nvim-lsp-installer", "rust-tools.nvim" },
     load_after = {},
     loaded = false,
     needs_bufread = false,
@@ -153,7 +153,7 @@ _G.packer_plugins = {
     path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/telescope-fzf-native.nvim"
   },
   ["telescope.nvim"] = {
-    after = { "rust-tools.nvim", "nvim-lspconfig" },
+    after = { "nvim-lspconfig", "rust-tools.nvim" },
     config = { "require('config.telescope')" },
     load_after = {},
     loaded = false,
@@ -203,7 +203,7 @@ _G.packer_plugins = {
     path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/vimspector"
   },
   ["which-key.nvim"] = {
-    after = { "rust-tools.nvim", "telescope.nvim", "vimspector", "nvim-lspconfig" },
+    after = { "telescope.nvim", "nvim-lspconfig", "rust-tools.nvim", "vimspector" },
     only_config = true
   }
 }
@@ -233,12 +233,8 @@ end
 
 -- Config for: lsp-status.nvim
 time("Config for lsp-status.nvim", true)
-require('config.lsp-status')
+require('config.lsp-status'); require('config.theme.statusline')
 time("Config for lsp-status.nvim", false)
--- Config for: nvim-treesitter
-time("Config for nvim-treesitter", true)
-require('config.nvim-treesitter')
-time("Config for nvim-treesitter", false)
 -- Config for: vim-solarized8
 time("Config for vim-solarized8", true)
 require('config.theme.vim-solarized8')
@@ -251,6 +247,10 @@ time("Config for nvim-compe", false)
 time("Config for which-key.nvim", true)
 require('config.which-key')
 time("Config for which-key.nvim", false)
+-- Config for: nvim-treesitter
+time("Config for nvim-treesitter", true)
+require('config.nvim-treesitter')
+time("Config for nvim-treesitter", false)
 -- Load plugins in order defined by `after`
 time("Sequenced loading", true)
 vim.cmd [[ packadd telescope.nvim ]]
@@ -279,20 +279,20 @@ vim.cmd [[augroup packer_load_aucmds]]
 vim.cmd [[au!]]
   -- Filetype lazy-loads
 time("Defining lazy-load filetype autocommands", true)
-vim.cmd [[au FileType avro ++once lua require("packer.load")({'vim-avro'}, { ft = "avro" }, _G.packer_plugins)]]
+vim.cmd [[au FileType clojure ++once lua require("packer.load")({'conjure'}, { ft = "clojure" }, _G.packer_plugins)]]
 vim.cmd [[au FileType avdl ++once lua require("packer.load")({'vim-avro'}, { ft = "avdl" }, _G.packer_plugins)]]
 vim.cmd [[au FileType terraform ++once lua require("packer.load")({'vim-terraform'}, { ft = "terraform" }, _G.packer_plugins)]]
+vim.cmd [[au FileType avro ++once lua require("packer.load")({'vim-avro'}, { ft = "avro" }, _G.packer_plugins)]]
 vim.cmd [[au FileType rust ++once lua require("packer.load")({'rust-tools.nvim'}, { ft = "rust" }, _G.packer_plugins)]]
-vim.cmd [[au FileType clojure ++once lua require("packer.load")({'conjure'}, { ft = "clojure" }, _G.packer_plugins)]]
 time("Defining lazy-load filetype autocommands", false)
 vim.cmd("augroup END")
 vim.cmd [[augroup filetypedetect]]
-time("Sourcing ftdetect script at: /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-terraform/ftdetect/terraform.vim", true)
-vim.cmd [[source /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-terraform/ftdetect/terraform.vim]]
-time("Sourcing ftdetect script at: /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-terraform/ftdetect/terraform.vim", false)
 time("Sourcing ftdetect script at: /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-avro/ftdetect/avdl.vim", true)
 vim.cmd [[source /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-avro/ftdetect/avdl.vim]]
 time("Sourcing ftdetect script at: /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-avro/ftdetect/avdl.vim", false)
+time("Sourcing ftdetect script at: /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-terraform/ftdetect/terraform.vim", true)
+vim.cmd [[source /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-terraform/ftdetect/terraform.vim]]
+time("Sourcing ftdetect script at: /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-terraform/ftdetect/terraform.vim", false)
 vim.cmd("augroup END")
 if should_profile then save_profiles(1) end
 
