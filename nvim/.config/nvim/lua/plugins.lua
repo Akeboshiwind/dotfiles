@@ -155,8 +155,10 @@ local function init()
     use {
         'williamboman/nvim-lsp-installer',
         run = [[require('config.nvim-lsp-installer').update_installed()]],
+        config = [[require('config.nvim-lsp-installer').setup_commands()]],
         after = 'nvim-lspconfig',
         module = 'nvim-lsp-installer',
+        cmd = 'LspUpdateAll',
     }
 
 
