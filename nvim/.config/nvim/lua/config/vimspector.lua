@@ -35,14 +35,14 @@ wk.register({
                   "Conditional Breakpoint" },
             a = { "<Plug>VimspectorAddFunctionBreakpoint",
                   "Add Function Breakpoint" },
-        }, 
+        },
 
-        c = {
+        s = {
             name = "step",
             r = { "<Plug>VimspectorRunToCursor", "Run to Cursor" },
             i = { "<Plug>VimspectorStepInto", "Into" },
             o = { "<Plug>VimspectorStepOut", "Out" },
             v = { "<Plug>VimspectorStepOver", "Over" },
-        }, 
+        },
     },
 }, { prefix = "<leader>" })
