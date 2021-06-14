@@ -227,6 +227,17 @@ local function init()
 
 
 
+    -- >> Lua
+
+    use {
+        'folke/lua-dev.nvim',
+        after = 'nvim-lsp-installer',
+        ft = 'lua',
+        config = [[require('config.lua-dev')]],
+    }
+
+
+
     -- >> Vimspector
     use {
         'puremourning/vimspector',

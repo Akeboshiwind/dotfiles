@@ -15,11 +15,11 @@ end
 
 
 
--- >> Configure
+-- >> Setup
 
 require('rust-tools').setup {
     server = lsp_config.compose_config({
-        on_attach = function(_client, bufnr)
+        on_attach = function(_, bufnr)
             local wk = require("which-key")
 
             -- Non-Prefixed

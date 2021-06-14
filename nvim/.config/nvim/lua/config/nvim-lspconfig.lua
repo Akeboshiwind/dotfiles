@@ -5,6 +5,9 @@ local lsp = {}
 
 -- >> Generic keybinds for lsp servers
 
+-- Register Generig LSP mappings
+--
+-- @param bufnr number
 function lsp.setup_mappings(bufnr)
     local wk = require("which-key")
     local builtin = require('telescope.builtin')
@@ -51,7 +54,7 @@ function lsp.setup_mappings(bufnr)
             n = { vim.lsp.buf.rename, "Rename symbol under cursor" },
             f = { vim.lsp.buf.formatting, "Format the buffer" },
         },
-        
+
         a = {
             name = "action",
             a = { builtin.lsp_code_actions, "Apply code action" },
@@ -122,11 +125,17 @@ local default_config = {
 -- When composing the default_config with the user_config the on_attach
 -- functions are combined so that the default on_attach is run, and then the
 -- user on_attach
-function lsp.compose_config(config, ...)
+--
+-- @vararg table       - Config tables
+--
+-- @return table       - The composed configs
+function lsp.compose_config(...)
+    local configs = {...}
+
     -- Compose together the on_attach functions
     local override = {}
-    if config.on_attach then
-        local user_on_attach = config.on_attach
+    if #configs >= 1 and configs[1].on_attach then
+        local user_on_attach = configs[1].on_attach
         override.on_attach = function(client, bufnr)
             default_config.on_attach(client, bufnr)
 
@@ -135,12 +144,9 @@ function lsp.compose_config(config, ...)
         end
     end
 
-    local others = vim.fn.reverse({...})
-
     return vim.tbl_deep_extend("force",
         default_config,
-        unpack(others),
-        config,
+        unpack(configs),
         override)
 end
 
