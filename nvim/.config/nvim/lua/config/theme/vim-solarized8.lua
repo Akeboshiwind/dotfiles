@@ -6,6 +6,7 @@
 require('config.theme.init').init()
 
 
+
 -- >> Config
 
 vim.opt.background = 'dark'

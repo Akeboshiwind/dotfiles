@@ -86,6 +86,7 @@ local function init()
     use {
         'lifepillar/vim-solarized8',
         config = [[require('config.theme.vim-solarized8')]],
+        disable = false,
     }
 
     use {
