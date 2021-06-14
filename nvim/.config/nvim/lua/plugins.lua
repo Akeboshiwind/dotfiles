@@ -220,7 +220,8 @@ local function init()
 
     use {
         'simrat39/rust-tools.nvim',
-        after = { 'which-key.nvim', 'nvim-lspconfig', 'telescope.nvim' },
+        after = { 'which-key.nvim', 'nvim-lspconfig',
+                  'nvim-lsp-installer', 'telescope.nvim' },
         ft = 'rust',
         config = [[require('config.rust-tools')]],
     }

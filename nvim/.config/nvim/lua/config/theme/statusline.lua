@@ -15,9 +15,9 @@ local fn = vim.fn
 -- /my/test/path/to/file.txt => /m/t/p/t/file.txt
 -- relative/path/to/file.txt => r/p/t/file.txt
 --
--- @param {string}   path Path to shorten
--- @param {number=1} n    Max length of each path segment
--- @return {string}       Shortened path
+-- @param string   path - Path to shorten
+-- @param number   n    - Max length of each path segment
+-- @return string       - Shortened path
 function shorten_path(path, n)
     -- If the path is empty or doesn't look like a path, return early
     if path == "" then
@@ -51,7 +51,7 @@ end
 --
 -- Unnamed buffers get the name `[unnamed]`
 --
--- @return {string} Shortened current working path
+-- @return string - Shortened current working path
 function statusline_cwd()
     local relative_path = fn.expand('%')
 
@@ -67,6 +67,9 @@ end
 
 -- >> LSP Config
 
+-- Return a string with a list of diagnostic information
+--
+-- @return string
 function lsp_diagnostics()
     local lsp_status = require('lsp-status')
 
