@@ -95,6 +95,7 @@ opt.ignorecase = true      -- In searches, ignore the case
 opt.smartcase = true       -- Unless there's an uppercase letter
 opt.splitright = true      -- Make splits to the right
 opt.inccommand = 'nosplit' -- Show live replacements with the :s command
+opt.updatetime = 1000      -- Make the CursorHold event trigger after 1 second not 4
 
 
 

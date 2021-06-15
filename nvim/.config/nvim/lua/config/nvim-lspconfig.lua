@@ -3,6 +3,7 @@
 local lsp = {}
 
 local fn = vim.fn
+local cmd = vim.cmd
 
 
 -- >> Setup functions
@@ -119,6 +120,12 @@ function lsp.setup_signs()
     end
 end
 
+-- Setup lighbulb to show when there's an action
+function lsp.setup_lightbulb()
+    -- TODO: Make buffer local?
+    cmd [[autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb() ]]
+end
+
 
 
 -- >> Default LSP config w/ overrides
@@ -133,6 +140,8 @@ local default_config = {
         -- Setup
         lsp.setup_mappings(bufnr)
         lsp.setup_signs()
+        lsp.setup_lightbulb()
+        require'lsp_signature'.on_attach()
     end,
     capabilities = lsp_status.capabilities,
 }

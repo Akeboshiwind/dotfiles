@@ -150,7 +150,8 @@ local function init()
     -- Might just cause a loop though 🤔
     use {
         'neovim/nvim-lspconfig',
-        after = { 'lsp-status.nvim', 'which-key.nvim', 'telescope.nvim' },
+        after = { 'lsp-status.nvim', 'which-key.nvim', 'telescope.nvim',
+                  'trouble.nvim', 'nvim-lightbulb', 'lsp_signature.nvim' },
     }
 
     use {
@@ -168,6 +169,8 @@ local function init()
         config = [[require("trouble").setup { }]],
     }
 
+    use 'kosayoda/nvim-lightbulb'
+    use 'ray-x/lsp_signature.nvim'
 
 
     -- >> Treesitter
