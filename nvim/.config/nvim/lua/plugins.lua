@@ -1,5 +1,5 @@
 -- plugins.lua
--- 
+--
 -- Loosely copied from:
 -- https://github.com/wbthomason/dotfiles/blob/8a9ac03/neovim/.config/nvim/lua/plugins.lua
 --
@@ -160,6 +160,12 @@ local function init()
         after = 'nvim-lspconfig',
         module = 'nvim-lsp-installer',
         cmd = 'LspUpdateAll',
+    }
+
+    use {
+        "folke/trouble.nvim",
+        requires = "kyazdani42/nvim-web-devicons",
+        config = [[require("trouble").setup { }]],
     }
 
 

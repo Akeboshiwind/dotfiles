@@ -4,7 +4,8 @@ local lsp = {}
 
 local fn = vim.fn
 
--- >> Generic keybinds for lsp servers
+
+-- >> Setup functions
 
 -- Register Generig LSP mappings
 --
@@ -22,13 +23,15 @@ function lsp.setup_mappings(bufnr)
         g = {
             name = "goto",
             D = { vim.lsp.buf.declaration, "Declaration" },
-            d = { builtin.lsp_definitions, "Definition" },
+            d = { ":TroubleToggle lsp_definitions<CR>", "Definition" },
             i = { builtin.implementations, "Implementation" },
             y = { vim.lsp.buf.type_definition, "Type definition" },
-            r = { builtin.lsp_references, "References" },
+            r = { ":TroubleToggle lsp_references<CR>", "References" },
 
             s = { builtin.lsp_document_symbols, "Document Symbols" },
             S = { builtin.lsp_workspace_symbols, "Workspace Symbols" },
+
+            q = { ":TroubleToggle quickfix<cr>", "Quickfix list" },
         },
     }, {
         buffer = bufnr,
@@ -64,8 +67,10 @@ function lsp.setup_mappings(bufnr)
 
         d = {
             name = "diagnostics",
-            d = { builtin.lsp_document_diagnostics, "Show document diagnostics" },
-            D = { builtin.lsp_workspace_diagnostics, "Show workspace diagnostics" },
+            d = { ":TroubleToggle lsp_document_diagnostics<cr>",
+                  "Show document diagnostics" },
+            D = { ":TroubleToggle lsp_workspace_diagnostics<cr>",
+                  "Show workspace diagnostics" },
             -- Make these [d & ]d ?
             n = { vim.lsp.diagnostic.goto_next, "Next" },
             p = { vim.lsp.diagnostic.goto_prev, "Previous" },
