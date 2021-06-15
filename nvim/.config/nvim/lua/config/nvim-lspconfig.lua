@@ -2,6 +2,7 @@
 
 local lsp = {}
 
+local fn = vim.fn
 
 -- >> Generic keybinds for lsp servers
 
@@ -94,6 +95,25 @@ function lsp.setup_mappings(bufnr)
     })
 end
 
+-- Setup lsp gutter signs
+function lsp.setup_signs()
+    local sign_config = {
+        LspDiagnosticsSignError = '',
+        LspDiagnosticsSignWarning = '',
+        LspDiagnosticsSignInformation = '',
+        LspDiagnosticsSignHint = '',
+    }
+
+    for sign, symbol in pairs(sign_config) do
+        fn.sign_define(sign, {
+            text = symbol,
+            texthl = sign,
+            linehl = '',
+            numhl = '',
+        })
+    end
+end
+
 
 
 -- >> Default LSP config w/ overrides
@@ -107,6 +127,7 @@ local default_config = {
 
         -- Setup
         lsp.setup_mappings(bufnr)
+        lsp.setup_signs()
     end,
     capabilities = lsp_status.capabilities,
 }

@@ -7,10 +7,10 @@ local lsp_status = require('lsp-status')
 
 -- TODO: Not sure if these are needed
 lsp_status.config {
-    indicator_errors = 'E',
-    indicator_warnings = 'W',
-    indicator_info = 'i',
-    indicator_hint = '?',
+    indicator_errors = '',
+    indicator_warnings = '',
+    indicator_info = '',
+    indicator_hint = '',
     indicator_separator = ':',
 }
 
