@@ -176,8 +176,8 @@ local function init()
     -- >> Treesitter
 
     use {
-    --     'nvim-treesitter/nvim-treesitter',
-        '~/prog/prog/assorted/nvim-treesitter',
+        'nvim-treesitter/nvim-treesitter',
+        -- '~/prog/prog/assorted/nvim-treesitter',
         run = ':TSUpdate',
         config = [[require('config.nvim-treesitter')]],
     }
@@ -185,6 +185,15 @@ local function init()
     use {
         'nvim-treesitter/playground',
         cmd = { 'TSPlaygroundToggle', 'TSHighlightCapturesUnderCursor' },
+    }
+
+
+
+    -- >> Motions
+
+    use {
+        'ggandor/lightspeed.nvim',
+        config = [[require('config.lightspeed')]],
     }
 
 
