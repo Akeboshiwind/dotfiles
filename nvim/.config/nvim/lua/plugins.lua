@@ -10,7 +10,7 @@
 --
 -- To do this we setup a function `init()` which sets up what packages are
 -- installed and their config.
--- 
+--
 -- `init()` is called each time a :Packer* command is called so config can be
 -- easily reloaded.
 
@@ -140,6 +140,9 @@ local function init()
 
 
     -- >> 05-LSP
+    -- TODO: Simplify all of this:
+    --       It makes the UI a bit cluttered
+    --       It might be a better idea to query for data using Telescope 🤔
 
     use {
         'nvim-lua/lsp-status.nvim',
