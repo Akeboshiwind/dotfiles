@@ -189,15 +189,6 @@ local function init()
 
 
 
-    -- >> Motions
-
-    use {
-        'ggandor/lightspeed.nvim',
-        config = [[require('config.lightspeed')]],
-    }
-
-
-
     -- >> Filetypes
 
     use {
