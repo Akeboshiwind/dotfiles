@@ -4,8 +4,18 @@
 -- >> Setup
 
 require('nvim-treesitter.configs').setup {
-    -- TODO: Only enable languages we use?
-    ensure_installed = "maintained",
+    -- TODO: Just install all maintained?
+    ensure_installed = {
+        -- languages
+        "clojure", "bash", "fennel", "java", "javascript", "lua", "python",
+        "rust", "typescript", "vim",
+
+        -- Filetypes
+        "html", "css", "dockerfile", "json", "latex", "query", "toml", "yaml",
+
+        -- Other
+        "comment", "regex",
+    },
     highlight = {
         enable = true,
     },
