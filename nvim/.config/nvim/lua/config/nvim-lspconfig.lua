@@ -179,10 +179,12 @@ function lsp.compose_config(...)
         end
     end
 
-    return vim.tbl_deep_extend("force",
-        default_config,
-        unpack(configs),
-        override)
+    -- Use default_config as base
+    table.insert(configs, 1, default_config)
+    -- Override usef config
+    table.insert(configs, override)
+
+    return vim.tbl_deep_extend("force", unpack(configs))
 end
 
 
