@@ -49,5 +49,14 @@ require('rust-tools').setup {
                 buffer = bufnr,
             })
         end,
+    },
+    {
+        settings = {
+            ["rust-analyzer"] = {
+                checkOnSave = {
+                    command = "clippy"
+                }
+            }
+        }
     }, server:get_default_options()),
 }

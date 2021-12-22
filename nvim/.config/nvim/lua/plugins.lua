@@ -182,7 +182,7 @@ local function init()
     use {
         'nvim-treesitter/nvim-treesitter',
         -- '~/prog/prog/assorted/nvim-treesitter',
-        branch = '0.5-compat',
+        -- branch = '0.5-compat',
         run = ':TSUpdate',
         config = [[require('config.nvim-treesitter')]],
     }
