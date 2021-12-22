@@ -4,16 +4,6 @@
 [user]
 	name = Oliver Marshall
 	email = olivershawmarshall@gmail.com
-    signingkey = 0x849895A8DD8B6A30
-
-[commit]
-    gpgsign = false
-
-[sendemail]
-    smtpserver = smtp.gmail.com
-    smtpuser = olivershawmarshall@gmail.com
-    smtpencryption = tls
-    smtpserverport = 587
 
 [includeIf "gitdir:~/prog/work/"]
     path = ~/work.gitconfig
