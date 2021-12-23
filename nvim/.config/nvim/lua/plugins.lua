@@ -141,7 +141,10 @@ local function init()
 
     use {
         'nvim-lua/lsp-status.nvim',
-        config = [[require('config.lsp-status') require('config.theme.statusline')]],
+        config = [[
+            require('config.lsp-status')
+            require('config.theme.statusline')
+        ]],
     }
 
     use {
@@ -239,6 +242,7 @@ local function init()
 
 
     -- >> Vimspector
+
     use {
         'puremourning/vimspector',
         keys = ',D',
