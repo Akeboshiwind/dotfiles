@@ -33,14 +33,6 @@ telescope.setup {
                 previewers_utils.job_maker(cmd, bufnr, opts)
             end
         }
-    },
-    extensions = {
-        fzf = {
-            fuzzy = true,
-            override_generic_sorter = false,
-            override_file_sorter = true,
-            case_mode = "smart_case",
-        }
     }
 }
 
