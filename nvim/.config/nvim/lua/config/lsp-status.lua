@@ -11,6 +11,7 @@ lsp_status.config {
     indicator_warnings = '',
     indicator_info = '',
     indicator_hint = '',
+    indicator_ok = '✔',
     indicator_separator = ':',
 }
 
