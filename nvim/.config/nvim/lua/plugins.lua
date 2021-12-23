@@ -118,7 +118,7 @@ local function init()
 
     use {
         'nvim-telescope/telescope.nvim',
-        requires = { 'nvim-lua/popup.nvim', 'nvim-lua/plenary.nvim' },
+        requires = { 'nvim-lua/plenary.nvim' },
         after = { 'which-key.nvim', 'telescope-fzf-native.nvim' },
         config = [[require('config.telescope')]],
     }

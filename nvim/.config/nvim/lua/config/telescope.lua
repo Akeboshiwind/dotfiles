@@ -2,13 +2,7 @@
 
 local telescope = require('telescope')
 local actions = require('telescope.actions')
-
-
--- >> Utils
-
-local previewers = require('telescope.previewers')
 local previewers_utils = require('telescope.previewers.utils')
-
 
 
 -- >> Setup telescope
@@ -24,6 +18,9 @@ telescope.setup {
                 -- Add easier movement keys
                 ["<C-j>"] = actions.move_selection_next,
                 ["<C-k>"] = actions.move_selection_previous,
+
+                -- Show the mappings for the current picker
+                ["<C-h>"] = actions.which_key,
             }
         },
         preview = {
@@ -40,7 +37,6 @@ telescope.setup {
 
 -- >> Add Telescope Extensions
 
---telescope.load_extension('fzy_native')
 telescope.load_extension('fzf')
 
 
