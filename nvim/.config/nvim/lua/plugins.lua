@@ -117,8 +117,6 @@ local function init()
 
     -- >> 03-Telescope
 
-    use { 'nvim-telescope/telescope-fzy-native.nvim', disable = true }
-
     use { 'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
 
     use {
