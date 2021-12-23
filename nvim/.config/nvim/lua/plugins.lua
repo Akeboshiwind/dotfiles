@@ -57,9 +57,6 @@ local function init()
         opt = true,
     }
 
-    -- Some sensible defaults for vim
-    use 'tpope/vim-sensible'
-
     -- Intelligently reopen files at your last edit position in Vim
     use 'farmergreg/vim-lastplace'
 

@@ -15,8 +15,6 @@ local opt = vim.opt
 function theme.init()
     -- >> Theme
 
-    cmd [[syntax enable]]
-
     -- TODO: Do I need this?
     if fn.exists('+termguicolors') ~= 0 then
         -- Not sure what these bits do tbh
@@ -30,15 +28,8 @@ function theme.init()
     end
 
 
-    -- let g:tokyonight_style = "night"
-    -- colorscheme tokyonight
-
-
 
     -- >> Appearance
-
-    -- Highlight matches
-    opt.hlsearch = true
 
     -- NOTE: These will only work in VTE compatible terminals (urxvt, st, etc.)
     --cmd [[let &t_SI = "\<Esc>[6 q"]]   -- IBeam shape in insert mode
