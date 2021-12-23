@@ -1,17 +1,17 @@
 -- config/nvim-lsp-installer.lua
 
-cmd = vim.cmd
+local config = {}
 
-config = {}
+local cmd = vim.cmd
 
 
 -- >> Utils
 
--- Updates all installed lsp servers
---
--- Run this when the plugin updates
--- TODO: Only update plugins that have changed versions?
--- TODO: If so have a `force` parameter
+--- Updates all installed lsp servers
+---
+--- Run this when the plugin updates
+--- TODO: Only update plugins that have changed versions?
+--- TODO: If so have a `force` parameter
 function config.update_installed()
     local installed = require('nvim-lsp-installer').get_installed_servers()
     for _, server in pairs(installed) do
@@ -19,18 +19,18 @@ function config.update_installed()
     end
 end
 
--- Returns the server
---
--- If it doesn't exist, throws an error to the user
---
--- @param server_name string - The name of the server to search for
---
--- @return Server - The name of the server to search for
+--- Returns the server
+---
+--- If it doesn't exist, throws an error to the user
+---
+--- @param server_name string #The name of the server to search for
+---
+--- @return Server #The name of the server to search for
 function config.get_server(server_name)
     local ok, server = require('nvim-lsp-installer').get_server(server_name)
 
     if not ok then
-        error(string.format("LSP server not found: %s", server_name))
+        error(string.format("LSP server not found: %s. Maybe misnamed?", server_name))
     end
 
     return server

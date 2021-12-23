@@ -8,9 +8,9 @@ local cmd = vim.cmd
 
 -- >> Setup functions
 
--- Register Generig LSP mappings
---
--- @param bufnr number
+--- Register Generig LSP mappings
+---
+--- @param bufnr number
 function lsp.setup_mappings(bufnr)
     local wk = require("which-key")
     local builtin = require('telescope.builtin')
@@ -101,7 +101,7 @@ function lsp.setup_mappings(bufnr)
     })
 end
 
--- Setup lsp gutter signs
+--- Setup lsp gutter signs
 function lsp.setup_signs()
     local sign_config = {
         LspDiagnosticsSignError = '',
@@ -120,12 +120,6 @@ function lsp.setup_signs()
     end
 end
 
--- Setup lighbulb to show when there's an action
-function lsp.setup_lightbulb()
-    -- TODO: Make buffer local?
-    cmd [[autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb() ]]
-end
-
 
 
 -- >> Default LSP config w/ overrides
@@ -140,30 +134,28 @@ local default_config = {
         -- Setup
         lsp.setup_mappings(bufnr)
         lsp.setup_signs()
-        lsp.setup_lightbulb()
-        require'lsp_signature'.on_attach()
     end,
     capabilities = lsp_status.capabilities,
 }
 
--- Compose together multiple configs
---
--- Configs are composed in reverse order
--- So `compose_config({a = 1}, {a = 2})` would get:
--- => `{a = 1}`
---
--- A default_config is always used as the base to compose the other configs
--- onto
---
--- The first config supplied is assumed to be the user_config
---
--- When composing the default_config with the user_config the on_attach
--- functions are combined so that the default on_attach is run, and then the
--- user on_attach
---
--- @vararg table       - Config tables
---
--- @return table       - The composed configs
+--- Compose together multiple configs
+---
+--- Configs are composed in reverse order
+--- So `compose_config({a = 1}, {a = 2})` would get:
+--- => `{a = 1}`
+---
+--- A default_config is always used as the base to compose the other configs
+--- onto
+---
+--- The first config supplied is assumed to be the user_config
+---
+--- When composing the default_config with the user_config the on_attach
+--- functions are combined so that the default on_attach is run, and then the
+--- user on_attach
+---
+--- @vararg table #Config tables
+---
+--- @return table #The composed configs
 function lsp.compose_config(...)
     local configs = {...}
 

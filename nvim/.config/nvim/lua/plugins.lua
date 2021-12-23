@@ -144,14 +144,13 @@ local function init()
         config = [[require('config.lsp-status') require('config.theme.statusline')]],
     }
 
-    -- TODO: Maybe lazyload?
-    -- Might just cause a loop though 🤔
     use {
         'neovim/nvim-lspconfig',
-        after = { 'lsp-status.nvim', 'which-key.nvim', 'telescope.nvim',
-                  'trouble.nvim', 'nvim-lightbulb', 'lsp_signature.nvim' },
+        after = { 'lsp-status.nvim', 'which-key.nvim', 'telescope.nvim', },
     }
 
+    -- TODO: Update servers regularly? Reminder?
+    -- TODO: Fix updating servers after plugin update
     use {
         'williamboman/nvim-lsp-installer',
         run = [[require('config.nvim-lsp-installer').update_installed()]],
@@ -160,15 +159,6 @@ local function init()
         module = 'nvim-lsp-installer',
         cmd = 'LspUpdateAll',
     }
-
-    use {
-        "folke/trouble.nvim",
-        requires = "kyazdani42/nvim-web-devicons",
-        config = [[require("trouble").setup { }]],
-    }
-
-    use 'kosayoda/nvim-lightbulb'
-    use 'ray-x/lsp_signature.nvim'
 
 
 

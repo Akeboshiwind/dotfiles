@@ -21,10 +21,6 @@ local luadev = require("lua-dev").setup {
         settings = {
             Lua = {
                 hint = { enable = true },
-                workspace = {
-                    -- For conjure
-                    preloadFileSize = 150,
-                },
             },
         },
     },
