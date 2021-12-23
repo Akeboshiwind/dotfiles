@@ -13,18 +13,20 @@ opt.completeopt = { "menuone", "noselect" }
 
 require('compe').setup {
   enabled = true,
-  documentation = true,
 
   source = {
     path = true,
     buffer = true,
     calc = true,
-    emoji = true,
 
     nvim_lsp = true,
     nvim_lua = true,
 
     conjure = true,
+
+    vsnip = false,
+    ultisnips = false,
+    luasnip = false,
   },
 }
 
