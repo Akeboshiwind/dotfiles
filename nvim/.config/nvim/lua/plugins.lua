@@ -115,6 +115,7 @@ local function init()
     -- >> 03-Telescope
 
     use { 'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
+    use { 'nvim-telescope/telescope-ui-select.nvim' }
 
     use {
         'nvim-telescope/telescope.nvim',
@@ -223,7 +224,7 @@ local function init()
     use {
         'simrat39/rust-tools.nvim',
         after = { 'which-key.nvim', 'nvim-lspconfig',
-                  'nvim-lsp-installer', 'telescope.nvim' },
+                  'nvim-lsp-installer' },
         ft = 'rust',
         config = [[require('config.rust-tools')]],
     }

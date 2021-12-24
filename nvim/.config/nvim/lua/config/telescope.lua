@@ -30,7 +30,7 @@ telescope.setup {
                 previewers_utils.job_maker(cmd, bufnr, opts)
             end
         }
-    }
+    },
 }
 
 
@@ -38,6 +38,7 @@ telescope.setup {
 -- >> Add Telescope Extensions
 
 telescope.load_extension('fzf')
+telescope.load_extension('ui-select')
 
 
 

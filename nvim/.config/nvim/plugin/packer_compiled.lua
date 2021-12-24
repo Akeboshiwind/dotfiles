@@ -57,7 +57,7 @@ end
 time([[Luarocks path setup]], false)
 time([[try_loadstring definition]], true)
 local function try_loadstring(s, component, name)
-  local success, result = pcall(loadstring(s))
+  local success, result = pcall(loadstring(s), name, _G.packer_plugins[name])
   if not success then
     vim.schedule(function()
       vim.api.nvim_notify('packer.nvim: Error running ' .. component .. ' for ' .. name .. ': ' .. result, vim.log.levels.ERROR, {})
@@ -71,7 +71,8 @@ time([[Defining packer_plugins]], true)
 _G.packer_plugins = {
   ["auto_mkdir2.vim"] = {
     loaded = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/auto_mkdir2.vim"
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/auto_mkdir2.vim",
+    url = "https://github.com/arp242/auto_mkdir2.vim"
   },
   ["compe-conjure"] = {
     after_files = { "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/compe-conjure/after/plugin/compe_conjure.vim" },
@@ -80,23 +81,22 @@ _G.packer_plugins = {
     },
     loaded = false,
     needs_bufread = false,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/compe-conjure"
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/compe-conjure",
+    url = "https://github.com/tami5/compe-conjure"
   },
   conjure = {
     after = { "compe-conjure" },
     config = { "require('config.conjure')" },
     loaded = false,
     needs_bufread = false,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/conjure"
+    only_cond = false,
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/conjure",
+    url = "https://github.com/Olical/conjure"
   },
   ["lsp-status.nvim"] = {
     after = { "nvim-lspconfig" },
     loaded = true,
     only_config = true
-  },
-  ["lsp_signature.nvim"] = {
-    loaded = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/lsp_signature.nvim"
   },
   ["lua-dev.nvim"] = {
     config = { "require('config.lua-dev')" },
@@ -105,16 +105,14 @@ _G.packer_plugins = {
     },
     loaded = false,
     needs_bufread = false,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/lua-dev.nvim"
+    only_cond = false,
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/lua-dev.nvim",
+    url = "https://github.com/folke/lua-dev.nvim"
   },
   ["nvim-compe"] = {
     after = { "compe-conjure" },
     loaded = true,
     only_config = true
-  },
-  ["nvim-lightbulb"] = {
-    loaded = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/nvim-lightbulb"
   },
   ["nvim-lsp-installer"] = {
     after = { "lua-dev.nvim", "rust-tools.nvim" },
@@ -123,46 +121,47 @@ _G.packer_plugins = {
     load_after = {},
     loaded = false,
     needs_bufread = false,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/nvim-lsp-installer"
+    only_cond = false,
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/nvim-lsp-installer",
+    url = "https://github.com/williamboman/nvim-lsp-installer"
   },
   ["nvim-lspconfig"] = {
     after = { "nvim-lsp-installer", "rust-tools.nvim" },
     load_after = {},
     loaded = true,
     needs_bufread = false,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/nvim-lspconfig"
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/nvim-lspconfig",
+    url = "https://github.com/neovim/nvim-lspconfig"
   },
   ["nvim-treesitter"] = {
     config = { "require('config.nvim-treesitter')" },
     loaded = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/nvim-treesitter"
-  },
-  ["nvim-web-devicons"] = {
-    loaded = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/nvim-web-devicons"
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/nvim-treesitter",
+    url = "https://github.com/nvim-treesitter/nvim-treesitter"
   },
   ["packer.nvim"] = {
     loaded = false,
     needs_bufread = false,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/packer.nvim"
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/packer.nvim",
+    url = "https://github.com/wbthomason/packer.nvim"
   },
   ["parinfer-rust"] = {
     loaded = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/parinfer-rust"
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/parinfer-rust",
+    url = "https://github.com/eraserhd/parinfer-rust"
   },
   playground = {
     commands = { "TSPlaygroundToggle", "TSHighlightCapturesUnderCursor" },
     loaded = false,
     needs_bufread = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/playground"
+    only_cond = false,
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/playground",
+    url = "https://github.com/nvim-treesitter/playground"
   },
   ["plenary.nvim"] = {
     loaded = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/plenary.nvim"
-  },
-  ["popup.nvim"] = {
-    loaded = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/popup.nvim"
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/plenary.nvim",
+    url = "https://github.com/nvim-lua/plenary.nvim"
   },
   ["rust-tools.nvim"] = {
     config = { "require('config.rust-tools')" },
@@ -171,58 +170,67 @@ _G.packer_plugins = {
     },
     loaded = false,
     needs_bufread = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/rust-tools.nvim"
+    only_cond = false,
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/rust-tools.nvim",
+    url = "https://github.com/simrat39/rust-tools.nvim"
   },
   ["telescope-fzf-native.nvim"] = {
     loaded = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/telescope-fzf-native.nvim"
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/telescope-fzf-native.nvim",
+    url = "https://github.com/nvim-telescope/telescope-fzf-native.nvim"
+  },
+  ["telescope-ui-select.nvim"] = {
+    loaded = true,
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/telescope-ui-select.nvim",
+    url = "https://github.com/nvim-telescope/telescope-ui-select.nvim"
   },
   ["telescope.nvim"] = {
-    after = { "nvim-lspconfig", "rust-tools.nvim" },
+    after = { "nvim-lspconfig" },
     config = { "require('config.telescope')" },
     load_after = {},
     loaded = true,
     needs_bufread = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/telescope.nvim"
-  },
-  ["trouble.nvim"] = {
-    after = { "nvim-lspconfig" },
-    loaded = true,
-    only_config = true
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/telescope.nvim",
+    url = "https://github.com/nvim-telescope/telescope.nvim"
   },
   ["vim-avro"] = {
     loaded = false,
     needs_bufread = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-avro"
+    only_cond = false,
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-avro",
+    url = "https://github.com/gurpreetatwal/vim-avro"
   },
   ["vim-fugitive"] = {
     commands = { "G", "Git", "Gclog" },
     loaded = false,
     needs_bufread = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-fugitive"
+    only_cond = false,
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-fugitive",
+    url = "https://github.com/tpope/vim-fugitive"
   },
   ["vim-lastplace"] = {
     loaded = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/vim-lastplace"
-  },
-  ["vim-sensible"] = {
-    loaded = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/vim-sensible"
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/vim-lastplace",
+    url = "https://github.com/farmergreg/vim-lastplace"
   },
   ["vim-solarized8"] = {
     config = { "require('config.theme.vim-solarized8')" },
     loaded = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/vim-solarized8"
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/vim-solarized8",
+    url = "https://github.com/lifepillar/vim-solarized8"
   },
   ["vim-terraform"] = {
     config = { "require('config.vim-terraform')" },
     loaded = false,
     needs_bufread = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-terraform"
+    only_cond = false,
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-terraform",
+    url = "https://github.com/hashivim/vim-terraform"
   },
   ["vim-tmux-navigator"] = {
     loaded = true,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/vim-tmux-navigator"
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/start/vim-tmux-navigator",
+    url = "https://github.com/christoomey/vim-tmux-navigator"
   },
   vimspector = {
     config = { "require('config.vimspector')" },
@@ -230,10 +238,12 @@ _G.packer_plugins = {
     load_after = {},
     loaded = false,
     needs_bufread = false,
-    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/vimspector"
+    only_cond = false,
+    path = "/Users/oliverm/.local/share/nvim/site/pack/packer/opt/vimspector",
+    url = "https://github.com/puremourning/vimspector"
   },
   ["which-key.nvim"] = {
-    after = { "vimspector", "nvim-lspconfig", "rust-tools.nvim", "telescope.nvim" },
+    after = { "vimspector", "telescope.nvim", "nvim-lspconfig", "rust-tools.nvim" },
     loaded = true,
     only_config = true
   }
@@ -268,32 +278,31 @@ if not vim.g.packer_custom_loader_enabled then
   vim.g.packer_custom_loader_enabled = true
 end
 
--- Config for: nvim-compe
-time([[Config for nvim-compe]], true)
-require('config.nvim-compe')
-time([[Config for nvim-compe]], false)
--- Config for: which-key.nvim
-time([[Config for which-key.nvim]], true)
-require('config.which-key')
-time([[Config for which-key.nvim]], false)
 -- Config for: vim-solarized8
 time([[Config for vim-solarized8]], true)
 require('config.theme.vim-solarized8')
 time([[Config for vim-solarized8]], false)
--- Config for: trouble.nvim
-time([[Config for trouble.nvim]], true)
-require("trouble").setup { }
-time([[Config for trouble.nvim]], false)
+-- Config for: which-key.nvim
+time([[Config for which-key.nvim]], true)
+require('config.which-key')
+time([[Config for which-key.nvim]], false)
+-- Config for: lsp-status.nvim
+time([[Config for lsp-status.nvim]], true)
+            require('config.lsp-status')
+            require('config.theme.statusline')
+        
+time([[Config for lsp-status.nvim]], false)
 -- Config for: nvim-treesitter
 time([[Config for nvim-treesitter]], true)
 require('config.nvim-treesitter')
 time([[Config for nvim-treesitter]], false)
--- Config for: lsp-status.nvim
-time([[Config for lsp-status.nvim]], true)
-require('config.lsp-status') require('config.theme.statusline')
-time([[Config for lsp-status.nvim]], false)
+-- Config for: nvim-compe
+time([[Config for nvim-compe]], true)
+require('config.nvim-compe')
+time([[Config for nvim-compe]], false)
 -- Load plugins in order defined by `after`
 time([[Sequenced loading]], true)
+vim.cmd [[ packadd telescope-fzf-native.nvim ]]
 vim.cmd [[ packadd telescope.nvim ]]
 
 -- Config for: telescope.nvim
@@ -304,12 +313,12 @@ time([[Sequenced loading]], false)
 
 -- Command lazy-loads
 time([[Defining lazy-load commands]], true)
-pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file TSPlaygroundToggle lua require("packer.load")({'playground'}, { cmd = "TSPlaygroundToggle", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args> }, _G.packer_plugins)]])
-pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file TSHighlightCapturesUnderCursor lua require("packer.load")({'playground'}, { cmd = "TSHighlightCapturesUnderCursor", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args> }, _G.packer_plugins)]])
-pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file G lua require("packer.load")({'vim-fugitive'}, { cmd = "G", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args> }, _G.packer_plugins)]])
-pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file LspUpdateAll lua require("packer.load")({'nvim-lsp-installer'}, { cmd = "LspUpdateAll", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args> }, _G.packer_plugins)]])
-pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file Gclog lua require("packer.load")({'vim-fugitive'}, { cmd = "Gclog", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args> }, _G.packer_plugins)]])
-pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file Git lua require("packer.load")({'vim-fugitive'}, { cmd = "Git", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args> }, _G.packer_plugins)]])
+pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file LspUpdateAll lua require("packer.load")({'nvim-lsp-installer'}, { cmd = "LspUpdateAll", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args>, mods = "<mods>" }, _G.packer_plugins)]])
+pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file G lua require("packer.load")({'vim-fugitive'}, { cmd = "G", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args>, mods = "<mods>" }, _G.packer_plugins)]])
+pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file Git lua require("packer.load")({'vim-fugitive'}, { cmd = "Git", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args>, mods = "<mods>" }, _G.packer_plugins)]])
+pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file Gclog lua require("packer.load")({'vim-fugitive'}, { cmd = "Gclog", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args>, mods = "<mods>" }, _G.packer_plugins)]])
+pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file TSPlaygroundToggle lua require("packer.load")({'playground'}, { cmd = "TSPlaygroundToggle", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args>, mods = "<mods>" }, _G.packer_plugins)]])
+pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file TSHighlightCapturesUnderCursor lua require("packer.load")({'playground'}, { cmd = "TSHighlightCapturesUnderCursor", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args>, mods = "<mods>" }, _G.packer_plugins)]])
 time([[Defining lazy-load commands]], false)
 
 -- Keymap lazy-loads
@@ -321,21 +330,21 @@ vim.cmd [[augroup packer_load_aucmds]]
 vim.cmd [[au!]]
   -- Filetype lazy-loads
 time([[Defining lazy-load filetype autocommands]], true)
-vim.cmd [[au FileType avro ++once lua require("packer.load")({'vim-avro'}, { ft = "avro" }, _G.packer_plugins)]]
 vim.cmd [[au FileType avdl ++once lua require("packer.load")({'vim-avro'}, { ft = "avdl" }, _G.packer_plugins)]]
 vim.cmd [[au FileType terraform ++once lua require("packer.load")({'vim-terraform'}, { ft = "terraform" }, _G.packer_plugins)]]
-vim.cmd [[au FileType lua ++once lua require("packer.load")({'lua-dev.nvim'}, { ft = "lua" }, _G.packer_plugins)]]
 vim.cmd [[au FileType clojure ++once lua require("packer.load")({'conjure'}, { ft = "clojure" }, _G.packer_plugins)]]
 vim.cmd [[au FileType rust ++once lua require("packer.load")({'rust-tools.nvim'}, { ft = "rust" }, _G.packer_plugins)]]
+vim.cmd [[au FileType lua ++once lua require("packer.load")({'lua-dev.nvim'}, { ft = "lua" }, _G.packer_plugins)]]
+vim.cmd [[au FileType avro ++once lua require("packer.load")({'vim-avro'}, { ft = "avro" }, _G.packer_plugins)]]
 time([[Defining lazy-load filetype autocommands]], false)
 vim.cmd("augroup END")
 vim.cmd [[augroup filetypedetect]]
-time([[Sourcing ftdetect script at: /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-avro/ftdetect/avdl.vim]], true)
-vim.cmd [[source /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-avro/ftdetect/avdl.vim]]
-time([[Sourcing ftdetect script at: /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-avro/ftdetect/avdl.vim]], false)
 time([[Sourcing ftdetect script at: /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-terraform/ftdetect/hcl.vim]], true)
 vim.cmd [[source /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-terraform/ftdetect/hcl.vim]]
 time([[Sourcing ftdetect script at: /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-terraform/ftdetect/hcl.vim]], false)
+time([[Sourcing ftdetect script at: /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-avro/ftdetect/avdl.vim]], true)
+vim.cmd [[source /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-avro/ftdetect/avdl.vim]]
+time([[Sourcing ftdetect script at: /Users/oliverm/.local/share/nvim/site/pack/packer/opt/vim-avro/ftdetect/avdl.vim]], false)
 vim.cmd("augroup END")
 if should_profile then save_profiles(1) end
 
