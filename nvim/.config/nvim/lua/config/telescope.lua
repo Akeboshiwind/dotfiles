@@ -104,10 +104,24 @@ wk.register({
         ["/"] = { builtin.current_buffer_fuzzy_find, "Fuzzy find in the current buffer"},
 
     },
+    d = {
+        name = "diagnostic",
+        d = { builtin.diagnostics, "List all diagnostics" },
+        b = { function()
+            builtin.diagnostics({
+                bufnr = 0
+            })
+        end, "List buffer diagnostics" },
+
+        n = { function()
+            vim.diagnostic.goto_next({ float =  { border = "rounded" }})
+        end, "Next" },
+        p = { function()
+            vim.diagnostic.goto_prev({ float =  { border = "rounded" }})
+        end, "Previous" },
+    },
     G = {
         name = "git",
-        g = { ":G<CR>", "Branches"},
-
         b = { builtin.git_branches, "Branches"},
     },
 }, { prefix = "<leader>", })

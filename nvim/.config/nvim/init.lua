@@ -122,3 +122,23 @@ local disabled_built_ins = { 'netrwPlugin', 'man', 'matchit' }
 for i = 1, #disabled_built_ins do
     g['loaded_' .. disabled_built_ins[i]] = 1
 end
+
+
+
+-- >> Setup Diagnostic Signs
+
+local sign_config = {
+    DiagnosticSignError = '',
+    DiagnosticSignWarn = '',
+    DiagnosticSignInfo = '',
+    DiagnosticSignHint = '',
+}
+
+for sign, symbol in pairs(sign_config) do
+    fn.sign_define(sign, {
+        text = symbol,
+        texthl = sign,
+        linehl = '',
+        numhl = '',
+    })
+end

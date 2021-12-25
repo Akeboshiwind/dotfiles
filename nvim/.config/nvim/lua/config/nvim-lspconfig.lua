@@ -2,9 +2,6 @@
 
 local lsp = {}
 
-local fn = vim.fn
-local cmd = vim.cmd
-
 
 -- >> Setup functions
 
@@ -21,38 +18,12 @@ function lsp.setup_mappings(bufnr)
     -- Non-Prefixed
     wk.register({
         K = { vim.lsp.buf.hover, "Document symbol" },
-        g = {
-            name = "goto",
-            D = { vim.lsp.buf.declaration, "Declaration" },
-            d = { ":TroubleToggle lsp_definitions<CR>", "Definition" },
-            i = { builtin.implementations, "Implementation" },
-            y = { vim.lsp.buf.type_definition, "Type definition" },
-            r = { ":TroubleToggle lsp_references<CR>", "References" },
-
-            s = { builtin.lsp_document_symbols, "Document Symbols" },
-            S = { builtin.lsp_workspace_symbols, "Workspace Symbols" },
-
-            q = { ":TroubleToggle quickfix<cr>", "Quickfix list" },
-        },
     }, {
         buffer = bufnr,
     })
 
     -- Leader
     wk.register({
-        -- TODO: Other useful lsp mappings?
-        -- TODO: Better mnumonics?
-        -- TODO: Convert some functions into telescope functions
-        --       - List workspace folders
-
-        w = {
-            name = "workspace",
-            a = { vim.lsp.buf.add_workspace_folder, "Add workspace folder" },
-            r = { vim.lsp.buf.remove_workspace_folder,
-                  "Remove workspace folder" },
-            l = { vim.lsp.buf.list_workspace_folders,
-                  "List workspace folders" },
-        },
 
         r = {
             name = "run",
@@ -66,20 +37,17 @@ function lsp.setup_mappings(bufnr)
             -- Add keybind for whole buffer?
         },
 
-        d = {
-            name = "diagnostics",
-            d = { ":TroubleToggle lsp_document_diagnostics<cr>",
-                  "Show document diagnostics" },
-            D = { ":TroubleToggle lsp_workspace_diagnostics<cr>",
-                  "Show workspace diagnostics" },
-            -- Make these [d & ]d ?
-            n = { vim.lsp.diagnostic.goto_next, "Next" },
-            p = { vim.lsp.diagnostic.goto_prev, "Previous" },
-        },
+        g = {
+            name = "goto",
+            D = { vim.lsp.buf.declaration, "Declaration" },
+            d = { builtin.lsp_definitions, "Definition" },
+            i = { builtin.lsp_implementations, "Implementation" },
+            y = { builtin.lsp_type_definitions, "Type definition" },
+            r = { builtin.lsp_references, "References" },
 
-        -- buf_set_keymap('n', '<space>q',
-        --                '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>',
-        --                opts)
+            s = { builtin.lsp_document_symbols, "Document Symbols" },
+            S = { builtin.lsp_workspace_symbols, "Workspace Symbols" },
+        },
     }, {
         prefix = "<leader>",
         buffer = bufnr,
@@ -89,35 +57,13 @@ function lsp.setup_mappings(bufnr)
     wk.register({
         a = {
             name = "action",
-            -- TODO: Why do you have to press <esc> after running?
-            -- TODO: Does this select the wrong range?
-            -- TODO: Does it pass the right range to the `extract to function`?
-            a = { builtin.lsp_range_code_actions, "Apply code action" },
+            a = { ":'<,'>Telescope lsp_range_code_actions<CR>", "Apply code action" },
         },
     }, {
         prefix = "<leader>",
         mode = 'v',
         buffer = bufnr,
     })
-end
-
---- Setup lsp gutter signs
-function lsp.setup_signs()
-    local sign_config = {
-        LspDiagnosticsSignError = '',
-        LspDiagnosticsSignWarning = '',
-        LspDiagnosticsSignInformation = '',
-        LspDiagnosticsSignHint = '',
-    }
-
-    for sign, symbol in pairs(sign_config) do
-        fn.sign_define(sign, {
-            text = symbol,
-            texthl = sign,
-            linehl = '',
-            numhl = '',
-        })
-    end
 end
 
 
@@ -131,9 +77,8 @@ local default_config = {
         -- Status messages
         lsp_status.on_attach(client, bufnr)
 
-        -- Setup
+        -- Mappings
         lsp.setup_mappings(bufnr)
-        lsp.setup_signs()
     end,
     capabilities = lsp_status.capabilities,
 }
