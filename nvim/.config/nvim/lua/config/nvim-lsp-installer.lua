@@ -1,6 +1,6 @@
 -- config/nvim-lsp-installer.lua
 
-local config = {}
+local M = {}
 
 local cmd = vim.cmd
 
@@ -12,7 +12,7 @@ local cmd = vim.cmd
 --- Run this when the plugin updates
 --- TODO: Only update plugins that have changed versions?
 --- TODO: If so have a `force` parameter
-function config.update_installed()
+function M.update_installed()
     local installed = require('nvim-lsp-installer').get_installed_servers()
     for _, server in pairs(installed) do
         server:install()
@@ -26,7 +26,7 @@ end
 --- @param server_name string #The name of the server to search for
 ---
 --- @return Server #The name of the server to search for
-function config.get_server(server_name)
+function M.get_server(server_name)
     local ok, server = require('nvim-lsp-installer').get_server(server_name)
 
     if not ok then
@@ -40,8 +40,8 @@ end
 
 -- >> Commands
 
-function config.setup_commands()
+function M.setup_commands()
     cmd [[command! LspUpdateAll lua require('config.nvim-lsp-installer').update_installed()]]
 end
 
-return config
+return M

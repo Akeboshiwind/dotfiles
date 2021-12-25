@@ -1,6 +1,6 @@
 -- config/nvim-lspconfig.lua
 
-local lsp = {}
+local M = {}
 
 
 -- >> Setup functions
@@ -8,7 +8,7 @@ local lsp = {}
 --- Register Generig LSP mappings
 ---
 --- @param bufnr number
-function lsp.setup_mappings(bufnr)
+function M.setup_mappings(bufnr)
     local wk = require("which-key")
     local builtin = require('telescope.builtin')
 
@@ -78,7 +78,7 @@ local default_config = {
         lsp_status.on_attach(client, bufnr)
 
         -- Mappings
-        lsp.setup_mappings(bufnr)
+        M.setup_mappings(bufnr)
     end,
     capabilities = lsp_status.capabilities,
 }
@@ -101,7 +101,7 @@ local default_config = {
 --- @vararg table #Config tables
 ---
 --- @return table #The composed configs
-function lsp.compose_config(...)
+function M.compose_config(...)
     local configs = {...}
 
     -- Compose together the on_attach functions
@@ -126,4 +126,4 @@ end
 
 
 
-return lsp
+return M
