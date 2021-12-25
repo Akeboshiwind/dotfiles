@@ -1,7 +1,7 @@
 -- config/rust-tools.lua
 
-local lsp_installer = require('config.nvim-lsp-installer')
-local lsp_config = require('config.nvim-lspconfig')
+local lsp_installer = require('utils.lsp.installer')
+local lsp_config = require('utils.lsp.config')
 
 
 -- >> Install server

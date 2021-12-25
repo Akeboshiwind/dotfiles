@@ -1,11 +1,11 @@
--- config/nvim-lspconfig.lua
+-- utils/lsp/config.lua
 
 local M = {}
 
 
 -- >> Setup functions
 
---- Register Generig LSP mappings
+--- Register Generic LSP mappings
 ---
 --- @param bufnr number
 function M.setup_mappings(bufnr)

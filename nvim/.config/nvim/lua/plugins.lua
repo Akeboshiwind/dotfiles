@@ -157,8 +157,8 @@ local function init()
     -- TODO: Fix updating servers after plugin update
     use {
         'williamboman/nvim-lsp-installer',
-        run = [[require('config.nvim-lsp-installer').update_installed()]],
-        config = [[require('config.nvim-lsp-installer').setup_commands()]],
+        run = [[require('utils.lsp.installer').update_installed()]],
+        config = [[require('utils.lsp.installer').setup_commands()]],
         after = 'nvim-lspconfig',
         module = 'nvim-lsp-installer',
         cmd = 'LspUpdateAll',

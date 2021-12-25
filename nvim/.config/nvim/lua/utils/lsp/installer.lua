@@ -1,4 +1,4 @@
--- config/nvim-lsp-installer.lua
+-- utils/lsp/installer.lua
 
 local M = {}
 
@@ -41,7 +41,7 @@ end
 -- >> Commands
 
 function M.setup_commands()
-    cmd [[command! LspUpdateAll lua require('config.nvim-lsp-installer').update_installed()]]
+    cmd [[command! LspUpdateAll lua require('utils.lsp.installer').update_installed()]]
 end
 
 return M
