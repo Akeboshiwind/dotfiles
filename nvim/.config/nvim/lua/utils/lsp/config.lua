@@ -72,7 +72,7 @@ end
 
 local lsp_status = require('lsp-status')
 
-local default_config = {
+M.default_config = {
     on_attach = function(client, bufnr)
         -- Status messages
         lsp_status.on_attach(client, bufnr)
@@ -83,43 +83,45 @@ local default_config = {
     capabilities = lsp_status.capabilities,
 }
 
---- Compose together multiple configs
+--- Merges multiple configs together, while composing on_attach functions
 ---
---- Configs are composed in reverse order
---- So `compose_config({a = 1}, {a = 2})` would get:
---- => `{a = 1}`
+--- Configs are composed left to right, keeping keys from the rightmost side
+--- So `smart_merge_configs({a = 1}, {a = 2})` would get:
+--- => `{a = 2}`
+--- This is just to make things easier to read, from top to bottom
 ---
---- A default_config is always used as the base to compose the other configs
---- onto
----
---- The first config supplied is assumed to be the user_config
----
---- When composing the default_config with the user_config the on_attach
---- functions are combined so that the default on_attach is run, and then the
---- user on_attach
+--- `on_attach` functions are composed by running the functions from left to right
+--- So `smart_merge_configs(
+---       {on_attach = function(client, bufnr) print("a") end},
+---       {on_attach = function(client, bufnr) print("b") end})`
+--- Effectively produces:
+--- => `{on_attach = function(client, bufnr) print("a") print("b") end}`
 ---
 --- @vararg table #Config tables
 ---
 --- @return table #The composed configs
-function M.compose_config(...)
+function M.smart_merge_configs(...)
     local configs = {...}
 
-    -- Compose together the on_attach functions
-    local override = {}
-    if #configs >= 1 and configs[1].on_attach then
-        local user_on_attach = configs[1].on_attach
-        override.on_attach = function(client, bufnr)
-            default_config.on_attach(client, bufnr)
+    -- Composed on_attach functions
+    local composed = function(_, _) end
 
-            -- We use the user one after so we can override things
-            user_on_attach(client, bufnr)
+    for _, config in pairs(configs) do
+        if config.on_attach then
+            local prev_composed = composed
+            composed = function(client, bufnr)
+                -- Call the previous one first
+                -- This runs the `on_attach` functions in
+                -- the order they were specified
+                prev_composed(client, bufnr)
+
+                config.on_attach(client, bufnr)
+            end
         end
     end
 
-    -- Use default_config as base
-    table.insert(configs, 1, default_config)
-    -- Override usef config
-    table.insert(configs, override)
+    -- Override on_attach w/ composed version
+    table.insert(configs, { on_attach = composed })
 
     return vim.tbl_deep_extend("force", unpack(configs))
 end

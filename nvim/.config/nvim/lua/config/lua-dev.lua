@@ -17,13 +17,16 @@ end
 -- >> Setup
 
 local luadev = require("lua-dev").setup {
-    lspconfig = lsp_config.compose_config{
-        settings = {
-            Lua = {
-                hint = { enable = true },
+    lspconfig = lsp_config.smart_merge_configs(
+        lsp_config.default_config,
+        {
+            settings = {
+                Lua = {
+                    hint = { enable = true },
+                },
             },
-        },
-    },
+        }
+    )
 }
 
 server:setup(luadev)
