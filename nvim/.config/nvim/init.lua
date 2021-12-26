@@ -127,6 +127,12 @@ end
 
 -- >> Setup Diagnostic Signs
 
+-- Always enable sign column
+opt.signcolumn = 'yes'
+-- Link SignColumn & LignNr highlights
+-- TODO: Maybe move this to theme specific config?
+cmd [[highlight! link SignColumn LineNr]]
+
 local sign_config = {
     DiagnosticSignError = '',
     DiagnosticSignWarn = '',
