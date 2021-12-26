@@ -148,3 +148,15 @@ for sign, symbol in pairs(sign_config) do
         numhl = '',
     })
 end
+
+
+
+-- >> Setup Term Colors
+
+if fn.exists('+termguicolors') ~= 0 then
+    -- Tell nvim that terminal support truecolor
+    -- If not turned on then the theme doesn't work
+    -- Can test using the truecolor-test script in bin or at:
+    -- https://gist.github.com/XVilka/8346728
+    opt.termguicolors = true
+end

@@ -3,12 +3,6 @@
 local g = vim.g
 
 
--- >> Init theme
-
-require('config.theme.init').init()
-
-
-
 -- >> Config
 
 g.moonlight_italic_comments = true
