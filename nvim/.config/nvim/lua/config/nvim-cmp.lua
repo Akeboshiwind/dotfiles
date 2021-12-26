@@ -13,6 +13,7 @@ opt.completeopt = { "menu", "menuone", "noselect" }
 
 -- >> Setup
 
+
 cmp.setup {
     snippet = {
         expand = function(args)
@@ -31,11 +32,11 @@ cmp.setup {
             c = cmp.mapping.close(),
         }),
         ["<C-u>"] = cmp.mapping(
-            cmp.mapping.scroll_docs(4),
+            cmp.mapping.scroll_docs(-4),
             { 'i', 'c' }
         ),
         ["<C-d>"] = cmp.mapping(
-            cmp.mapping.scroll_docs(-4),
+            cmp.mapping.scroll_docs(4),
             { 'i', 'c' }
         ),
 
