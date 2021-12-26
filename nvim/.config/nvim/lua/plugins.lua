@@ -115,7 +115,7 @@ local function init()
     -- >> 03-Telescope
 
     use { 'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
-    use { 'nvim-telescope/telescope-ui-select.nvim' }
+    use 'nvim-telescope/telescope-ui-select.nvim'
 
     use {
         'nvim-telescope/telescope.nvim',
@@ -128,11 +128,16 @@ local function init()
 
     -- >> 04-Completion
 
+    use 'hrsh7th/cmp-nvim-lsp'
+    use 'hrsh7th/cmp-buffer'
+    use 'hrsh7th/cmp-path'
+    use 'hrsh7th/cmp-cmdline'
+    use 'L3MON4D3/LuaSnip'
+    use 'saadparwaiz1/cmp_luasnip'
     use {
-        'hrsh7th/nvim-compe',
-         config = [[require('config.nvim-compe')]],
+        'hrsh7th/nvim-cmp',
+         config = [[require('config.nvim-cmp')]],
     }
-
 
 
     -- >> 05-LSP
@@ -208,8 +213,8 @@ local function init()
     }
 
     use {
-        'tami5/compe-conjure',
-        after = { 'nvim-compe', 'conjure' },
+        'PaterJason/cmp-conjure',
+        after = { 'nvim-cmp', 'conjure' },
     }
 
     use {
