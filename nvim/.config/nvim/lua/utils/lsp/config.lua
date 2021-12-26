@@ -71,6 +71,9 @@ end
 -- >> Default LSP config w/ overrides
 
 local lsp_status = require('lsp-status')
+-- Already updates based on `vim.lsp.protocol.make_client_capabilities()`
+local capabilities = lsp_status.capabilities
+capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
 M.default_config = {
     on_attach = function(client, bufnr)
@@ -80,7 +83,7 @@ M.default_config = {
         -- Mappings
         M.setup_mappings(bufnr)
     end,
-    capabilities = lsp_status.capabilities,
+    capabilities = capabilities,
 }
 
 --- Merges multiple configs together, while composing on_attach functions
