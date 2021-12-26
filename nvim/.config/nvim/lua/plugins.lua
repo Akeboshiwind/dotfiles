@@ -153,9 +153,12 @@ local function init()
         ]],
     }
 
+    use 'kosayoda/nvim-lightbulb'
+
     use {
         'neovim/nvim-lspconfig',
-        after = { 'lsp-status.nvim', 'which-key.nvim', 'telescope.nvim', },
+        after = { 'lsp-status.nvim', 'which-key.nvim',
+                  'telescope.nvim', 'nvim-lightbulb' },
     }
 
     -- TODO: Update servers regularly? Reminder?

@@ -2,6 +2,8 @@
 
 local M = {}
 
+local cmd = vim.cmd
+
 
 -- >> Setup functions
 
@@ -66,6 +68,11 @@ function M.setup_mappings(bufnr)
     })
 end
 
+-- Setup lighbulb to show when there's an action
+function M.setup_lightbulb()
+    -- TODO: Make buffer local?
+    cmd [[autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb() ]]
+end
 
 
 -- >> Default LSP config w/ overrides
@@ -79,6 +86,9 @@ M.default_config = {
     on_attach = function(client, bufnr)
         -- Status messages
         lsp_status.on_attach(client, bufnr)
+
+        -- Lightbulb
+        M.setup_lightbulb()
 
         -- Mappings
         M.setup_mappings(bufnr)
