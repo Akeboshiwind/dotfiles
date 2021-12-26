@@ -5,7 +5,6 @@ local lsp_status = require('lsp-status')
 
 -- >> Config
 
--- TODO: Not sure if these are needed
 lsp_status.config {
     indicator_errors = '',
     indicator_warnings = '',

@@ -14,8 +14,6 @@ local cmd = vim.cmd
 --- Also opens the info window
 ---
 --- Run this when the plugin updates
---- TODO: Only update plugins that have changed versions?
---- TODO: If so have a `force` parameter
 function M.update_installed()
     local lsp_installer = require('nvim-lsp-installer')
 

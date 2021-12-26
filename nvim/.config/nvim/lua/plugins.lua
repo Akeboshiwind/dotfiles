@@ -16,7 +16,6 @@
 
 
 -- So that we only require packer once
--- TODO: Does this mean that nvim has to be reloaded if packer is updated?
 local packer = nil
 
 
@@ -141,9 +140,6 @@ local function init()
 
 
     -- >> 05-LSP
-    -- TODO: Simplify all of this:
-    --       It makes the UI a bit cluttered
-    --       It might be a better idea to query for data using Telescope 🤔
 
     use {
         'nvim-lua/lsp-status.nvim',
