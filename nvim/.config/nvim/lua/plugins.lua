@@ -82,7 +82,7 @@ local function init()
     use {
         'lifepillar/vim-solarized8',
         config = [[require('config.theme.vim-solarized8')]],
-        disable = false,
+        disable = true,
     }
 
     use {
@@ -99,6 +99,12 @@ local function init()
 
     --use 'shaunsingh/solarized.nvim'
     use { '~/prog/prog/assorted/solarized.nvim', disable = true }
+
+    use {
+        "rebelot/kanagawa.nvim",
+        config = [[require('config.theme.kanagawa')]],
+        disable = false,
+    }
 
 
 
