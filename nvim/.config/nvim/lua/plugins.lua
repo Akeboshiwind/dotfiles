@@ -252,6 +252,17 @@ local function init()
 
 
 
+    -- >> Python
+
+    use {
+        '~/.config/nvim/local_plugins/python-tools.nvim',
+        after = 'nvim-lsp-installer',
+        ft = 'python',
+        config = [[require('config.python-tools')]],
+    }
+
+
+
     -- >> Vimspector
 
     use {
