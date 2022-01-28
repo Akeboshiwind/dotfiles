@@ -60,7 +60,10 @@ local function init()
     use 'farmergreg/vim-lastplace'
 
     -- Seamless navigation between tmux panes and vim splits
-    use 'christoomey/vim-tmux-navigator'
+    use {
+        'alexghergh/nvim-tmux-navigation',
+        config = [[require('config.nvim-tmux-navigation')]]
+    }
 
     -- Automatically create paths that don't exist on buffer save
     use 'arp242/auto_mkdir2.vim'
