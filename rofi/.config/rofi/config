@@ -1,5 +1,0 @@
-# rofi theme file
-
-
-# >> Load theme file
-rofi.theme: ~/.cache/wal/colors-rofi-dark.rasi
