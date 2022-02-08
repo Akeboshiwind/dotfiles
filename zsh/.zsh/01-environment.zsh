@@ -27,11 +27,3 @@ export PATH=$PATH:~/kafka/kafka_2.11-2.1.0/bin
 
 export EDITOR=vim
 export VISUAL=vim
-
-
-
-#>> GPG
-
-export GPG_TTY="$(tty)"
-export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
-gpgconf --launch gpg-agent

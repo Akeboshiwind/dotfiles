@@ -39,5 +39,3 @@ shell:
   args:
     - zsh
     - -l
-    - -c
-    - "tmux"

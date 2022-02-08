@@ -3,6 +3,11 @@
 # https://github.com/xero/dotfiles
 
 
+# >> Tmux
+
+[ -z "$TMUX" ] && { tmux attach || tmux new }
+
+
 # >> Config variables
 
 export COMPLETION_PATH=~/.zsh/completion
