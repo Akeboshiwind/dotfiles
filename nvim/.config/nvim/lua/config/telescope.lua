@@ -50,7 +50,18 @@ local builtin = require('telescope.builtin')
 wk.register({
     f = {
         name = "find",
-        f = { builtin.find_files, "Browse local files"},
+        f = { function ()
+            builtin.find_files({
+                find_command = {
+                    "rg",
+                    -- Show hidden files
+                    "--hidden",
+                    -- -- Ignore any .git directories
+                    "--glob", "!**/.git/**",
+                    "--files",
+                },
+            })
+        end, "Browse local files (inc hidden)"},
         g = { builtin.git_files, "Current repo files"},
         o = { builtin.oldfiles, "Recently opened files"},
         ["."] = { function()
