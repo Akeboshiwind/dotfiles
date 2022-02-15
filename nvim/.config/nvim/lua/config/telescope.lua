@@ -39,6 +39,7 @@ telescope.setup {
 
 telescope.load_extension('fzf')
 telescope.load_extension('ui-select')
+telescope.load_extension('file_browser')
 
 
 
@@ -46,6 +47,7 @@ telescope.load_extension('ui-select')
 
 local wk = require("which-key")
 local builtin = require('telescope.builtin')
+local extensions = require('telescope').extensions
 
 wk.register({
     f = {
@@ -83,7 +85,7 @@ wk.register({
             -- % get's the current buffer's path
             -- :h get's the full path
             local buffer_relative_path = vim.call("expand", "%:h")
-            builtin.file_browser({
+            extensions.file_browser.file_browser({
                 cwd = buffer_relative_path,
             })
         end, "Browse relative to buffer"},
