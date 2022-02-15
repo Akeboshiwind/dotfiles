@@ -113,6 +113,11 @@ wk.register({
                 cwd = buffer_relative_path,
             })
         end, "Search relative to buffer"},
+        t = { function()
+            builtin.grep_string({
+                search = "TODO",
+            })
+        end, "Search for TODOs"},
         ["*"] = { builtin.grep_string, "Search for word under cursor"},
         ["/"] = { builtin.current_buffer_fuzzy_find, "Fuzzy find in the current buffer"},
 
