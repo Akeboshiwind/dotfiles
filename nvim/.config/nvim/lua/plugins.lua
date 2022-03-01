@@ -201,7 +201,7 @@ local function init()
 
     use {
         'hashivim/vim-terraform',
-        ft = 'terraform',
+        ft = {'terraform', 'hcl'},
         config = [[require('config.vim-terraform')]],
     }
 
