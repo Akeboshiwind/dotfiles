@@ -1,9 +1,9 @@
 [core]
-    editor = vim
+    editor = nvim
 
 [user]
-	name = Oliver Marshall
-	email = olivershawmarshall@gmail.com
+    name = Oliver Marshall
+    email = olivershawmarshall@gmail.com
 
 [includeIf "gitdir:~/prog/work/"]
     path = ~/work.gitconfig
