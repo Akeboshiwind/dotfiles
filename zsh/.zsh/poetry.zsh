@@ -3,7 +3,7 @@
 
 # >> Setup path
 
-export PATH=$PATH:/Users/oliverm/Library/Python/3.9/bin
+export PATH="$HOME/.poetry/bin:$PATH"
 
 
 
