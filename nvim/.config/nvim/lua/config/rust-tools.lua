@@ -1,25 +1,13 @@
 -- config/rust-tools.lua
 
-local lsp_installer = require('utils.lsp.installer')
-local lsp_config = require('utils.lsp.config')
-
-
--- >> Install server
-
-local server = lsp_installer.get_server("rust_analyzer")
-
-if not server:is_installed() then
-    print("Installing LSP server")
-    server:install()
-end
-
+local lsputils = require('utils.lsp')
 
 
 -- >> Setup
 
 require('rust-tools').setup {
-    server = lsp_config.smart_merge_configs(
-        lsp_config.default_config,
+    server = lsputils.smart_merge_configs(
+        lsputils.default_config,
         {
             on_attach = function(_, bufnr)
                 local wk = require("which-key")
@@ -60,8 +48,6 @@ require('rust-tools').setup {
                     }
                 }
             }
-        },
-        -- TODO: Move this after own defaults?
-        server:get_default_options()
+        }
     ),
 }

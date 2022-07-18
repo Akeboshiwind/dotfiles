@@ -1,24 +1,14 @@
 -- config/lua-dev.lua
-local lsp_installer = require('utils.lsp.installer')
-local lsp_config = require('utils.lsp.config')
 
-
--- >> Install server
-
-local server = lsp_installer.get_server("sumneko_lua")
-
-if not server:is_installed() then
-    print("Installing LSP server")
-    server:install()
-end
-
+local lspconfig = require('lspconfig')
+local lsputils = require('utils.lsp')
 
 
 -- >> Setup
 
 local luadev = require("lua-dev").setup {
-    lspconfig = lsp_config.smart_merge_configs(
-        lsp_config.default_config,
+    lspconfig = lsputils.smart_merge_configs(
+        lsputils.default_config,
         {
             settings = {
                 Lua = {
@@ -29,4 +19,4 @@ local luadev = require("lua-dev").setup {
     )
 }
 
-server:setup(luadev)
+lspconfig.sumneko_lua.setup(luadev)

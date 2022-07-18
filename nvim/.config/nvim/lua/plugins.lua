@@ -168,14 +168,10 @@ local function init()
     }
 
     -- TODO: Update servers regularly? Reminder?
-    -- TODO: Fix updating servers after plugin update
     use {
         'williamboman/nvim-lsp-installer',
-        run = [[require('utils.lsp.installer').update_installed()]],
-        config = [[require('utils.lsp.installer').setup_commands()]],
+        config = [[require('config.nvim-lsp-installer')]],
         after = 'nvim-lspconfig',
-        module = 'nvim-lsp-installer',
-        cmd = 'LspUpdateAll',
     }
 
 
