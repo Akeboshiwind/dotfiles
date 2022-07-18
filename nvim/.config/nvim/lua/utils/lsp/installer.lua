@@ -17,7 +17,6 @@ local cmd = vim.cmd
 function M.update_installed()
     local lsp_installer = require('nvim-lsp-installer')
 
-    lsp_installer.info_window.open()
     local installed = lsp_installer.get_installed_servers()
     for _, server in pairs(installed) do
         server:install()
