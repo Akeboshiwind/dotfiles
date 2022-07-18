@@ -59,7 +59,7 @@ local g = vim.g
 local install_path = fn.stdpath('data')..'/site/pack/packer/opt/packer.nvim'
 
 if fn.empty(fn.glob(install_path)) > 0 then
-  fn.system({'git', 'clone', 'https://github.com/wbthomason/packer.nvim', install_path})
+  local packer_bootstrap =  fn.system({'git', 'clone', '--depth', '1', 'https://github.com/wbthomason/packer.nvim', install_path})
 end
 
 
@@ -77,6 +77,10 @@ cmd [[command! PackerSync packadd packer.nvim | lua require('plugins').sync()]]
 cmd [[command! PackerClean packadd packer.nvim | lua require('plugins').clean()]]
 -- Compiles plugins to a lazyloader, loads compiled lazyloader
 cmd [[command! PackerCompile packadd packer.nvim | lua require('plugins').compile()]]
+
+if packer_bootstrap then
+    cmd [[:PackerSync]]
+end
 
 
 
