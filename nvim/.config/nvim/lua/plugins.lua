@@ -167,10 +167,11 @@ local function init()
                   'telescope.nvim', 'nvim-lightbulb' },
     }
 
-    -- TODO: Update servers regularly? Reminder?
+    -- TODO: Update packages regularly? Reminder?
     use {
-        'williamboman/nvim-lsp-installer',
-        config = [[require('config.nvim-lsp-installer')]],
+        'williamboman/mason.nvim',
+        requires = { 'williamboman/mason-lspconfig.nvim' },
+        config = [[require('config.mason')]],
         after = 'nvim-lspconfig',
     }
 
@@ -234,7 +235,7 @@ local function init()
     use {
         'simrat39/rust-tools.nvim',
         after = { 'which-key.nvim', 'nvim-lspconfig',
-                  'nvim-lsp-installer' },
+                  'mason.nvim' },
         ft = 'rust',
         config = [[require('config.rust-tools')]],
     }
@@ -245,7 +246,7 @@ local function init()
 
     use {
         'folke/lua-dev.nvim',
-        after = 'nvim-lsp-installer',
+        after = 'mason.nvim',
         ft = 'lua',
         config = [[require('config.lua-dev')]],
     }
@@ -256,7 +257,7 @@ local function init()
 
     use {
         '~/.config/nvim/local_plugins/python-tools.nvim',
-        after = 'nvim-lsp-installer',
+        after = 'mason.nvim',
         ft = 'python',
         config = [[require('config.python-tools')]],
     }
