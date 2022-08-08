@@ -131,8 +131,11 @@ _G.packer_plugins = {
   },
   ["lsp-status.nvim"] = {
     after = { "nvim-lspconfig" },
+    config = { "            require('config.lsp-status')\n            require('config.theme.statusline')\n        " },
     loaded = true,
-    only_config = true
+    only_config = true,
+    path = "/Users/olivermarshall/.local/share/nvim/site/pack/packer/start/lsp-status.nvim",
+    url = "https://github.com/nvim-lua/lsp-status.nvim"
   },
   ["lua-dev.nvim"] = {
     config = { "require('config.lua-dev')" },
@@ -143,27 +146,35 @@ _G.packer_plugins = {
     path = "/Users/olivermarshall/.local/share/nvim/site/pack/packer/opt/lua-dev.nvim",
     url = "https://github.com/folke/lua-dev.nvim"
   },
+  ["mason-lspconfig.nvim"] = {
+    loaded = true,
+    path = "/Users/olivermarshall/.local/share/nvim/site/pack/packer/start/mason-lspconfig.nvim",
+    url = "https://github.com/williamboman/mason-lspconfig.nvim"
+  },
+  ["mason.nvim"] = {
+    after = { "python-tools.nvim", "rust-tools.nvim", "lua-dev.nvim" },
+    config = { "require('config.mason')" },
+    load_after = {},
+    loaded = true,
+    needs_bufread = false,
+    path = "/Users/olivermarshall/.local/share/nvim/site/pack/packer/opt/mason.nvim",
+    url = "https://github.com/williamboman/mason.nvim"
+  },
   ["nvim-cmp"] = {
     after = { "cmp-conjure" },
+    config = { "require('config.nvim-cmp')" },
     loaded = true,
-    only_config = true
+    only_config = true,
+    path = "/Users/olivermarshall/.local/share/nvim/site/pack/packer/start/nvim-cmp",
+    url = "https://github.com/hrsh7th/nvim-cmp"
   },
   ["nvim-lightbulb"] = {
     loaded = true,
     path = "/Users/olivermarshall/.local/share/nvim/site/pack/packer/start/nvim-lightbulb",
     url = "https://github.com/kosayoda/nvim-lightbulb"
   },
-  ["nvim-lsp-installer"] = {
-    after = { "lua-dev.nvim", "python-tools.nvim", "rust-tools.nvim" },
-    config = { "require('config.nvim-lsp-installer')" },
-    load_after = {},
-    loaded = true,
-    needs_bufread = true,
-    path = "/Users/olivermarshall/.local/share/nvim/site/pack/packer/opt/nvim-lsp-installer",
-    url = "https://github.com/williamboman/nvim-lsp-installer"
-  },
   ["nvim-lspconfig"] = {
-    after = { "nvim-lsp-installer", "rust-tools.nvim" },
+    after = { "rust-tools.nvim", "mason.nvim" },
     load_after = {},
     loaded = true,
     needs_bufread = false,
@@ -287,9 +298,12 @@ _G.packer_plugins = {
     url = "https://github.com/puremourning/vimspector"
   },
   ["which-key.nvim"] = {
-    after = { "nvim-lspconfig", "vimspector", "rust-tools.nvim", "telescope.nvim" },
+    after = { "vimspector", "rust-tools.nvim", "nvim-lspconfig", "telescope.nvim" },
+    config = { "require('config.which-key')" },
     loaded = true,
-    only_config = true
+    only_config = true,
+    path = "/Users/olivermarshall/.local/share/nvim/site/pack/packer/start/which-key.nvim",
+    url = "https://github.com/folke/which-key.nvim"
   }
 }
 
@@ -323,17 +337,17 @@ time([[Config for nvim-treesitter]], false)
 -- Load plugins in order defined by `after`
 time([[Sequenced loading]], true)
 vim.cmd [[ packadd telescope-fzf-native.nvim ]]
-vim.cmd [[ packadd nvim-lightbulb ]]
 vim.cmd [[ packadd telescope.nvim ]]
 
 -- Config for: telescope.nvim
 require('config.telescope')
 
+vim.cmd [[ packadd nvim-lightbulb ]]
 vim.cmd [[ packadd nvim-lspconfig ]]
-vim.cmd [[ packadd nvim-lsp-installer ]]
+vim.cmd [[ packadd mason.nvim ]]
 
--- Config for: nvim-lsp-installer
-require('config.nvim-lsp-installer')
+-- Config for: mason.nvim
+require('config.mason')
 
 time([[Sequenced loading]], false)
 
@@ -355,14 +369,14 @@ vim.cmd [[augroup packer_load_aucmds]]
 vim.cmd [[au!]]
   -- Filetype lazy-loads
 time([[Defining lazy-load filetype autocommands]], true)
-vim.cmd [[au FileType terraform ++once lua require("packer.load")({'vim-terraform'}, { ft = "terraform" }, _G.packer_plugins)]]
-vim.cmd [[au FileType python ++once lua require("packer.load")({'python-tools.nvim'}, { ft = "python" }, _G.packer_plugins)]]
-vim.cmd [[au FileType clojure ++once lua require("packer.load")({'conjure'}, { ft = "clojure" }, _G.packer_plugins)]]
-vim.cmd [[au FileType avdl ++once lua require("packer.load")({'vim-avro'}, { ft = "avdl" }, _G.packer_plugins)]]
-vim.cmd [[au FileType avro ++once lua require("packer.load")({'vim-avro'}, { ft = "avro" }, _G.packer_plugins)]]
-vim.cmd [[au FileType hcl ++once lua require("packer.load")({'vim-terraform'}, { ft = "hcl" }, _G.packer_plugins)]]
 vim.cmd [[au FileType lua ++once lua require("packer.load")({'lua-dev.nvim'}, { ft = "lua" }, _G.packer_plugins)]]
 vim.cmd [[au FileType rust ++once lua require("packer.load")({'rust-tools.nvim'}, { ft = "rust" }, _G.packer_plugins)]]
+vim.cmd [[au FileType avdl ++once lua require("packer.load")({'vim-avro'}, { ft = "avdl" }, _G.packer_plugins)]]
+vim.cmd [[au FileType python ++once lua require("packer.load")({'python-tools.nvim'}, { ft = "python" }, _G.packer_plugins)]]
+vim.cmd [[au FileType avro ++once lua require("packer.load")({'vim-avro'}, { ft = "avro" }, _G.packer_plugins)]]
+vim.cmd [[au FileType terraform ++once lua require("packer.load")({'vim-terraform'}, { ft = "terraform" }, _G.packer_plugins)]]
+vim.cmd [[au FileType hcl ++once lua require("packer.load")({'vim-terraform'}, { ft = "hcl" }, _G.packer_plugins)]]
+vim.cmd [[au FileType clojure ++once lua require("packer.load")({'conjure'}, { ft = "clojure" }, _G.packer_plugins)]]
 time([[Defining lazy-load filetype autocommands]], false)
 vim.cmd("augroup END")
 vim.cmd [[augroup filetypedetect]]
