@@ -1,12 +1,11 @@
 -- config/python-tools.lua
 
-local lspconfig = require('lspconfig')
 local lsputils = require('utils.lsp')
 
 
 -- >> Setup
 
-lspconfig.pylsp.setup(
+require('lspconfig').pylsp.setup(
     lsputils.smart_merge_configs(
         lsputils.default_config,
         {
@@ -19,6 +18,7 @@ lspconfig.pylsp.setup(
                 -- >> Format on save
 
                 vim.cmd [[ autocmd BufWritePre *.py lua vim.lsp.buf.formatting_sync(nil, 1000) ]]
+                print("Run custom on_attach")
             end,
         }
     )

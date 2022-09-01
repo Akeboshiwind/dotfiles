@@ -1,6 +1,5 @@
 -- config/which-key.lua
 
-local opt = vim.opt
 local wk = require("which-key")
 local tnav = require('nvim-tmux-navigation')
 

@@ -1,13 +1,10 @@
 -- config/mason.lua
 
-local mason = require("mason")
-local mason_lspconfig = require("mason-lspconfig")
-
 
 -- >> Setup
 
-mason.setup()
+require("mason").setup()
 
-mason_lspconfig.setup({
+require("mason-lspconfig").setup({
     automatic_installation = true,
 })
