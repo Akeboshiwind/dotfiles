@@ -3,7 +3,7 @@
 
 # >> Load plugin
 
-. /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source "$(brew-prefix zsh-syntax-highlighting)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
 
 
