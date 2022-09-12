@@ -7,8 +7,6 @@ call plug#begin('~/.vim/plugged')
 
 Plug 'tpope/vim-sensible'
 
-Plug 'dylanaraps/wal.vim'
-
 Plug 'farmergreg/vim-lastplace'
 
 Plug 'christoomey/vim-tmux-navigator'
@@ -32,7 +30,6 @@ set timeoutlen=200
 
 " >> Appearance
 
-colorscheme wal
 set hlsearch
 
 " Note: these will only work in VTE compatible terminals (urxvt, st, etc.)
