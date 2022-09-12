@@ -1,7 +1,3 @@
 # Main packages
 zsh
 zsh-syntax-highlighting
-
-# Addons
-fzf
-zoxide
