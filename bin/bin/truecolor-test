@@ -15,13 +15,15 @@ See for more information
 Usage: truecolor-test [OPTIONS]
 
 Options:
+    --height    The width in columns of the output
     --height    The height in lines of the output
 
     -h, --help  Display this help and exit
     --version   Output the version information and exit
 
 Examples:
-    yclean      Clear keys with with keygrip specified
+    truecolor-test                           Output a single line of colours
+    truecolor-test --width 10 --height 10    Output a 10x10 rectangle of colours
 
 Report bugs to <olivershawmarshall+dotfiles@gmail.com>.
 USAGE
