@@ -18,3 +18,6 @@ fi
 # >> Key bindings
 
 source "$(brew-prefix fzf)/shell/key-bindings.zsh"
+
+# Add support for vim-like page up and down
+export FZF_DEFAULT_OPTS="--bind ctrl-u:page-up,ctrl-d:page-down"
