@@ -39,3 +39,10 @@ shell:
   args:
     - zsh
     - -l
+
+
+
+# >> Env
+
+env:
+  TERM: xterm-256color
