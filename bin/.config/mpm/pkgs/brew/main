@@ -1,27 +1,10 @@
 # Command line tools
-bash
+bash # TODO: Update scripts to just use sh
 coreutils
 git
-ispell
-the_silver_searcher
 tree
-rename
 jq
-ffmpeg
+# ffmpeg
 stow
-node
-z
-v
 help2man
-nmap
 htop
-runit
-mtr
-
-# pass
-gopass
-amar1729/formulae/browserpass
-
-# Languages
-clojure
-leiningen
