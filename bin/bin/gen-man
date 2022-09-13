@@ -6,6 +6,10 @@
 
 usage() {
     cat << USAGE
+'gen-man' uses 'help2man' to generate a manpage output to stdout
+
+Depends on \'help2man\'
+
 Usage: gen-man [OPTIONS] executable
 
 Options:
@@ -53,17 +57,6 @@ if [ "$exe" = "" ]; then
     echo -e "Error: No executable supplied\n"
     usage
     exit 1
-fi
-
-
-
-# >> Find include file
-
-include_path=~/bin/man/$exe
-opt_arg=()
-
-if [ -f $include_path ]; then
-    opt_arg=("-i $include_path")
 fi
 
 

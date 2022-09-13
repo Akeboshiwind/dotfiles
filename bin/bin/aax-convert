@@ -6,6 +6,19 @@
 
 usage() {
     cat << USAGE
+'aax-convert' converts files from the 'aax' file format so another format
+using ffmpeg.
+
+Depends on 'ffmpeg' and 'pass' and assumes you have your amazon activation
+bytes stored at 'personal/amazon.co.uk' under a key called 'activation-bytes'
+in your password store.
+
+The activation bytes can be found using the following tool:
+https://github.com/inAudible-NG/audible-activator.
+
+The tool only needs to be used once then the activation-bytes can be saved
+somewhere (like a password manager) and used in this script.
+
 Usage: aax-convert [OPTIONS] input-file
 
 Options:

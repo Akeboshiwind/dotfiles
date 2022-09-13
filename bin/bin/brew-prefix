@@ -6,6 +6,13 @@
 
 usage() {
     cat << USAGE
+Run 'brew prefix [formula]', caching the results.
+This is useful because 'brew prefix' can be a slow operation, so if you're
+running it in a time sensitive application (.zshrc), caching the result for
+speed is required.
+
+Results are cached in ~/.cache/brew-prefix/
+
 Usage: brew-prefix [-h|--help] [formula]
 
 Examples:

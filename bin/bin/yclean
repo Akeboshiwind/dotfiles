@@ -6,6 +6,9 @@
 
 usage() {
     cat << USAGE
+'yclean' clears out gpg keys with the specified keygrip ready for a new yubikey
+to be inserted and used.
+
 Usage: yclean [OPTIONS]
 
 Options:

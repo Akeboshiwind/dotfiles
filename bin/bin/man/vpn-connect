@@ -1,5 +1,0 @@
-[description]
-\'vpn-connect\' connects to the given target using openvpn. Depends on openvpn.
-
-Valid values for target are: pi
-The default value for target is: pi

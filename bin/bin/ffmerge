@@ -9,6 +9,10 @@
 
 usage() {
     cat << USAGE
+'ffmerge' concatenates a given directory of files using 'ffmpeg' to a single
+output file. Useful for when you are given an audiobook separated into chapter
+files.
+
 Usage: ffmerge [OPTIONS] [output-file]
 
 Options:

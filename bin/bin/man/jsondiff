@@ -1,3 +1,0 @@
-[description]
-\'jsondiff\' takes two json files as input, sorts them by keys and then uses
-\'vim\' to compare the two files. Depends on \'jq\' and \'vim\'.
