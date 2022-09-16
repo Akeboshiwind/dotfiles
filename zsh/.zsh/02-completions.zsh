@@ -5,6 +5,7 @@
 
 setopt BRACE_CCL
 export COMPLETION_PATH=~/.zsh/completion
+mkdir -p $COMPLETION_PATH
 fpath=($COMPLETION_PATH $fpath)
 autoload -Uz compinit
 compinit -u
