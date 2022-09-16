@@ -11,7 +11,21 @@ fi
 
 # >> Auto-completion
 
-[[ $- == *i* ]] && source "$(brew-prefix fzf)/shell/completion.zsh" 2> /dev/null
+# TODO:
+# The problem is that this overrides all completions :think:
+#source "$(brew-prefix fzf)/shell/completion.zsh" 2> /dev/null
+
+# Allow the Auto-completion to work with empty inputs
+FZF_COMPLETION_TRIGGER=""
+
+
+
+# >> Custom completions
+
+# If you're wanting to do this, probably looking into stealing this code:
+# https://doronbehar.com/articles/ZSH-FZF-completion/
+
+
 
 
 
