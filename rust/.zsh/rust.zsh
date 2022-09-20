@@ -8,6 +8,14 @@ rustup_completion_path=$COMPLETION_PATH/_rustup
 
 
 
+# >> PATH
+
+PATH="$HOME/.cargo/bin:$PATH"
+
+
+
+# >> Completions
+
 # Only install the completions if rustup is installed
 command -v rustup 1>/dev/null && {
     installed_completions=false
