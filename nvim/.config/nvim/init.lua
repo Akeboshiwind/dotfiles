@@ -115,7 +115,11 @@ opt.expandtab = true       -- On pressing tab, insert 4 spaces
 
 -- >> Filetype conversions
 
-cmd [[au BufNewFile,BufRead Jenkinsfile setf groovy]]
+vim.filetype.add({
+    filename = {
+        ["Jenkinsfile"] = "groovy",
+    },
+})
 
 
 
