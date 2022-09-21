@@ -128,26 +128,34 @@ aws_prompt() {
     prefix='%B%F{green}'
     suffix='%f%b'
 
+    # TODO: Some way of detecting wrong account?
     if [[ -n "$AWS_PROFILE" && `pwd` =~ '/env/' && ! `pwd` =~ "/env/$AWS_PROFILE" ]]; then
         prefix='%B%F{red}'
         suffix='!%f%b'
     fi
 
-    if [ ! -z "$AWS_PROFILE" ]; then
+    profile="$AWS_PROFILE"
+    if [ -z "$profile" ]; then
+        profile="$AWS_VAULT"
+    fi
+
+    if [ ! -z "$profile" ]; then
 
         delta_str=""
-        if [ ! -z "$AWS_SESSION_END" ]; then
-            delta="$(($AWS_SESSION_END - $(date +%s)))"
+        if [ ! -z "$AWS_SESSION_EXPIRATION" ]; then
+            # NOTE: Limitation in expecting 'Z' timezone
+            end_time="$(TZ=Z date -j -f "%Y-%m-%dT%H:%M:%SZ" "$AWS_SESSION_EXPIRATION" +%s)"
+            delta="$(($end_time - $(date +%s)))"
             if [ "$delta" -gt "0" ]; then
                 delta_str="$(pretty_delta $delta)"
             else
-                delta_str="✘"
+                delta_str="%B%F{red}✘%f%b"
             fi
 
             delta_str="($delta_str)"
         fi
 
-        echo "$prefix$AWS_PROFILE$delta_str$suffix "
+        echo "$prefix$profile$delta_str$suffix "
     fi
 }
 
