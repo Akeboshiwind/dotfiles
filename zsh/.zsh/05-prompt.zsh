@@ -163,6 +163,25 @@ local aws_profile='$(aws_prompt)'
 
 
 
+# >> Terraform
+
+tf_prompt() {
+
+    prefix='%B%F{yellow}'
+    suffix='%f%b'
+
+    command -v terraform >/dev/null && {
+        workspace="$(terraform workspace show)"
+        [ $workspace != "default" ] && {
+            echo "$prefix$workspace$suffix "
+        }
+    }
+}
+
+local tf_profile='$(tf_prompt)'
+
+
+
 # >> Kubernetes
 
 #. ~/.zsh/prompt/kube-ps1.sh
@@ -177,7 +196,7 @@ local aws_profile='$(aws_prompt)'
 
 case "$PROMPT_STYLE" in
     bira)  PROMPT="
-${USER_COLOR}╭─ ${COLOR_NORMAL}${current_dir}${aws_profile}${git_branch}${USER_COLOR}
+${USER_COLOR}╭─ ${COLOR_NORMAL}${current_dir}${aws_profile}${tf_profile}${git_branch}${USER_COLOR}
 ╰─%B${USER_SYMBOL}%b ${COLOR_NORMAL}"
         RPS1="%B${return_code}%b"
         ;;
