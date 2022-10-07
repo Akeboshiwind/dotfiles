@@ -4,6 +4,10 @@
 [user]
     name = Oliver Marshall
     email = olivershawmarshall@gmail.com
+	signingkey = ~/.ssh/juxt_mac_osm.pub
+
+[gpg]
+	format = ssh
 
 [includeIf "gitdir:~/prog/work/"]
     path = ~/work.gitconfig
