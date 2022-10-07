@@ -213,7 +213,7 @@ local function init()
 
     use {
         'Olical/conjure',
-        tag = 'v4.35.1',
+        tag = 'v4.40.0',
         ft = 'clojure',
         config = [[require('config.conjure')]],
     }
