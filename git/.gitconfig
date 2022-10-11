@@ -12,5 +12,13 @@
 [commit]
     gpgSign = true
 
+[pull]
+    # Assume `--rebase` when doing a `git pull`
+	rebase = true
+
+[push]
+    # Assume `--set-upstream` when doing a `git push origin <branch>`
+	autoSetupRemote = true
+
 [includeIf "gitdir:~/prog/work/"]
     path = ~/work.gitconfig
