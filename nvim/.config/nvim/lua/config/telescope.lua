@@ -31,6 +31,14 @@ telescope.setup {
             end
         }
     },
+    extensions = {
+        emoji = {
+            action = function (emoji)
+                -- Insert the selected emoji after the cursor
+                vim.api.nvim_put({ emoji.value }, 'c', false, true)
+            end
+        }
+    }
 }
 
 
@@ -40,6 +48,7 @@ telescope.setup {
 telescope.load_extension('fzf')
 telescope.load_extension('ui-select')
 telescope.load_extension('file_browser')
+telescope.load_extension('emoji')
 
 
 
@@ -121,6 +130,7 @@ wk.register({
         ["*"] = { builtin.grep_string, "Search for word under cursor"},
         ["/"] = { builtin.current_buffer_fuzzy_find, "Fuzzy find in the current buffer"},
 
+        e = { extensions.emoji.emoji, "Emoji"},
     },
     d = {
         name = "diagnostic",
