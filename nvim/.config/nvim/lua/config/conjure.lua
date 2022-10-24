@@ -13,6 +13,9 @@ g["conjure#highlight#enabled"] = true
 -- Only enable for clojure (so far anyway)
 g["conjure#filetypes"] = { "clojure" }
 
+-- Disable the mapping for selecting a session as that collides with searching
+-- files within a project
+g["conjure#client#clojure#nrepl#mapping#session_select"] = false
 
 
 -- >> Document Mappings
