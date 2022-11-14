@@ -32,6 +32,14 @@ wk.register {
     ["<leader>"] = {
         x = { "<cmd>source %<CR>", "Source vim buffer" },
         X = { "<cmd>luafile %<CR>", "Source lua buffer" },
+        w = {
+            name = "window",
+            ["="] = { "<cmd>wincmd =<CR>", "Equalise all windows" },
+            ["+"] = { "<cmd>wincmd +<CR>", "Increase window height" },
+            ["-"] = { "<cmd>wincmd -<CR>", "Decrease window height" },
+            [">"] = { "<cmd>wincmd <<CR>", "Increase window width" },
+            ["<"] = { "<cmd>wincmd ><CR>", "Decrease window width" },
+        },
     },
     ["<C-Space>"] = { "<cmd>:WhichKey ''<CR>", "Show base commands" },
 }
