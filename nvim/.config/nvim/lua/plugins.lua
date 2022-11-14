@@ -246,10 +246,10 @@ local function init()
     -- >> Lua
 
     use {
-        'folke/lua-dev.nvim',
+        'folke/neodev.nvim',
         after = 'mason.nvim',
         ft = 'lua',
-        config = [[require('config.lua-dev')]],
+        config = [[require('config.neodev')]],
     }
 
 

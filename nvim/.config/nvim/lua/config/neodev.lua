@@ -1,11 +1,19 @@
--- config/lua-dev.lua
+-- config/neodev.lua
 
 local lsputils = require('utils.lsp')
 
 
 -- >> Setup
 
-local luadev = require("lua-dev").setup {
+require("neodev").setup {
+    library = {
+        plugins = {
+            "telescope.nvim"
+        }
+    }
+}
+
+require('lspconfig').sumneko_lua.setup {
     lspconfig = lsputils.smart_merge_configs(
         lsputils.default_config,
         {
@@ -17,5 +25,3 @@ local luadev = require("lua-dev").setup {
         }
     )
 }
-
-require('lspconfig').sumneko_lua.setup(luadev)
