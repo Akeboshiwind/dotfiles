@@ -80,7 +80,7 @@ end
 local lsp_status = require('lsp-status')
 -- Already updates based on `vim.lsp.protocol.make_client_capabilities()`
 local capabilities = lsp_status.capabilities
-capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
+capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
 M.default_config = {
     on_attach = function(client, bufnr)
