@@ -69,6 +69,10 @@ cmp.setup {
         { name = 'luasnip' },
         { name = 'buffer' },
         {
+            name = 'rg',
+            keyword_length = 3,
+        },
+        {
             name = 'path',
             option = {
                 trailing_slash = true
