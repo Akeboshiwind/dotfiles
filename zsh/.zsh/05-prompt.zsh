@@ -3,8 +3,6 @@
 
 # >> Configuration
 
-PROMPT_STYLE="bira"
-
 COLOR_ROOT="%F{red}"
 COLOR_USER="%F{cyan}"
 COLOR_NORMAL="%F{white}"
@@ -57,10 +55,7 @@ ICO_DIVERGED="↕"
 
 git_prompt() {
     if [ ! "$(git rev-parse --is-inside-work-tree 2> /dev/null)" ]; then
-        case "$PROMPT_STYLE" in
-            *)  echo "$reset_color%F{cyan}•%f"
-                ;;
-        esac
+        echo "$reset_color%F{cyan}•%f"
         return
     fi
 
@@ -79,10 +74,7 @@ git_prompt() {
                     ;;
     esac
 
-    case "$PROMPT_STYLE" in
-        *)  echo "%B%F{white}${ref}${dirty}${stat}%f%b "
-            ;;
-    esac
+    echo "%B%F{white}${ref}${dirty}${stat}%f%b "
 }
 
 local git_branch='$(git_prompt)%{%f%}'
@@ -194,10 +186,7 @@ local tf_profile='$(tf_prompt)'
 
 # >> Prompt
 
-case "$PROMPT_STYLE" in
-    bira)  PROMPT="
+PROMPT="
 ${USER_COLOR}╭─ ${COLOR_NORMAL}${current_dir}${aws_profile}${tf_profile}${git_branch}${USER_COLOR}
 ╰─%B${USER_SYMBOL}%b ${COLOR_NORMAL}"
-        RPS1="%B${return_code}%b"
-        ;;
-esac
+RPS1="%B${return_code}%b"
