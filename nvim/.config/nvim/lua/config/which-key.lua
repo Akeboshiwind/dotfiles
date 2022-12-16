@@ -30,8 +30,8 @@ wk.register({
 
 wk.register {
     ["<leader>"] = {
-        x = { "<cmd>source %<CR>", "Source vim buffer" },
-        X = { "<cmd>luafile %<CR>", "Source lua buffer" },
+        x = { "<cmd>luafile %<CR>", "Source lua buffer" },
+        X = { "<cmd>source %<CR>", "Source vim buffer" },
         w = {
             name = "window",
             ["="] = { "<cmd>wincmd =<CR>", "Equalise all windows" },
