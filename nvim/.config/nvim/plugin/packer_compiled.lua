@@ -96,10 +96,8 @@ _G.packer_plugins = {
   },
   ["cmp-conjure"] = {
     after_files = { "/Users/osm/.local/share/nvim/site/pack/packer/opt/cmp-conjure/after/plugin/cmp_conjure.lua" },
-    load_after = {
-      conjure = true
-    },
-    loaded = false,
+    load_after = {},
+    loaded = true,
     needs_bufread = false,
     path = "/Users/osm/.local/share/nvim/site/pack/packer/opt/cmp-conjure",
     url = "https://github.com/PaterJason/cmp-conjure"
@@ -114,6 +112,11 @@ _G.packer_plugins = {
     path = "/Users/osm/.local/share/nvim/site/pack/packer/start/cmp-path",
     url = "https://github.com/hrsh7th/cmp-path"
   },
+  ["cmp-rg"] = {
+    loaded = true,
+    path = "/Users/osm/.local/share/nvim/site/pack/packer/start/cmp-rg",
+    url = "https://github.com/lukas-reineke/cmp-rg"
+  },
   cmp_luasnip = {
     loaded = true,
     path = "/Users/osm/.local/share/nvim/site/pack/packer/start/cmp_luasnip",
@@ -122,9 +125,9 @@ _G.packer_plugins = {
   conjure = {
     after = { "cmp-conjure" },
     config = { "require('config.conjure')" },
-    loaded = false,
+    load_after = {},
+    loaded = true,
     needs_bufread = false,
-    only_cond = false,
     path = "/Users/osm/.local/share/nvim/site/pack/packer/opt/conjure",
     url = "https://github.com/Olical/conjure"
   },
@@ -142,28 +145,27 @@ _G.packer_plugins = {
     path = "/Users/osm/.local/share/nvim/site/pack/packer/start/lsp-status.nvim",
     url = "https://github.com/nvim-lua/lsp-status.nvim"
   },
-  ["lua-dev.nvim"] = {
-    config = { "require('config.lua-dev')" },
-    load_after = {},
-    loaded = false,
-    needs_bufread = false,
-    only_cond = false,
-    path = "/Users/osm/.local/share/nvim/site/pack/packer/opt/lua-dev.nvim",
-    url = "https://github.com/folke/lua-dev.nvim"
-  },
   ["mason-lspconfig.nvim"] = {
     loaded = true,
     path = "/Users/osm/.local/share/nvim/site/pack/packer/start/mason-lspconfig.nvim",
     url = "https://github.com/williamboman/mason-lspconfig.nvim"
   },
   ["mason.nvim"] = {
-    after = { "python-tools.nvim", "lua-dev.nvim", "rust-tools.nvim" },
+    after = { "python-tools.nvim", "rust-tools.nvim", "neodev.nvim" },
     config = { "require('config.mason')" },
     load_after = {},
     loaded = true,
     needs_bufread = false,
     path = "/Users/osm/.local/share/nvim/site/pack/packer/opt/mason.nvim",
     url = "https://github.com/williamboman/mason.nvim"
+  },
+  ["neodev.nvim"] = {
+    config = { "require('config.neodev')" },
+    load_after = {},
+    loaded = true,
+    needs_bufread = false,
+    path = "/Users/osm/.local/share/nvim/site/pack/packer/opt/neodev.nvim",
+    url = "https://github.com/folke/neodev.nvim"
   },
   ["nvim-cmp"] = {
     after = { "cmp-conjure" },
@@ -199,9 +201,8 @@ _G.packer_plugins = {
     url = "https://github.com/nvim-treesitter/nvim-treesitter"
   },
   ["packer.nvim"] = {
-    loaded = false,
-    needs_bufread = false,
-    path = "/Users/osm/.local/share/nvim/site/pack/packer/opt/packer.nvim",
+    loaded = true,
+    path = "/Users/osm/.local/share/nvim/site/pack/packer/start/packer.nvim",
     url = "https://github.com/wbthomason/packer.nvim"
   },
   ["parinfer-rust"] = {
@@ -210,11 +211,8 @@ _G.packer_plugins = {
     url = "https://github.com/eraserhd/parinfer-rust"
   },
   playground = {
-    commands = { "TSPlaygroundToggle", "TSHighlightCapturesUnderCursor" },
-    loaded = false,
-    needs_bufread = true,
-    only_cond = false,
-    path = "/Users/osm/.local/share/nvim/site/pack/packer/opt/playground",
+    loaded = true,
+    path = "/Users/osm/.local/share/nvim/site/pack/packer/start/playground",
     url = "https://github.com/nvim-treesitter/playground"
   },
   ["plenary.nvim"] = {
@@ -225,20 +223,23 @@ _G.packer_plugins = {
   ["python-tools.nvim"] = {
     config = { "require('config.python-tools')" },
     load_after = {},
-    loaded = false,
+    loaded = true,
     needs_bufread = false,
-    only_cond = false,
     path = "/Users/osm/.local/share/nvim/site/pack/packer/opt/python-tools.nvim",
     url = "/Users/osm/.config/nvim/local_plugins/python-tools.nvim"
   },
   ["rust-tools.nvim"] = {
     config = { "require('config.rust-tools')" },
     load_after = {},
-    loaded = false,
+    loaded = true,
     needs_bufread = true,
-    only_cond = false,
     path = "/Users/osm/.local/share/nvim/site/pack/packer/opt/rust-tools.nvim",
     url = "https://github.com/simrat39/rust-tools.nvim"
+  },
+  ["telescope-emoji.nvim"] = {
+    loaded = true,
+    path = "/Users/osm/.local/share/nvim/site/pack/packer/start/telescope-emoji.nvim",
+    url = "https://github.com/xiyaowong/telescope-emoji.nvim"
   },
   ["telescope-file-browser.nvim"] = {
     loaded = true,
@@ -256,7 +257,7 @@ _G.packer_plugins = {
     url = "https://github.com/nvim-telescope/telescope-ui-select.nvim"
   },
   ["telescope.nvim"] = {
-    after = { "nvim-lspconfig" },
+    after = { "conjure", "nvim-lspconfig" },
     config = { "require('config.telescope')" },
     load_after = {},
     loaded = true,
@@ -265,18 +266,13 @@ _G.packer_plugins = {
     url = "https://github.com/nvim-telescope/telescope.nvim"
   },
   ["vim-avro"] = {
-    loaded = false,
-    needs_bufread = true,
-    only_cond = false,
-    path = "/Users/osm/.local/share/nvim/site/pack/packer/opt/vim-avro",
+    loaded = true,
+    path = "/Users/osm/.local/share/nvim/site/pack/packer/start/vim-avro",
     url = "https://github.com/gurpreetatwal/vim-avro"
   },
   ["vim-fugitive"] = {
-    commands = { "G", "Git", "Gclog" },
-    loaded = false,
-    needs_bufread = true,
-    only_cond = false,
-    path = "/Users/osm/.local/share/nvim/site/pack/packer/opt/vim-fugitive",
+    loaded = true,
+    path = "/Users/osm/.local/share/nvim/site/pack/packer/start/vim-fugitive",
     url = "https://github.com/tpope/vim-fugitive"
   },
   ["vim-lastplace"] = {
@@ -286,24 +282,12 @@ _G.packer_plugins = {
   },
   ["vim-terraform"] = {
     config = { "require('config.vim-terraform')" },
-    loaded = false,
-    needs_bufread = true,
-    only_cond = false,
-    path = "/Users/osm/.local/share/nvim/site/pack/packer/opt/vim-terraform",
+    loaded = true,
+    path = "/Users/osm/.local/share/nvim/site/pack/packer/start/vim-terraform",
     url = "https://github.com/hashivim/vim-terraform"
   },
-  vimspector = {
-    config = { "require('config.vimspector')" },
-    keys = { { "", ",D" } },
-    load_after = {},
-    loaded = false,
-    needs_bufread = false,
-    only_cond = false,
-    path = "/Users/osm/.local/share/nvim/site/pack/packer/opt/vimspector",
-    url = "https://github.com/puremourning/vimspector"
-  },
   ["which-key.nvim"] = {
-    after = { "vimspector", "telescope.nvim", "nvim-lspconfig", "rust-tools.nvim" },
+    after = { "nvim-lspconfig", "telescope.nvim", "rust-tools.nvim" },
     config = { "require('config.which-key')" },
     loaded = true,
     only_config = true,
@@ -313,14 +297,6 @@ _G.packer_plugins = {
 }
 
 time([[Defining packer_plugins]], false)
--- Config for: nvim-tmux-navigation
-time([[Config for nvim-tmux-navigation]], true)
-require('config.nvim-tmux-navigation')
-time([[Config for nvim-tmux-navigation]], false)
--- Config for: which-key.nvim
-time([[Config for which-key.nvim]], true)
-require('config.which-key')
-time([[Config for which-key.nvim]], false)
 -- Config for: nvim-treesitter
 time([[Config for nvim-treesitter]], true)
 require('config.nvim-treesitter')
@@ -331,6 +307,10 @@ time([[Config for lsp-status.nvim]], true)
             require('config.theme.statusline')
         
 time([[Config for lsp-status.nvim]], false)
+-- Config for: vim-terraform
+time([[Config for vim-terraform]], true)
+require('config.vim-terraform')
+time([[Config for vim-terraform]], false)
 -- Config for: kanagawa.nvim
 time([[Config for kanagawa.nvim]], true)
 require('config.theme.kanagawa')
@@ -339,59 +319,51 @@ time([[Config for kanagawa.nvim]], false)
 time([[Config for nvim-cmp]], true)
 require('config.nvim-cmp')
 time([[Config for nvim-cmp]], false)
+-- Config for: nvim-tmux-navigation
+time([[Config for nvim-tmux-navigation]], true)
+require('config.nvim-tmux-navigation')
+time([[Config for nvim-tmux-navigation]], false)
+-- Config for: which-key.nvim
+time([[Config for which-key.nvim]], true)
+require('config.which-key')
+time([[Config for which-key.nvim]], false)
 -- Load plugins in order defined by `after`
 time([[Sequenced loading]], true)
 vim.cmd [[ packadd telescope-fzf-native.nvim ]]
-vim.cmd [[ packadd nvim-lightbulb ]]
 vim.cmd [[ packadd telescope.nvim ]]
 
 -- Config for: telescope.nvim
 require('config.telescope')
 
+vim.cmd [[ packadd conjure ]]
+
+-- Config for: conjure
+require('config.conjure')
+
+vim.cmd [[ packadd cmp-conjure ]]
+vim.cmd [[ packadd nvim-lightbulb ]]
 vim.cmd [[ packadd nvim-lspconfig ]]
 vim.cmd [[ packadd mason.nvim ]]
 
 -- Config for: mason.nvim
 require('config.mason')
 
+vim.cmd [[ packadd neodev.nvim ]]
+
+-- Config for: neodev.nvim
+require('config.neodev')
+
+vim.cmd [[ packadd rust-tools.nvim ]]
+
+-- Config for: rust-tools.nvim
+require('config.rust-tools')
+
+vim.cmd [[ packadd python-tools.nvim ]]
+
+-- Config for: python-tools.nvim
+require('config.python-tools')
+
 time([[Sequenced loading]], false)
-
--- Command lazy-loads
-time([[Defining lazy-load commands]], true)
-pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file Git lua require("packer.load")({'vim-fugitive'}, { cmd = "Git", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args>, mods = "<mods>" }, _G.packer_plugins)]])
-pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file Gclog lua require("packer.load")({'vim-fugitive'}, { cmd = "Gclog", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args>, mods = "<mods>" }, _G.packer_plugins)]])
-pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file TSHighlightCapturesUnderCursor lua require("packer.load")({'playground'}, { cmd = "TSHighlightCapturesUnderCursor", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args>, mods = "<mods>" }, _G.packer_plugins)]])
-pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file TSPlaygroundToggle lua require("packer.load")({'playground'}, { cmd = "TSPlaygroundToggle", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args>, mods = "<mods>" }, _G.packer_plugins)]])
-pcall(vim.cmd, [[command -nargs=* -range -bang -complete=file G lua require("packer.load")({'vim-fugitive'}, { cmd = "G", l1 = <line1>, l2 = <line2>, bang = <q-bang>, args = <q-args>, mods = "<mods>" }, _G.packer_plugins)]])
-time([[Defining lazy-load commands]], false)
-
--- Keymap lazy-loads
-time([[Defining lazy-load keymaps]], true)
-vim.cmd [[noremap <silent> ,D <cmd>lua require("packer.load")({'vimspector'}, { keys = ",D", prefix = "" }, _G.packer_plugins)<cr>]]
-time([[Defining lazy-load keymaps]], false)
-
-vim.cmd [[augroup packer_load_aucmds]]
-vim.cmd [[au!]]
-  -- Filetype lazy-loads
-time([[Defining lazy-load filetype autocommands]], true)
-vim.cmd [[au FileType rust ++once lua require("packer.load")({'rust-tools.nvim'}, { ft = "rust" }, _G.packer_plugins)]]
-vim.cmd [[au FileType clojure ++once lua require("packer.load")({'conjure'}, { ft = "clojure" }, _G.packer_plugins)]]
-vim.cmd [[au FileType avro ++once lua require("packer.load")({'vim-avro'}, { ft = "avro" }, _G.packer_plugins)]]
-vim.cmd [[au FileType avdl ++once lua require("packer.load")({'vim-avro'}, { ft = "avdl" }, _G.packer_plugins)]]
-vim.cmd [[au FileType python ++once lua require("packer.load")({'python-tools.nvim'}, { ft = "python" }, _G.packer_plugins)]]
-vim.cmd [[au FileType hcl ++once lua require("packer.load")({'vim-terraform'}, { ft = "hcl" }, _G.packer_plugins)]]
-vim.cmd [[au FileType lua ++once lua require("packer.load")({'lua-dev.nvim'}, { ft = "lua" }, _G.packer_plugins)]]
-vim.cmd [[au FileType terraform ++once lua require("packer.load")({'vim-terraform'}, { ft = "terraform" }, _G.packer_plugins)]]
-time([[Defining lazy-load filetype autocommands]], false)
-vim.cmd("augroup END")
-vim.cmd [[augroup filetypedetect]]
-time([[Sourcing ftdetect script at: /Users/osm/.local/share/nvim/site/pack/packer/opt/vim-terraform/ftdetect/hcl.vim]], true)
-vim.cmd [[source /Users/osm/.local/share/nvim/site/pack/packer/opt/vim-terraform/ftdetect/hcl.vim]]
-time([[Sourcing ftdetect script at: /Users/osm/.local/share/nvim/site/pack/packer/opt/vim-terraform/ftdetect/hcl.vim]], false)
-time([[Sourcing ftdetect script at: /Users/osm/.local/share/nvim/site/pack/packer/opt/vim-avro/ftdetect/avdl.vim]], true)
-vim.cmd [[source /Users/osm/.local/share/nvim/site/pack/packer/opt/vim-avro/ftdetect/avdl.vim]]
-time([[Sourcing ftdetect script at: /Users/osm/.local/share/nvim/site/pack/packer/opt/vim-avro/ftdetect/avdl.vim]], false)
-vim.cmd("augroup END")
 
 _G._packer.inside_compile = false
 if _G._packer.needs_bufread == true then

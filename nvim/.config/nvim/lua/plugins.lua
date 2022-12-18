@@ -53,7 +53,6 @@ local function init()
 
     use {
         'wbthomason/packer.nvim',
-        opt = true,
     }
 
     -- Intelligently reopen files at your last edit position in Vim
@@ -71,9 +70,6 @@ local function init()
     -- Git plugin
     use {
         'tpope/vim-fugitive',
-        cmd = {
-            'G', 'Git', 'Gclog'
-        },
     }
 
 
@@ -191,7 +187,6 @@ local function init()
 
     use {
         'nvim-treesitter/playground',
-        cmd = { 'TSPlaygroundToggle', 'TSHighlightCapturesUnderCursor' },
     }
 
 
@@ -200,13 +195,11 @@ local function init()
 
     use {
         'hashivim/vim-terraform',
-        ft = {'terraform', 'hcl'},
         config = [[require('config.vim-terraform')]],
     }
 
     use {
         'gurpreetatwal/vim-avro',
-        ft = { 'avro', 'avdl' },
     }
 
 
@@ -216,7 +209,7 @@ local function init()
     use {
         'Olical/conjure',
         tag = 'v4.40.0',
-        ft = 'clojure',
+        after = { 'telescope.nvim' },
         config = [[require('config.conjure')]],
     }
 
@@ -230,6 +223,13 @@ local function init()
         run = 'cargo build --release',
     }
 
+    -- use {
+    --     'kkharji/lispdocs.nvim',
+    --     after = { 'conjure' },
+    --     requires = { 'kkharji/sqlite.lua' },
+    --     config = [[require('config.lispdocs')]],
+    -- }
+
 
 
     -- >> Rust
@@ -238,7 +238,7 @@ local function init()
         'simrat39/rust-tools.nvim',
         after = { 'which-key.nvim', 'nvim-lspconfig',
                   'mason.nvim' },
-        ft = 'rust',
+        -- ft = 'rust',
         config = [[require('config.rust-tools')]],
     }
 
@@ -249,7 +249,7 @@ local function init()
     use {
         'folke/neodev.nvim',
         after = 'mason.nvim',
-        ft = 'lua',
+        -- ft = 'lua',
         config = [[require('config.neodev')]],
     }
 
@@ -260,7 +260,7 @@ local function init()
     use {
         '~/.config/nvim/local_plugins/python-tools.nvim',
         after = 'mason.nvim',
-        ft = 'python',
+        -- ft = 'python',
         config = [[require('config.python-tools')]],
     }
 
@@ -268,12 +268,12 @@ local function init()
 
     -- >> Vimspector
 
-    use {
-        'puremourning/vimspector',
-        keys = ',D',
-        after = { 'which-key.nvim' },
-        config = [[require('config.vimspector')]],
-    }
+    -- use {
+    --     'puremourning/vimspector',
+    --     -- keys = ',D',
+    --     after = { 'which-key.nvim' },
+    --     config = [[require('config.vimspector')]],
+    -- }
 end
 
 
