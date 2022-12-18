@@ -70,7 +70,7 @@ cmp.setup {
         { name = 'buffer' },
         {
             name = 'rg',
-            keyword_length = 3,
+            keyword_length = 4,
         },
         {
             name = 'path',
@@ -84,7 +84,8 @@ cmp.setup {
 }
 
 -- Use buffer source for `/`
-cmp.setup.cmdline('/', {
+cmp.setup.cmdline({ '/', '?' }, {
+    mapping = cmp.mapping.preset.cmdline(),
     sources = {
         { name = 'buffer' },
     }
@@ -92,6 +93,7 @@ cmp.setup.cmdline('/', {
 
 -- Use cmdline * path source for `:`
 cmp.setup.cmdline(':', {
+    mapping = cmp.mapping.preset.cmdline(),
     sources = cmp.config.sources({
         { name = 'path' },
         { name = 'cmdline' },
