@@ -4,21 +4,13 @@
 -- >> Setup
 
 require('nvim-treesitter.configs').setup {
-    -- TODO: Just install all maintained?
-    ensure_installed = {
-        -- languages
-        "clojure", "bash", "fennel", "java", "javascript", "lua", "python",
-        "rust", "typescript", "vim",
+    ensure_installed = { "comment", "regex" },
+    auto_install = true,
 
-        -- Filetypes
-        "html", "css", "dockerfile", "json", "latex", "query", "toml", "yaml",
-
-        -- Other
-        "comment", "regex",
-    },
     highlight = {
         enable = true,
     },
+
     indent = {
         enable = false,
     },
