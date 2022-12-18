@@ -238,7 +238,6 @@ local function init()
         'simrat39/rust-tools.nvim',
         after = { 'which-key.nvim', 'nvim-lspconfig',
                   'mason.nvim' },
-        -- ft = 'rust',
         config = [[require('config.rust-tools')]],
     }
 
@@ -249,7 +248,6 @@ local function init()
     use {
         'folke/neodev.nvim',
         after = 'mason.nvim',
-        -- ft = 'lua',
         config = [[require('config.neodev')]],
     }
 
@@ -260,7 +258,6 @@ local function init()
     use {
         '~/.config/nvim/local_plugins/python-tools.nvim',
         after = 'mason.nvim',
-        -- ft = 'python',
         config = [[require('config.python-tools')]],
     }
 
