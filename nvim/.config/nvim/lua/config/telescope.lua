@@ -108,6 +108,7 @@ wk.register({
         y = { builtin.filetypes, "File types"},
         c = { builtin.colorscheme, "Colorschemes"},
         m = { builtin.keymaps, "Mappings"},
+        M = { builtin.man_pages, "Man Pages"},
 
         B = { builtin.builtin, "Builtins"},
     },
