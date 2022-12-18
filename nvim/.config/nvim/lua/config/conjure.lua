@@ -155,7 +155,7 @@ wk.register({
         l = "List",
         n = "Next",
         p = "Previous",
-        S = { shadow_select, "Select" },
+        S = { shadow_select, "Conjure Select Shadowcljs Environment" },
     },
     t = {
         name = "test",
