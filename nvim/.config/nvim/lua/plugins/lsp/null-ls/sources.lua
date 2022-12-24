@@ -2,15 +2,14 @@
 
 local null_ls = require("null-ls")
 
-
 -- >> Utils
 
 local function starts_with(str, start)
-    return string.sub(str, 1, string.len(start)) == start
+    return str:sub(1, #start) == start
 end
 
-local function escape_str(str)
-    return str:gsub("([%(%)%.%%%+%-%*%?%[%^%$%]])", "%%%1")
+local function ends_with(str, ending)
+    return ending == "" or str:sub(-#ending) == ending
 end
 
 -- >> Module
@@ -32,10 +31,21 @@ M.config_file_lints = {
             -- >> Prefix exceptions
 
             local prefix_exceptions = {
-                M.config_dir .. "/.git"
+                M.config_dir .. "/.git",
             }
             for _, value in ipairs(prefix_exceptions) do
                 if starts_with(params.bufname, value) then
+                    return diagnostics
+                end
+            end
+
+            -- >> Suffix exceptions
+
+            local suffix_exceptions = {
+                ".json",
+            }
+            for _, value in ipairs(suffix_exceptions) do
+                if ends_with(params.bufname, value) then
                     return diagnostics
                 end
             end
@@ -64,10 +74,7 @@ M.config_file_lints = {
             if not maybe_title then
                 table.insert(diagnostics, diagnostic)
             else
-                maybe_title = escape_str(maybe_title)
-                local pattern = string.format("%s$", maybe_title)
-
-                if not string.match(params.bufname, pattern) then
+                if not ends_with(params.bufname, maybe_title) then
                     table.insert(diagnostics, diagnostic)
                 end
             end
