@@ -78,14 +78,9 @@ function M.config()
             ),
         },
 
-        sources = cmp.config.sources {
-            { name = 'nvim_lsp' },
+        sources = cmp.config.sources({
+            { name = 'copilot' },
             { name = 'luasnip' },
-            { name = 'buffer' },
-            {
-                name = 'rg',
-                keyword_length = 4,
-            },
             {
                 name = 'path',
                 option = {
@@ -94,7 +89,14 @@ function M.config()
             },
 
             { name = 'conjure' },
-        },
+            { name = 'nvim_lsp' },
+
+            {
+                name = 'rg',
+                keyword_length = 4,
+            },
+            { name = 'buffer' },
+        }),
     }
 
     -- Use buffer source for `/`
