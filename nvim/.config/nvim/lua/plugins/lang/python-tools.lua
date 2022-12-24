@@ -6,7 +6,7 @@ local M = {
     dependencies = { 'mason.nvim' },
 }
 
-function M.config()
+function M.setup()
     local lsputils = require('utils.lsp')
 
 

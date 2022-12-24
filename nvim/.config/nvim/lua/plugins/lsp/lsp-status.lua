@@ -4,7 +4,7 @@ local M = {
     'nvim-lua/lsp-status.nvim',
 }
 
-function M.config()
+function M.setup()
     local lsp_status = require('lsp-status')
     local statusline = require('config.theme.statusline')
 

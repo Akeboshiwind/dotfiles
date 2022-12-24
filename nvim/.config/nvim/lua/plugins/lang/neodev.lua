@@ -2,11 +2,11 @@
 
 local M = {
     'folke/neodev.nvim',
-    dependencies = { 'mason.nvim' },
+    dependencies = { 'williamboman/mason.nvim' },
 }
 
 
-function M.config()
+function M.setup()
 
     local lsputils = require('utils.lsp')
 

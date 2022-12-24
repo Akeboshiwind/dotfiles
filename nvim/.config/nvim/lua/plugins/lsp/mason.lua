@@ -10,7 +10,7 @@ local M = {
 }
 
 
-function M.config()
+function M.setup()
     require("mason").setup()
 
     require("mason-lspconfig").setup({

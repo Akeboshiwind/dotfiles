@@ -10,7 +10,7 @@ local M = {
 }
 
 
-function M.config()
+function M.setup()
     local lsputils = require('utils.lsp')
 
 
