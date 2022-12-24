@@ -4,7 +4,6 @@ local fn = vim.fn
 
 local M = {}
 
-
 -- >> Utils
 
 -- Given a path, shorten it by taking substrings of each of the path segments
@@ -23,7 +22,7 @@ function shorten_path(path, n)
     -- If the path is empty or doesn't look like a path, return early
     if path == "" then
         return ""
-    elseif string.find(path, '/') == nil then
+    elseif string.find(path, "/") == nil then
         return path
     end
 
@@ -31,7 +30,7 @@ function shorten_path(path, n)
     -- e.g.
     -- a/b  => { 'a', 'b' }
     -- /a/b => { '', 'a', 'b' }
-    local parts = vim.split(path, '/')
+    local parts = vim.split(path, "/")
 
     -- Shorten parent folders to be `n` characters
     -- Keep the filename the same length
@@ -45,7 +44,7 @@ function shorten_path(path, n)
     -- e.g.
     -- { 'a', 'b' }     => 'a/b'
     -- { '', 'a', 'b' } => '/a/b'
-    return table.concat(parts, '/')
+    return table.concat(parts, "/")
 end
 
 -- Get the shortened path for the cwd
@@ -54,7 +53,7 @@ end
 --
 -- @return string - Shortened current working path
 function statusline_cwd()
-    local relative_path = fn.expand('%')
+    local relative_path = fn.expand("%")
 
     if relative_path == "" then
         -- We're in an unnamed buffer, so just default the file name
@@ -64,15 +63,13 @@ function statusline_cwd()
     end
 end
 
-
-
 -- >> LSP Config
 
 -- Return a string with a list of diagnostic information
 --
 -- @return string
 function lsp_diagnostics()
-    local lsp_status = require('lsp-status')
+    local lsp_status = require("lsp-status")
 
     local status = {
         lsp_status.status_errors(),
@@ -81,16 +78,15 @@ function lsp_diagnostics()
         lsp_status.status_hints(),
     }
 
-    status = vim.tbl_filter(function(elem) return elem ~= nil end, status)
+    status = vim.tbl_filter(function(elem)
+        return elem ~= nil
+    end, status)
 
     return table.concat(status, " ")
 end
 
-
-
 -- >> Configure the statusline
 -- See `:help statusline` for more info on the codes here
-
 
 function M.setup()
     local opt = vim.opt
@@ -102,21 +98,19 @@ function M.setup()
     opt.statusline = opt.statusline + [[%{luaeval("statusline_cwd()")}]]
 
     -- Add lsp progress
-    opt.statusline = opt.statusline
-        + [[ %{luaeval("require('lsp-status').status_progress()")}]]
+    opt.statusline = opt.statusline + [[ %{luaeval("require('lsp-status').status_progress()")}]]
 
     -- Separate the start and the end
-    opt.statusline = opt.statusline + '%='
+    opt.statusline = opt.statusline + "%="
 
     -- Add lsp diagnostics
-    opt.statusline = opt.statusline
-        + [[ %{luaeval("lsp_diagnostics()")}]]
+    opt.statusline = opt.statusline + [[ %{luaeval("lsp_diagnostics()")}]]
 
     -- Line number and file length & column number
-    opt.statusline = opt.statusline + ' %l/%L:%c'
+    opt.statusline = opt.statusline + " %l/%L:%c"
 
     -- Padding at the end
-    opt.statusline = opt.statusline + ' '
+    opt.statusline = opt.statusline + " "
 end
 
 return M

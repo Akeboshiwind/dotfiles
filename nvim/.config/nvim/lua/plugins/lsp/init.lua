@@ -1,17 +1,17 @@
 -- plugins/lsp/init.lua
 
 local nvim_lspconfig_cfg = {
-    'neovim/nvim-lspconfig',
+    "neovim/nvim-lspconfig",
     dependencies = {
-        'nvim-lua/lsp-status.nvim',
-        'folke/which-key.nvim',
-        'nvim-telescope/telescope.nvim',
-        'kosayoda/nvim-lightbulb',
+        "nvim-lua/lsp-status.nvim",
+        "folke/which-key.nvim",
+        "nvim-telescope/telescope.nvim",
+        "kosayoda/nvim-lightbulb",
     },
 }
 
-local lsp_status_cfg = require('plugins.lsp.lsp-status')
-local mason_cfg = require('plugins.lsp.mason')
+local lsp_status_cfg = require("plugins.lsp.lsp-status")
+local mason_cfg = require("plugins.lsp.mason")
 
 function nvim_lspconfig_cfg.config()
     mason_cfg.setup()
@@ -24,8 +24,8 @@ end
 
 return {
     nvim_lspconfig_cfg,
-    'kosayoda/nvim-lightbulb',
+    "kosayoda/nvim-lightbulb",
     lsp_status_cfg,
     mason_cfg,
-    require('plugins.lsp.null-ls'),
+    require("plugins.lsp.null-ls"),
 }

@@ -4,7 +4,6 @@ local M = {}
 
 local cmd = vim.cmd
 
-
 -- >> Setup functions
 
 --- Register Generic LSP mappings
@@ -12,8 +11,7 @@ local cmd = vim.cmd
 --- @param bufnr number
 function M.setup_mappings(bufnr)
     local wk = require("which-key")
-    local builtin = require('telescope.builtin')
-
+    local builtin = require("telescope.builtin")
 
     -- >> Mappings
 
@@ -63,7 +61,7 @@ function M.setup_mappings(bufnr)
         },
     }, {
         prefix = "<leader>",
-        mode = 'v',
+        mode = "v",
         buffer = bufnr,
     })
 end
@@ -71,16 +69,15 @@ end
 -- Setup lighbulb to show when there's an action
 function M.setup_lightbulb()
     -- TODO: Make buffer local?
-    cmd [[autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb() ]]
+    cmd([[autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb() ]])
 end
-
 
 -- >> Default LSP config w/ overrides
 
-local lsp_status = require('lsp-status')
+local lsp_status = require("lsp-status")
 -- Already updates based on `vim.lsp.protocol.make_client_capabilities()`
 local capabilities = lsp_status.capabilities
-capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
+capabilities = require("cmp_nvim_lsp").default_capabilities(capabilities)
 
 M.default_config = {
     on_attach = function(client, bufnr)
@@ -114,7 +111,7 @@ M.default_config = {
 ---
 --- @return table #The composed configs
 function M.smart_merge_configs(...)
-    local configs = {...}
+    local configs = { ... }
 
     -- Composed on_attach functions
     local composed = function(_, _) end
@@ -138,7 +135,5 @@ function M.smart_merge_configs(...)
 
     return vim.tbl_deep_extend("force", unpack(configs))
 end
-
-
 
 return M

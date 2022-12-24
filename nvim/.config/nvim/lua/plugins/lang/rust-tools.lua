@@ -1,67 +1,71 @@
 -- plugins/lang/rust-tools.lua
 
 local M = {
-    'simrat39/rust-tools.nvim',
+    "simrat39/rust-tools.nvim",
     dependencies = {
-        'which-key.nvim',
-        'nvim-lspconfig',
-        'mason.nvim',
+        "which-key.nvim",
+        "nvim-lspconfig",
+        "mason.nvim",
     },
 }
 
-
 function M.setup()
-    local lsputils = require('utils.lsp')
-
+    local lsputils = require("utils.lsp")
 
     -- >> Setup
 
-    require('rust-tools').setup {
-        server = lsputils.smart_merge_configs(
-            lsputils.default_config,
-            {
-                on_attach = function(_, bufnr)
-                    local wk = require("which-key")
+    require("rust-tools").setup({
+        server = lsputils.smart_merge_configs(lsputils.default_config, {
+            on_attach = function(_, bufnr)
+                local wk = require("which-key")
 
-                    -- Non-Prefixed
-                    wk.register({
-                        K = { require('rust-tools.hover_actions').hover_actions,
-                               "Hover actions" },
-                    }, {
-                        buffer = bufnr,
-                    })
+                -- Non-Prefixed
+                wk.register({
+                    K = {
+                        require("rust-tools.hover_actions").hover_actions,
+                        "Hover actions",
+                    },
+                }, {
+                    buffer = bufnr,
+                })
 
-                    -- Leader
-                    wk.register({
-                        g = {
-                            c = { require('rust-tools.open_cargo_toml').open_cargo_toml,
-                                  "Cargo toml file" },
-                            p = { require('rust-tools.parent_module').parent_module,
-                                  "Parent module" },
+                -- Leader
+                wk.register({
+                    g = {
+                        c = {
+                            require("rust-tools.open_cargo_toml").open_cargo_toml,
+                            "Cargo toml file",
                         },
+                        p = {
+                            require("rust-tools.parent_module").parent_module,
+                            "Parent module",
+                        },
+                    },
+                    r = {
                         r = {
-                            r = { require('rust-tools.runnables').runnables,
-                                  "Show Runnables" },
+                            require("rust-tools.runnables").runnables,
+                            "Show Runnables",
                         },
-                        me = { require('rust-tools.expand_macro').expand_macro,
-                               "Macroexpand" },
-                    }, {
-                        prefix = "<leader>",
-                        buffer = bufnr,
-                    })
-                end,
+                    },
+                    me = {
+                        require("rust-tools.expand_macro").expand_macro,
+                        "Macroexpand",
+                    },
+                }, {
+                    prefix = "<leader>",
+                    buffer = bufnr,
+                })
+            end,
+        }, {
+            settings = {
+                ["rust-analyzer"] = {
+                    checkOnSave = {
+                        command = "clippy",
+                    },
+                },
             },
-            {
-                settings = {
-                    ["rust-analyzer"] = {
-                        checkOnSave = {
-                            command = "clippy"
-                        }
-                    }
-                }
-            }
-        ),
-    }
+        }),
+    })
 end
 
 return M

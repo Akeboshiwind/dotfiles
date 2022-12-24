@@ -1,20 +1,20 @@
 -- config/nvim-treesitter.lua
 
 local M = {
-    'nvim-treesitter/nvim-treesitter',
+    "nvim-treesitter/nvim-treesitter",
     -- dir = '~/prog/prog/assorted/nvim-treesitter',
     -- branch = '0.5-compat',
-    build = ':TSUpdate',
+    build = ":TSUpdate",
     dependencies = {
         {
-            'nvim-treesitter/playground',
-            cmd = "TSPlaygroundToggle"
-        }
-    }
+            "nvim-treesitter/playground",
+            cmd = "TSPlaygroundToggle",
+        },
+    },
 }
 
 function M.config()
-    require('nvim-treesitter.configs').setup {
+    require("nvim-treesitter.configs").setup({
         ensure_installed = { "comment", "regex" },
         auto_install = true,
 
@@ -33,9 +33,9 @@ function M.config()
         query_linter = {
             enable = true,
             use_virtual_text = true,
-            lint_events = {"BufWrite", "CursorHold"},
+            lint_events = { "BufWrite", "CursorHold" },
         },
-    }
+    })
 end
 
 return M

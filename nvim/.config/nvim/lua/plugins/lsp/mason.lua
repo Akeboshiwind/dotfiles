@@ -2,13 +2,12 @@
 -- TODO: Update packages regularly? Reminder?
 
 local M = {
-    'williamboman/mason.nvim',
+    "williamboman/mason.nvim",
     dependencies = {
-        'williamboman/mason-lspconfig.nvim',
-        'neovim/nvim-lspconfig',
+        "williamboman/mason-lspconfig.nvim",
+        "neovim/nvim-lspconfig",
     },
 }
-
 
 function M.setup()
     require("mason").setup()

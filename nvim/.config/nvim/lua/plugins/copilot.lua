@@ -6,11 +6,11 @@ local M = {
     dependencies = {
         {
             "zbirenbaum/copilot-cmp",
-            config = function ()
+            config = function()
                 require("copilot_cmp").setup()
             end,
-        }
-    }
+        },
+    },
 }
 
 function M.config()

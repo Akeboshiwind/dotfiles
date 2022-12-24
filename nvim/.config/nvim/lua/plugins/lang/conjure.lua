@@ -1,17 +1,16 @@
 -- plugins/lang/conjure.lua
 
-
 local M = {
-    'Olical/conjure',
-    tag = 'v4.40.0',
+    "Olical/conjure",
+    tag = "v4.40.0",
     dependencies = {
-        'nvim-telescope/telescope.nvim',
-        'gpanders/nvim-parinfer',
+        "nvim-telescope/telescope.nvim",
+        "gpanders/nvim-parinfer",
         {
-            'PaterJason/cmp-conjure',
+            "PaterJason/cmp-conjure",
             dependencies = {
-                'hrsh7th/nvim-cmp',
-                'Olical/conjure'
+                "hrsh7th/nvim-cmp",
+                "Olical/conjure",
             },
         },
     },
@@ -32,15 +31,13 @@ function M.config()
     -- files within a project
     g["conjure#client#clojure#nrepl#mapping#session_select"] = false
 
-
-
     -- >> Custom commands
 
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
     local conf = require("telescope.config").values
-    local actions = require "telescope.actions"
-    local action_state = require "telescope.actions.state"
+    local actions = require("telescope.actions")
+    local action_state = require("telescope.actions.state")
 
     local shadow_select = function(opts)
         opts = opts or {}
@@ -58,7 +55,7 @@ function M.config()
         --  - Filters for shadow-cljs watch commands
         --  - Returns the app name
         --  - De-duplicates the results
-        opts.entry_maker = function (entry)
+        opts.entry_maker = function(entry)
             -- NOTE: Have to put the `-` in a set for some reason...
             local app = entry:match("shadow[-]cljs watch (%w*)")
 
@@ -81,27 +78,25 @@ function M.config()
             }
         end
 
-        pickers.new(opts, {
-            prompt_title = "colours",
-            finder = finders.new_oneshot_job(
-                { "ps", "aux" },
-                opts
-            ),
-            sorter = conf.generic_sorter(opts),
-            attach_mappings = function (prompt_bufnr, _)
-                -- When an app is selected, run ConjureShadowSelect
-                actions.select_default:replace(function ()
-                    actions.close(prompt_bufnr)
-                    local selection = action_state.get_selected_entry()
-                    local app = selection.value
+        pickers
+            .new(opts, {
+                prompt_title = "colours",
+                finder = finders.new_oneshot_job({ "ps", "aux" }, opts),
+                sorter = conf.generic_sorter(opts),
+                attach_mappings = function(prompt_bufnr, _)
+                    -- When an app is selected, run ConjureShadowSelect
+                    actions.select_default:replace(function()
+                        actions.close(prompt_bufnr)
+                        local selection = action_state.get_selected_entry()
+                        local app = selection.value
 
-                    vim.cmd(string.format("ConjureShadowSelect %s", app))
-                end)
-                return true
-            end
-        }):find()
+                        vim.cmd(string.format("ConjureShadowSelect %s", app))
+                    end)
+                    return true
+                end,
+            })
+            :find()
     end
-
 
     -- >> Document Mappings
 
@@ -139,11 +134,11 @@ function M.config()
             name = "goto",
             d = "Definition",
         },
-    }, { prefix = "<leader>", })
+    }, { prefix = "<leader>" })
 
     wk.register({
         E = "Evaluate selection",
-    }, { prefix = "<leader>", mode = 'v' })
+    }, { prefix = "<leader>", mode = "v" })
 
     -- Clojure Nrepl Client Mappings
     wk.register({
@@ -185,7 +180,7 @@ function M.config()
             a = "All, even unchanged",
             c = "Clear refresh cache",
         },
-    }, { prefix = "<leader>", })
+    }, { prefix = "<leader>" })
 end
 
 return M

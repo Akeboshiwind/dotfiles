@@ -1,8 +1,7 @@
 -- plugins/theme/moonlight.lua
 
-
 local M = {
-    'shaunsingh/moonlight.nvim',
+    "shaunsingh/moonlight.nvim",
     enabled = false,
 }
 
@@ -17,7 +16,7 @@ function M.config()
     g.moonlight_borders = true
     g.moonlight_disable_background = false
 
-    require('moonlight').set()
+    require("moonlight").set()
 end
 
 return M

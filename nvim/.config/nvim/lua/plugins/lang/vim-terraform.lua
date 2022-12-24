@@ -1,8 +1,7 @@
 -- plugins/lang/vim-terraform.lua
 
-
 local M = {
-    'hashivim/vim-terraform',
+    "hashivim/vim-terraform",
     enabled = false,
 }
 
@@ -11,4 +10,3 @@ function M.config()
 end
 
 return M
-
