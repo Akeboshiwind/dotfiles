@@ -27,4 +27,5 @@ return {
     'kosayoda/nvim-lightbulb',
     lsp_status_cfg,
     mason_cfg,
+    require('plugins.lsp.null-ls'),
 }

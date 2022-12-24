@@ -3,6 +3,7 @@
 
 local M = {
     'hashivim/vim-terraform',
+    enabled = false,
 }
 
 function M.config()
