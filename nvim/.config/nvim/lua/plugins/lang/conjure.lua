@@ -6,16 +6,13 @@ local M = {
     tag = 'v4.40.0',
     dependencies = {
         'nvim-telescope/telescope.nvim',
+        'gpanders/nvim-parinfer',
         {
             'PaterJason/cmp-conjure',
             dependencies = {
                 'hrsh7th/nvim-cmp',
                 'Olical/conjure'
             },
-        },
-        {
-            'eraserhd/parinfer-rust',
-            build = 'cargo build --release',
         },
     },
 }
