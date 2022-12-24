@@ -89,6 +89,7 @@ require("lazy").setup("plugins", {
       start = "🚀",
       task = "📌",
     },
+    border = "single"
   },
 })
 
