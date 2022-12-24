@@ -10,6 +10,7 @@ local M = {
 
 M.tools = {
     "stylua",
+    "cspell",
 }
 
 function M.install_tools()
@@ -54,7 +55,10 @@ function M.config()
         sources = {
             null_ls.builtins.formatting.terraform_fmt,
             null_ls.builtins.formatting.stylua.with({
-                extra_args = { "--config-path", vim.fn.stdpath("config") .. "config/stylua.toml" },
+                extra_args = { "--config-path", vim.fn.stdpath("config") .. "/config/stylua.toml" },
+            }),
+            null_ls.builtins.diagnostics.cspell.with({
+                extra_args = { "--config", vim.fn.stdpath("config") .. "/config/cspell.json" },
             }),
         },
     })
