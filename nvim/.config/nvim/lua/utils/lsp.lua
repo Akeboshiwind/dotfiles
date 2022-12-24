@@ -1,4 +1,4 @@
--- utils/lsp/config.lua
+-- utils/lsp.lua
 
 local M = {}
 
@@ -66,7 +66,7 @@ function M.setup_mappings(bufnr)
     })
 end
 
--- Setup lighbulb to show when there's an action
+-- Setup lightbulb to show when there's an action
 function M.setup_lightbulb()
     -- TODO: Make buffer local?
     cmd([[autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb() ]])

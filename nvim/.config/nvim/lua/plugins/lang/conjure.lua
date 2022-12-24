@@ -21,7 +21,7 @@ function M.config()
 
     g["conjure#mapping#prefix"] = "<leader>"
 
-    -- Breifly highlight evaluated forms
+    -- Briefly highlight evaluated forms
     g["conjure#highlight#enabled"] = true
 
     -- Only enable for clojure (so far anyway)
@@ -109,7 +109,7 @@ function M.config()
             s = "Open in new horizontal split window",
             v = "Open in new vertical split window",
             t = "Open in new tab",
-            q = "Close all visibal windows in current tab",
+            q = "Close all visible windows in current tab",
             r = "Soft reset",
             R = "Hard reset",
         },

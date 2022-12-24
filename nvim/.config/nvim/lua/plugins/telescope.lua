@@ -1,4 +1,4 @@
--- config/telescope.lua
+-- plugins/telescope.lua
 
 local M = {
     "nvim-telescope/telescope.nvim",

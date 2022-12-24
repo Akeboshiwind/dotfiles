@@ -1,4 +1,4 @@
--- config/which-key.lua
+-- plugins/which-key.lua
 
 local M = {
     "folke/which-key.nvim",
