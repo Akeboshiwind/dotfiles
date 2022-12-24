@@ -51,7 +51,6 @@ function M.config()
     null_ls.setup({
         on_attach = M.on_attach,
         sources = {
-            null_ls.builtins.completion.spell,
             null_ls.builtins.formatting.terraform_fmt,
             null_ls.builtins.formatting.stylua.with({
                 extra_args = { "--config-path", vim.fn.stdpath("config") .. "config/stylua/stylua.toml" },
