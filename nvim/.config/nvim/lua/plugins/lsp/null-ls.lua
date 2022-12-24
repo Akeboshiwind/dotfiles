@@ -75,23 +75,31 @@ function M.config()
                 -- -- my/config/file.lua
                 -- ```
                 -- There may be some exceptions like files that start with #!
-
                 local first_line = params.content[1]
-                local maybe_title = string.match(first_line, "(%S+)$")
-                maybe_title = escape_str(maybe_title)
-                local pattern = string.format("%s$", maybe_title)
 
-                if not string.match(params.bufname, pattern) then
-                    local range = {
+                local diagnostic = {
+                    range = {
                         start = { line = 0, character = 0 },
                         ["end"] = { line = 0, character = #first_line },
-                    }
-                    table.insert(diagnostics, {
-                        range = range,
-                        severity = vim.lsp.protocol.DiagnosticSeverity.Warning,
-                        message = "Missing Config Title",
-                        source = "config-title",
-                    })
+                    },
+                    severity = vim.lsp.protocol.DiagnosticSeverity.Warning,
+                    message = "Missing Config Title",
+                    source = "config-title",
+                }
+
+                local maybe_title = string.match(first_line, "(%S+)$")
+                if not maybe_title then
+                    table.insert(diagnostics, diagnostic)
+                else
+                    maybe_title = escape_str(maybe_title)
+                    local pattern = string.format("%s$", maybe_title)
+
+                    print(params.bufname)
+                    print(pattern)
+                    print(string.match(params.bufname, pattern))
+                    if not string.match(params.bufname, pattern) then
+                        table.insert(diagnostics, diagnostic)
+                    end
                 end
 
                 return diagnostics
