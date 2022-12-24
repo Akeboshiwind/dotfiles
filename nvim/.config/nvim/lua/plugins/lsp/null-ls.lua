@@ -67,6 +67,17 @@ function M.config()
             fn = function(params)
                 local diagnostics = {}
 
+                -- >> Prefix exceptions
+
+                local prefix_exceptions = {
+                    config_dir .. "/.git"
+                }
+                for _, value in ipairs(prefix_exceptions) do
+                    if starts_with(params.bufname, value) then
+                        return diagnostics
+                    end
+                end
+
                 -- >> Config Titles
                 -- I expect the first line of config files to end with part of
                 -- the path of the file.
@@ -94,9 +105,6 @@ function M.config()
                     maybe_title = escape_str(maybe_title)
                     local pattern = string.format("%s$", maybe_title)
 
-                    print(params.bufname)
-                    print(pattern)
-                    print(string.match(params.bufname, pattern))
                     if not string.match(params.bufname, pattern) then
                         table.insert(diagnostics, diagnostic)
                     end
