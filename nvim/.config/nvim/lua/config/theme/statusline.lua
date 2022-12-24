@@ -1,7 +1,8 @@
 -- config/theme/statusline.lua
 
-local opt = vim.opt
 local fn = vim.fn
+
+local M = {}
 
 
 -- >> Utils
@@ -90,25 +91,32 @@ end
 -- >> Configure the statusline
 -- See `:help statusline` for more info on the codes here
 
--- Clear previous
-opt.statusline = ""
 
--- Add shortened path
-opt.statusline = opt.statusline + [[%{luaeval("statusline_cwd()")}]]
+function M.setup()
+    local opt = vim.opt
 
--- Add lsp progress
-opt.statusline = opt.statusline
-    + [[ %{luaeval("require('lsp-status').status_progress()")}]]
+    -- Clear previous
+    opt.statusline = ""
 
--- Separate the start and the end
-opt.statusline = opt.statusline + '%='
+    -- Add shortened path
+    opt.statusline = opt.statusline + [[%{luaeval("statusline_cwd()")}]]
 
--- Add lsp diagnostics
-opt.statusline = opt.statusline
-    + [[ %{luaeval("lsp_diagnostics()")}]]
+    -- Add lsp progress
+    opt.statusline = opt.statusline
+        + [[ %{luaeval("require('lsp-status').status_progress()")}]]
 
--- Line number and file length & column number
-opt.statusline = opt.statusline + ' %l/%L:%c'
+    -- Separate the start and the end
+    opt.statusline = opt.statusline + '%='
 
--- Padding at the end
-opt.statusline = opt.statusline + ' '
+    -- Add lsp diagnostics
+    opt.statusline = opt.statusline
+        + [[ %{luaeval("lsp_diagnostics()")}]]
+
+    -- Line number and file length & column number
+    opt.statusline = opt.statusline + ' %l/%L:%c'
+
+    -- Padding at the end
+    opt.statusline = opt.statusline + ' '
+end
+
+return M
