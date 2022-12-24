@@ -43,10 +43,63 @@ function M.on_attach(client, bufnr)
     end
 end
 
+local function starts_with(str, start)
+    return string.sub(str, 1, string.len(start)) == start
+end
+
+local function escape_str(str)
+    return str:gsub("([%(%)%.%%%+%-%*%?%[%^%$%]])", "%%%1")
+end
+
 function M.config()
     local null_ls = require("null-ls")
 
     M.install_tools()
+
+    local config_dir = vim.fn.expand("~") .. "/dotfiles"
+    local config_file_lints = {
+        method = null_ls.methods.DIAGNOSTICS,
+        condition = function(utils)
+            return utils.root_matches(config_dir)
+        end,
+        filetypes = {},
+        generator = {
+            fn = function(params)
+                local diagnostics = {}
+
+                -- >> Config Titles
+                -- I expect the first line of config files to end with part of
+                -- the path of the file.
+                -- So something like:
+                -- ```lua
+                -- -- my/config/file.lua
+                -- ```
+                -- There may be some exceptions like files that start with #!
+
+                local first_line = params.content[1]
+                local maybe_title = string.match(first_line, "(%S+)$")
+                maybe_title = escape_str(maybe_title)
+                local pattern = string.format("%s$", maybe_title)
+
+                if not string.match(params.bufname, pattern) then
+                    local range = {
+                        start = { line = 0, character = 0 },
+                        ["end"] = { line = 0, character = #first_line },
+                    }
+                    table.insert(diagnostics, {
+                        range = range,
+                        severity = vim.lsp.protocol.DiagnosticSeverity.Warning,
+                        message = "Missing Config Title",
+                        source = "config-title",
+                    })
+                end
+
+                return diagnostics
+            end,
+        },
+    }
+
+    null_ls.register(config_file_lints)
 
     null_ls.setup({
         on_attach = M.on_attach,
