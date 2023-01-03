@@ -13,6 +13,9 @@ M.tools = {
     "cspell",
 }
 
+M.stylua_cfg = vim.fn.stdpath("config") .. "/config/stylua.toml"
+M.cspell_cfg = vim.fn.stdpath("config") .. "/config/cspell.json"
+
 function M.install_tools()
     local mr = require("mason-registry")
     for _, tool in ipairs(M.tools) do
@@ -21,6 +24,46 @@ function M.install_tools()
             p:install()
         end
     end
+end
+
+function M.read_json_file(filename)
+    local f = io.open(filename, "rb")
+    if f then
+        local content = f:read("*all")
+        f:close()
+        local t = vim.fn.json_decode(content)
+        return t
+    end
+end
+
+function M.write_json_file(filename, content)
+    local f = io.open(filename, "w")
+    if f then
+        f:write(vim.fn.json_encode(content))
+        f:close()
+    end
+end
+
+function M.cspell_add_exception(word)
+    local cfg = M.read_json_file(M.cspell_cfg)
+    if cfg and cfg.words then
+        table.insert(cfg.words, word)
+        M.write_json_file(M.cspell_cfg, cfg)
+    end
+end
+
+function M.setup_cspell()
+    vim.api.nvim_create_user_command("CspellAddException", function(opts)
+        M.cspell_add_exception(opts.args)
+    end, { nargs = 1 })
+
+    local wk = require("which-key")
+    wk.register({
+        a = {
+            ":CspellAddException <C-r><C-w>",
+            "Cspell Add Exception",
+        },
+    }, { prefix = "<leader>" })
 end
 
 function M.on_attach(client, bufnr)
@@ -34,11 +77,7 @@ function M.on_attach(client, bufnr)
             group = augroup,
             buffer = bufnr,
             callback = function()
-                if vim.lsp.buf.format then
-                    vim.lsp.buf.format({ bufnr = bufnr })
-                else
-                    vim.lsp.buf.formatting_sync()
-                end
+                vim.lsp.buf.format({ bufnr = bufnr })
             end,
         })
     end
@@ -55,15 +94,17 @@ function M.config()
         sources = {
             null_ls.builtins.formatting.terraform_fmt,
             null_ls.builtins.formatting.stylua.with({
-                extra_args = { "--config-path", vim.fn.stdpath("config") .. "/config/stylua.toml" },
+                extra_args = { "--config-path", M.stylua_cfg },
             }),
             null_ls.builtins.diagnostics.cspell.with({
-                extra_args = { "--config", vim.fn.stdpath("config") .. "/config/cspell.json" },
+                extra_args = { "--config", M.cspell_cfg },
             }),
         },
     })
 
     null_ls.register(sources.config_file_lints)
+
+    M.setup_cspell()
 end
 
 return M
