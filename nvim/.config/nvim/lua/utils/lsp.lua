@@ -33,7 +33,7 @@ function M.setup_mappings(bufnr)
 
         a = {
             name = "action",
-            a = { builtin.lsp_code_actions, "Apply code action" },
+            a = { vim.lsp.buf.code_action, "Apply code action" },
             -- Add keybind for whole buffer?
         },
 
