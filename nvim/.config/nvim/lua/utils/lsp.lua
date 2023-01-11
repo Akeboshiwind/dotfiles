@@ -14,13 +14,16 @@ function M.setup_mappings(bufnr)
     local builtin = require("telescope.builtin")
 
     -- >> Mappings
+    local filetype = vim.bo[bufnr].filetype
 
     -- Non-Prefixed
-    wk.register({
-        K = { vim.lsp.buf.hover, "Document symbol" },
-    }, {
-        buffer = bufnr,
-    })
+    if filetype ~= "clojure" then
+        wk.register({
+            K = { vim.lsp.buf.hover, "Document symbol" },
+        }, {
+            buffer = bufnr,
+        })
+    end
 
     -- Leader
     wk.register({
@@ -40,7 +43,6 @@ function M.setup_mappings(bufnr)
         g = {
             name = "goto",
             D = { vim.lsp.buf.declaration, "Declaration" },
-            d = { builtin.lsp_definitions, "Definition" },
             i = { builtin.lsp_implementations, "Implementation" },
             y = { builtin.lsp_type_definitions, "Type definition" },
             r = { builtin.lsp_references, "References" },
@@ -52,6 +54,19 @@ function M.setup_mappings(bufnr)
         prefix = "<leader>",
         buffer = bufnr,
     })
+
+    -- Don't overwrite conjure mapping
+    if filetype ~= "clojure" then
+        wk.register({
+            g = {
+                name = "goto",
+                d = { builtin.lsp_definitions, "Definition" },
+            },
+        }, {
+            prefix = "<leader>",
+            buffer = bufnr,
+        })
+    end
 
     -- Visual
     wk.register({
