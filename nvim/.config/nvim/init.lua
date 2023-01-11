@@ -74,6 +74,9 @@ end
 vim.opt.runtimepath:prepend(lazypath)
 
 require("lazy").setup("plugins", {
+    dev = {
+        path = "~/prog/prog/nvim/"
+    },
     ui = {
         icons = {
             cmd = "⌘",
