@@ -66,16 +66,16 @@ if not vim.loop.fs_stat(lazypath) then
         "git",
         "clone",
         "--filter=blob:none",
-        "--single-branch",
         "https://github.com/folke/lazy.nvim.git",
+        "--branch=stable", -- latest stable release
         lazypath,
     })
 end
-vim.opt.runtimepath:prepend(lazypath)
+vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup("plugins", {
     dev = {
-        path = "~/prog/prog/nvim/"
+        path = "~/prog/prog/nvim/",
     },
     ui = {
         icons = {
