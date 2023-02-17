@@ -1,4 +1,4 @@
--- config/nvim-treesitter.lua
+-- plugins/treesitter/nvim-treesitter.lua
 
 local M = {
     "nvim-treesitter/nvim-treesitter",
@@ -6,10 +6,10 @@ local M = {
     -- branch = '0.5-compat',
     build = ":TSUpdate",
     dependencies = {
-        {
-            "nvim-treesitter/playground",
-            cmd = "TSPlaygroundToggle",
-        },
+        -- {
+        --     "nvim-treesitter/playground",
+        --     cmd = "TSPlaygroundToggle",
+        -- },
     },
 }
 
@@ -26,9 +26,9 @@ function M.config()
             enable = false,
         },
 
-        playground = {
-            enable = true,
-        },
+        -- playground = {
+        --     enable = true,
+        -- },
 
         query_linter = {
             enable = true,
