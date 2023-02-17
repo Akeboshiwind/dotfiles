@@ -11,6 +11,7 @@ local M = {
 M.tools = {
     "stylua",
     "cspell",
+    "commitlint",
 }
 
 function M.install_tools()
@@ -49,6 +50,7 @@ function M.config()
 
     local stylua_cfg = vim.fn.stdpath("config") .. "/config/stylua.toml"
     local cspell_cfg = vim.fn.stdpath("config") .. "/config/cspell.json"
+    local commitlint_cfg = vim.fn.stdpath("config") .. "/config/commitlint.config.js"
 
     null_ls.setup(lsputils.smart_merge_configs(lsputils.default_config, {
         on_attach = M.on_attach,
@@ -67,6 +69,12 @@ function M.config()
                         return cspell_cfg
                     end,
                 },
+            }),
+            null_ls.builtins.diagnostics.commitlint.with({
+                env = {
+                    NODE_PATH = vim.fn.stdpath("data") .. "/mason/packages/commitlint/node_modules",
+                },
+                extra_args = { "--config", commitlint_cfg },
             }),
         },
     }))
