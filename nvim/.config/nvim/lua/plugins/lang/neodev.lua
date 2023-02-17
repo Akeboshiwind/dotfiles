@@ -2,6 +2,7 @@
 
 local M = {
     "folke/neodev.nvim",
+    enabled = false,
     dependencies = { "williamboman/mason.nvim" },
 }
 

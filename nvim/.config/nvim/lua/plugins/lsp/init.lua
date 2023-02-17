@@ -17,7 +17,7 @@ function nvim_lspconfig_cfg.config()
     mason_cfg.setup()
     lsp_status_cfg.setup()
 
-    require("plugins.lang.neodev").setup()
+    -- require("plugins.lang.neodev").setup()
     require("plugins.lang.python-tools").setup()
     require("plugins.lang.rust-tools").setup()
 end
