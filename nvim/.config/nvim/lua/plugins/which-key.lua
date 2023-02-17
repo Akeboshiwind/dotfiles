@@ -29,6 +29,8 @@ function M.config()
     }, { mode = "i" })
 
     wk.register({
+        ["*"] = { "g*", "Search in buffer for match" },
+        ["#"] = { "g#", "Search in buffer for match, backwards" },
         ["<leader>"] = {
             x = { "<cmd>luafile %<CR>", "Source lua buffer" },
             X = { "<cmd>source %<CR>", "Source vim buffer" },
