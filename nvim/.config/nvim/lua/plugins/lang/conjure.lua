@@ -35,6 +35,9 @@ function M.config()
     -- files within a project
     g["conjure#client#clojure#nrepl#mapping#session_select"] = false
 
+    -- Disable auto-starting a babashka repl
+    g["conjure#client#clojure#nrepl#connection#auto_repl#enabled"] = false
+
     -- >> Custom commands
 
     local pickers = require("telescope.pickers")
