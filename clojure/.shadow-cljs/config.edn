@@ -1,1 +1,4 @@
-{:dependencies [[cider/cider-nrepl "0.28.4"]]}
+;; >> .shadow-cljs/config.edn
+
+{:dependencies [;; If shadow detects `cider-nrepl` then it will used automatically
+                [cider/cider-nrepl "0.30.0"]]}
