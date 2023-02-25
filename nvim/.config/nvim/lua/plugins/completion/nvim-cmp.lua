@@ -33,7 +33,10 @@ function M.config()
 
         mapping = {
             ["<C-Space>"] = cmp.mapping(cmp.mapping.complete(), { "i", "c" }),
-            ["<CR>"] = cmp.mapping.confirm({ select = true }),
+            ["<CR>"] = cmp.mapping.confirm({
+                select = true,
+                behavior = cmp.ConfirmBehavior.Replace,
+            }),
             ["<C-e>"] = cmp.mapping({
                 i = cmp.mapping.abort(),
                 c = cmp.mapping.close(),
