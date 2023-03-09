@@ -12,6 +12,7 @@ M.tools = {
     "stylua",
     "cspell",
     "commitlint",
+    "clj-kondo",
 }
 
 function M.install_tools()
@@ -76,6 +77,7 @@ function M.config()
                 },
                 extra_args = { "--config", commitlint_cfg },
             }),
+            null_ls.builtins.diagnostics.clj_kondo,
         },
     }))
 
