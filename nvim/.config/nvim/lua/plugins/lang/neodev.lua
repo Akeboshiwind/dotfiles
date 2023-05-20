@@ -7,7 +7,7 @@ local M = {
 }
 
 function M.setup()
-    local lsputils = require("utils.lsp")
+    local lsputils = require("config.lsp.utils")
 
     -- >> Setup
 

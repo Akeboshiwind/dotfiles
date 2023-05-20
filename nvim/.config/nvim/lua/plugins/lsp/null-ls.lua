@@ -44,8 +44,8 @@ end
 
 function M.config()
     local null_ls = require("null-ls")
-    local sources = require("plugins.lsp.null-ls.sources")
-    local lsputils = require("utils.lsp")
+    local sources = require("config.lsp.null-ls.sources")
+    local lsputils = require("config.lsp.utils")
 
     M.install_tools()
 

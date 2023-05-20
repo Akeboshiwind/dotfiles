@@ -2,9 +2,9 @@
 
 return {
     "gurpreetatwal/vim-avro",
-    require("plugins.lang.conjure"),
-    require("plugins.lang.neodev"),
-    require("plugins.lang.python-tools"),
-    require("plugins.lang.rust-tools"),
-    require("plugins.lang.vim-terraform"),
+    { import = "plugins.lang.conjure" },
+    { import = "plugins.lang.neodev" },
+    { import = "plugins.lang.python-tools" },
+    { import = "plugins.lang.rust-tools" },
+    { import = "plugins.lang.vim-terraform" },
 }

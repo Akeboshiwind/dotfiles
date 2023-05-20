@@ -1,5 +1,5 @@
 -- plugins/treesitter/init.lua
 
 return {
-    require("plugins/treesitter/nvim-treesitter"),
+    { import = "plugins/treesitter/nvim-treesitter" },
 }

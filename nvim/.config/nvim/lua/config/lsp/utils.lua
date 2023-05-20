@@ -1,4 +1,4 @@
--- utils/lsp.lua
+-- config/lsp/utils.lua
 
 local M = {}
 
