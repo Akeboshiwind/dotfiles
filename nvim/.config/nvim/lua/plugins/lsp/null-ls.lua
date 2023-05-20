@@ -15,16 +15,6 @@ M.tools = {
     "clj-kondo",
 }
 
-function M.install_tools()
-    local mr = require("mason-registry")
-    for _, tool in ipairs(M.tools) do
-        local p = mr.get_package(tool)
-        if not p:is_installed() then
-            p:install()
-        end
-    end
-end
-
 function M.on_attach(client, bufnr)
     local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
     if client.supports_method("textDocument/formatting") then
@@ -47,7 +37,8 @@ function M.config()
     local sources = require("config.lsp.null-ls.sources")
     local lsputils = require("config.lsp.utils")
 
-    M.install_tools()
+    local mason_utils = require("config.mason.utils")
+    mason_utils.install_tools(M.tools)
 
     local stylua_cfg = vim.fn.stdpath("config") .. "/config/stylua.toml"
     local cspell_cfg = vim.fn.stdpath("config") .. "/config/cspell.json"
