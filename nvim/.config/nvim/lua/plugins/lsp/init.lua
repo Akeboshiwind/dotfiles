@@ -7,6 +7,14 @@ local nvim_lspconfig_cfg = {
         "folke/which-key.nvim",
         "nvim-telescope/telescope.nvim",
         "kosayoda/nvim-lightbulb",
+        {
+            "j-hui/fidget.nvim",
+            opts = {
+                timer = {
+                    task_decay = 0,
+                },
+            },
+        },
     },
 }
 
