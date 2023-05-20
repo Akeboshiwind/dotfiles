@@ -20,8 +20,6 @@ local nvim_lspconfig_cfg = {
 
 function nvim_lspconfig_cfg.config()
     require("plugins.lsp.mason").setup()
-    require("plugins.lsp.lsp-status").setup()
-
     -- require("plugins.lang.neodev").setup()
     require("plugins.lang.python-tools").setup()
     require("plugins.lang.rust-tools").setup()
@@ -31,6 +29,5 @@ return {
     nvim_lspconfig_cfg,
     "kosayoda/nvim-lightbulb",
     { import = "plugins.lsp.mason" },
-    { import = "plugins.lsp.lsp-status" },
     { import = "plugins.lsp.null-ls" },
 }
