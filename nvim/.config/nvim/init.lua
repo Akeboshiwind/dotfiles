@@ -143,10 +143,10 @@ opt.signcolumn = "yes"
 cmd([[highlight! link SignColumn LineNr]])
 
 local sign_config = {
-    DiagnosticSignError = "",
-    DiagnosticSignWarn = "",
-    DiagnosticSignInfo = "",
-    DiagnosticSignHint = "",
+    DiagnosticSignError = "",
+    DiagnosticSignWarn = "",
+    DiagnosticSignInfo = "",
+    DiagnosticSignHint = "",
 }
 
 for sign, symbol in pairs(sign_config) do
