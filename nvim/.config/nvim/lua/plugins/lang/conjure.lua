@@ -87,7 +87,7 @@ function M.config()
 
         pickers
             .new(opts, {
-                prompt_title = "colours",
+                prompt_title = "shadow-cljs apps",
                 finder = finders.new_oneshot_job({ "ps", "aux" }, opts),
                 sorter = conf.generic_sorter(opts),
                 attach_mappings = function(prompt_bufnr, _)
