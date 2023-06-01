@@ -1,12 +1,12 @@
 -- chatgpt.lua
 
 local M = {
-    "jackMort/ChatGPT.nvim",
+    "Bryley/neoai.nvim",
     dependencies = {
         "MunifTanjim/nui.nvim",
-        "nvim-lua/plenary.nvim",
         "nvim-telescope/telescope.nvim",
     },
+    -- TODO: Lazy
 }
 
 function M.file_exists(path)
@@ -32,57 +32,85 @@ function M.load_api_key()
     return api_key
 end
 
+M.prompts = {
+    ["nvim-lua"] = { "In nvim, using lua:", "" },
+}
+
+M.visual_prompts = {
+    ["summarise"] = { "Summarise the given text in 1-2 lines.", "" },
+    ["doc string"] = {
+        "Output a docstring in a codeblock for the given code.",
+        "Do not output the code as well, just the docstring",
+        "",
+    },
+    ["clarity suggestions"] = {
+        "Output a bullet point list of suggestions to improve clarity.",
+        "Format this as up to 5 'specific' suggestions, these suggestions should point to specific parts of the text.",
+        "Follow these with up to 3 'generic' suggestions which can suggest general things the text could improve on.",
+        "If you don't have enough suggestions you think are relevant, then include include less rather trying to fill out as many as possible.",
+        "",
+    },
+}
+
+function M.visual_prompt_select()
+    local neoai_utils = require("config.neoai")
+    neoai_utils.prompt_select({
+        prompts = M.visual_prompts,
+        select_action = function(prompt)
+            neoai_utils.set_context()
+            neoai_utils.fill_prompt(prompt)
+        end,
+    })
+end
+
+function M.chat_with_context()
+    require("config.neoai").set_context()
+    -- Open the sidebar if not already
+    require("neoai").toggle(true)
+end
+
 function M.config()
-    local api_key = M.load_api_key()
-    if api_key == nil then
-        return
-    end
+    -- >> Setup
 
-    vim.env.OPENAI_API_KEY = api_key
+    local open_api_key_env = "OPENAI_API_KEY"
+    vim.env[open_api_key_env] = M.load_api_key()
 
-    local chatgpt = require("chatgpt")
-    chatgpt.setup({})
+    require("neoai").setup({
+        open_api_key_env = open_api_key_env,
+        shortcuts = {},
+        ui = {
+            submit = "<S-Enter>",
+        },
+    })
+
+    -- >> Bindings
 
     local wk = require("which-key")
 
+    -- Normal mode
     wk.register({
-        p = {
-            name = "ChatGPT",
-            c = {
-                function()
-                    chatgpt.openChat()
-                end,
-                "Chat with ChatGPT",
-            },
-            a = {
-                function()
-                    chatgpt.selectAwesomePrompt()
-                end,
-                "ActAs",
-            },
-            e = {
-                function()
-                    chatgpt.edit_with_instructions()
-                end,
-                "Edit with instructions",
-            },
+        ac = { ":NeoAI<CR>", "NeoAI Chat" },
+        ap = {
+            function()
+                require("config.neoai").prompt_select({
+                    prompts = M.prompts,
+                })
+            end,
+            "Select prompt",
         },
     }, { prefix = "<leader>" })
 
+    -- Visual mode
     wk.register({
-        p = {
-            name = "ChatGPT",
-            e = {
-                function()
-                    chatgpt.edit_with_instructions()
-                end,
-                "Edit with instructions",
-            },
+        ap = {
+            ":'<,'>lua require('plugins.chatgpt').visual_prompt_select()<CR>",
+            "Select prompt",
         },
-    }, {
-        prefix = "<leader>",
-        mode = "v",
-    })
+        ac = {
+            ":'<,'>lua require('plugins.chatgpt').chat_with_context()<CR>",
+            "Chat with context",
+        },
+    }, { mode = "v", prefix = "<leader>" })
 end
 
 return M
