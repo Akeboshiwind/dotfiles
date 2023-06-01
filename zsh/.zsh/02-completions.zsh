@@ -3,12 +3,21 @@
 
 # >> Basic Setup
 
-setopt BRACE_CCL
-export COMPLETION_PATH=~/.zsh/completion
+# Expand expressions in braces which would not otherwise undergo brace explosion
+setopt BRACE_CCL # Not sure if needed:
+
+# Setup brew builtin completions
+fpath=($(brew-prefix)/share/zsh/site-functions/ $fpath)
+
+# Setup custom completions
+export COMPLETION_PATH=~/.zsh/completion # Config local completion directory
 mkdir -p $COMPLETION_PATH
 fpath=($COMPLETION_PATH $fpath)
+
+# Setup completions
 autoload -Uz compinit
 compinit -u
+
 # Fixes error 'zsh: no matches found'
 # E.g. of command that would produce error: `curl google.com/search?q=`
 unsetopt nomatch
