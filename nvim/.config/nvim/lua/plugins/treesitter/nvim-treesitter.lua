@@ -11,10 +11,7 @@ local M = {
         --     cmd = "TSPlaygroundToggle",
         -- },
     },
-}
-
-function M.config()
-    require("nvim-treesitter.configs").setup({
+    opts = {
         ensure_installed = { "comment", "regex" },
         auto_install = true,
 
@@ -35,7 +32,7 @@ function M.config()
             use_virtual_text = true,
             lint_events = { "BufWrite", "CursorHold" },
         },
-    })
-end
+    },
+}
 
 return M

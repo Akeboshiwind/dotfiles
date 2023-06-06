@@ -5,14 +5,7 @@ local M = {
     dependencies = {
         "kyazdani42/nvim-web-devicons",
     },
-}
-
-function M.config()
-    local lualine = require("lualine")
-
-    -- >> Config
-
-    lualine.setup({
+    opts = {
         sections = {
             lualine_a = { "filename" },
             lualine_b = { "branch", "diff", "diagnostics" },
@@ -27,7 +20,7 @@ function M.config()
             lualine_y = {},
             lualine_z = { "location" },
         },
-    })
-end
+    },
+}
 
 return M

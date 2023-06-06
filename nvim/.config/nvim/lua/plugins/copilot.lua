@@ -11,17 +11,14 @@ local M = {
             end,
         },
     },
-}
-
-function M.config()
-    require("copilot").setup({
+    opts = {
         panel = {
             enabled = false,
         },
         suggestion = {
             enabled = false,
         },
-    })
-end
+    },
+}
 
 return M
