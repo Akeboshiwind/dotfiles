@@ -53,6 +53,10 @@ function M.config()
             }),
             null_ls.builtins.diagnostics.cspell.with({
                 extra_args = { "--config", cspell_cfg },
+                -- Force the severity to be HINT
+                diagnostics_postprocess = function(diagnostic)
+                    diagnostic.severity = vim.diagnostic.severity.HINT
+                end,
             }),
             null_ls.builtins.code_actions.cspell.with({
                 config = {
