@@ -2,7 +2,7 @@
 
 local M = {
     "Olical/conjure",
-    tag = "v4.43.0",
+    tag = "v4.44.2",
     dependencies = {
         "nvim-telescope/telescope.nvim",
         --"gpanders/nvim-parinfer",
