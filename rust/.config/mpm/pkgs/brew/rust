@@ -1,8 +1,0 @@
-
-rustup-init
-
-# c2rust
-llvm
-python3
-cmake
-openssl

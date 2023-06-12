@@ -1,0 +1,7 @@
+{brew/rustup-init {}
+
+ ; brew/c2rust {}
+ brew/llvm {}
+ brew/python3 {}
+ brew/cmake {}
+ brew/openssl {}}

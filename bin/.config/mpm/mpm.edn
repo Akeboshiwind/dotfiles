@@ -1,0 +1,4 @@
+{:pkgs {}
+ :plugins [brew
+           {:name "asdf"
+            :global-install-all true}]}

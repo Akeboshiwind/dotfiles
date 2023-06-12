@@ -1,0 +1,5 @@
+{brew/bash {}
+
+ ; Addons
+ brew/bash-completion {}
+ brew/fzf {}}
