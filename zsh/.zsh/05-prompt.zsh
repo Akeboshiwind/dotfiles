@@ -6,6 +6,8 @@
 COLOR_ROOT="%F{red}"
 COLOR_USER="%F{cyan}"
 COLOR_NORMAL="%F{white}"
+COLOR_OK="%F{green}"
+COLOR_FAIL="%F{red}"
 
 SYMBOL_ROOT="#"
 SYMBOL_USER="$"
@@ -54,8 +56,11 @@ ICO_BEHIND="↓"
 ICO_DIVERGED="↕"
 
 git_prompt() {
+
+    prefix="%B${COLOR_OK}"
+    suffix='%f%b'
+
     if [ ! "$(git rev-parse --is-inside-work-tree 2> /dev/null)" ]; then
-        echo "$reset_color%F{cyan}•%f"
         return
     fi
 
@@ -74,7 +79,11 @@ git_prompt() {
                     ;;
     esac
 
-    echo "%B%F{white}${ref}${dirty}${stat}%f%b "
+    echo -n "%F{yellow}git:(%f"
+    echo -n "$prefix"
+    echo -n "${ref}${dirty}${stat}"
+    echo -n "$suffix"
+    echo -n "%F{yellow})%f "
 }
 
 local git_branch='$(git_prompt)%{%f%}'
@@ -117,12 +126,12 @@ pretty_delta() {
 
 aws_prompt() {
 
-    prefix='%B%F{green}'
+    prefix="%B${COLOR_OK}"
     suffix='%f%b'
 
     # TODO: Some way of detecting wrong account?
     if [[ -n "$AWS_PROFILE" && `pwd` =~ '/env/' && ! `pwd` =~ "/env/$AWS_PROFILE" ]]; then
-        prefix='%B%F{red}'
+        prefix="%B${COLOR_FAIL}"
         suffix='!%f%b'
     fi
 
@@ -134,9 +143,9 @@ aws_prompt() {
     if [ ! -z "$profile" ]; then
 
         delta_str=""
-        if [ ! -z "$AWS_SESSION_EXPIRATION" ]; then
+        if [ ! -z "$AWS_CREDENTIAL_EXPIRATION" ]; then
             # NOTE: Limitation in expecting 'Z' timezone
-            end_time="$(TZ=Z date -j -f "%Y-%m-%dT%H:%M:%SZ" "$AWS_SESSION_EXPIRATION" +%s)"
+            end_time="$(TZ=Z date -j -f "%Y-%m-%dT%H:%M:%SZ" "$AWS_CREDENTIAL_EXPIRATION" +%s)"
             delta="$(($end_time - $(date +%s)))"
             if [ "$delta" -gt "0" ]; then
                 delta_str="$(pretty_delta $delta)"
@@ -144,10 +153,14 @@ aws_prompt() {
                 delta_str="%B%F{red}✘%f%b"
             fi
 
-            delta_str="($delta_str)"
+            delta_str=" - $delta_str"
         fi
 
-        echo "$prefix$profile$delta_str$suffix "
+        echo -n "%F{yellow}aws:(%f"
+        echo -n "$prefix"
+        echo -n "$profile$delta_str"
+        echo -n "$suffix"
+        echo -n "%F{yellow})%f "
     fi
 }
 
@@ -159,13 +172,17 @@ local aws_profile='$(aws_prompt)'
 
 tf_prompt() {
 
-    prefix='%B%F{yellow}'
+    prefix="%B${COLOR_OK}"
     suffix='%f%b'
 
     command -v terraform >/dev/null && {
         workspace="$(terraform workspace show)"
         [ $workspace != "default" ] && {
-            echo "$prefix$workspace$suffix "
+            echo -n "%F{yellow}tf:(%f"
+            echo -n "$prefix"
+            echo -n "$workspace"
+            echo -n "$suffix"
+            echo -n "%F{yellow})%f "
         }
     }
 }
