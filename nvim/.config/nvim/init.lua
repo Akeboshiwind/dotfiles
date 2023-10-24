@@ -121,6 +121,9 @@ opt.expandtab = true -- On pressing tab, insert 4 spaces
 -- >> Filetype conversions
 
 vim.filetype.add({
+    extension = {
+        mdx = "markdown",
+    },
     filename = {
         ["Jenkinsfile"] = "groovy",
     },
