@@ -20,7 +20,7 @@ function M.setup()
             -- >> Format on save
 
             vim.cmd([[ autocmd BufWritePre *.py lua vim.lsp.buf.format(nil, 1000) ]])
-            print("Run custom on_attach")
+            vim.notify("Run custom on_attach", vim.log.levels.INFO)
         end,
     }))
 end
