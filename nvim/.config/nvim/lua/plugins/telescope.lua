@@ -18,6 +18,7 @@ local M = {
 function M.config()
     local telescope = require("telescope")
     local actions = require("telescope.actions")
+    local fb_actions = require("telescope._extensions.file_browser.actions")
     local previewers_utils = require("telescope.previewers.utils")
 
     -- >> Setup telescope
@@ -52,6 +53,13 @@ function M.config()
                     -- Insert the selected emoji after the cursor
                     vim.api.nvim_put({ emoji.value }, "c", false, true)
                 end,
+            },
+            file_browser = {
+                mappings = {
+                    i = {
+                        ["<C-c>"] = fb_actions.create_from_prompt,
+                    },
+                },
             },
         },
     })
