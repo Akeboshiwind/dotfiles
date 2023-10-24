@@ -1,4 +1,10 @@
 ;; >> .shadow-cljs/config.edn
 
 {:dependencies [;; If shadow detects `cider-nrepl` then it will used automatically
-                [cider/cider-nrepl "0.30.0"]]}
+                [cider/cider-nrepl "0.40.0"]
+                ;; Intro:
+                ;; (require '[portal.core :as p])
+                ;; (p/open)             ; open portal in browser
+                ;; (add-tap #'p/submit) ; setup tap
+                ;; (tap> {:a "b"})      ; appears in browser
+                [djblue/portal "0.37.1"]]}
