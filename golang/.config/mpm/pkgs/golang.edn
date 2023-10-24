@@ -1,0 +1,4 @@
+{asdf/golang {:version "1.21.1"}
+ 
+ ;; Requirements:
+ brew/coreutils {}}
