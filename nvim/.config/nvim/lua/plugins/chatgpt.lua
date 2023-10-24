@@ -81,6 +81,18 @@ function M.config()
         ui = {
             submit = "<S-Enter>",
         },
+        models = {
+            -- {
+            --     name = "openai",
+            --     model = "gpt-3.5-turbo",
+            --     params = nil,
+            -- },
+            {
+                name = "openai",
+                model = "gpt-4",
+                params = nil,
+            },
+        },
     })
 
     -- >> Bindings
