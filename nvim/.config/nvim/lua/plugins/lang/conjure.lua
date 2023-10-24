@@ -136,6 +136,10 @@ function M.config()
             m = "Form at the given mark",
             f = "File from disk",
             b = "Current buffer",
+            g = {
+                ":ConjureEval (user/go!)<CR>",
+                "user/go!",
+            },
         },
         g = {
             name = "goto",
