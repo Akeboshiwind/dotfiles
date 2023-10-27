@@ -17,7 +17,8 @@ end
 --- Opens the NeoAI chat window with the given prompt text.
 -- Any existing text in the prompt window is cleared before the new prompt is added.
 -- @param prompt The prompt to add to the prompt window.
-function M.fill_prompt(prompt)
+-- @param pos The position to put the cursor in prompt window.
+function M.fill_prompt(prompt, pos)
     -- Open the sidebar if not already
     require("neoai").toggle(true)
 
@@ -29,6 +30,11 @@ function M.fill_prompt(prompt)
 
     -- Put the prompt into the buffer
     vim.api.nvim_put(prompt, "c", true, true)
+
+    if pos then
+        -- Move the cursor to the given position
+        vim.api.nvim_win_set_cursor(0, pos)
+    end
 end
 
 --- Returns a table with just the keys from the given table.
@@ -41,7 +47,47 @@ function keys(tbl)
     return result
 end
 
---- Processes the given prompts table into a table of functions that return the prompt
+--- Returns the start and stop position of the input marker in a given string
+-- @param line The line to search
+function input_marker(line)
+    return string.find(line, "{{}}")
+end
+
+--- Search the prompt for an input marker and return the position of the marker
+-- @param prompt A table of lines
+function input_pos(prompt)
+    local output = {}
+    local pos = nil
+
+    for idx, line in ipairs(prompt) do
+        local marker_start, marker_end = input_marker(line)
+        if marker_start ~= nil then
+            local prefix = string.sub(line, 1, marker_start - 1)
+            local suffix = string.sub(line, marker_end + 1)
+            line = prefix .. suffix
+
+            pos = { idx, marker_start }
+        end
+
+        table.insert(output, line)
+    end
+
+    return output, pos
+end
+
+--- Process a table of prompts into a uniform output of names to functions
+-- The input is a table of name -> prompt
+--
+-- Input prompts can be either:
+-- - A string
+-- - A table of strings
+-- - A function
+--
+-- If a string or table of strings is input an `input_marker` is searched for (default: {{}})
+-- If one is found then cursor is placed there when the prompt is opened.
+-- Otherwise the cursor is placed after the last line of the prompt.
+--
+-- @param prompts A table of names to prompts
 function process_prompts(prompts)
     local result = {}
     for k, v in pairs(prompts) do
@@ -56,8 +102,17 @@ function process_prompts(prompts)
                 prompt = { v }
             end
 
+            local prompt, pos = input_pos(prompt)
+
+            -- If no input_pos was found ensure the prompt ends with a blank line
+            if pos == nil then
+                if prompt[#prompt] ~= "" then
+                    table.insert(prompt, "")
+                end
+            end
+
             prompt_fn = function()
-                return prompt
+                return prompt, pos
             end
         end
 
@@ -95,8 +150,9 @@ function M.prompt_select(opts)
             sorter = conf.generic_sorter(opts),
             previewer = previewers.new_buffer_previewer({
                 define_preview = function(self, entry, status)
+                    local prompt, _ = prompts[entry.value](entry.value)
                     return require("telescope.previewers.utils").with_preview_window(status, nil, function()
-                        vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, prompts[entry.value](entry.value))
+                        vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, prompt)
                     end)
                 end,
             }),
@@ -104,9 +160,9 @@ function M.prompt_select(opts)
                 actions.select_default:replace(function()
                     actions.close(prompt_bufnr)
                     local selection = action_state.get_selected_entry()
-                    local prompt = prompts[selection.value](selection.value)
+                    local prompt, pos = prompts[selection.value](selection.value)
 
-                    opts.select_action(prompt)
+                    opts.select_action(prompt, pos)
                 end)
                 return true
             end,

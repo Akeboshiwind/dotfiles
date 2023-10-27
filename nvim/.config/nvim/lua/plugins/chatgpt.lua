@@ -1,7 +1,8 @@
 -- chatgpt.lua
 
 local M = {
-    "Bryley/neoai.nvim",
+    -- "Bryley/neoai.nvim",
+    dir = "~/prog/prog/lua/neoai.nvim",
     dependencies = {
         "MunifTanjim/nui.nvim",
         "nvim-telescope/telescope.nvim",
@@ -33,22 +34,20 @@ function M.load_api_key()
 end
 
 M.prompts = {
-    ["nvim-lua"] = { "In nvim, using lua:", "" },
+    ["nvim-lua"] = "In nvim, using lua:",
 }
 
 M.visual_prompts = {
-    ["summarise"] = { "Summarise the given text in 1-2 lines.", "" },
+    ["summarise"] = "Summarise the given text in 1-2 lines.",
     ["doc string"] = {
         "Output a docstring in a codeblock for the given code.",
         "Do not output the code as well, just the docstring",
-        "",
     },
     ["clarity suggestions"] = {
         "Output a bullet point list of suggestions to improve clarity.",
         "Format this as up to 5 'specific' suggestions, these suggestions should point to specific parts of the text.",
         "Follow these with up to 3 'generic' suggestions which can suggest general things the text could improve on.",
         "If you don't have enough suggestions you think are relevant, then include include less rather trying to fill out as many as possible.",
-        "",
     },
 }
 
@@ -56,9 +55,9 @@ function M.visual_prompt_select()
     local neoai_utils = require("config.neoai")
     neoai_utils.prompt_select({
         prompts = M.visual_prompts,
-        select_action = function(prompt)
+        select_action = function(prompt, pos)
             neoai_utils.set_context()
-            neoai_utils.fill_prompt(prompt)
+            neoai_utils.fill_prompt(prompt, pos)
         end,
     })
 end
