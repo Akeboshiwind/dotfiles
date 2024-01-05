@@ -6,6 +6,7 @@ local M = {
     dependencies = {
         "nvim-telescope/telescope.nvim",
         --"gpanders/nvim-parinfer",
+        "mason.nvim",
         {
             "eraserhd/parinfer-rust",
             build = "cargo build --release",
@@ -203,6 +204,16 @@ function M.config()
             c = "Clear refresh cache",
         },
     }, { prefix = "<leader>" })
+end
+
+function M.setup()
+    local lsputils = require("config.lsp.utils")
+
+    -- >> Setup
+
+    require("lspconfig").clojure_lsp.setup(lsputils.smart_merge_configs(lsputils.default_config, {
+        on_attach = function(_, _) end,
+    }))
 end
 
 return M

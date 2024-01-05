@@ -12,7 +12,7 @@ M.tools = {
     "stylua",
     "cspell",
     "commitlint",
-    "clj-kondo",
+    -- "clj-kondo",
 }
 
 function M.on_attach(client, bufnr)
@@ -72,7 +72,7 @@ function M.config()
                 },
                 extra_args = { "--config", commitlint_cfg },
             }),
-            null_ls.builtins.diagnostics.clj_kondo,
+            -- null_ls.builtins.diagnostics.clj_kondo,
         },
     }))
 
