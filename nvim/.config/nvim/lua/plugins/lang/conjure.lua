@@ -140,6 +140,17 @@ function M.config()
                 ":ConjureEval (user/go!)<CR>",
                 "user/go!",
             },
+            s = {
+                function()
+                    -- Save buffer
+                    vim.cmd("w")
+
+                    -- clerk/show!
+                    local filename = vim.fn.expand("%:p")
+                    vim.cmd(string.format('ConjureEval (nextjournal.clerk/show! "%s")', filename))
+                end,
+                "clerk/show!",
+            },
         },
         g = {
             name = "goto",
