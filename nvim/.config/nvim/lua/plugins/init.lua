@@ -1,6 +1,11 @@
 -- init.lua
 
 return {
+    {
+        "folke/lazy.nvim",
+        version = "v10.16.0",
+    },
+
     -- Intelligently reopen files at your last edit position in Vim
     "farmergreg/vim-lastplace",
 
