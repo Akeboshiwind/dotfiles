@@ -3,6 +3,7 @@
 local nvim_lspconfig_cfg = {
     "neovim/nvim-lspconfig",
     dependencies = {
+        "mason.nvim",
         "nvim-lua/lsp-status.nvim",
         "folke/which-key.nvim",
         "nvim-telescope/telescope.nvim",
@@ -19,8 +20,6 @@ local nvim_lspconfig_cfg = {
 }
 
 function nvim_lspconfig_cfg.config()
-    -- TODO: Search for these somehow?
-    require("plugins.lsp.mason").setup()
     -- require("plugins.lang.neodev").setup()
     require("plugins.lang.python-tools").setup()
     require("plugins.lang.rust-tools").setup()

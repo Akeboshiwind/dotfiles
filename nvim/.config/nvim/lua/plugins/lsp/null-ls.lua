@@ -1,18 +1,24 @@
 -- plugins/lsp/null-ls.lua
 
 local M = {
-    "jose-elias-alvarez/null-ls.nvim",
-    dependencies = {
-        "nvim-lua/plenary.nvim",
-        "williamboman/mason.nvim",
+    {
+        "jose-elias-alvarez/null-ls.nvim",
+        dependencies = {
+            "nvim-lua/plenary.nvim",
+            "williamboman/mason.nvim",
+        },
     },
-}
-
-M.tools = {
-    "stylua",
-    "cspell",
-    "commitlint",
-    -- "clj-kondo",
+    {
+        "williamboman/mason.nvim",
+        opts = function(_, opts)
+            vim.list_extend(opts.ensure_installed, {
+                "stylua",
+                "cspell",
+                "commitlint",
+                -- "clj-kondo",
+            })
+        end
+    }
 }
 
 function M.on_attach(client, bufnr)
@@ -32,13 +38,10 @@ function M.on_attach(client, bufnr)
     end
 end
 
-function M.config()
+function M.config(_, opts)
     local null_ls = require("null-ls")
     local sources = require("config.lsp.null-ls.sources")
     local lsputils = require("config.lsp.utils")
-
-    local mason_utils = require("config.mason.utils")
-    mason_utils.install_tools(M.tools)
 
     local stylua_cfg = vim.fn.stdpath("config") .. "/config/stylua.toml"
     local cspell_cfg = vim.fn.stdpath("config") .. "/config/cspell.json"
