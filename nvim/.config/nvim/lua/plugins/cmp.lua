@@ -1,4 +1,4 @@
--- plugins/completion/nvim-cmp.lua
+-- plugins/cmp.lua
 
 local M = {
     "hrsh7th/nvim-cmp",
@@ -70,7 +70,7 @@ function M.config()
             {
                 name = "path",
                 option = {
-                    trailing_slash = true,
+                    -- trailing_slash = true,
                 },
             },
 
