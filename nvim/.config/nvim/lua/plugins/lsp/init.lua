@@ -10,10 +10,8 @@ local nvim_lspconfig_cfg = {
         "kosayoda/nvim-lightbulb",
         {
             "j-hui/fidget.nvim",
+            event = "LspAttach",
             opts = {
-                timer = {
-                    task_decay = 0,
-                },
             },
         },
     },
