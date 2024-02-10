@@ -26,7 +26,6 @@ end
 
 return {
     nvim_lspconfig_cfg,
-    "kosayoda/nvim-lightbulb",
     { import = "plugins.lsp.mason" },
     { import = "plugins.lsp.null-ls" },
 }
