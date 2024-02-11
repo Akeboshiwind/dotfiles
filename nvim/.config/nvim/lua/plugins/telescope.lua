@@ -39,13 +39,6 @@ function M.config()
                     ["<C-h>"] = actions.which_key,
                 },
             },
-            preview = {
-                filesize_hook = function(filepath, bufnr, opts)
-                    local max_bytes = 100000
-                    local cmd = { "head", "-c", max_bytes, filepath }
-                    previewers_utils.job_maker(cmd, bufnr, opts)
-                end,
-            },
         },
         extensions = {
             emoji = {

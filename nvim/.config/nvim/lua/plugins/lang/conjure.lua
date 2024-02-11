@@ -11,7 +11,7 @@ return {
     },
     {
         "Olical/conjure",
-        tag = "v4.44.2",
+        tag = "v4.50.0",
         dependencies = {
             "nvim-telescope/telescope.nvim",
             --"gpanders/nvim-parinfer",
