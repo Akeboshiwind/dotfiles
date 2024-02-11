@@ -9,7 +9,7 @@ return {
             vim.list_extend(opts.ensure_installed, {
                 "commitlint",
             })
-        end
+        end,
     },
     {
         "mfussenegger/nvim-lint",
@@ -23,10 +23,13 @@ return {
             linters = {
                 commitlint = {
                     args = {
-                        "--config", vim.fn.stdpath("config") .. "/config/commitlint.config.js" ,
-                        "--extends", vim.fn.stdpath("data") .. "/mason/packages/commitlint/node_modules/@commitlint/config-conventional",
+                        "--config",
+                        vim.fn.stdpath("config") .. "/config/commitlint.config.js",
+                        "--extends",
+                        vim.fn.stdpath("data")
+                            .. "/mason/packages/commitlint/node_modules/@commitlint/config-conventional",
                     },
-                }
+                },
             },
         },
         config = function(_, opts)
@@ -46,8 +49,10 @@ return {
             -- Add autocmd to trigger linters
             vim.api.nvim_create_autocmd(opts.events, {
                 group = vim.api.nvim_create_augroup("nvim-lint", { clear = true }),
-                callback = util.debounce(100, function() lint.try_lint() end),
+                callback = util.debounce(100, function()
+                    lint.try_lint()
+                end),
             })
         end,
-    }
+    },
 }

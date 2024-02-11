@@ -80,7 +80,7 @@ return {
     {
         "j-hui/fidget.nvim",
         event = "LspAttach",
-        opts = { },
+        opts = {},
     },
     {
         "nvim-lua/lsp-status.nvim",
@@ -114,11 +114,9 @@ return {
         },
         opts = {
             -- LSP Servers
-            servers = {
-            },
+            servers = {},
             -- Optional setup function for servers
-            setup = {
-            },
+            setup = {},
         },
         config = function(_, opts)
             -- TODO: Allow lsp servers to not use default functionality
@@ -131,20 +129,16 @@ return {
                 require("cmp_nvim_lsp").default_capabilities(),
                 require("lsp-status").capabilities,
                 opts.capabilities or {}
-              )
+            )
 
             util.lsp.on_attach(function(client, bufnr)
                 setup_mappings(bufnr)
             end)
 
             for server, server_opts in pairs(opts.servers) do
-                local final_server_opts = vim.tbl_deep_extend(
-                    "force",
-                    {
-                        capabilities = vim.deepcopy(capabilities),
-                    },
-                    server_opts or {}
-                )
+                local final_server_opts = vim.tbl_deep_extend("force", {
+                    capabilities = vim.deepcopy(capabilities),
+                }, server_opts or {})
                 if opts.setup[server] then
                     opts.setup[server](server, final_server_opts)
                 else

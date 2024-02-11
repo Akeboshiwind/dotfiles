@@ -55,6 +55,8 @@ local fn = vim.fn
 local opt = vim.opt
 local g = vim.g
 
+
+
 -- >> Package Manager
 
 -- Map before loading lazy.nvim
@@ -113,6 +115,8 @@ require("lazy").setup("plugins", {
     },
 })
 
+
+
 -- >> Utils
 
 function _G.P(...)
@@ -127,6 +131,8 @@ opt.splitright = true -- Make splits to the right
 opt.inccommand = "nosplit" -- Show live replacements with the :s command
 opt.updatetime = 1000 -- Make the CursorHold event trigger after 1 second not 4
 
+
+
 -- >> Indentation
 
 -- Enable filetype specific .vim files to be loaded
@@ -135,6 +141,8 @@ cmd([[filetype plugin indent on]])
 opt.tabstop = 4 -- Show existing tab with 4 spaces width
 opt.shiftwidth = 4 -- When indenting with '>', use 4 spaces width
 opt.expandtab = true -- On pressing tab, insert 4 spaces
+
+
 
 -- >> Filetype conversions
 
@@ -172,6 +180,8 @@ for sign, symbol in pairs(sign_config) do
         numhl = "",
     })
 end
+
+
 
 -- >> Setup Term Colors
 
