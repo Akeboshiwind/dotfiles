@@ -7,12 +7,16 @@ return {
         dependencies = {
             "williamboman/mason-lspconfig.nvim",
         },
-        opts = {
-            ensure_installed = { },
-            mason_lspconfig = {
+        -- TODO: Why can't this just be specifying a map?
+        -- list-like tables seem to not merge well w/ lazy.nvim
+        -- TODO: One way to get rid of this would be to make ensure_installed a map like so:
+        -- { black = true, stylua = true }
+        opts = function(_, opts)
+            opts.ensure_installed = opts.ensure_installed or {}
+            opts.mason_lspconfig = opts.mason_lspconfig or {
                 automatic_installation = true,
-            },
-        },
+            }
+        end,
         config = function(_, opts)
             require("mason").setup(opts)
             require("mason-lspconfig").setup(opts.mason_lspconfig)
@@ -29,6 +33,6 @@ return {
             end
 
             mr.refresh(ensure_installed)
-        end
-    }
+        end,
+    },
 }
