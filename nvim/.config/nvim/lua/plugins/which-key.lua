@@ -1,50 +1,45 @@
 -- plugins/which-key.lua
 
-local M = {
-    "folke/which-key.nvim",
-}
+return {
+    {
+        "folke/which-key.nvim",
+        init = function()
+            -- leader mapped in init.lua
+            vim.opt.timeoutlen = 400
+        end,
+        event = "VeryLazy",
+        keys = {
+            { "fd", "<ESC>", desc = "Quick Escape", mode = "i" },
 
-function M.config()
-    local opt = vim.opt
-    local wk = require("which-key")
+            { "*", "g*", desc = "Search in buffer for match" },
+            { "#", "g#", desc = "Search in buffer for match, backwards" },
 
-    -- >> Configure
+            { "<leader>x", "<cmd>luafile %<CR>", desc = "Source lua buffer" },
+            { "<leader>X", "<cmd>source %<CR>", desc = "Source vim buffer" },
 
-    -- leader mapped in init.lua
-    opt.timeoutlen = 400
+            { "<leader>w=", "<cmd>wincmd =<CR>", desc = "Equalise all windows" },
+            { "<leader>w+", "<cmd>wincmd +<CR>", desc = "Increase window height" },
+            { "<leader>w-", "<cmd>wincmd -<CR>", desc = "Decrease window height" },
+            { "<leader>w>", "<cmd>wincmd <<CR>", desc = "Increase window width" },
+            { "<leader>w<", "<cmd>wincmd ><CR>", desc = "Decrease window width" },
 
-    -- >> Setup
-
-    wk.setup({
-        triggers_blacklist = {
-            -- Ignore escape key 'fd'
-            i = { "f" },
+            { "<C-Space>", "<cmd>:WhichKey ''<CR>", desc = "Show base commands" },
         },
-    })
-
-    -- >> Mappings
-
-    wk.register({
-        fd = { "<ESC>", "Quick Escape" },
-    }, { mode = "i" })
-
-    wk.register({
-        ["*"] = { "g*", "Search in buffer for match" },
-        ["#"] = { "g#", "Search in buffer for match, backwards" },
-        ["<leader>"] = {
-            x = { "<cmd>luafile %<CR>", "Source lua buffer" },
-            X = { "<cmd>source %<CR>", "Source vim buffer" },
-            w = {
-                name = "window",
-                ["="] = { "<cmd>wincmd =<CR>", "Equalise all windows" },
-                ["+"] = { "<cmd>wincmd +<CR>", "Increase window height" },
-                ["-"] = { "<cmd>wincmd -<CR>", "Decrease window height" },
-                [">"] = { "<cmd>wincmd <<CR>", "Increase window width" },
-                ["<"] = { "<cmd>wincmd ><CR>", "Decrease window width" },
+        opts = {
+            plugins = { spelling = true },
+            triggers_blacklist = {
+                -- Ignore escape key 'fd'
+                i = { "f" },
+            },
+            defaults = {
+                ["<leader>w"] = { name = "window" },
             },
         },
-        ["<C-Space>"] = { "<cmd>:WhichKey ''<CR>", "Show base commands" },
-    })
-end
+        config = function(_, opts)
+            local wk = require("which-key")
 
-return M
+            wk.setup(opts)
+            wk.register(opts.defaults)
+        end,
+    },
+}
