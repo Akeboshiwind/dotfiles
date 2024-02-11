@@ -7,7 +7,17 @@ return {
             servers = {
                 clojure_lsp = {},
             },
-        }
+        },
+    },
+    {
+        "PaterJason/cmp-conjure",
+        dependencies = {
+            "hrsh7th/nvim-cmp",
+        },
+    },
+    {
+        "eraserhd/parinfer-rust",
+        build = "cargo build --release",
     },
     {
         "Olical/conjure",
@@ -15,17 +25,8 @@ return {
         dependencies = {
             "nvim-telescope/telescope.nvim",
             --"gpanders/nvim-parinfer",
-            "mason.nvim",
-            {
-                "eraserhd/parinfer-rust",
-                build = "cargo build --release",
-            },
-            {
-                "PaterJason/cmp-conjure",
-                dependencies = {
-                    "hrsh7th/nvim-cmp",
-                },
-            },
+            "eraserhd/parinfer-rust",
+            "PaterJason/cmp-conjure",
         },
         config = function()
             local g = vim.g
@@ -210,6 +211,6 @@ return {
                     c = "Clear refresh cache",
                 },
             }, { prefix = "<leader>" })
-        end
+        end,
     },
 }

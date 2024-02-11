@@ -13,9 +13,10 @@ return {
         -- { black = true, stylua = true }
         opts = function(_, opts)
             opts.ensure_installed = opts.ensure_installed or {}
-            opts.mason_lspconfig = opts.mason_lspconfig or {
-                automatic_installation = true,
-            }
+            opts.mason_lspconfig = opts.mason_lspconfig
+                or {
+                    automatic_installation = true,
+                }
         end,
         config = function(_, opts)
             require("mason").setup(opts)
