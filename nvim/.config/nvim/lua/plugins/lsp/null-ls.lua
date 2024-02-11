@@ -13,7 +13,6 @@ local M = {
         opts = function(_, opts)
             vim.list_extend(opts.ensure_installed, {
                 "stylua",
-                "cspell",
                 "commitlint",
                 -- "clj-kondo",
             })
@@ -44,7 +43,6 @@ function M.config(_, opts)
     local lsputils = require("config.lsp.utils")
 
     local stylua_cfg = vim.fn.stdpath("config") .. "/config/stylua.toml"
-    local cspell_cfg = vim.fn.stdpath("config") .. "/config/cspell.json"
     local commitlint_cfg = vim.fn.stdpath("config") .. "/config/commitlint.config.js"
 
     null_ls.setup(lsputils.smart_merge_configs(lsputils.default_config, {
@@ -53,21 +51,6 @@ function M.config(_, opts)
             null_ls.builtins.formatting.terraform_fmt,
             null_ls.builtins.formatting.stylua.with({
                 extra_args = { "--config-path", stylua_cfg },
-            }),
-            null_ls.builtins.diagnostics.cspell.with({
-                extra_args = { "--config", cspell_cfg },
-                -- Force the severity to be HINT
-                diagnostics_postprocess = function(diagnostic)
-                    diagnostic.severity = vim.diagnostic.severity.HINT
-                end,
-            }),
-            null_ls.builtins.code_actions.cspell.with({
-                config = {
-                    create_config_file = false,
-                    find_json = function(_)
-                        return cspell_cfg
-                    end,
-                },
             }),
             null_ls.builtins.diagnostics.commitlint.with({
                 env = {
