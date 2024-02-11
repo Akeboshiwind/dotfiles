@@ -93,6 +93,10 @@ require("lazy").setup("plugins", {
         },
         border = "single",
     },
+    checker = {
+        enabled = true,
+        check_pinned = true,
+    },
 })
 
 -- >> Utils
