@@ -148,5 +148,4 @@ return {
         end,
     },
     { import = "plugins.lsp.mason" },
-    { import = "plugins.lsp.null-ls" },
 }
