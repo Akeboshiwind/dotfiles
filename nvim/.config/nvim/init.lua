@@ -170,3 +170,20 @@ if fn.exists("+termguicolors") ~= 0 then
     -- https://gist.github.com/XVilka/8346728
     opt.termguicolors = true
 end
+
+
+
+-- >> Setup spell checking
+-- Basic usage:
+--  ]s - move to next misspelled word
+--  z= - see suggestions
+--  zg - add word to spellfile
+-- See :help spell for more
+-- TODO: Add custom spellfile for all words < 3 characters
+
+vim.o.spelllang = 'en_gb'
+vim.o.spell = true
+-- Include camel case words
+vim.o.spelloptions = 'camel'
+-- Disable capitalization check
+vim.o.spellcapcheck = ''
