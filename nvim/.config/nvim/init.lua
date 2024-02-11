@@ -97,6 +97,20 @@ require("lazy").setup("plugins", {
         enabled = true,
         check_pinned = true,
     },
+    performance = {
+        rtp = {
+            disabled_plugins = {
+                "gzip",
+                "matchit",
+                "matchparen",
+                "netrwPlugin",
+                "tarPlugin",
+                "tohtml",
+                "tutor",
+                "zipPlugin",
+            },
+        },
+    },
 })
 
 -- >> Utils
@@ -133,13 +147,7 @@ vim.filetype.add({
     },
 })
 
--- >> Disable built-in plugins
 
-local disabled_built_ins = { "netrwPlugin", "man", "matchit" }
-
-for i = 1, #disabled_built_ins do
-    g["loaded_" .. disabled_built_ins[i]] = 1
-end
 
 -- >> Setup Diagnostic Signs
 
