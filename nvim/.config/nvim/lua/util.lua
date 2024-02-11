@@ -12,6 +12,17 @@ function M.on_very_lazy(fn)
     })
 end
 
+function M.debounce(ms, fn)
+    local timer = vim.loop.new_timer()
+    return function(...)
+        local argv = { ... }
+        timer:start(ms, 0, function()
+            timer:stop()
+            vim.schedule_wrap(fn)(unpack(argv))
+        end)
+    end
+end
+
 M.lsp = {}
 
 function M.lsp.on_attach(on_attach)
