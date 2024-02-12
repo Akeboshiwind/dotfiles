@@ -119,8 +119,11 @@ return {
             setup = {},
         },
         config = function(_, opts)
-            -- TODO: Allow lsp servers to not use default functionality
+            require("lspconfig.ui.windows").default_options = {
+                border = "rounded",
+            }
 
+            -- TODO: Allow lsp servers to not use default functionality
             -- TODO: Have some way of the other plugins setting this up
             local capabilities = vim.tbl_deep_extend(
                 "force",
