@@ -6,6 +6,17 @@ return {
         build = "make",
     },
     {
+        "folke/which-key.nvim",
+        opts = {
+            defaults = {
+                ["<leader>f"] = { name = "find" },
+                ["<leader>s"] = { name = "search" },
+                ["<leader>d"] = { name = "diagnostic" },
+                ["<leader>G"] = { name = "git" },
+            },
+        },
+    },
+    {
         "nvim-telescope/telescope.nvim",
         dependencies = {
             "nvim-lua/plenary.nvim",
@@ -15,191 +26,183 @@ return {
             "nvim-telescope/telescope-file-browser.nvim",
             "xiyaowong/telescope-emoji.nvim",
         },
-        config = function()
+        cmd = "Telescope",
+        keys = {
+            -- >> find
+            {
+                "<leader>ff",
+                function()
+                    require("telescope.builtin").find_files({
+                        find_command = {
+                            "rg",
+                            -- Show hidden files
+                            "--hidden",
+                            -- -- Ignore any .git directories
+                            "--glob",
+                            "!**/.git/**",
+                            "--files",
+                        },
+                    })
+                end,
+                desc = "Browse local files (inc hidden)",
+            },
+            {
+                "<leader>f.",
+                function()
+                    require("telescope.builtin").git_files({
+                        cwd = "~/dotfiles",
+                    })
+                end,
+                desc = "Dotfiles",
+            },
+            {
+                "<leader>fr",
+                function()
+                    -- % get's the current buffer's path
+                    -- :h get's the full path
+                    local buffer_relative_path = vim.call("expand", "%:h")
+                    require("telescope").extensions.file_browser.file_browser({
+                        cwd = buffer_relative_path,
+                    })
+                end,
+                desc = "Browse relative to buffer",
+            },
+            {
+                "<leader>fb",
+                function()
+                    require("telescope.builtin").buffers({
+                        sort_lastused = true,
+                    })
+                end,
+                desc = "Buffers",
+            },
+            { "<leader>fh", "<cmd>Telescope help_tags<CR>", desc = "Help tags" },
+            { "<leader>fy", "<cmd>Telescope filetypes<CR>", desc = "File types" },
+            { "<leader>fc", "<cmd>Telescope colorscheme<CR>", desc = "Colorschemes" },
+            { "<leader>fm", "<cmd>Telescope keymaps<CR>", desc = "Mappings" },
+            { "<leader>fM", "<cmd>Telescope man_pages<CR>", desc = "Man Pages" },
+            { "<leader>fB", "<cmd>Telescope builtin<CR>", desc = "Builtins" },
+
+            -- >> search
+            { "<leader>ss", "<cmd>Telescope live_grep<CR>", desc = "Search project file contents" },
+            {
+                "<leader>sr",
+                function()
+                    -- % get's the current buffer's path
+                    -- :h get's the full path
+                    local buffer_relative_path = vim.call("expand", "%:h")
+                    require("telescope.builtin").live_grep({
+                        cwd = buffer_relative_path,
+                    })
+                end,
+                desc = "Search relative to buffer",
+            },
+            {
+                "<leader>st",
+                function()
+                    require("telescope.builtin").grep_string({
+                        search = "TODO",
+                    })
+                end,
+                desc = "Search for TODOs",
+            },
+            { "<leader>s*", "<cmd>Telescope grep_string<CR>", desc = "Search for word under cursor" },
+            { "<leader>s/", "<cmd>Telescope current_buffer_fuzzy_find<CR>", desc = "Fuzzy find in the current buffer" },
+
+            {
+                "<leader>se",
+                function()
+                    require("telescope").extensions.emoji.emoji()
+                end,
+                desc = "Emoji",
+            },
+
+            -- >> diagnostic
+            { "<leader>dd", "<cmd>Telescope diagnostics", desc = "List all diagnostics" },
+            {
+                "<leader>db",
+                function()
+                    require("telescope.builtin").diagnostics({
+                        bufnr = 0,
+                    })
+                end,
+                desc = "List buffer diagnostics",
+            },
+            {
+                "<leader>dn",
+                function()
+                    vim.diagnostic.goto_next({ float = { border = "rounded" } })
+                end,
+                desc = "Next",
+            },
+            {
+                "<leader>dp",
+                function()
+                    vim.diagnostic.goto_prev({ float = { border = "rounded" } })
+                end,
+                desc = "Previous",
+            },
+
+            -- git
+            { "<leader>Gb", "<cmd>Telescope git_branches", desc = "Branches" },
+        },
+        opts = {
+            defaults = {
+                mappings = {
+                    i = {
+                        -- Normally when you press <esc> it puts you in normal mode in
+                        -- telescope. This binding skips that to just exit.
+                        ["<esc>"] = function(...)
+                            require("telescope.actions").close(...)
+                        end,
+
+                        -- Add easier movement keys
+                        ["<C-j>"] = function(...)
+                            require("telescope.actions").move_selection_next(...)
+                        end,
+                        ["<C-k>"] = function(...)
+                            require("telescope.actions").move_selection_previous(...)
+                        end,
+
+                        -- Show the mappings for the current picker
+                        ["<C-h>"] = function(...)
+                            require("telescope.actions").which_key(...)
+                        end,
+                    },
+                },
+            },
+            extensions = {
+                fzf = {},
+                ["ui-select"] = {},
+                emoji = {
+                    action = function(emoji)
+                        -- Insert the selected emoji after the cursor
+                        vim.api.nvim_put({ emoji.value }, "c", false, true)
+                    end,
+                },
+                file_browser = {
+                    mappings = {
+                        i = {
+                            ["<C-c>"] = function(...)
+                                require("telescope._extensions.file_browser.actions").create_from_prompt(...)
+                            end,
+                        },
+                    },
+                },
+            },
+        },
+        config = function(_, opts)
             local telescope = require("telescope")
-            local actions = require("telescope.actions")
-            local fb_actions = require("telescope._extensions.file_browser.actions")
-            local previewers_utils = require("telescope.previewers.utils")
 
             -- >> Setup telescope
 
-            telescope.setup({
-                defaults = {
-                    mappings = {
-                        i = {
-                            -- Normally when you press <esc> it puts you in normal mode in
-                            -- telescope. This binding skips that to just exit.
-                            ["<esc>"] = actions.close,
-
-                            -- Add easier movement keys
-                            ["<C-j>"] = actions.move_selection_next,
-                            ["<C-k>"] = actions.move_selection_previous,
-
-                            -- Show the mappings for the current picker
-                            ["<C-h>"] = actions.which_key,
-                        },
-                    },
-                },
-                extensions = {
-                    emoji = {
-                        action = function(emoji)
-                            -- Insert the selected emoji after the cursor
-                            vim.api.nvim_put({ emoji.value }, "c", false, true)
-                        end,
-                    },
-                    file_browser = {
-                        mappings = {
-                            i = {
-                                ["<C-c>"] = fb_actions.create_from_prompt,
-                            },
-                        },
-                    },
-                },
-            })
+            telescope.setup(opts)
 
             -- >> Add Telescope Extensions
 
-            telescope.load_extension("fzf")
-            telescope.load_extension("ui-select")
-            telescope.load_extension("file_browser")
-            telescope.load_extension("emoji")
-
-            -- >> Mappings
-
-            local wk = require("which-key")
-            local builtin = require("telescope.builtin")
-            local extensions = require("telescope").extensions
-
-            wk.register({
-                f = {
-                    name = "find",
-                    f = {
-                        function()
-                            builtin.find_files({
-                                find_command = {
-                                    "rg",
-                                    -- Show hidden files
-                                    "--hidden",
-                                    -- -- Ignore any .git directories
-                                    "--glob",
-                                    "!**/.git/**",
-                                    "--files",
-                                },
-                            })
-                        end,
-                        "Browse local files (inc hidden)",
-                    },
-                    g = { builtin.git_files, "Current repo files" },
-                    o = { builtin.oldfiles, "Recently opened files" },
-                    ["."] = {
-                        function()
-                            builtin.git_files({
-                                cwd = "~/dotfiles",
-                            })
-                        end,
-                        "Dotfiles",
-                    },
-                    p = {
-                        function()
-                            builtin.find_files({
-                                cwd = "~/prog/",
-                            })
-                        end,
-                        "~/prog",
-                    },
-                    P = {
-                        function()
-                            builtin.find_files({
-                                cwd = "~/.local/share/nvim/plugged/",
-                            })
-                        end,
-                        "Plugin source files",
-                    },
-                    r = {
-                        function()
-                            -- % get's the current buffer's path
-                            -- :h get's the full path
-                            local buffer_relative_path = vim.call("expand", "%:h")
-                            extensions.file_browser.file_browser({
-                                cwd = buffer_relative_path,
-                            })
-                        end,
-                        "Browse relative to buffer",
-                    },
-
-                    b = {
-                        function()
-                            builtin.buffers({
-                                sort_lastused = true,
-                            })
-                        end,
-                        "Buffers",
-                    },
-                    h = { builtin.help_tags, "Help tags" },
-                    y = { builtin.filetypes, "File types" },
-                    c = { builtin.colorscheme, "Colorschemes" },
-                    m = { builtin.keymaps, "Mappings" },
-                    M = { builtin.man_pages, "Man Pages" },
-
-                    B = { builtin.builtin, "Builtins" },
-                },
-                s = {
-                    name = "search",
-                    s = { builtin.live_grep, "Search project file contents" },
-                    r = {
-                        function()
-                            -- % get's the current buffer's path
-                            -- :h get's the full path
-                            local buffer_relative_path = vim.call("expand", "%:h")
-                            builtin.live_grep({
-                                cwd = buffer_relative_path,
-                            })
-                        end,
-                        "Search relative to buffer",
-                    },
-                    t = {
-                        function()
-                            builtin.grep_string({
-                                search = "TODO",
-                            })
-                        end,
-                        "Search for TODOs",
-                    },
-                    ["*"] = { builtin.grep_string, "Search for word under cursor" },
-                    ["/"] = { builtin.current_buffer_fuzzy_find, "Fuzzy find in the current buffer" },
-
-                    e = { extensions.emoji.emoji, "Emoji" },
-                },
-                d = {
-                    name = "diagnostic",
-                    d = { builtin.diagnostics, "List all diagnostics" },
-                    b = {
-                        function()
-                            builtin.diagnostics({
-                                bufnr = 0,
-                            })
-                        end,
-                        "List buffer diagnostics",
-                    },
-
-                    n = {
-                        function()
-                            vim.diagnostic.goto_next({ float = { border = "rounded" } })
-                        end,
-                        "Next",
-                    },
-                    p = {
-                        function()
-                            vim.diagnostic.goto_prev({ float = { border = "rounded" } })
-                        end,
-                        "Previous",
-                    },
-                },
-                G = {
-                    name = "git",
-                    b = { builtin.git_branches, "Branches" },
-                },
-            }, { prefix = "<leader>" })
+            for extension, _cfg in pairs(opts.extensions) do
+                telescope.load_extension(extension)
+            end
         end,
     },
 }
