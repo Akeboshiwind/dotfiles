@@ -47,7 +47,7 @@ return {
             "eraserhd/parinfer-rust",
             "PaterJason/cmp-conjure",
         },
-        config = function()
+        init = function()
             local g = vim.g
 
             g["conjure#mapping#prefix"] = "<leader>"
@@ -64,7 +64,8 @@ return {
 
             -- Disable auto-starting a babashka repl
             g["conjure#client#clojure#nrepl#connection#auto_repl#enabled"] = false
-
+        end,
+        config = function()
             -- >> Custom commands
 
             local pickers = require("telescope.pickers")
