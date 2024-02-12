@@ -19,3 +19,9 @@ truecolor
 github
 com
 plugins
+config
+Clojure
+nrepl
+clojure
+babashka
+repl
