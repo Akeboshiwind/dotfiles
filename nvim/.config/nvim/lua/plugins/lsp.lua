@@ -150,5 +150,4 @@ return {
             end
         end,
     },
-    { import = "plugins.lsp.mason" },
 }
