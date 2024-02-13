@@ -1,7 +1,7 @@
 -- plugins/lang/python-tools.lua
 local util = require("util")
 
-local M = {
+return {
     {
         "williamboman/mason.nvim",
         opts = function(_, opts)
@@ -29,5 +29,3 @@ local M = {
         },
     },
 }
-
-return M

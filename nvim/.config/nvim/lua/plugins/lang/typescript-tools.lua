@@ -1,6 +1,6 @@
 -- plugins/lang/typescript-tools.lua
 
-local M = {
+return {
     {
         "pmizio/typescript-tools.nvim",
         ft = {
@@ -13,5 +13,3 @@ local M = {
         opts = {},
     },
 }
-
-return M

@@ -1,26 +1,16 @@
 -- plugins/nvim-tmux-navigation.lua
 -- Seamless navigation between tmux panes and vim splits
 
-local M = {
-    "alexghergh/nvim-tmux-navigation",
+return {
+    {
+        "alexghergh/nvim-tmux-navigation",
+        opts = {},
+        -- stylua: ignore
+        keys = {
+            {"<C-h>", function() require("nvim-tmux-navigation").NvimTmuxNavigateLeft() end,  desc="Navigate Left" },
+            {"<C-j>", function() require("nvim-tmux-navigation").NvimTmuxNavigateDown() end,  desc="Navigate Left" },
+            {"<C-k>", function() require("nvim-tmux-navigation").NvimTmuxNavigateUp() end,    desc="Navigate Left" },
+            {"<C-l>", function() require("nvim-tmux-navigation").NvimTmuxNavigateRight() end, desc="Navigate Left" },
+        },
+    },
 }
-
-function M.config()
-    local wk = require("which-key")
-    local tnav = require("nvim-tmux-navigation")
-
-    -- >> Setup
-
-    tnav.setup({})
-
-    -- >> Mappings
-
-    wk.register({
-        ["<C-h>"] = { tnav.NvimTmuxNavigateLeft, "Navigate Left" },
-        ["<C-j>"] = { tnav.NvimTmuxNavigateDown, "Navigate Left" },
-        ["<C-k>"] = { tnav.NvimTmuxNavigateUp, "Navigate Left" },
-        ["<C-l>"] = { tnav.NvimTmuxNavigateRight, "Navigate Left" },
-    }, { mode = "n" })
-end
-
-return M
