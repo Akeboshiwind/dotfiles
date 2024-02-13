@@ -25,3 +25,6 @@ nrepl
 clojure
 babashka
 repl
+dialog
+plugin
+max
