@@ -9,8 +9,6 @@ return {
             "hrsh7th/cmp-path",
             "hrsh7th/cmp-cmdline",
             "lukas-reineke/cmp-rg",
-            "L3MON4D3/LuaSnip",
-            "saadparwaiz1/cmp_luasnip",
         },
         init = function()
             vim.opt.completeopt = { "menu", "menuone", "noselect" }
@@ -23,17 +21,10 @@ return {
         --   - I'd rather not remove them and rely on (potentially) internal details
         config = function()
             local cmp = require("cmp")
-            local luasnip = require("luasnip")
 
             -- >> Setup
 
             cmp.setup({
-                snippet = {
-                    expand = function(args)
-                        luasnip.lsp_expand(args.body)
-                    end,
-                },
-
                 mapping = {
                     ["<C-Space>"] = cmp.mapping(cmp.mapping.complete(), { "i", "c" }),
                     ["<CR>"] = cmp.mapping.confirm({
@@ -50,8 +41,6 @@ return {
                     ["<Tab>"] = cmp.mapping(function(fallback)
                         if cmp.visible() then
                             cmp.select_next_item()
-                        elseif luasnip.expand_or_jumpable() then
-                            luasnip.expand_or_jump()
                         else
                             fallback()
                         end
@@ -59,8 +48,6 @@ return {
                     ["<S-Tab>"] = cmp.mapping(function(fallback)
                         if cmp.visible() then
                             cmp.select_prev_item()
-                        elseif luasnip.jumpable(-1) then
-                            luasnip.jump(-1)
                         else
                             fallback()
                         end
@@ -69,7 +56,6 @@ return {
 
                 sources = cmp.config.sources({
                     { name = "copilot" },
-                    { name = "luasnip" },
                     {
                         name = "path",
                         option = {
