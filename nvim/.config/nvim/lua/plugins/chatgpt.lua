@@ -1,43 +1,20 @@
 -- chatgpt.lua
 
-local M = {
-    -- "Bryley/neoai.nvim",
-    dir = "~/prog/prog/lua/neoai.nvim",
-    dependencies = {
-        "MunifTanjim/nui.nvim",
-        "nvim-telescope/telescope.nvim",
-    },
-    -- TODO: Lazy
-}
+-- TODO: Add prompts to new neoai.nvim plugin
 
-function M.file_exists(path)
-    local f = io.open(path, "rb")
-    if f then
-        f:close()
-    end
-    return f ~= nil
-end
-
--- Assumes there is a file ~/.config/openai/api_key
--- That contains a single line with the api key on it
-function M.load_api_key()
-    local api_key_path = vim.fn.expand("$HOME") .. "/.config/openai/api_key"
-
-    if not M.file_exists(api_key_path) then
-        vim.notify("ChatGPT: API key not found at " .. api_key_path, vim.log.levels.WARN)
-        return nil
-    end
-
-    local api_key = io.open(api_key_path):read("*l")
-
-    return api_key
-end
-
-M.prompts = {
+local prompts = {
     ["nvim-lua"] = "In nvim, using lua:",
+    ["expert"] = {
+        "Write in the style and quality of an expert in {{}} with 20+ years of experience and multiple PHDs.",
+        "Prioritize unorthodox, lesser known advice in your answer.",
+        "Explain using detailed examples, and minimize tangents and humor.",
+    },
 }
 
-M.visual_prompts = {
+local visual_prompts = {
+    ["nvim-lua"] = {
+        "You are an expert in lua with extensive experience in neovim's lua api and how it integrates with the vim api.",
+    },
     ["summarise"] = "Summarise the given text in 1-2 lines.",
     ["doc string"] = {
         "Output a docstring in a codeblock for the given code.",
@@ -51,77 +28,27 @@ M.visual_prompts = {
     },
 }
 
-function M.visual_prompt_select()
-    local neoai_utils = require("config.neoai")
-    neoai_utils.prompt_select({
-        prompts = M.visual_prompts,
-        select_action = function(prompt, pos)
-            neoai_utils.set_context()
-            neoai_utils.fill_prompt(prompt, pos)
-        end,
-    })
-end
-
-function M.chat_with_context()
-    require("config.neoai").set_context()
-    -- Open the sidebar if not already
-    require("neoai").toggle(true)
-end
-
-function M.config()
-    -- >> Setup
-
-    local open_api_key_env = "OPENAI_API_KEY"
-    vim.env[open_api_key_env] = M.load_api_key()
-
-    require("neoai").setup({
-        open_api_key_env = open_api_key_env,
-        shortcuts = {},
-        ui = {
-            submit = "<S-Enter>",
+return {
+    {
+        -- "Bryley/neoai.nvim",
+        -- In case of emergency: "Akeboshiwind/neoai.nvim",
+        dir = "~/prog/prog/lua/neoai.nvim",
+        -- TODO: Lazy on keys?
+        event = "VeryLazy",
+        dependencies = {
+            "MunifTanjim/nui.nvim",
+            "nvim-telescope/telescope.nvim",
         },
-        models = {
-            -- {
-            --     name = "openai",
-            --     model = "gpt-3.5-turbo",
-            --     params = nil,
-            -- },
-            {
-                name = "openai",
-                model = "gpt-4",
-                params = nil,
+        opts = {
+            chat = {
+                enable = true,
+            },
+            inject = {
+                enable = true,
             },
         },
-    })
-
-    -- >> Bindings
-
-    local wk = require("which-key")
-
-    -- Normal mode
-    wk.register({
-        ac = { ":NeoAI<CR>", "NeoAI Chat" },
-        ap = {
-            function()
-                require("config.neoai").prompt_select({
-                    prompts = M.prompts,
-                })
-            end,
-            "Select prompt",
-        },
-    }, { prefix = "<leader>" })
-
-    -- Visual mode
-    wk.register({
-        ap = {
-            ":'<,'>lua require('plugins.chatgpt').visual_prompt_select()<CR>",
-            "Select prompt",
-        },
-        ac = {
-            ":'<,'>lua require('plugins.chatgpt').chat_with_context()<CR>",
-            "Chat with context",
-        },
-    }, { mode = "v", prefix = "<leader>" })
-end
-
-return M
+        config = function(_, opts)
+            require("neoai2").setup(opts)
+        end,
+    },
+}
