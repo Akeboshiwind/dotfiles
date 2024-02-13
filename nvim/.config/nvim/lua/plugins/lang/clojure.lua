@@ -1,11 +1,16 @@
 -- plugins/lang/conjure.lua
+-- TODO: Move conjure stuff to it's own file?
 
 return {
     {
         "neovim/nvim-lspconfig",
         opts = {
             servers = {
-                clojure_lsp = {},
+                clojure_lsp = {
+                    init_options = {
+                        ["cljfmt-config-path"] = vim.fn.stdpath("config") .. "/config/.cljfmt.edn",
+                    },
+                },
             },
         },
     },
