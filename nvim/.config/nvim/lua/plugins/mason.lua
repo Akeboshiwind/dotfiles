@@ -2,7 +2,7 @@
 local function _1_(_, opts)
   opts.ensure_installed = (opts.ensure_installed or {})
   opts.mason_lspconfig = (opts.mason_lspconfig or {automatic_installation = true})
-  return nil
+  return opts
 end
 local function _2_(_, opts)
   do end (require("mason")).setup(opts)

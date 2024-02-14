@@ -17,7 +17,6 @@ local function debounce(ms, f)
   end
   return _2_
 end
---[[ (fn call [obj method ...] ((. obj method) (unpack ...))) ]]
 local lsp = {}
 lsp.on_attach = function(on_attach)
   local function _4_(args)

@@ -4,7 +4,8 @@
 [{1 :williamboman/mason.nvim
   :opts (fn [_ opts]
           (set opts.ensure_installed (or opts.ensure_installed {}))
-          (vim.list_extend opts.ensure_installed ["commitlint"]))}
+          (vim.list_extend opts.ensure_installed ["commitlint"])
+          opts)}
 
  {1 :mfussenegger/nvim-lint
   :opts {; Event to trigger linters

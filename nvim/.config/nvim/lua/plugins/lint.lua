@@ -2,7 +2,8 @@
 local util = require("util")
 local function _1_(_, opts)
   opts.ensure_installed = (opts.ensure_installed or {})
-  return vim.list_extend(opts.ensure_installed, {"commitlint"})
+  vim.list_extend(opts.ensure_installed, {"commitlint"})
+  return opts
 end
 local function _2_(_, opts)
   local lint = require("lint")
