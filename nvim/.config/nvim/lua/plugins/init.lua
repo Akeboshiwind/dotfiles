@@ -1,17 +1,2 @@
--- init.lua
-
-return {
-    {
-        "folke/lazy.nvim",
-        tag = "v10.16.0",
-    },
-
-    -- Intelligently reopen files at your last edit position in Vim
-    "farmergreg/vim-lastplace",
-
-    -- Automatically create paths that don't exist on buffer save
-    "arp242/auto_mkdir2.vim",
-
-    -- Git plugin
-    "tpope/vim-fugitive",
-}
+-- [nfnl] Compiled from fnl/plugins/init.fnl by https://github.com/Olical/nfnl, do not edit.
+return {{"folke/lazy.nvim", tag = "v10.16.0"}, "farmergreg/vim-lastplace", "arp242/auto_mkdir2.vim", "tpope/vim-fugitive"}
