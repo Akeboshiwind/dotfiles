@@ -33,89 +33,94 @@
                  ;:gpanders/nvim-parinfer
                  :eraserhd/parinfer-rust
                  :PaterJason/cmp-conjure]
-  :init #(let [g vim.g]
-           (tset g "conjure#mapping#prefix" "<leader>")
+  :opts {:config
+         {"mapping#prefix" "<leader>"
 
-           ; Briefly highlight evaluated forms
-           (tset g  "conjure#highlight#enabled" true)
+          ; Briefly highlight evaluated forms
+          "highlight#enabled" true
 
-           ; Only enable for clojure (so far anyway)
-           (tset g "conjure#filetypes" ["clojure"])
+          ; Only enable for clojure (so far anyway)
+          "filetypes" ["clojure"]
 
-           ; Disable the mapping for selecting a session as that collides with searching)
-           ; files within a project
-           (tset g "conjure#client#clojure#nrepl#mapping#session_select" false)
+          ; Disable the mapping for selecting a session as that collides with searching)
+          ; files within a project
+          "client#clojure#nrepl#mapping#session_select" false
+          ; Disable auto-starting a babashka repl
+          "client#clojure#nrepl#connection#auto_repl#enabled" false}}
+  :config (fn [_ opts]
+            ; >> Configure
+            (each [k v (pairs opts.config)]
+              (tset vim.g (string.format "conjure#%s" k) v))
 
-           ; Disable auto-starting a babashka repl
-           (tset g "conjure#client#clojure#nrepl#connection#auto_repl#enabled" false))
-  :config #(let [pickers (require "telescope.pickers")
-                 finders (require "telescope.finders")
-                 conf (. (require "telescope.config") :values)
-                 actions (require "telescope.actions")
-                 action-state (require "telescope.actions.state")]
+            ; >> Mappings
+            (let [pickers (require "telescope.pickers")]
+                finders (require "telescope.finders")
+                conf (. (require "telescope.config") :values)
+                actions (require "telescope.actions")
+                action-state (require "telescope.actions.state"))
 
-             (fn shadow-select [opts]
-               (let [opts (or opts {})
-                     ; A set used to de-duplicate the entries
-                     ; To use a table as a set, use the keys as values
-                     ; # Insertion:
-                     ; (tset set value true)
-                     ; # Contains?
-                     ; (if (. set value)
-                     ;   (print "contains"))
-                     ; See: https://www.lua.org/pil/11.5.html
-                     entry_cache {}]
+            (fn shadow-select [opts]
+              (let [opts (or opts {})
+                    ; A set used to de-duplicate the entries
+                    ; To use a table as a set, use the keys as values
+                    ; # Insertion:
+                    ; (tset set value true)
+                    ; # Contains?
+                    ; (if (. set value)
+                    ;   (print "contains"))
+                    ; See: https://www.lua.org/pil/11.5.html
+                    entry_cache {}]
 
-                   ; Does three things to the `ps aux` output:
-                   ;  - Filters for shadow-cljs watch commands
-                   ;  - Returns the app name
-                   ;  - De-duplicates the results
-                   (set opts.entry_maker
-                     (fn [entry]
-                       ; NOTE: Have to put the `-` in a set for some reason...
-                       ; TODO: when-let?
-                       (let [app (entry:match "shadow[-]cljs watch (%w*)")]
-                         (when app
-                           ; Cache the entry
-                           (when (not (. entry_cache app))
-                             (tset entry_cache app true)
-                             {:value app
-                              :display app
-                              :ordinal app})))))
+                  ; Does three things to the `ps aux` output:
+                  ;  - Filters for shadow-cljs watch commands
+                  ;  - Returns the app name
+                  ;  - De-duplicates the results
+                  (set opts.entry_maker
+                    (fn [entry]
+                      ; NOTE: Have to put the `-` in a set for some reason...
+                      ; TODO: when-let?
+                      (let [app (entry:match "shadow[-]cljs watch (%w*)")]
+                        (when app
+                          ; Cache the entry
+                          (when (not (. entry_cache app))
+                            (tset entry_cache app true)
+                            {:value app
+                             :display app
+                             :ordinal app})))))
 
-                   (-> pickers
-                       (#((. $1 :new)
-                          opts
-                          {:prompt_title "shadow-cljs apps"
-                           :finder (finders.new_oneshot_job ["ps" "aux"] opts)
-                           :sorter (conf.generic_sorter opts)
-                           :attach_mappings 
-                           (fn [prompt_bufnr _]
-                             ; When an app is selected, run ConjureShadowSelect
-                             (actions.select_default:replace
-                               #(do
-                                  (actions.close prompt_bufnr)
-                                  (let [selection (action_state.get_selected_entry)
-                                        app selection.value]
+                  (-> pickers
+                      (#((. $1 :new)
+                         opts
+                         {:prompt_title "shadow-cljs apps"
+                          :finder (finders.new_oneshot_job ["ps" "aux"] opts)
+                          :sorter (conf.generic_sorter opts)
+                          :attach_mappings 
+                          (fn [prompt_bufnr _]
+                            ; When an app is selected, run ConjureShadowSelect
+                            (actions.select_default:replace
+                              #(do
+                                 (actions.close prompt_bufnr)
+                                 (let [selection (action_state.get_selected_entry)
+                                       app selection.value]
 
-                                    (vim.cmd (string.format "ConjureShadowSelect %s" app)))
-                                  true)))}))
+                                   (vim.cmd (string.format "ConjureShadowSelect %s" app)))
+                                 true)))}))
                         
-                       (: :find))))
+                      (: :find))))
 
-             ; >> Document Mappings
-             (let [wk (require "which-key")]
+            ; >> Document Mappings
+            (let [wk (require "which-key")]
 
-               ; Base Conjure Mappings
-               (wk.register
-                 {:e {:g [":ConjureEval (user/go!)<CR>" "user/go!"]
-                      :s [#(do
-                             ; Save buffer
-                             (vim.cmd "w")
+              ; Base Conjure Mappings
+              (wk.register
+                {:e {:g [":ConjureEval (user/go!)<CR>" "user/go!"]
+                     :s [#(do
+                            ; Save buffer
+                            (vim.cmd "w")
 
-                             ; clerk/show!
-                             (let [filename (vim.fn.expand "%:p")]
-                               (vim.cmd (string.format "ConjureEval (nextjournal.clerk/show! \"%s\")" filename))))
-                          "clerk/show!"]}
-                  :s {:S [shadow_select "Conjure Select Shadowcljs Environment"]}}
-                 {:prefix "<leader>"})))}]
+                            ; clerk/show!
+                            (let [filename (vim.fn.expand "%:p")]
+                              (vim.cmd (string.format "ConjureEval (nextjournal.clerk/show! \"%s\")" filename))))
+                         "clerk/show!"]}
+                 :s {:S [shadow_select "Conjure Select Shadowcljs Environment"]}}
+                {:prefix "<leader>"})))}]
