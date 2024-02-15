@@ -70,7 +70,7 @@
           :desc "Emoji"}
 
          ; >> diagnostic
-         {1 "<leader>dd" 2 "<cmd>Telescope diagnostics" :desc "List all diagnostics"}
+         {1 "<leader>dd" 2 "<cmd>Telescope diagnostics<CR>" :desc "List all diagnostics"}
          {1 "<leader>db"
           2 #((. (require "telescope.builtin") :diagnostics)
               {:bufnr 0})
@@ -85,7 +85,7 @@
           :desc "Previous"}
 
          ; >> Git
-         {1 "<leader>Gb" 2 "<cmd>Telescope git_branches" :desc "Branches"}]
+         {1 "<leader>Gb" 2 "<cmd>Telescope git_branches<CR>" :desc "Branches"}]
   :opts {:defaults
          {:mappings
           {:i {; Normally when you press <esc> it puts you in normal mode in
