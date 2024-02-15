@@ -12,6 +12,7 @@
          :events [:BufWritePost :BufReadPost :InsertLeave]
          :linters_by_ft {:gitcommit ["commitlint"]}
          ; Add new linters or override existing ones
+         ; You can also add a :condition key to add the linter only when the condition is true
          :linters {:commitlint {:args ["--config"
                                        (.. (vim.fn.stdpath "config")
                                            "/config/commitlint.config.js")
@@ -30,7 +31,38 @@
 
               (set lint.linters_by_ft opts.linters_by_ft)
 
+              ; src: https://github.com/LazyVim/LazyVim/blob/a50f92f7550fb6e9f21c0852e6cb190e6fcd50f5/lua/lazyvim/plugins/linting.lua#L55
+              ; Same as all of this tbh 😅
+              (fn try-lint []
+                ; Use nvim-lint's logic
+                (var names (lint._resolve_linter_by_ft vim.bo.filetype))
+
+                ; Add fallback linters
+                (if (not= 0 (length names))
+                  (vim.list_extend names (or (. lint.linters_by_ft "_") [])))
+
+                ; Add global linters
+                (vim.list_extend names (or (. lint.linters_by_ft "*") []))
+
+                ; Filter out linters that don't match the :condition
+                (let [filename (vim.api.nvim_buf_get_name 0)
+                      ctx {:filename filename
+                           :dirname (vim.fn.fnamemodify filename ":h")}]
+                  (set names (vim.tbl_filter
+                               (fn [name]
+                                 (let [linter (. lint.linters name)]
+                                   (and linter
+                                        (not (and (= (type linter) "table")
+                                                  linter.condition
+                                                  (not (linter.condition ctx)))))))
+                               names)))
+
+                ; Run the linters
+                (if (not= 0 (length names))
+                  (lint.try_lint names)))
+                                     
+
               ; Add autocmd to trigger linters
               (vim.api.nvim_create_autocmd opts.events
                 {:group (vim.api.nvim_create_augroup "nvim-lint" {:clear true})
-                 :callback (util.debounce 100 #(lint.try_lint))})))}]
+                 :callback (util.debounce 100 #(try_lint))})))}]
