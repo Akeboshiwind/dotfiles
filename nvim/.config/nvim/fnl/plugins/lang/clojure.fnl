@@ -39,8 +39,8 @@
           ; Briefly highlight evaluated forms
           "highlight#enabled" true
 
-          ; Only enable for clojure (so far anyway)
-          "filetypes" ["clojure"]
+          ; TODO: Remove and enable for all?
+          "filetypes" ["clojure" "fennel"]
 
           ; Disable the mapping for selecting a session as that collides with searching)
           ; files within a project
