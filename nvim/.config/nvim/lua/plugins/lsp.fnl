@@ -5,6 +5,7 @@
 (local builtin (autoload :telescope.builtin))
 (local lspconfig (autoload :lspconfig))
 (local lsp-ui-window (autoload :lspconfig.ui.windows))
+(local nvim-lightbulb (autoload :nvim-lightbulb))
 (local cmp-nvim-lsp (autoload :cmp_nvim_lsp))
 
 ; Register Generic LSP mapings
@@ -56,11 +57,11 @@
   :event :LspAttach
   :opts {}}
  {1 :kosayoda/nvim-lightbulb
-  ; Maybe init so this can be lazy?
-  :config #(util.lsp.on-attach
-             (fn [_client _bufnr]
-               ; TODO: Make buffer local?
-               (vim.cmd "autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb()")))}
+  :init #(util.lsp.on-attach
+           (fn [_client bufnr]
+             (vim.api.nvim_create_autocmd ["CursorHold" "CursorHoldI"]
+               {:buffer bufnr
+                :callback #(nvim-lightbulb.update_lightbulb)})))}
  {1 :neovim/nvim-lspconfig
   :dependencies [; Not sure what needs to be here anymore
                  :williamboman/mason.nvim
