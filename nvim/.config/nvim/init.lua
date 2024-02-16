@@ -1,13 +1,17 @@
 -- [nfnl] Compiled from init.fnl by https://github.com/Olical/nfnl, do not edit.
 vim.g.mapleader = ","
-do
-  local lazypath = (vim.fn.stdpath("data") .. "/lazy/lazy.nvim")
-  if not vim.loop.fs_stat(lazypath) then
-    vim.fn.system({"git", "clone", "--filter=blob:none", "https://github.com/folke/lazy.nvim.git", "--branch=stable", lazypath})
+local lazypath = (vim.fn.stdpath("data") .. "/lazy")
+local function ensure(user, repo, branch)
+  local install_path = (lazypath .. "/" .. repo)
+  local branch0 = (branch or "main")
+  if not vim.loop.fs_stat(install_path) then
+    return vim.fn.system({"git", "clone", "--filter=blob:none", ("https://github.com/" .. user .. "/" .. repo .. ".git"), ("--branch=" .. branch0), install_path})
   else
+    return (vim.opt.rtp):prepend(install_path)
   end
-  do end (vim.opt.rtp):prepend(lazypath)
 end
+ensure("folke", "lazy.nvim", "stable")
+ensure("Olical", "nfnl")
 local lazy = require("lazy")
 lazy.setup("plugins", {dev = {path = "~/prog/prog/nvim/"}, ui = {border = "single", icons = {cmd = "\226\140\152", config = "\240\159\155\160", event = "\240\159\147\133", ft = "\240\159\147\130", init = "\226\154\153", keys = "\240\159\151\157", plugin = "\240\159\148\140", runtime = "\240\159\146\187", source = "\240\159\147\132", start = "\240\159\154\128", task = "\240\159\147\140"}}, checker = {enabled = true, check_pinned = true}, performance = {rtp = {disabled_plugins = {"gzip", "matchit", "matchparen", "netrwPlugin", "tarPlugin", "tohtml", "tutor", "zipPlugin"}}}})
 _G.P = function(...)

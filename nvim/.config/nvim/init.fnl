@@ -7,17 +7,23 @@
 ;; Map before loading lazy.nvim
 (set vim.g.mapleader ",")
 
-(let [lazypath (.. (vim.fn.stdpath "data") "/lazy/lazy.nvim")]
-    (if (not (vim.loop.fs_stat lazypath))
+(local lazypath (.. (vim.fn.stdpath "data") "/lazy"))
+
+(fn ensure [user repo branch]
+  (let [install-path (.. lazypath "/" repo)
+        branch (or branch "main")]
+    (if (not (vim.loop.fs_stat install-path))
       (vim.fn.system
         ["git"
          "clone"
          "--filter=blob:none"
-         "https://github.com/folke/lazy.nvim.git"
-         "--branch=stable" ; latest stable release
-         lazypath]))
+         (.. "https://github.com/" user "/" repo ".git")
+         (.. "--branch=" branch)
+         install-path])
+     (vim.opt.rtp:prepend install-path))))
 
-    (vim.opt.rtp:prepend lazypath))
+(ensure :folke :lazy.nvim :stable)
+(ensure :Olical :nfnl)
 
 (local lazy (require "lazy"))
 (lazy.setup "plugins"
