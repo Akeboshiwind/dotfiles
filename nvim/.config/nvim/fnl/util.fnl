@@ -14,14 +14,6 @@
             (timer:stop)
             ((vim.schedule_wrap f) (unpack argv))))))))
 
-; Would something like this be useful?
-; For this:
-; ((. (require "something") :method) a b c)
-; (call (require "something") :method a b c)
-(comment
-  (fn call [obj method ...]
-    ((. obj method) (unpack ...))))
-
 (local lsp {})
 
 (fn lsp.on_attach [on-attach]
