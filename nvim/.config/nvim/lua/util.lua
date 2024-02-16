@@ -18,7 +18,7 @@ local function debounce(ms, f)
   return _2_
 end
 local lsp = {}
-lsp.on_attach = function(on_attach)
+lsp["on-attach"] = function(on_attach)
   local function _4_(args)
     local buffer = args.buf
     local client = vim.lsp.get_client_by_id(args.data.client_id)
@@ -26,4 +26,4 @@ lsp.on_attach = function(on_attach)
   end
   return vim.api.nvim_create_autocmd("LspAttach", {callback = _4_})
 end
-return {on_very_lazy = on_very_lazy, debounce = debounce, lsp = lsp}
+return {["on-very-lazy"] = on_very_lazy, debounce = debounce, lsp = lsp}

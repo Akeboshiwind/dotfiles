@@ -53,10 +53,10 @@
   :opts {}}
  {1 :nvim-lua/lsp-status.nvim
   ; Maybe init so this can be lazy?
-  :config #(util.lsp.on_attach (. (require "lsp-status") :on_attach))}
+  :config #(util.lsp.on-attach (. (require "lsp-status") :on_attach))}
  {1 :kosayoda/nvim-lightbulb
   ; Maybe init so this can be lazy?
-  :config #(util.lsp.on_attach
+  :config #(util.lsp.on-attach
              (fn [client bufnr]
                ; TODO: Make buffer local?
                (vim.cmd "autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb()")))}
@@ -76,7 +76,7 @@
             (tset (require "lspconfig.ui.windows") :default_options
              {:border "rounded"})
 
-            (util.lsp.on_attach
+            (util.lsp.on-attach
               (fn [client bufnr]
                 (setup_mappings bufnr)))
 

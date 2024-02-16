@@ -16,20 +16,20 @@ local function setup_mappings(bufnr)
   return wk.register({a = {name = "action", a = {":'<,'>Telescope lsp_range_code_actions<CR>", "Apply code action"}}}, {prefix = "<leader>", mode = "v", buffer = bufnr})
 end
 local function _3_()
-  return util.lsp.on_attach((require("lsp-status")).on_attach)
+  return util.lsp["on-attach"]((require("lsp-status")).on_attach)
 end
 local function _4_()
   local function _5_(client, bufnr)
     return vim.cmd("autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb()")
   end
-  return util.lsp.on_attach(_5_)
+  return util.lsp["on-attach"](_5_)
 end
 local function _6_(_, opts)
   require("lspconfig.ui.windows")["default_options"] = {border = "rounded"}
   local function _7_(client, bufnr)
     return setup_mappings(bufnr)
   end
-  util.lsp.on_attach(_7_)
+  util.lsp["on-attach"](_7_)
   local capabilities = vim.tbl_deep_extend("force", {}, vim.lsp.protocol.make_client_capabilities(), (require("cmp_nvim_lsp")).default_capabilities(), (require("lsp-status")).capabilities, (opts.capabilities or {}))
   for server, server_opts in pairs(opts.servers) do
     local final_server_opts = vim.tbl_deep_extend("force", {capabilities = vim.deepcopy(capabilities)}, (server_opts or {}))

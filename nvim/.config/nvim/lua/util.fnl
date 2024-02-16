@@ -1,6 +1,6 @@
 ;; util.fnl
 
-(fn on_very_lazy [f]
+(fn on-very-lazy [f]
   (vim.api.nvim_create_autocmd "User"
     {:pattern "VeryLazy"
      :callback (fn [] (f))}))
@@ -16,7 +16,7 @@
 
 (local lsp {})
 
-(fn lsp.on_attach [on-attach]
+(fn lsp.on-attach [on-attach]
   (vim.api.nvim_create_autocmd "LspAttach"
     {:callback (fn [args]
                  (let [buffer args.buf
@@ -24,6 +24,6 @@
                                 args.data.client_id)]
                    (on-attach client buffer)))}))
 
-{: on_very_lazy
+{: on-very-lazy
  : debounce
  : lsp}

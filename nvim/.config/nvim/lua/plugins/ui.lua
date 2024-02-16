@@ -11,7 +11,7 @@ local function _3_()
     vim.notify = require("notify")
     return nil
   end
-  return util.on_very_lazy(_4_)
+  return util["on-very-lazy"](_4_)
 end
 local function _5_(_241)
   return vim.api.nvim_win_set_config(_241, {zindex = 100})

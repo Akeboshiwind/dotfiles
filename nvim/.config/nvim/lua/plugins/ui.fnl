@@ -22,7 +22,7 @@
                     :lualine_z [:location]}}}
 
  {1 :rcarriga/nvim-notify
-  :init #(util.on_very_lazy #(set vim.notify (require "notify")))
+  :init #(util.on-very-lazy #(set vim.notify (require "notify")))
   :opts {:timeout 3000
          ; Ensure notifications are always on top
          :on_open #(vim.api.nvim_win_set_config $1 {:zindex 100})
