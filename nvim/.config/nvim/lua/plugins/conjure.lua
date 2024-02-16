@@ -1,4 +1,4 @@
--- [nfnl] Compiled from fnl/plugins/conjure.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] Compiled from lua/plugins/conjure.fnl by https://github.com/Olical/nfnl, do not edit.
 local function _1_(_, opts)
   for k, v in pairs(opts.config) do
     vim.g[string.format("conjure#%s", k)] = v

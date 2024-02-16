@@ -1,4 +1,4 @@
--- [nfnl] Compiled from fnl/plugins/which-key.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] Compiled from lua/plugins/which-key.fnl by https://github.com/Olical/nfnl, do not edit.
 local function _1_()
   vim.opt.timeoutlen = 400
   return nil

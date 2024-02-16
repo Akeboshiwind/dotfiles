@@ -1,4 +1,4 @@
--- [nfnl] Compiled from fnl/plugins/lsp.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] Compiled from lua/plugins/lsp.fnl by https://github.com/Olical/nfnl, do not edit.
 local util = require("util")
 local function setup_mappings(bufnr)
   local wk = require("which-key")

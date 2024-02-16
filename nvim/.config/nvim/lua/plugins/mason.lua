@@ -1,4 +1,4 @@
--- [nfnl] Compiled from fnl/plugins/mason.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] Compiled from lua/plugins/mason.fnl by https://github.com/Olical/nfnl, do not edit.
 local function _1_(_, opts)
   opts.ensure_installed = (opts.ensure_installed or {})
   opts.mason_lspconfig = (opts.mason_lspconfig or {automatic_installation = true})

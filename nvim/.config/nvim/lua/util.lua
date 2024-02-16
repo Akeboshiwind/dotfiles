@@ -1,4 +1,4 @@
--- [nfnl] Compiled from fnl/util.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] Compiled from lua/util.fnl by https://github.com/Olical/nfnl, do not edit.
 local function on_very_lazy(f)
   local function _1_()
     return f()

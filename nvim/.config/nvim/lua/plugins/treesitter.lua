@@ -1,4 +1,4 @@
--- [nfnl] Compiled from fnl/plugins/treesitter.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] Compiled from lua/plugins/treesitter.fnl by https://github.com/Olical/nfnl, do not edit.
 --[[ {1 "nvim-treesitter/playground" :cmd "TSPlaygroundToggle"} ]]
 local function _1_(_, opts)
   local _let_2_ = require("nvim-treesitter.configs")

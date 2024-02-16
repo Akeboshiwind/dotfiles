@@ -1,4 +1,4 @@
--- [nfnl] Compiled from fnl/plugins/ui.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] Compiled from lua/plugins/ui.fnl by https://github.com/Olical/nfnl, do not edit.
 local util = require("util")
 local function _1_()
   local _let_2_ = require("kanagawa")

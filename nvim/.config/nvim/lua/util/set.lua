@@ -1,4 +1,4 @@
--- [nfnl] Compiled from fnl/util/set.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] Compiled from lua/util/set.fnl by https://github.com/Olical/nfnl, do not edit.
 local function new()
   return {}
 end

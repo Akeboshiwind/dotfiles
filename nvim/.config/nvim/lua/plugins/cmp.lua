@@ -1,4 +1,4 @@
--- [nfnl] Compiled from fnl/plugins/cmp.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] Compiled from lua/plugins/cmp.fnl by https://github.com/Olical/nfnl, do not edit.
 local function _1_()
   vim.opt.completeopt = {"menu", "menuone", "noselect"}
   return nil

@@ -1,4 +1,4 @@
--- [nfnl] Compiled from fnl/plugins/telescope.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] Compiled from lua/plugins/telescope.fnl by https://github.com/Olical/nfnl, do not edit.
 local function _1_()
   return (require("telescope.builtin")).find_files({find_command = {"rg", "--hidden", "--glob", "!**/.git/**", "--files"}})
 end
