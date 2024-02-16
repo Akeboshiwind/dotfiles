@@ -1,11 +1,13 @@
 ; plugins/lang/yaml.fnl
+(local {: autoload} (require :nfnl.module))
+(local {: update : merge} (autoload :nfnl.core))
 
 [{1 :williamboman/mason.nvim
   :opts (fn [_ opts]
-          (set opts.ensure_installed (or opts.ensure_installed []))
-          (vim.list_extend opts.ensure_installed
-            [:cfn-lint :actionlint :yamllint])
-          opts)}
+          (-> opts
+              (update :ensure-installed #(or $ []))
+              (update :ensure-installed
+                #(vim.list_extend $ [:cfn-lint :actionlint :yamllint]))))}
  {1 :mfussenegger/nvim-lint
   :opts {:linters_by_ft {:yaml [:cfn_lint :actionlint :yamllint]}
          :linters {:cfn_lint
