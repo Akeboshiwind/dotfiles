@@ -5,7 +5,6 @@
 (local builtin (autoload :telescope.builtin))
 (local lspconfig (autoload :lspconfig))
 (local lsp-ui-window (autoload :lspconfig.ui.windows))
-(local lsp-status (autoload :lsp-status))
 (local cmp-nvim-lsp (autoload :cmp_nvim_lsp))
 
 ; Register Generic LSP mapings
@@ -56,9 +55,6 @@
 [{1 :j-hui/fidget.nvim
   :event :LspAttach
   :opts {}}
- {1 :nvim-lua/lsp-status.nvim
-  ; Maybe init so this can be lazy?
-  :config #(util.lsp.on-attach lsp-status.on_attach)}
  {1 :kosayoda/nvim-lightbulb
   ; Maybe init so this can be lazy?
   :config #(util.lsp.on-attach
@@ -68,7 +64,6 @@
  {1 :neovim/nvim-lspconfig
   :dependencies [; Not sure what needs to be here anymore
                  :williamboman/mason.nvim
-                 :nvim-lua/lsp-status.nvim
                  :folke/which-key.nvim
                  :nvim-telescope/telescope.nvim
                  :kosayoda/nvim-lightbulb
@@ -90,7 +85,6 @@
                                  {}
                                  (vim.lsp.protocol.make_client_capabilities)
                                  (cmp-nvim-lsp.default_capabilities)
-                                 lsp-status.capabilities
                                  (or opts.capabilities {}))]
               (each [server server-opts (pairs opts.servers)]
                 (let [final-server-opts
