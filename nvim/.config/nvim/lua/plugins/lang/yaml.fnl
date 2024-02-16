@@ -18,6 +18,7 @@
                                  (print dirname)
                                  (string.match dirname ".github/workflows"))}}}}
 
+ ;; Don't think this is doing anything really :S
  {1 :neovim/nvim-lspconfig
   :opts {:servers
          {:yamlls
