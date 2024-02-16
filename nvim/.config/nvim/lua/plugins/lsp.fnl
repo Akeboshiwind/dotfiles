@@ -63,15 +63,15 @@
                {:buffer bufnr
                 :callback #(nvim-lightbulb.update_lightbulb)})))}
  {1 :neovim/nvim-lspconfig
-  :dependencies [; Not sure what needs to be here anymore
-                 :williamboman/mason.nvim
+  :dependencies [:williamboman/mason-lspconfig.nvim
                  :folke/which-key.nvim
-                 :nvim-telescope/telescope.nvim
-                 :kosayoda/nvim-lightbulb
-                 :j-hui/fidget.nvim]
+                 :nvim-telescope/telescope.nvim]
   :opts {; LSP Servers
+         ; Put the lsp server (following the nvim-lspconfig naming)
+         ; along with any associated config
          :servers {}
-         ; Optional setup function for servers
+         ; (optional) Override setup function for lsp server
+         ; Defaults to lspconfig setup function
          :setup {}}
   :config (fn [_ opts]
             (set lsp-ui-window.default_options {:border "rounded"})
@@ -89,9 +89,9 @@
                                  (or opts.capabilities {}))]
               (each [server server-opts (pairs opts.servers)]
                 (let [final-server-opts
-                       (vim.tbl_deep_extend "force"
-                         {:capabilities (vim.deepcopy capabilities)}
-                         (or server-opts {}))]
+                      (vim.tbl_deep_extend "force"
+                        {:capabilities (vim.deepcopy capabilities)}
+                        (or server-opts {}))]
                   (if (. opts :setup server)
                     ((. opts :setup server) server final-server-opts)
                     ((. lspconfig server :setup) final-server-opts))))))}]

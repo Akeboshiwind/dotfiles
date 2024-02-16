@@ -47,4 +47,4 @@ local function _7_(_, opts)
   end
   return nil
 end
-return {{"j-hui/fidget.nvim", event = "LspAttach", opts = {}}, {"kosayoda/nvim-lightbulb", init = _4_}, {"neovim/nvim-lspconfig", dependencies = {"williamboman/mason.nvim", "folke/which-key.nvim", "nvim-telescope/telescope.nvim", "kosayoda/nvim-lightbulb", "j-hui/fidget.nvim"}, opts = {servers = {}, setup = {}}, config = _7_}}
+return {{"j-hui/fidget.nvim", event = "LspAttach", opts = {}}, {"kosayoda/nvim-lightbulb", init = _4_}, {"neovim/nvim-lspconfig", dependencies = {"williamboman/mason-lspconfig.nvim", "folke/which-key.nvim", "nvim-telescope/telescope.nvim"}, opts = {servers = {}, setup = {}}, config = _7_}}
