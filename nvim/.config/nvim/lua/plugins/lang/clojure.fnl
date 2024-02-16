@@ -1,5 +1,4 @@
 ; plugins/lang/clojure.fnl
-; TODO: Move conjure stuff to it's own file
 (local {: autoload} (require :nfnl.module))
 (local {: assoc} (autoload :nfnl.core))
 (local pickers (autoload :telescope.pickers))
