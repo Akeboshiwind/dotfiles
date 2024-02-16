@@ -1,7 +1,7 @@
 ; plugins/lang/clojure.fnl
 ; TODO: Move conjure stuff to it's own file
 (local {: autoload} (require :nfnl.module))
-
+(local {: assoc} (autoload :nfnl.core))
 (local pickers (autoload :telescope.pickers))
 (local finders (autoload :telescope.finders))
 (local config (autoload :telescope.config))
@@ -10,44 +10,42 @@
 
 (local Set (autoload :util.set))
 
+(fn make-shadow-entry-maker []
+  ; Does three things to the `ps aux` output:
+  ;  - Filters for shadow-cljs watch commands
+  ;  - Returns the app name
+  ;  - De-duplicates the results
+  (var entry-cache (Set.new))
+  (fn [entry]
+    ; NOTE: Have to put the `-` in a set for some reason...
+    ; TODO: when-let?
+    (let [app (entry:match "shadow[-]cljs watch (%w*)")]
+      (print app)
+      (when (and app (not (Set.contains? entry-cache app)))
+        (Set.insert! entry-cache app)
+        {:value app
+         :display app
+         :ordinal app}))))
 
 (fn shadow-select [opts]
-  (let [opts (or opts {})
-        entry-cache (Set.new)]
+  (let [opts (-> (or opts {})
+                 (assoc :entry_maker (make-shadow-entry-maker)))
+        picker (pickers.new opts
+                 {:prompt_title "shadow-cljs apps"
+                  :finder (finders.new_oneshot_job ["ps" "aux"] opts)
+                  :sorter (config.values.generic_sorter opts)
+                  :attach_mappings 
+                  (fn [prompt_bufnr _]
+                    ; When an app is selected, run ConjureShadowSelect
+                    (actions.select_default:replace
+                      #(do
+                         (actions.close prompt_bufnr)
+                         (let [selection (action-state.get_selected_entry)
+                               app selection.value]
 
-      ; Does three things to the `ps aux` output:
-      ;  - Filters for shadow-cljs watch commands
-      ;  - Returns the app name
-      ;  - De-duplicates the results
-      (set opts.entry_maker
-        (fn [entry]
-          ; NOTE: Have to put the `-` in a set for some reason...
-          ; TODO: when-let?
-          (let [app (entry:match "shadow[-]cljs watch (%w*)")]
-            (when (and app
-                       (not (Set.contains? entry-cache app)))
-              (Set.insert! entry-cache app)
-              {:value app
-               :display app
-               :ordinal app}))))
-
-      (let [picker
-            (pickers.new opts
-              {:prompt_title "shadow-cljs apps"
-               :finder (finders.new_oneshot_job ["ps" "aux"] opts)
-               :sorter (config.values.generic_sorter opts)
-               :attach_mappings 
-               (fn [prompt_bufnr _]
-                 ; When an app is selected, run ConjureShadowSelect
-                 (actions.select_default:replace
-                   #(do
-                      (actions.close prompt_bufnr)
-                      (let [selection (action-state.get_selected_entry)
-                            app selection.value]
-
-                        (vim.cmd (string.format "ConjureShadowSelect %s" app)))
-                      true)))})]
-        (picker:find))))
+                           (vim.cmd (string.format "ConjureShadowSelect %s" app)))
+                         true)))})]
+    (picker:find)))
 
 [{1 :neovim/nvim-lspconfig
   :opts {:servers
