@@ -1,5 +1,9 @@
 ; plugins/telescope.fnl
-
+(local {: autoload} (require :nfnl.module))
+(local telescope (autoload :telescope))
+(local builtin (autoload :telescope.builtin))
+(local actions (autoload :telescope.actions))
+(local file-browser-actions (autoload :telescope._extensions.file_browser.actions))
 
 [{1 :nvim-telescope/telescope-fzf-native.nvim
   :build "make"}
@@ -19,7 +23,7 @@
   :cmd "Telescope"
   :keys [; >> find
          {1 "<leader>ff"
-          2 #((. (require "telescope.builtin") :find_files)
+          2 #(builtin.find_files
               {:find_command ["rg"
                               ; Show hidden files
                               "--hidden"
@@ -29,19 +33,17 @@
                               "--files"]})
           :desc "Browse local files (inc hidden)"}
          {1 "<leader>f."
-          2 #((. (require "telescope.builtin") :git_files)
-              {:cwd "~/dotfiles"})
+          2 #(builtin.git_files {:cwd "~/dotfiles"})
           :desc "Dotfiles"}
          {1 "<leader>fr"
           2 #(let [; % gets the current buffer's path
                    ; :h gets the full path
                    buffer-relative-path (vim.call "expand" "%:h")]
-               ((. (require "telescope") :extensions :file_browser :file_browser)
+               (telescope.extensions.file_browser.file_browser
                 {:cwd buffer-relative-path}))
           :desc "Browse relative to buffer"}
          {1 "<leader>fb"
-          2 #((. (require "telescope.builtin") :buffers)
-              {:sort_lastused true})
+          2 #(builtin.buffers {:sort_lastused true})
           :desc "Buffers"}
          {1 "<leader>fh" 2 "<cmd>Telescope help_tags<CR>" :desc "Help tags"}
          {1 "<leader>fy" 2 "<cmd>Telescope filetypes<CR>" :desc "File types"}
@@ -56,32 +58,27 @@
           2 #(let [; % gets the current buffer's path
                    ; :h gets the full path
                    buffer-relative-path (vim.call "expand" "%:h")]
-               ((. (require "telescope.builtin") :live_grep)
-                {:cwd buffer-relative-path}))
+               (builtin.live_grep {:cwd buffer-relative-path}))
           :desc "Search relative to buffer"}
          {1 "<leader>st"
-          2 #((. (require "telescope.builtin") :grep_string)
-              {:search "TODO"})
+          2 #(builtin.grep_string {:search "TODO"})
           :desc "Search for TODOs"}
          {1 "<leader>s*" 2 "<cmd>Telescope grep_string<CR>" :desc "Search for word under cursor"}
          {1 "<leader>s/" 2 "<cmd>Telescope current_buffer_fuzzy_find<CR>" :desc "Fuzzy find in the current buffer"}
          {1 "<leader>se"
-          2 #((. (require "telescope") :extensions :emoji :emoji))
+          2 #(telescope.extensions.emoji.emoji)
           :desc "Emoji"}
 
          ; >> diagnostic
          {1 "<leader>dd" 2 "<cmd>Telescope diagnostics<CR>" :desc "List all diagnostics"}
          {1 "<leader>db"
-          2 #((. (require "telescope.builtin") :diagnostics)
-              {:bufnr 0})
+          2 #(builtin.diagnostics {:bufnr 0})
           :desc "List buffer diagnostics"}
          {1 "<leader>dn"
-          2 #(vim.diagnostic.goto_next
-              {:float {:border "rounded"}})
+          2 #(vim.diagnostic.goto_next {:float {:border "rounded"}})
           :desc "Next"}
          {1 "<leader>dp"
-          2 #(vim.diagnostic.goto_prev
-              {:float {:border "rounded"}})
+          2 #(vim.diagnostic.goto_prev {:float {:border "rounded"}})
           :desc "Previous"}
 
          ; >> Git
@@ -90,24 +87,23 @@
          {:mappings
           {:i {; Normally when you press <esc> it puts you in normal mode in
                ; telescope. This binding skips that to just exit.
-               "<esc>" #((. (require "telescope.actions") :close) $...)
+               "<esc>" (fn [...] (actions.close ...))
                ; Add easier movement keys
-               "<C-j>" #((. (require "telescope.actions") :move_selection_next) $...)
-               "<C-k>" #((. (require "telescope.actions") :move_selection_previous) $...)
+               "<C-j>" (fn [...] (actions.move_selection_next ...))
+               "<C-k>" (fn [...] (actions.move_selection_previous ...))
 
                ; Show the mappings for the current picker
-               "<C-h>" #((. (require "telescope.actions") :which_key) $...)}}}
+               "<C-h>" (fn [...] actions.which_key ...)}}}
          :extensions
          {:fzf {}
           :ui-select {}
           :emoji {:action #(vim.api.nvim_put [$.value] :c false true)}
           :file_browser {:mappings
-                         {:i {"<C-c>" #((. (require "telescope._extensions.file_browser.actions") :create_from_prompt) $...)}}}}}
+                         {:i {"<C-c>" (fn [...] (file-browser-actions.create_from_prompt ...))}}}}}
   :config (fn [_ opts]
-            (let [telescope (require "telescope")]
-              ;; >> Setup
-              (telescope.setup opts)
+            ;; >> Setup
+            (telescope.setup opts)
 
-              ;; >> Add Telescope Extensions
-              (each [extension _cfg (pairs opts.extensions)]
-                (telescope.load_extension extension))))}]
+            ;; >> Add Telescope Extensions
+            (each [extension _cfg (pairs opts.extensions)]
+              (telescope.load_extension extension)))}]

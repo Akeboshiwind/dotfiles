@@ -1,4 +1,6 @@
 ; plugins/which-key.fnl
+(local {: autoload} (require :nfnl.module))
+(local wk (autoload :which-key))
 
 [{1 :folke/which-key.nvim
   :init (fn []
@@ -24,6 +26,5 @@
                               :i ["f"]}
          :defaults {"<leader>w" { :name "window"}}}
   :config (fn [_ opts]
-            (let [wk (require "which-key")]
-              (wk.setup opts)
-              (wk.register opts.defaults)))}]
+            (wk.setup opts)
+            (wk.register opts.defaults))}]

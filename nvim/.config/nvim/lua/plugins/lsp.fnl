@@ -1,11 +1,16 @@
 ; plugins/lsp.fnl
-(local util (require "util"))
+(local {: autoload} (require :nfnl.module))
+(local util (autoload :util))
+(local wk (autoload :which-key))
+(local builtin (autoload :telescope.builtin))
+(local lspconfig (autoload :lspconfig))
+(local lsp-ui-window (autoload :lspconfig.ui.windows))
+(local lsp-status (autoload :lsp-status))
+(local cmp-nvim-lsp (autoload :cmp_nvim_lsp))
 
 ; Register Generic LSP mapings
 (fn setup-mappings [bufnr]
-  (let [wk (require "which-key")
-        builtin (require "telescope.builtin")
-        filetype (. vim :bo bufnr :filetype)]
+  (let [filetype (. vim :bo bufnr :filetype)]
 
     ; >> Non-prefixed
     (if (not= filetype "clojure")
@@ -53,11 +58,11 @@
   :opts {}}
  {1 :nvim-lua/lsp-status.nvim
   ; Maybe init so this can be lazy?
-  :config #(util.lsp.on-attach (. (require "lsp-status") :on_attach))}
+  :config #(util.lsp.on-attach lsp-status.on_attach)}
  {1 :kosayoda/nvim-lightbulb
   ; Maybe init so this can be lazy?
   :config #(util.lsp.on-attach
-             (fn [client bufnr]
+             (fn [_client _bufnr]
                ; TODO: Make buffer local?
                (vim.cmd "autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb()")))}
  {1 :neovim/nvim-lspconfig
@@ -73,26 +78,25 @@
          ; Optional setup function for servers
          :setup {}}
   :config (fn [_ opts]
-            (tset (require "lspconfig.ui.windows") :default_options
-             {:border "rounded"})
+            (set lsp-ui-window.default_options {:border "rounded"})
 
             (util.lsp.on-attach
-              (fn [client bufnr]
-                (setup_mappings bufnr)))
+              (fn [_client bufnr]
+                (setup-mappings bufnr)))
 
             ; TODO: Allow lsp servers to not use default functionality
             ; TODO: Have some way of the other plugins setting this up
             (let [capabilities (vim.tbl_deep_extend "force"
                                  {}
                                  (vim.lsp.protocol.make_client_capabilities)
-                                 ((. (require "cmp_nvim_lsp") :default_capabilities))
-                                 (. (require "lsp-status") :capabilities)
+                                 (cmp-nvim-lsp.default_capabilities)
+                                 lsp-status.capabilities
                                  (or opts.capabilities {}))]
               (each [server server-opts (pairs opts.servers)]
                 (let [final-server-opts
                        (vim.tbl_deep_extend "force"
                          {:capabilities (vim.deepcopy capabilities)}
-                         (or server_opts {}))]
+                         (or server-opts {}))]
                   (if (. opts :setup server)
                     ((. opts :setup server) server final-server-opts)
-                    ((. (require "lspconfig") server :setup) final-server-opts))))))}]
+                    ((. lspconfig server :setup) final-server-opts))))))}]

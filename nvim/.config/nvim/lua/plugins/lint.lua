@@ -1,10 +1,10 @@
 -- [nfnl] Compiled from lua/plugins/lint.fnl by https://github.com/Olical/nfnl, do not edit.
 local _local_1_ = require("nfnl.module")
 local autoload = _local_1_["autoload"]
-local util = autoload("util")
 local _local_2_ = autoload("nfnl.core")
 local update = _local_2_["update"]
-local merge = _local_2_["merge"]
+local util = autoload("util")
+local lint = autoload("lint")
 local function _3_(_, opts)
   local function _4_(_241)
     return (_241 or {})
@@ -15,7 +15,6 @@ local function _3_(_, opts)
   return update(update(opts, "ensure-installed", _4_), "ensure-installed", _5_)
 end
 local function _6_(_, opts)
-  local lint = require("lint")
   for name, linter in pairs(opts.linters) do
     if (("table" == type(linter)) and ("table" == type(lint.linters[name]))) then
       lint.linters[name] = vim.tbl_deep_extend("force", lint.linters[name], linter)

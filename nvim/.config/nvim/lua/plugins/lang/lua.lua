@@ -3,7 +3,6 @@ local _local_1_ = require("nfnl.module")
 local autoload = _local_1_["autoload"]
 local _local_2_ = autoload("nfnl.core")
 local update = _local_2_["update"]
-local merge = _local_2_["merge"]
 local function _3_(_, opts)
   local function _4_(_241)
     return (_241 or {})

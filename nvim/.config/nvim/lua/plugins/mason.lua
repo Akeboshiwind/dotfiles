@@ -4,6 +4,9 @@ local autoload = _local_1_["autoload"]
 local _local_2_ = autoload("nfnl.core")
 local update = _local_2_["update"]
 local merge = _local_2_["merge"]
+local mason = autoload("mason")
+local mason_lspconfig = autoload("mason-lspconfig")
+local mr = autoload("mason-registry")
 local function _3_(_, opts)
   local function _4_(_241)
     return (_241 or {})
@@ -17,9 +20,6 @@ local function _3_(_, opts)
   return update(update(update(opts, "ensure-installed", _4_), "mason-lspconfig", _5_), "mason-lspconfig", _6_)
 end
 local function _7_(_, opts)
-  local mason = require("mason")
-  local mason_lspconfig = require("mason-lspconfig")
-  local mr = require("mason-registry")
   mason.setup(opts)
   mason_lspconfig.setup(opts["mason-lspconfig"])
   local function _8_()

@@ -42,7 +42,7 @@
                  (actions.select_default:replace
                    #(do
                       (actions.close prompt_bufnr)
-                      (let [selection (action_state.get_selected_entry)
+                      (let [selection (action-state.get_selected_entry)
                             app selection.value]
 
                         (vim.cmd (string.format "ConjureShadowSelect %s" app)))
@@ -71,14 +71,15 @@
   :ft ["clojure"]
   :keys [{1 "<leader>eg" 2 "<cmd>ConjureEval (user/go!)<CR>" :desc "user/go!"}
          {1 "<leader>es"
-          2 #(do ; Save buffer
-                 (vim.cmd "w")
+          2 #(do 
+               ; Save buffer
+               (vim.cmd "w")
 
-                 ; clerk/show!
-                 (let [filename (vim.fn.expand "%:p")]
-                   (vim.cmd (string.format "ConjureEval (nextjournal.clerk/show! \"%s\")" filename))))
+               ; clerk/show!
+               (let [filename (vim.fn.expand "%:p")]
+                 (vim.cmd (string.format "ConjureEval (nextjournal.clerk/show! \"%s\")" filename))))
           :desc "clerk/show!"}
-         {1 "<leader>sS" 2 shadow_select :desc "Conjure Select Shadowcljs Environment"}]
+         {1 "<leader>sS" 2 shadow-select :desc "Conjure Select Shadowcljs Environment"}]
   :opts {:config
          {; Disable the mapping for selecting a session as that collides with searching)
           ; files within a project

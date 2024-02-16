@@ -1,6 +1,6 @@
 ; plugins/lang/python.fnl
 (local {: autoload} (require :nfnl.module))
-(local {: update : merge} (autoload :nfnl.core))
+(local {: update} (autoload :nfnl.core))
 
 [{1 :williamboman/mason.nvim
   :opts (fn [_ opts]

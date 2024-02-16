@@ -1,4 +1,6 @@
 ; plugins/treesitter.fnl
+(local {: autoload} (require :nfnl.module))
+(local nvim-treesitter-config (autoload :nvim-treesitter.configs))
 
 [{1 :nvim-treesitter/nvim-treesitter
   ;:dir "~/prog/prog/assorted/nvim-treesitter"}]
@@ -17,5 +19,4 @@
                         :use_virtual_text true
                         :lint_events [:BufWrite :CursorHold]}}
   :config (fn [_ opts]
-            (let [{: setup} (require "nvim-treesitter.configs")]
-              (setup opts)))}]
+            (nvim-treesitter-config.setup opts))}]

@@ -1,4 +1,7 @@
 ; plugins/cmp.fnl
+(local {: autoload} (require :nfnl.module))
+(local cmp (autoload :cmp))
+(local wk (autoload :which-key))
 
 [{1 :hrsh7th/nvim-cmp
   :dependencies [:hrsh7th/cmp-nvim-lsp
@@ -15,64 +18,62 @@
   ; - The config isn't just data, it relies on function calls
   ;   - I'd rather not remove them and rely on (potentially) internal details
   :config (fn []
-            (let [cmp (require "cmp")]
-              ; >> Setup
-              (cmp.setup
-                {:mapping {"<C-Space>" (cmp.mapping (cmp.mapping.complete) [:i :c])
-                           "<CR>" (cmp.mapping.confirm
-                                    {:select true
-                                     :behavior cmp.ConfirmBehavior.Replace})
-                           "<C-e>" (cmp.mapping
-                                     {:i (cmp.mapping.abort)
-                                      :c (cmp.mapping.close)})
-                           "<C-u>" (cmp.mapping (cmp.mapping.scroll_docs -4) [:i :c])
-                           "<C-d>" (cmp.mapping (cmp.mapping.scroll_docs 4) [:i :c])
+            ; >> Setup
+            (cmp.setup
+              {:mapping {"<C-Space>" (cmp.mapping (cmp.mapping.complete) [:i :c])
+                         "<CR>" (cmp.mapping.confirm
+                                  {:select true
+                                   :behavior cmp.ConfirmBehavior.Replace})
+                         "<C-e>" (cmp.mapping
+                                   {:i (cmp.mapping.abort)
+                                    :c (cmp.mapping.close)})
+                         "<C-u>" (cmp.mapping (cmp.mapping.scroll_docs -4) [:i :c])
+                         "<C-d>" (cmp.mapping (cmp.mapping.scroll_docs 4) [:i :c])
 
-                           "<Tab>" (cmp.mapping
+                         "<Tab>" (cmp.mapping
+                                   (fn [fallback]
+                                     (if (cmp.visible)
+                                         (cmp.select_next_item)
+                                         (fallback)))
+                                   [:i :c])
+                         "<S-Tab>" (cmp.mapping
                                      (fn [fallback]
                                        (if (cmp.visible)
-                                           (cmp.select_next_item)
+                                           (cmp.select_prev_item)
                                            (fallback)))
-                                     [:i :c])
-                           "<S-Tab>" (cmp.mapping
-                                       (fn [fallback]
-                                         (if (cmp.visible)
-                                             (cmp.select_prev_item)
-                                             (fallback)))
-                                       [:i :c])}
-                 :sources (cmp.config.sources
-                            [{:name :copilot}
-                             {:name :path}
-                              ;:option {:trailing_slash true}}
+                                     [:i :c])}
+               :sources (cmp.config.sources
+                          [{:name :copilot}
+                           {:name :path}
+                            ;:option {:trailing_slash true}}
 
-                             {:name :conjure}
-                             {:name :nvim_lsp}
+                           {:name :conjure}
+                           {:name :nvim_lsp}
 
-                             {:name :rg
-                              :keyword_length 4}
-                             {:name :buffer}])})
+                           {:name :rg
+                            :keyword_length 4}
+                           {:name :buffer}])})
 
-              ; Use buffer source for `/`
-              (cmp.setup.cmdline ["/" "?"]
-                {:mapping (cmp.mapping.preset.cmdline)
-                 :sources [{:name :buffer}]})
+            ; Use buffer source for `/`
+            (cmp.setup.cmdline ["/" "?"]
+              {:mapping (cmp.mapping.preset.cmdline)
+               :sources [{:name :buffer}]})
 
-              ; Use cmdline * path source for `:`
-              (cmp.setup.cmdline ":"
-                {:mapping (cmp.mapping.preset.cmdline)
-                 :sources (cmp.config.sources
-                            [{:name :path}
-                             {:name :cmdline}])})
+            ; Use cmdline * path source for `:`
+            (cmp.setup.cmdline ":"
+              {:mapping (cmp.mapping.preset.cmdline)
+               :sources (cmp.config.sources
+                          [{:name :path}
+                           {:name :cmdline}])})
 
-              ; >> Mappings
-              (let [wk (require "which-key")]
-                (wk.register
-                  {"<C-Space>" "Invoke completion"
-                   "<CR>" "Confirm selection or fallback"
-                   "<C-e>" "Close the completion menu"
-                   "<C-u>" "Page up"
-                   "<C-d>" "Page down"
+            ; >> Mappings
+            (wk.register
+              {"<C-Space>" "Invoke completion"
+               "<CR>" "Confirm selection or fallback"
+               "<C-e>" "Close the completion menu"
+               "<C-u>" "Page up"
+               "<C-d>" "Page down"
 
-                   "<TAB>" "Next completion item"
-                   "<S-TAB>" "Prev completion item"}
-                  {:mode :i}))))}]
+               "<TAB>" "Next completion item"
+               "<S-TAB>" "Prev completion item"}
+              {:mode :i}))}]

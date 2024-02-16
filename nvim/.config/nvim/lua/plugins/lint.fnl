@@ -1,7 +1,8 @@
 ; plugins/lint.fnl
 (local {: autoload} (require :nfnl.module))
-(local util (autoload "util"))
-(local {: update : merge} (autoload :nfnl.core))
+(local {: update} (autoload :nfnl.core))
+(local util (autoload :util))
+(local lint (autoload :lint))
 
 [{1 :williamboman/mason.nvim
   :opts (fn [_ opts]
@@ -23,49 +24,48 @@
                                        (.. (vim.fn.stdpath "data")
                                            "/mason/packages/commitlint/node_modules/@commitlint/config-conventional")]}}}
   :config (fn [_ opts]
-            (let [lint (require "lint")]
-              ; Add new linters or override existing ones
-              (each [name linter (pairs opts.linters)]
-                (if (and (= "table" (type linter))
-                         (= "table" (type (. lint.linters name))))
-                  (tset lint.linters name
-                       (vim.tbl_deep_extend "force" (. lint.linters name) linter))
-                  (tset lint.linters name linter)))
+            ; Add new linters or override existing ones
+            (each [name linter (pairs opts.linters)]
+              (if (and (= "table" (type linter))
+                       (= "table" (type (. lint.linters name))))
+                (tset lint.linters name
+                     (vim.tbl_deep_extend "force" (. lint.linters name) linter))
+                (tset lint.linters name linter)))
 
-              (set lint.linters_by_ft opts.linters_by_ft)
+            (set lint.linters_by_ft opts.linters_by_ft)
 
-              ; src: https://github.com/LazyVim/LazyVim/blob/a50f92f7550fb6e9f21c0852e6cb190e6fcd50f5/lua/lazyvim/plugins/linting.lua#L55
-              ; Same as all of this tbh 😅
-              (fn try-lint []
-                ; Use nvim-lint's logic
-                (var names (lint._resolve_linter_by_ft vim.bo.filetype))
+            ; src: https://github.com/LazyVim/LazyVim/blob/a50f92f7550fb6e9f21c0852e6cb190e6fcd50f5/lua/lazyvim/plugins/linting.lua#L55
+            ; Same as all of this tbh 😅
+            (fn try-lint []
+              ; Use nvim-lint's logic
+              (var names (lint._resolve_linter_by_ft vim.bo.filetype))
 
-                ; Add fallback linters
-                (if (not= 0 (length names))
-                  (vim.list_extend names (or (. lint.linters_by_ft "_") [])))
+              ; Add fallback linters
+              (if (not= 0 (length names))
+                (vim.list_extend names (or (. lint.linters_by_ft "_") [])))
 
-                ; Add global linters
-                (vim.list_extend names (or (. lint.linters_by_ft "*") []))
+              ; Add global linters
+              (vim.list_extend names (or (. lint.linters_by_ft "*") []))
 
-                ; Filter out linters that don't match the :condition
-                (let [filename (vim.api.nvim_buf_get_name 0)
-                      ctx {:filename filename
-                           :dirname (vim.fn.fnamemodify filename ":h")}]
-                  (set names (vim.tbl_filter
-                               (fn [name]
-                                 (let [linter (. lint.linters name)]
-                                   (and linter
-                                        (not (and (= (type linter) "table")
-                                                  linter.condition
-                                                  (not (linter.condition ctx)))))))
-                               names)))
+              ; Filter out linters that don't match the :condition
+              (let [filename (vim.api.nvim_buf_get_name 0)
+                    ctx {:filename filename
+                         :dirname (vim.fn.fnamemodify filename ":h")}]
+                (set names (vim.tbl_filter
+                             (fn [name]
+                               (let [linter (. lint.linters name)]
+                                 (and linter
+                                      (not (and (= (type linter) "table")
+                                                linter.condition
+                                                (not (linter.condition ctx)))))))
+                             names)))
 
-                ; Run the linters
-                (if (not= 0 (length names))
-                  (lint.try_lint names)))
-                                     
+              ; Run the linters
+              (if (not= 0 (length names))
+                (lint.try_lint names)))
+                                   
 
-              ; Add autocmd to trigger linters
-              (vim.api.nvim_create_autocmd opts.events
-                {:group (vim.api.nvim_create_augroup "nvim-lint" {:clear true})
-                 :callback (util.debounce 100 #(try_lint))})))}]
+            ; Add autocmd to trigger linters
+            (vim.api.nvim_create_autocmd opts.events
+              {:group (vim.api.nvim_create_augroup "nvim-lint" {:clear true})
+               :callback (util.debounce 100 #(try-lint))}))}]

@@ -1,4 +1,6 @@
 ; plugins/chatgpt.fnl
+(local {: autoload} (require :nfnl.module))
+(local neoai2 (autoload :neoai2))
 
 ; TODO: Add prompts to neoai2.nvim
 
@@ -28,4 +30,4 @@
   :opts {:chat {:enable true}
          :inject {:enable true}}
   :config (fn [_ opts]
-            ((. (require "neoai2") :setup) opts))}]
+            (neoai2.setup opts))}]

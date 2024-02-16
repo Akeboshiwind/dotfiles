@@ -1,6 +1,6 @@
 ; plugins/lang/yaml.fnl
 (local {: autoload} (require :nfnl.module))
-(local {: update : merge} (autoload :nfnl.core))
+(local {: update} (autoload :nfnl.core))
 
 [{1 :williamboman/mason.nvim
   :opts (fn [_ opts]
@@ -17,7 +17,6 @@
                                      (string.match dirname "cfn")))}
                    :actionlint
                    {:condition (fn [{: dirname}]
-                                 (print dirname)
                                  (string.match dirname ".github/workflows"))}}}}
 
  ;; Don't think this is doing anything really :S
