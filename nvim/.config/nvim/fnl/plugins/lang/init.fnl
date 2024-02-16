@@ -1,6 +1,7 @@
 ; plugins/lang/init.fnl
 
 [:gurpreetatwal/vim-avro
+ {:import "plugins.lang.yaml"}
  {:import "plugins.lang.terraform"}
 
  {:import "plugins.lang.lua"}
