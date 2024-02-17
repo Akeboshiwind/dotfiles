@@ -17,7 +17,6 @@
             (mason-lspconfig.setup opts.mason-lspconfig)
             (mr.refresh
               #(each [tool install? (pairs opts.ensure-installed)]
-                 (print (vim.inspect tool))
                  (if install?
                    (let [p (mr.get_package tool)]
                      (if (not (p:is_installed))

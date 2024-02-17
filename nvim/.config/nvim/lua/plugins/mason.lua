@@ -12,7 +12,6 @@ local function _3_(_, opts)
   mason_lspconfig.setup(opts["mason-lspconfig"])
   local function _4_()
     for tool, install_3f in pairs(opts["ensure-installed"]) do
-      print(vim.inspect(tool))
       if install_3f then
         local p = mr.get_package(tool)
         if not p:is_installed() then
