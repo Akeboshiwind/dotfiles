@@ -3,11 +3,7 @@
 (local {: update} (autoload :nfnl.core))
 
 [{1 :williamboman/mason.nvim
-  :opts (fn [_ opts]
-          (-> opts
-              (update :ensure-installed #(or $ []))
-              (update :ensure-installed
-                #(vim.list_extend $ ["stylua"]))))}
+  :opts {:ensure-installed {:stylua true}}}
  {1 :stevearc/conform.nvim
   :opts {:formatters_by_ft {:lua ["stylua"]}
          :formatters {:stylua {:prepend_args ["--config-path"

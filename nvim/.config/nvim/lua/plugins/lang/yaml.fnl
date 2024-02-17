@@ -3,11 +3,9 @@
 (local {: update} (autoload :nfnl.core))
 
 [{1 :williamboman/mason.nvim
-  :opts (fn [_ opts]
-          (-> opts
-              (update :ensure-installed #(or $ []))
-              (update :ensure-installed
-                #(vim.list_extend $ [:cfn-lint :actionlint :yamllint]))))}
+  :opts {:ensure-installed {:cfn-lint true
+                            :actionlint true
+                            :yamllint true}}}
  {1 :mfussenegger/nvim-lint
   :opts {:linters_by_ft {:yaml [:cfn_lint :actionlint :yamllint]}
          :linters {:cfn_lint

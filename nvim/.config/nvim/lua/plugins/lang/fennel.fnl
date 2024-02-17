@@ -8,11 +8,7 @@
  {1 :Olical/conjure
   :ft ["fennel"]}
  {1 :williamboman/mason.nvim
-  :opts (fn [_ opts]
-          (-> opts
-              (update :ensure-installed #(or $ []))
-              (update :ensure-installed
-                #(vim.list_extend $ ["fennel-language-server"]))))}
+  :opts {:ensure-installed {:fennel-language-server true}}}
  {1 :neovim/nvim-lspconfig
   :opts {:servers
          {:fennel_language_server

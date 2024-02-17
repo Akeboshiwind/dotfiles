@@ -11,29 +11,20 @@ local assoc = _local_2_["assoc"]
 local util = autoload("util")
 local lint = autoload("lint")
 local function _3_(_, opts)
-  local function _4_(_241)
-    return (_241 or {})
-  end
-  local function _5_(_241)
-    return vim.list_extend(_241, {"commitlint"})
-  end
-  return update(update(opts, "ensure-installed", _4_), "ensure-installed", _5_)
-end
-local function _6_(_, opts)
-  local function _9_(acc, _7_)
-    local _arg_8_ = _7_
-    local name = _arg_8_[1]
-    local linter = _arg_8_[2]
+  local function _6_(acc, _4_)
+    local _arg_5_ = _4_
+    local name = _arg_5_[1]
+    local linter = _arg_5_[2]
     if (table_3f(linter) and get(acc, name)) then
-      local function _10_(_241)
+      local function _7_(_241)
         return vim.tbl_deep_extend("force", _241, linter)
       end
-      return update(acc, name, _10_)
+      return update(acc, name, _7_)
     else
       return assoc(acc, name, linter)
     end
   end
-  reduce(_9_, lint.linters, kv_pairs(opts.linters))
+  reduce(_6_, lint.linters, kv_pairs(opts.linters))
   assoc(lint, "linters_by_ft", opts.linters_by_ft)
   local function try_lint()
     local names = lint._resolve_linter_by_ft(vim.bo.filetype)
@@ -45,11 +36,11 @@ local function _6_(_, opts)
     do
       local filename = vim.api.nvim_buf_get_name(0)
       local ctx = {filename = filename, dirname = vim.fn.fnamemodify(filename, ":h")}
-      local function _13_(name)
+      local function _10_(name)
         local linter = lint.linters[name]
         return (linter and not ((type(linter) == "table") and linter.condition and not linter.condition(ctx)))
       end
-      names = vim.tbl_filter(_13_, names)
+      names = vim.tbl_filter(_10_, names)
     end
     if (0 ~= #names) then
       return lint.try_lint(names)
@@ -57,9 +48,9 @@ local function _6_(_, opts)
       return nil
     end
   end
-  local function _15_()
+  local function _12_()
     return try_lint()
   end
-  return vim.api.nvim_create_autocmd(opts.events, {group = vim.api.nvim_create_augroup("nvim-lint", {clear = true}), callback = util.debounce(100, _15_)})
+  return vim.api.nvim_create_autocmd(opts.events, {group = vim.api.nvim_create_augroup("nvim-lint", {clear = true}), callback = util.debounce(100, _12_)})
 end
-return {{"williamboman/mason.nvim", opts = _3_}, {"mfussenegger/nvim-lint", opts = {events = {"BufWritePost", "BufReadPost", "InsertLeave"}, linters_by_ft = {gitcommit = {"commitlint"}}, linters = {commitlint = {args = {"--config", (vim.fn.stdpath("config") .. "/config/commitlint.config.js"), "--extends", (vim.fn.stdpath("data") .. "/mason/packages/commitlint/node_modules/@commitlint/config-conventional")}}}}, config = _6_}}
+return {{"williamboman/mason.nvim", opts = {["ensure-installed"] = {commitlint = true}}}, {"mfussenegger/nvim-lint", opts = {events = {"BufWritePost", "BufReadPost", "InsertLeave"}, linters_by_ft = {gitcommit = {"commitlint"}}, linters = {commitlint = {args = {"--config", (vim.fn.stdpath("config") .. "/config/commitlint.config.js"), "--extends", (vim.fn.stdpath("data") .. "/mason/packages/commitlint/node_modules/@commitlint/config-conventional")}}}}, config = _3_}}

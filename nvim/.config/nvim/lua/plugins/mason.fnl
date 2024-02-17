@@ -8,16 +8,17 @@
 
 [{1 :williamboman/mason.nvim
   :dependencies [:williamboman/mason-lspconfig.nvim]
-  :opts (fn [_ opts]
-          (-> opts
-              (update :ensure-installed #(or $ []))
-              (update :mason-lspconfig #(or $ {}))
-              (update :mason-lspconfig #(merge $ {:automatic_installation true}))))
+  :opts {; Ensure these tools are installed
+         ; To add set it's value to anything truthy
+         :ensure-installed {}
+         :mason-lspconfig {:automatic_installation true}}
   :config (fn [_ opts]
             (mason.setup opts)
             (mason-lspconfig.setup opts.mason-lspconfig)
             (mr.refresh
-              #(each [_ tool (ipairs opts.ensure-installed)]
-                 (let [p (mr.get_package tool)]
-                   (if (not (p:is_installed))
-                     (p:install))))))}]
+              #(each [tool install? (pairs opts.ensure-installed)]
+                 (print (vim.inspect tool))
+                 (if install?
+                   (let [p (mr.get_package tool)]
+                     (if (not (p:is_installed))
+                       (p:install)))))))}]

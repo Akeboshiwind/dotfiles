@@ -5,11 +5,7 @@
 (local lint (autoload :lint))
 
 [{1 :williamboman/mason.nvim
-  :opts (fn [_ opts]
-          (-> opts
-              (update :ensure-installed #(or $ []))
-              (update :ensure-installed
-                #(vim.list_extend $ ["commitlint"]))))}
+  :opts {:ensure-installed {:commitlint true}}}
 
  {1 :mfussenegger/nvim-lint
   :opts {; Event to trigger linters
