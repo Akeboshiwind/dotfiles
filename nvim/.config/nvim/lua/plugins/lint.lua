@@ -3,6 +3,11 @@ local _local_1_ = require("nfnl.module")
 local autoload = _local_1_["autoload"]
 local _local_2_ = autoload("nfnl.core")
 local update = _local_2_["update"]
+local kv_pairs = _local_2_["kv-pairs"]
+local reduce = _local_2_["reduce"]
+local table_3f = _local_2_["table?"]
+local get = _local_2_["get"]
+local assoc = _local_2_["assoc"]
 local util = autoload("util")
 local lint = autoload("lint")
 local function _3_(_, opts)
@@ -15,14 +20,21 @@ local function _3_(_, opts)
   return update(update(opts, "ensure-installed", _4_), "ensure-installed", _5_)
 end
 local function _6_(_, opts)
-  for name, linter in pairs(opts.linters) do
-    if (("table" == type(linter)) and ("table" == type(lint.linters[name]))) then
-      lint.linters[name] = vim.tbl_deep_extend("force", lint.linters[name], linter)
+  local function _9_(acc, _7_)
+    local _arg_8_ = _7_
+    local name = _arg_8_[1]
+    local linter = _arg_8_[2]
+    if (table_3f(linter) and get(acc, name)) then
+      local function _10_(_241)
+        return vim.tbl_deep_extend("force", _241, linter)
+      end
+      return update(acc, name, _10_)
     else
-      lint.linters[name] = linter
+      return assoc(acc, name, linter)
     end
   end
-  lint.linters_by_ft = opts.linters_by_ft
+  reduce(_9_, lint.linters, kv_pairs(opts.linters))
+  assoc(lint, "linters_by_ft", opts.linters_by_ft)
   local function try_lint()
     local names = lint._resolve_linter_by_ft(vim.bo.filetype)
     if (0 ~= #names) then
@@ -33,11 +45,11 @@ local function _6_(_, opts)
     do
       local filename = vim.api.nvim_buf_get_name(0)
       local ctx = {filename = filename, dirname = vim.fn.fnamemodify(filename, ":h")}
-      local function _9_(name)
+      local function _13_(name)
         local linter = lint.linters[name]
         return (linter and not ((type(linter) == "table") and linter.condition and not linter.condition(ctx)))
       end
-      names = vim.tbl_filter(_9_, names)
+      names = vim.tbl_filter(_13_, names)
     end
     if (0 ~= #names) then
       return lint.try_lint(names)
@@ -45,9 +57,9 @@ local function _6_(_, opts)
       return nil
     end
   end
-  local function _11_()
+  local function _15_()
     return try_lint()
   end
-  return vim.api.nvim_create_autocmd(opts.events, {group = vim.api.nvim_create_augroup("nvim-lint", {clear = true}), callback = util.debounce(100, _11_)})
+  return vim.api.nvim_create_autocmd(opts.events, {group = vim.api.nvim_create_augroup("nvim-lint", {clear = true}), callback = util.debounce(100, _15_)})
 end
 return {{"williamboman/mason.nvim", opts = _3_}, {"mfussenegger/nvim-lint", opts = {events = {"BufWritePost", "BufReadPost", "InsertLeave"}, linters_by_ft = {gitcommit = {"commitlint"}}, linters = {commitlint = {args = {"--config", (vim.fn.stdpath("config") .. "/config/commitlint.config.js"), "--extends", (vim.fn.stdpath("data") .. "/mason/packages/commitlint/node_modules/@commitlint/config-conventional")}}}}, config = _6_}}
