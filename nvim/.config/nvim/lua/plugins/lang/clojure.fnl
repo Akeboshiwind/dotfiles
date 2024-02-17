@@ -19,7 +19,6 @@
     ; NOTE: Have to put the `-` in a set for some reason...
     ; TODO: when-let?
     (let [app (entry:match "shadow[-]cljs watch (%w*)")]
-      (print app)
       (when (and app (not (Set.contains? entry-cache app)))
         (Set.insert! entry-cache app)
         {:value app

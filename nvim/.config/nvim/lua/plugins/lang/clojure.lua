@@ -13,7 +13,6 @@ local function make_shadow_entry_maker()
   local entry_cache = Set.new()
   local function _3_(entry)
     local app = entry:match("shadow[-]cljs watch (%w*)")
-    print(app)
     if (app and not Set["contains?"](entry_cache, app)) then
       Set["insert!"](entry_cache, app)
       return {value = app, display = app, ordinal = app}
