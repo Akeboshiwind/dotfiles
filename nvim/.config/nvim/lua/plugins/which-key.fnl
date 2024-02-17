@@ -24,6 +24,15 @@
   :opts {:plugins { :spelling true}
          :triggers_blacklist {; Ignore escape key 'fd'
                               :i ["f"]}
+         ; There are four ways to bind keys:
+         ; 1. :keys on the plugin spec 
+         ;    - This should be what you reach for first
+         ; 2. wk.register
+         ;    - Use this for dynamically registered bindings
+         ; 3. This :defaults map
+         ;    - Use this to setup folder names for keys
+         ; 4. vim.keymap.set
+         ;    - There should be no reason to use this
          :defaults {"<leader>w" { :name "window"}}}
   :config (fn [_ opts]
             (wk.setup opts)
