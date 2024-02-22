@@ -1,10 +1,24 @@
 ; plugins/lang/fennel.lua
 (local {: autoload} (require :nfnl.module))
 (local {: update} (autoload :nfnl.core))
-(local lspconfig (require :lspconfig))
+(local lspconfig (autoload :lspconfig))
+(local test-harness (autoload :plenary.test_harness))
+(local wk (autoload :which-key))
+
 
 [{1 :Olical/nfnl
-  :ft "fennel"}
+  :ft "fennel"
+  :config (fn [_ _opts]
+            (fn test-current-file []
+              (let [path (vim.fn.expand "%")
+                    lua-path (path:gsub ".fnl$" ".lua")]
+                (vim.cmd (.. ":PlenaryBustedFile " lua-path))
+                (test-harness.test_file lua-path)))
+              
+            (wk.register
+              {"p" {:name "plenary"
+                    "t" [test-current-file "Test current file"]}}
+              {:prefix "<leader>"}))}
  {1 :Olical/conjure
   :ft ["fennel"]}
  {1 :williamboman/mason.nvim
