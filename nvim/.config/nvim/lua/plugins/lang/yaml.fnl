@@ -1,6 +1,4 @@
 ; plugins/lang/yaml.fnl
-(local {: autoload} (require :nfnl.module))
-(local {: update} (autoload :nfnl.core))
 
 [{1 :williamboman/mason.nvim
   :opts {:ensure-installed {:cfn-lint true
@@ -17,60 +15,63 @@
                    {:condition (fn [{: dirname}]
                                  (string.match dirname ".github/workflows"))}}}}
 
- ;; Don't think this is doing anything really :S
- {1 :neovim/nvim-lspconfig
-  :opts {:servers
-         {:yamlls
-          {:settings
-           {:yaml
-            {:format {:enable true}
-             :validate {:enable true}
-             :schemaStore {:enable true}
-             :customTags ["!And scalar"
-                          "!And mapping"
-                          "!And sequence"                
-                          "!If scalar"
-                          "!If mapping"
-                          "!If sequence"                
-                          "!Not scalar"
-                          "!Not mapping"
-                          "!Not sequence"                
-                          "!Equals scalar"
-                          "!Equals mapping"
-                          "!Equals sequence"                
-                          "!Or scalar"
-                          "!Or mapping"
-                          "!Or sequence"                
-                          "!FindInMap scalar"
-                          "!FindInMap mappping"        
-                          "!FindInMap sequence"
-                          "!Base64 scalar"
-                          "!Base64 mapping"
-                          "!Base64 sequence"                
-                          "!Cidr scalar"
-                          "!Cidr mapping"
-                          "!Cidr sequence"                
-                          "!Ref scalar"
-                          "!Ref mapping"
-                          "!Ref sequence"                
-                          "!Sub scalar"
-                          "!Sub mapping"
-                          "!Sub sequence"                
-                          "!GetAtt scalar"
-                          "!GetAtt mapping"
-                          "!GetAtt sequence"                
-                          "!GetAZs scalar"
-                          "!GetAZs mapping"
-                          "!GetAZs sequence"                
-                          "!ImportValue scalar"
-                          "!ImportValue mapping"
-                          "!ImportValue sequence"                
-                          "!Select scalar"
-                          "!Select mapping"
-                          "!Select sequence"
-                          "!Split scalar"
-                          "!Split mapping"
-                          "!Split sequence"                
-                          "!Join scalar"
-                          "!Join mapping"
-                          "!Join sequence"]}}}}}}]                
+ ;; I don't think this was really doing anything tbh
+ ;; Really, the above linters work just fine for me
+ (comment
+   {1 :neovim/nvim-lspconfig
+    :opts {:servers
+           {:yamlls
+            {:settings
+             {:yaml
+              {:format {:enable true}
+               :validate {:enable true}
+               :schemaStore {:enable true}
+               :customTags ["!And scalar"
+                            "!And mapping"
+                            "!And sequence"                
+                            "!If scalar"
+                            "!If mapping"
+                            "!If sequence"
+                            "!Not scalar"
+                            "!Not mapping"
+                            "!Not sequence"                
+                            "!Equals scalar"
+                            "!Equals mapping"
+                            "!Equals sequence"                
+                            "!Or scalar"
+                            "!Or mapping"
+                            "!Or sequence"                
+                            "!FindInMap scalar"
+                            "!FindInMap mappping"        
+                            "!FindInMap sequence"
+                            "!Base64 scalar"
+                            "!Base64 mapping"
+                            "!Base64 sequence"                
+                            "!Cidr scalar"
+                            "!Cidr mapping"
+                            "!Cidr sequence"                
+                            "!Ref scalar"
+                            "!Ref mapping"
+                            "!Ref sequence"                
+                            "!Sub scalar"
+                            "!Sub mapping"
+                            "!Sub sequence"                
+                            "!GetAtt scalar"
+                            "!GetAtt mapping"
+                            "!GetAtt sequence"                
+                            "!GetAZs scalar"
+                            "!GetAZs mapping"
+                            "!GetAZs sequence"                
+                            "!ImportValue scalar"
+                            "!ImportValue mapping"
+                            "!ImportValue sequence"                
+                            "!Select scalar"
+                            "!Select mapping"
+                            "!Select sequence"
+                            "!Split scalar"
+                            "!Split mapping"
+                            "!Split sequence"                
+                            "!Join scalar"
+                            "!Join mapping"
+                            "!Join sequence"]}}}}}})]                
+
