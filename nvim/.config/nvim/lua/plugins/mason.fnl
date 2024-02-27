@@ -1,7 +1,7 @@
 ; plugins/mason.fnl
 ; TODO: Update packages regularly? Reminder?
 (local {: autoload} (require :nfnl.module))
-(local {: update : merge} (autoload :nfnl.core))
+(local fun (autoload :vend.luafun))
 (local mason (autoload :mason))
 (local mason-lspconfig (autoload :mason-lspconfig))
 (local mr (autoload :mason-registry))
@@ -16,8 +16,8 @@
             (mason.setup opts)
             (mason-lspconfig.setup opts.mason-lspconfig)
             (mr.refresh
-              #(each [tool install? (pairs opts.ensure-installed)]
-                 (if install?
-                   (let [p (mr.get_package tool)]
-                     (if (not (p:is_installed))
-                       (p:install)))))))}]
+              #(->> (fun.iter opts.ensure-installed)
+                    (fun.filter (fn [_tool install?] install?))
+                    (fun.map (fn [tool _install?] (mr.get_package tool)))
+                    (fun.filter #(not ($:is_installed)))
+                    (fun.each #($:install)))))}]

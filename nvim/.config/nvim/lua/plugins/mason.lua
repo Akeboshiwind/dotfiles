@@ -1,28 +1,28 @@
 -- [nfnl] Compiled from lua/plugins/mason.fnl by https://github.com/Olical/nfnl, do not edit.
 local _local_1_ = require("nfnl.module")
 local autoload = _local_1_["autoload"]
-local _local_2_ = autoload("nfnl.core")
-local update = _local_2_["update"]
-local merge = _local_2_["merge"]
+local fun = autoload("vend.luafun")
 local mason = autoload("mason")
 local mason_lspconfig = autoload("mason-lspconfig")
 local mr = autoload("mason-registry")
-local function _3_(_, opts)
+local function _2_(_, opts)
   mason.setup(opts)
   mason_lspconfig.setup(opts["mason-lspconfig"])
-  local function _4_()
-    for tool, install_3f in pairs(opts["ensure-installed"]) do
-      if install_3f then
-        local p = mr.get_package(tool)
-        if not p:is_installed() then
-          p:install()
-        else
-        end
-      else
-      end
+  local function _3_()
+    local function _4_(_2410)
+      return _2410:install()
     end
-    return nil
+    local function _5_(_2410)
+      return not _2410:is_installed()
+    end
+    local function _6_(tool, _install_3f)
+      return mr.get_package(tool)
+    end
+    local function _7_(_tool, install_3f)
+      return install_3f
+    end
+    return fun.each(_4_, fun.filter(_5_, fun.map(_6_, fun.filter(_7_, fun.iter(opts["ensure-installed"])))))
   end
-  return mr.refresh(_4_)
+  return mr.refresh(_3_)
 end
-return {{"williamboman/mason.nvim", dependencies = {"williamboman/mason-lspconfig.nvim"}, opts = {["ensure-installed"] = {}, ["mason-lspconfig"] = {automatic_installation = true}}, config = _3_}}
+return {{"williamboman/mason.nvim", dependencies = {"williamboman/mason-lspconfig.nvim"}, opts = {["ensure-installed"] = {}, ["mason-lspconfig"] = {automatic_installation = true}}, config = _2_}}
