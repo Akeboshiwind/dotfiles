@@ -10,7 +10,7 @@
           "<leader>c" {:name "display as comment"}
           "<leader>g" {:name "goto"}}}}
  {1 :Olical/conjure
-  :tag "v4.50.0"
+  :version "*"
   :ft ["python"]
   :dependencies [:PaterJason/cmp-conjure]
   :opts {:config

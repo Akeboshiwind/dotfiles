@@ -1,7 +1,7 @@
 ; plugins/init.fnl
 
 [{1 :folke/lazy.nvim
-  :tag "v10.16.0"}
+  :version "*"}
 
  ; Intelligently reopen files at your last edit position in Vim
  :farmergreg/vim-lastplace

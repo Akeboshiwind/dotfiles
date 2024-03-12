@@ -5,4 +5,4 @@ local function _1_(_, opts)
   end
   return nil
 end
-return {{"PaterJason/cmp-conjure", dependencies = {"hrsh7th/nvim-cmp"}}, {"folke/which-key.nvim", opts = {defaults = {["<leader>l"] = {name = "log"}, ["<leader>e"] = {name = "eval"}, ["<leader>c"] = {name = "display as comment"}, ["<leader>g"] = {name = "goto"}}}}, {"Olical/conjure", tag = "v4.50.0", ft = {"python"}, dependencies = {"PaterJason/cmp-conjure"}, opts = {config = {["mapping#prefix"] = "<leader>", ["highlight#enabled"] = true}}, config = _1_}}
+return {{"PaterJason/cmp-conjure", dependencies = {"hrsh7th/nvim-cmp"}}, {"folke/which-key.nvim", opts = {defaults = {["<leader>l"] = {name = "log"}, ["<leader>e"] = {name = "eval"}, ["<leader>c"] = {name = "display as comment"}, ["<leader>g"] = {name = "goto"}}}}, {"Olical/conjure", version = "*", ft = {"python"}, dependencies = {"PaterJason/cmp-conjure"}, opts = {config = {["mapping#prefix"] = "<leader>", ["highlight#enabled"] = true}}, config = _1_}}
