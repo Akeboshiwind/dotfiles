@@ -1,2 +1,2 @@
 -- [nfnl] Compiled from lua/plugins/lang/init.fnl by https://github.com/Olical/nfnl, do not edit.
-return {"gurpreetatwal/vim-avro", {import = "plugins.lang.yaml"}, {import = "plugins.lang.terraform"}, {import = "plugins.lang.lua"}, {import = "plugins.lang.clojure"}, {import = "plugins.lang.fennel"}, {import = "plugins.lang.python"}, {import = "plugins.lang.typescript"}}
+return {"gurpreetatwal/vim-avro", {import = "plugins.lang.yaml"}, {import = "plugins.lang.terraform"}, {import = "plugins.lang.markdown"}, {import = "plugins.lang.lua"}, {import = "plugins.lang.clojure"}, {import = "plugins.lang.fennel"}, {import = "plugins.lang.python"}, {import = "plugins.lang.typescript"}}
