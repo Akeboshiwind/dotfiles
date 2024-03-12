@@ -1,6 +1,5 @@
 ; plugins/lang/fennel.lua
 (local {: autoload} (require :nfnl.module))
-(local {: update} (autoload :nfnl.core))
 (local lspconfig (autoload :lspconfig))
 (local test-harness (autoload :plenary.test_harness))
 (local wk (autoload :which-key))
@@ -31,5 +30,9 @@
            :single_file_support true
            :settings
            {:fennel
-            {:diagnostics {:globals [:vim :jit :comment]}
+            {:diagnostics {:globals [:jit :comment 
+                                     ; vim
+                                     :vim
+                                     ; hammerspoon
+                                     :hs :spoon]}
              :workspace {:library (vim.api.nvim_list_runtime_paths)}}}}}}}]
