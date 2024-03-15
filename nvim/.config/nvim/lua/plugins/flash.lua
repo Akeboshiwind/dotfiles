@@ -10,7 +10,7 @@ local function _3_()
   return flash.treesitter()
 end
 local function _4_()
-  return flash.jump({pattern = vim.fn.expand("<cword>")})
+  return flash.jump({pattern = vim.fn.expand("<cword>"), jump = {history = true, register = true, jumplist = true}})
 end
 local function _5_()
   return flash.remote()

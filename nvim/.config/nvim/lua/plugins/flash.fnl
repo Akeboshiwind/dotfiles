@@ -14,7 +14,10 @@
          {1 "S" 2 #(flash.treesitter)
           :mode [:n :x :o]
           :desc "Flash Treesitter"}
-         {1 "*" 2 #(flash.jump {:pattern (vim.fn.expand "<cword>")})
+         {1 "*" 2 #(flash.jump {:pattern (vim.fn.expand "<cword>")
+                                :jump {:history true
+                                       :register true
+                                       :jumplist true}})
           :mode [:n :x :o]
           :desc "Flash under cursor"}
          {1 "r" 2 #(flash.remote)
