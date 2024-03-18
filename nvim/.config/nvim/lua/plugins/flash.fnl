@@ -4,10 +4,12 @@
 
 [{1 :folke/flash.nvim
   :event :VeryLazy
-  :opts {:modes {:char {:keys [; So that `fd` still works as <esc>
-                               ; TODO: Is there another method?
-                               (comment :f) :F
-                               :t :T]}}}
+  :opts {:modes {:char {; So that `fd` still works as <esc>
+                        ; TODO: Is there another method?
+                        :keys [(comment :f) :F
+                               :t :T]
+                        ; Only move one
+                        :autohide true}}}
   :keys [{1 "s" 2 #(flash.jump)
           :mode [:n :x :o]
           :desc "Flash"}
@@ -15,7 +17,7 @@
           :mode [:n :x :o]
           :desc "Flash Treesitter"}
          {1 "r" 2 #(flash.remote)
-          :mode "o"
+          :mode :o
           :desc "Remote Flash"}
          {1 "R" 2 #(flash.treesitter_search)
           :mode [:o :x]
