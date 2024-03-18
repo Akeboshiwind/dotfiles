@@ -1,0 +1,57 @@
+# >> alacritty.yml
+
+
+# >> Imports
+import = ["/Users/osm/.config/alacritty/kanagawa_theme.toml"]
+
+
+
+# >> Font configuration
+
+[font]
+size = 17.0
+
+[font.bold]
+family = "MesloLGS Nerd Font"
+style = "Bold"
+
+[font.bold_italic]
+family = "MesloLGS Nerd Font"
+style = "Bold Italic"
+
+[font.italic]
+family = "MesloLGS Nerd Font"
+style = "Italic"
+
+[font.normal]
+family = "MesloLGS Nerd Font"
+style = "Regular"
+
+
+
+# >> Shell
+
+[shell]
+args = ["zsh", "-l"]
+program = "/usr/bin/env"
+
+
+
+# >> Env
+
+[env]
+TERM = "xterm-256color"
+
+
+
+# >> Key bindings
+
+[[keyboard.bindings]]
+chars = "\u001B[13;2u"
+key = "Return"
+mods = "Shift"
+
+[[keyboard.bindings]]
+chars = "\u001B[13;5u"
+key = "Return"
+mods = "Control"
