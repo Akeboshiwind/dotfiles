@@ -21,7 +21,7 @@
          {1 "<leader>w<" 2 "<cmd>wincmd ><CR>" :desc "Decrease window width"}
 
          {1 "<C-Space>" 2 "<cmd>:WhichKey ''<CR>" :desc "Show base commands"}]
-  :opts {:plugins { :spelling true}
+  :opts {:plugins {:spelling true}
          :triggers_blacklist {; Ignore escape key 'fd'
                               :i ["f"]}
          ; There are four ways to bind keys:
