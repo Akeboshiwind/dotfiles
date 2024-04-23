@@ -1,2 +1,8 @@
 -- [nfnl] Compiled from lua/plugins/format.fnl by https://github.com/Olical/nfnl, do not edit.
-return {{"stevearc/conform.nvim", event = {"BufWritePre"}, cmd = {"ConformInfo"}, opts = {formatters_by_ft = {}, format_on_save = {timeout_ms = 500, lsp_fallback = true}, formatters = {}}}}
+local _local_1_ = require("nfnl.module")
+local autoload = _local_1_["autoload"]
+local conform = autoload("conform")
+local function _2_()
+  return conform.format()
+end
+return {{"stevearc/conform.nvim", event = {"BufWritePre"}, cmd = {"ConformInfo"}, keys = {{"<leader>F", _2_}}, opts = {formatters_by_ft = {}, formatters = {}}}}
