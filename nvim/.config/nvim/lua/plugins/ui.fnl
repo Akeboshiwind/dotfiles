@@ -12,7 +12,9 @@
   :config #(do
              (kanagawa.setup
                {; dim inactive window `:h hl-NormalNC`
-                :dimInactive true})
+                :dimInactive true
+                :overrides (fn [_]
+                             {"@comment.todo" {:link "@comment.note"}})})
              (vim.cmd "colorscheme kanagawa"))}
 
  {1 :nvim-lualine/lualine.nvim
