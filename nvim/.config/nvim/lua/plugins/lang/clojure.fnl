@@ -6,6 +6,7 @@
 (local config (autoload :telescope.config))
 (local actions (autoload :telescope.actions))
 (local action-state (autoload :telescope.actions.state))
+(local eval (autoload :conjure.eval))
 
 (local Set (autoload :util.set))
 
@@ -65,7 +66,12 @@
           "<leader>r" {:name "refresh"}}}}
  {1 :Olical/conjure
   :ft ["clojure"]
-  :keys [{1 "<leader>eg" 2 "<cmd>ConjureEval (user/go!)<CR>" :desc "user/go!"}
+  :keys [{1 "<leader>eg"
+          2 #(eval.command
+               "(when-let [go! (or (ns-resolve 'user 'go!)
+                                   (ns-resolve 'user 'go))]
+                  (go!))")
+          :desc "user/go!"}
          {1 "<leader>es"
           2 #(do 
                ; Save buffer
@@ -73,7 +79,8 @@
 
                ; clerk/show!
                (let [filename (vim.fn.expand "%:p")]
-                 (vim.cmd (string.format "ConjureEval (nextjournal.clerk/show! \"%s\")" filename))))
+                 (eval.command
+                   (string.format "(nextjournal.clerk/show! \"%s\")" filename))))
           :desc "clerk/show!"}
          {1 "<leader>sS" 2 shadow-select :desc "Conjure Select Shadowcljs Environment"}]
   :opts {:config

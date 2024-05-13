@@ -8,6 +8,7 @@ local finders = autoload("telescope.finders")
 local config = autoload("telescope.config")
 local actions = autoload("telescope.actions")
 local action_state = autoload("telescope.actions.state")
+local eval = autoload("conjure.eval")
 local Set = autoload("util.set")
 local function make_shadow_entry_maker()
   local entry_cache = Set.new()
@@ -41,8 +42,11 @@ local function shadow_select(opts)
   return picker:find()
 end
 local function _7_()
+  return eval.command("(when-let [go! (or (ns-resolve 'user 'go!)\n                                   (ns-resolve 'user 'go))]\n                  (go!))")
+end
+local function _8_()
   vim.cmd("w")
   local filename = vim.fn.expand("%:p")
-  return vim.cmd(string.format("ConjureEval (nextjournal.clerk/show! \"%s\")", filename))
+  return eval.command(string.format("(nextjournal.clerk/show! \"%s\")", filename))
 end
-return {{"neovim/nvim-lspconfig", opts = {servers = {clojure_lsp = {init_options = {["cljfmt-config-path"] = (vim.fn.stdpath("config") .. "/config/.cljfmt.edn")}}}}}, {"eraserhd/parinfer-rust", build = "cargo build --release"}, {"folke/which-key.nvim", opts = {defaults = {["<leader>G"] = {name = "git"}, ["<leader>v"] = {name = "view"}, ["<leader>s"] = {name = "session"}, ["<leader>t"] = {name = "test"}, ["<leader>r"] = {name = "refresh"}}}}, {"Olical/conjure", ft = {"clojure"}, keys = {{"<leader>eg", "<cmd>ConjureEval (user/go!)<CR>", desc = "user/go!"}, {"<leader>es", _7_, desc = "clerk/show!"}, {"<leader>sS", shadow_select, desc = "Conjure Select Shadowcljs Environment"}}, opts = {config = {["client#clojure#nrepl#mapping#session_select"] = false, ["client#clojure#nrepl#connection#auto_repl#enabled"] = false}}}}
+return {{"neovim/nvim-lspconfig", opts = {servers = {clojure_lsp = {init_options = {["cljfmt-config-path"] = (vim.fn.stdpath("config") .. "/config/.cljfmt.edn")}}}}}, {"eraserhd/parinfer-rust", build = "cargo build --release"}, {"folke/which-key.nvim", opts = {defaults = {["<leader>G"] = {name = "git"}, ["<leader>v"] = {name = "view"}, ["<leader>s"] = {name = "session"}, ["<leader>t"] = {name = "test"}, ["<leader>r"] = {name = "refresh"}}}}, {"Olical/conjure", ft = {"clojure"}, keys = {{"<leader>eg", _7_, desc = "user/go!"}, {"<leader>es", _8_, desc = "clerk/show!"}, {"<leader>sS", shadow_select, desc = "Conjure Select Shadowcljs Environment"}}, opts = {config = {["client#clojure#nrepl#mapping#session_select"] = false, ["client#clojure#nrepl#connection#auto_repl#enabled"] = false}}}}
