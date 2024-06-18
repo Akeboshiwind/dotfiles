@@ -15,7 +15,7 @@
   :dependencies [:PaterJason/cmp-conjure]
   :opts {:config
          {"mapping#prefix" "<leader>"
-
+          "client#clojure#nrepl#refresh#backend" "clj-reload"
           ; Briefly highlight evaluated forms
           "highlight#enabled" true}}
   :config (fn [_ opts]
