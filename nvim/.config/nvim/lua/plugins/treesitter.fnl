@@ -5,9 +5,8 @@
 [{1 :nvim-treesitter/nvim-treesitter
   ;:dir "~/prog/prog/assorted/nvim-treesitter"}]
   :build ":TSUpdate"
-  :dependencies [(comment 
-                   {1 :nvim-treesitter/playground
-                    :cmd "TSPlaygroundToggle"})]
+  :dependencies [{1 :nvim-treesitter/playground
+                  :cmd "TSPlaygroundToggle"}]
   :opts {:ensure_installed ["comment" "regex"]
          :auto_install true
 
