@@ -9,7 +9,9 @@
                         :keys [(comment :f) :F
                                :t :T]
                         ; Only move one
-                        :autohide true}}}
+                        :autohide true
+                        :multi_line false
+                        :highlight {:backdrop false}}}}
   :keys [{1 "s" 2 #(flash.jump)
           :mode [:n :x :o]
           :desc "Flash"}

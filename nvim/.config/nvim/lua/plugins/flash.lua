@@ -18,4 +18,4 @@ end
 local function _6_()
   return flash.toggle()
 end
-return {{"folke/flash.nvim", event = "VeryLazy", opts = {modes = {char = {keys = {nil, "F", "t", "T"}, autohide = true}}}, keys = {{"s", _2_, mode = {"n", "x", "o"}, desc = "Flash"}, {"S", _3_, mode = {"n", "x", "o"}, desc = "Flash Treesitter"}, {"r", _4_, mode = "o", desc = "Remote Flash"}, {"R", _5_, mode = {"o", "x"}, desc = "Treesitter Search"}, {"<c-s>", _6_, mode = {"c"}, desc = "Toggle Flash Search"}}}}
+return {{"folke/flash.nvim", event = "VeryLazy", opts = {modes = {char = {keys = {nil, "F", "t", "T"}, autohide = true, highlight = {backdrop = false}, multi_line = false}}}, keys = {{"s", _2_, mode = {"n", "x", "o"}, desc = "Flash"}, {"S", _3_, mode = {"n", "x", "o"}, desc = "Flash Treesitter"}, {"r", _4_, mode = "o", desc = "Remote Flash"}, {"R", _5_, mode = {"o", "x"}, desc = "Treesitter Search"}, {"<c-s>", _6_, mode = {"c"}, desc = "Toggle Flash Search"}}}}
