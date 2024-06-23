@@ -1,6 +1,12 @@
 # >> Terraform
 
 
+# >> Aliases
+
+alias tf="terraform"
+
+
+
 # >> Completions
 
 # Only install the completions if terraform is installed
