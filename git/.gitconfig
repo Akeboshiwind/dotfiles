@@ -1,6 +1,9 @@
 [core]
     editor = nvim
 
+[init]
+	defaultBranch = main
+
 [user]
     name = Oliver Marshall
     email = olivershawmarshall@gmail.com
