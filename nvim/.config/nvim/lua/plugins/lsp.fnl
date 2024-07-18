@@ -14,44 +14,38 @@
 
     ; >> Non-prefixed
     (if (not= filetype "clojure")
-      (wk.register
-        {:K [vim.lsp.buf.hover "Document symbol"]}
-        {:buffer bufnr}))
+      (wk.add
+        [{1 "K" 2 vim.lsp.buf.hover :desc "Document symbol" :buffer bufnr}]))
 
     ; >> Leader
-    (wk.register
-      {:r {:name "run"
-           :n [vim.lsp.buf.rename "Rename symbol under cursor"]
-           ;; TODO: Remove?
-           :f [vim.lsp.buf.formatting "Format the buffer"]}
-       :a {:name "action"
-           :a [vim.lsp.buf.code_action "Apply code action"]}
-       :g {:name "goto"
-           :D [vim.lsp.buf.declaration "Declaration"]
-           :i [builtin.lsp_implementations "Implementation"] 
-           :y [builtin.lsp_type_definitions "Type definition"] 
-           :r [builtin.lsp_references "References"] 
-
-           :s [builtin.lsp_document_symbols "Document Symbols"] 
-           :S [builtin.lsp_workspace_symbols "Workspace Symbols"]}} 
-      {:prefix "<leader>"
-       :buffer bufnr})
+    (wk.add
+      {:buffer bufnr
+       1 [{1 "<leader>r" :group "run"}
+          {1 "<leader>rn" 2 vim.lsp.buf.rename :desc "Rename symbol under cursor"}
+               ;; TODO: Remove?
+          {1 "<leader>rf" 2 vim.lsp.buf.formatting :desc "Format the buffer"}
+          {1 "<leader>a" :group "action"}
+          {1 "<leader>aa" 2 vim.lsp.buf.code_action :desc "Apply code action"}
+          {1 "<leader>g" :group "goto"}
+          {1 "<leader>gD" 2 vim.lsp.buf.declaration :desc "Declaration"}
+          {1 "<leader>gi" 2 builtin.lsp_implementations :desc "Implementation"} 
+          {1 "<leader>gy" 2 builtin.lsp_type_definitions :desc "Type definition"} 
+          {1 "<leader>gr" 2 builtin.lsp_references :desc "References"} 
+          {1 "<leader>gs" 2 builtin.lsp_document_symbols :desc "Document Symbols"} 
+          {1 "<leader>gS" 2 builtin.lsp_workspace_symbols :desc "Workspace Symbols"}]}) 
 
     ; Don't overwrite conjure mapping
     (if (not= filetype "clojure")
-      (wk.register
-        {:g {:name "goto"
-             :d [builtin.lsp_definitions "Definition"]}}
-        {:prefix "<leader>"
-         :buffer bufnr}))
+      (wk.add
+        {:buffer bufnr
+         1 [{1 "<leader>gd" 2 builtin.lsp_definitions :desc "Definition"}]}))
 
     ; Visual
-    (wk.register
-      {:a {:name "action"
-           :a [":'<,'>Telescope lsp_range_code_actions<CR>" "Apply code action"]}}
-      {:prefix "<leader>"
-       :mode :v
-       :buffer bufnr})))
+    (wk.add
+      {:mode :v
+       :buffer bufnr
+       1 [{1 "<leader>a" :group "action"}
+          {1 "<leader>aa" 2 ":'<,'>Telescope lsp_range_code_actions<CR>" :desc "Apply code action"}]})))
 
 [{1 :j-hui/fidget.nvim
   :event :LspAttach

@@ -11,15 +11,15 @@ local cmp_nvim_lsp = autoload("cmp_nvim_lsp")
 local function setup_mappings(bufnr)
   local filetype = vim.bo[bufnr].filetype
   if (filetype ~= "clojure") then
-    wk.register({K = {vim.lsp.buf.hover, "Document symbol"}}, {buffer = bufnr})
+    wk.add({{"K", vim.lsp.buf.hover, desc = "Document symbol", buffer = bufnr}})
   else
   end
-  wk.register({r = {name = "run", n = {vim.lsp.buf.rename, "Rename symbol under cursor"}, f = {vim.lsp.buf.formatting, "Format the buffer"}}, a = {name = "action", a = {vim.lsp.buf.code_action, "Apply code action"}}, g = {name = "goto", D = {vim.lsp.buf.declaration, "Declaration"}, i = {builtin.lsp_implementations, "Implementation"}, y = {builtin.lsp_type_definitions, "Type definition"}, r = {builtin.lsp_references, "References"}, s = {builtin.lsp_document_symbols, "Document Symbols"}, S = {builtin.lsp_workspace_symbols, "Workspace Symbols"}}}, {prefix = "<leader>", buffer = bufnr})
+  wk.add({{{"<leader>r", group = "run"}, {"<leader>rn", vim.lsp.buf.rename, desc = "Rename symbol under cursor"}, {"<leader>rf", vim.lsp.buf.formatting, desc = "Format the buffer"}, {"<leader>a", group = "action"}, {"<leader>aa", vim.lsp.buf.code_action, desc = "Apply code action"}, {"<leader>g", group = "goto"}, {"<leader>gD", vim.lsp.buf.declaration, desc = "Declaration"}, {"<leader>gi", builtin.lsp_implementations, desc = "Implementation"}, {"<leader>gy", builtin.lsp_type_definitions, desc = "Type definition"}, {"<leader>gr", builtin.lsp_references, desc = "References"}, {"<leader>gs", builtin.lsp_document_symbols, desc = "Document Symbols"}, {"<leader>gS", builtin.lsp_workspace_symbols, desc = "Workspace Symbols"}}, buffer = bufnr})
   if (filetype ~= "clojure") then
-    wk.register({g = {name = "goto", d = {builtin.lsp_definitions, "Definition"}}}, {prefix = "<leader>", buffer = bufnr})
+    wk.add({{{"<leader>gd", builtin.lsp_definitions, desc = "Definition"}}, buffer = bufnr})
   else
   end
-  return wk.register({a = {name = "action", a = {":'<,'>Telescope lsp_range_code_actions<CR>", "Apply code action"}}}, {prefix = "<leader>", mode = "v", buffer = bufnr})
+  return wk.add({{{"<leader>a", group = "action"}, {"<leader>aa", ":'<,'>Telescope lsp_range_code_actions<CR>", desc = "Apply code action"}}, mode = "v", buffer = bufnr})
 end
 local function _4_()
   local function _5_(_client, bufnr)

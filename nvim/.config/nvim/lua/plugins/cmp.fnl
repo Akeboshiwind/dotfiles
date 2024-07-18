@@ -67,13 +67,12 @@
                            {:name :cmdline}])})
 
             ; >> Mappings
-            (wk.register
-              {"<C-Space>" "Invoke completion"
-               "<CR>" "Confirm selection or fallback"
-               "<C-e>" "Close the completion menu"
-               "<C-u>" "Page up"
-               "<C-d>" "Page down"
-
-               "<TAB>" "Next completion item"
-               "<S-TAB>" "Prev completion item"}
-              {:mode :i}))}]
+            (wk.add
+              {:mode :i
+               1 [{1 "<C-Space>" :desc "Invoke completion"}
+                  {1 "<CR>"      :desc "Confirm selection or fallback"}
+                  {1 "<C-e>"     :desc "Close the completion menu"}
+                  {1 "<C-u>"     :desc "Page up"}
+                  {1 "<C-d>"     :desc "Page down"}
+                  {1 "<TAB>"     :desc "Next completion item"}
+                  {1 "<S-TAB>"   :desc "Prev completion item"}]}))}]

@@ -14,10 +14,9 @@
                 (vim.cmd (.. ":PlenaryBustedFile " lua-path))
                 (test-harness.test_file lua-path)))
               
-            (wk.register
-              {"p" {:name "plenary"
-                    "t" [test-current-file "Test current file"]}}
-              {:prefix "<leader>"}))}
+            (wk.add
+              [{1 "<leader>p" :group "plenary"}
+               {1 "<leader>pt" 2 test-current-file :desc "Test current file"}]))}
  {1 :Olical/conjure
   :ft ["fennel"]}
  {1 :williamboman/mason.nvim

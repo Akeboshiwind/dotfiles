@@ -4,15 +4,10 @@
 (local builtin (autoload :telescope.builtin))
 (local actions (autoload :telescope.actions))
 (local file-browser-actions (autoload :telescope._extensions.file_browser.actions))
+(local wk (autoload :which-key))
 
 [{1 :nvim-telescope/telescope-fzf-native.nvim
   :build "make"}
- {1 :folke/which-key.nvim
-  :opts {:defaults
-         {"<leader>f" {:name "find"}
-          "<leader>s" {:name "search"}
-          "<leader>d" {:name "diagnostic"}
-          "<leader>G" {:name "git"}}}}
  {1 :nvim-telescope/telescope.nvim
   :dependencies [:nvim-lua/plenary.nvim
                  :kyazdani42/nvim-web-devicons
@@ -106,4 +101,10 @@
 
             ;; >> Add Telescope Extensions
             (each [extension _cfg (pairs opts.extensions)]
-              (telescope.load_extension extension)))}]
+              (telescope.load_extension extension))
+            ; >> Which-key groups
+            (wk.add
+              [{1 "<leader>f" :group "find"}
+               {1 "<leader>s" :group "search"}
+               {1 "<leader>d" :group "diagnostic"}
+               {1 "<leader>G" :group "git"}]))}]

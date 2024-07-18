@@ -1,14 +1,9 @@
 ; plugins/conjure.fnl
+(local {: autoload} (require :nfnl.module))
+(local wk (autoload :which-key))
 
 [{1 :PaterJason/cmp-conjure
   :dependencies [:hrsh7th/nvim-cmp]}
- {1 :folke/which-key.nvim
-  :opts {:defaults
-         ; TODO: These don't work, why?
-         {"<leader>l" {:name "log"}
-          "<leader>e" {:name "eval"}
-          "<leader>c" {:name "display as comment"}
-          "<leader>g" {:name "goto"}}}}
  {1 :Olical/conjure
   :version "*"
   :ft ["python"]
@@ -21,4 +16,14 @@
   :config (fn [_ opts]
             ; >> Configure
             (each [k v (pairs opts.config)]
-              (tset vim.g (string.format "conjure#%s" k) v)))}]
+              (tset vim.g (string.format "conjure#%s" k) v))
+            ; >> Which-key groups
+            (wk.add
+              [{1 "<leader>c" :group "display as comment"}
+               {1 "<leader>e" :group "eval"}
+               {1 "<leader>g" :group "goto"}
+               {1 "<leader>l" :group "log"}
+               {1 "<leader>r" :group "refresh"}
+               {1 "<leader>s" :group "session"}
+               {1 "<leader>t" :group "test"}
+               {1 "<leader>v" :group "view"}]))}]

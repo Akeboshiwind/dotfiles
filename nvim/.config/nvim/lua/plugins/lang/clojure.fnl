@@ -56,14 +56,6 @@
  ;; TODO: Move to lisp specific?
  {1 :eraserhd/parinfer-rust
   :build "cargo build --release"}
- {1 :folke/which-key.nvim
-  :opts {:defaults
-         ; TODO: These don't work, why?
-         {"<leader>G" {:name "git"}
-          "<leader>v" {:name "view"}
-          "<leader>s" {:name "session"}
-          "<leader>t" {:name "test"}
-          "<leader>r" {:name "refresh"}}}}
  {1 :Olical/conjure
   :ft ["clojure"]
   :keys [{1 "<leader>eg"

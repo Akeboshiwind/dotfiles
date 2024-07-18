@@ -11,6 +11,6 @@ local function _2_(_, _opts)
     vim.cmd((":PlenaryBustedFile " .. lua_path))
     return test_harness.test_file(lua_path)
   end
-  return wk.register({p = {name = "plenary", t = {test_current_file, "Test current file"}}}, {prefix = "<leader>"})
+  return wk.add({{"<leader>p", group = "plenary"}, {"<leader>pt", test_current_file, desc = "Test current file"}})
 end
 return {{"Olical/nfnl", ft = "fennel", config = _2_}, {"Olical/conjure", ft = {"fennel"}}, {"williamboman/mason.nvim", opts = {["ensure-installed"] = {["fennel-language-server"] = true}}}, {"neovim/nvim-lspconfig", opts = {servers = {fennel_language_server = {filetypes = {"fennel"}, root_dir = lspconfig.util.root_pattern("lua", "fnl"), single_file_support = true, settings = {fennel = {diagnostics = {globals = {"jit", "comment", "vim", "hs", "spoon"}}, workspace = {library = vim.api.nvim_list_runtime_paths()}}}}}}}}
