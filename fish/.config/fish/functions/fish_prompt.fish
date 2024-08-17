@@ -13,6 +13,9 @@ function fish_prompt --description 'Write out the prompt'
     set -l pwd "$cwd_color$(prompt_pwd)$normal"
 
     # >> Git Status
+    set -lx __fish_git_prompt_showdirtystate true
+    set -lx __fish_git_prompt_showupstream informative
+    set -lx __fish_git_prompt_showcolorhints true
     set -lx __fish_git_prompt_color green
     set -lx __fish_git_prompt_color_prefix yellow
     set -lx __fish_git_prompt_color_suffix yellow
