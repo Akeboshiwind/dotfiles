@@ -19,7 +19,7 @@ fish_color_selection --background=2D4F67 brcyan
 fish_color_operator 76946A green
 fish_color_escape D27E99 brmagenta
 fish_color_autosuggestion 727169 brblack
-fish_color_cwd C0A36E yellow
+fish_color_cwd 7AA89F cyan
 ##fish_color_cwd_root :shrug:
 fish_color_user 7AA89F cyan
 fish_color_host 76946A green

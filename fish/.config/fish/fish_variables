@@ -5,7 +5,7 @@ SETUVAR fish_color_autosuggestion:727169\x1ebrblack
 SETUVAR fish_color_cancel:C34043\x1ered
 SETUVAR fish_color_command:7AA89F\x1ecyan
 SETUVAR fish_color_comment:727169\x1ebrblack
-SETUVAR fish_color_cwd:C0A36E\x1eyellow
+SETUVAR fish_color_cwd:7AA89F\x1ecyan
 SETUVAR fish_color_cwd_root:red
 SETUVAR fish_color_end:FF9E64\x1ebrred
 SETUVAR fish_color_error:C34043\x1ered
