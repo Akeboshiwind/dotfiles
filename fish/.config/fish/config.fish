@@ -5,7 +5,4 @@ if status is-interactive
     end
 end
 
-# Disable greeting
-set fish_greeting ""
-
 # TODO: Prompt to `fish_update_completions` occasionally
