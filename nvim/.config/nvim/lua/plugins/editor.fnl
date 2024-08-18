@@ -6,4 +6,6 @@
  :andymass/vim-matchup
 
  {1 :nmac427/guess-indent.nvim
-  :opts {}}]
+  :opts {}}
+ {1 :lukas-reineke/virt-column.nvim
+  :opts {:virtcolumn "80"}}]
