@@ -32,8 +32,7 @@ style = "Regular"
 # >> Shell
 
 [shell]
-args = ["zsh", "-l"]
-program = "/usr/bin/env"
+program = "/opt/homebrew/bin/fish"
 
 
 
