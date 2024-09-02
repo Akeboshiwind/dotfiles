@@ -9,4 +9,5 @@
  {:import "plugins.lang.clojure"}
  {:import "plugins.lang.fennel"}
  {:import "plugins.lang.python"}
- {:import "plugins.lang.typescript"}]
+ {:import "plugins.lang.typescript"}
+ {:import "plugins.lang.c"}]
