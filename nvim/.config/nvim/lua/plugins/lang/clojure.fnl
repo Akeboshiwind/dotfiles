@@ -64,6 +64,12 @@
                                    (ns-resolve 'user 'go))]
                   (go!))")
           :desc "user/go!"}
+         {1 "<leader>eS"
+          2 #(eval.command
+               "(do
+                  (require '[clojure.repl.deps])
+                  (clojure.repl.deps/sync-deps))")
+          :desc "Sync deps.edn"}
          {1 "<leader>es"
           2 #(do 
                ; Save buffer

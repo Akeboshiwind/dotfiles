@@ -36,7 +36,7 @@ local function shadow_select(opts)
       end
       return true
     end
-    return (actions.select_default):replace(_6_)
+    return actions.select_default:replace(_6_)
   end
   picker = pickers.new(opts0, {prompt_title = "shadow-cljs apps", finder = finders.new_oneshot_job({"ps", "aux"}, opts0), sorter = config.values.generic_sorter(opts0), attach_mappings = _5_})
   return picker:find()
@@ -45,8 +45,11 @@ local function _7_()
   return eval.command("(when-let [go! (or (ns-resolve 'user 'go!)\n                                   (ns-resolve 'user 'go))]\n                  (go!))")
 end
 local function _8_()
+  return eval.command("(do\n                  (require '[clojure.repl.deps])\n                  (clojure.repl.deps/sync-deps))")
+end
+local function _9_()
   vim.cmd("w")
   local filename = vim.fn.expand("%:p")
   return eval.command(string.format("(nextjournal.clerk/show! \"%s\")", filename))
 end
-return {{"neovim/nvim-lspconfig", opts = {servers = {clojure_lsp = {init_options = {["cljfmt-config-path"] = (vim.fn.stdpath("config") .. "/config/.cljfmt.edn")}}}}}, {"eraserhd/parinfer-rust", build = "cargo build --release"}, {"Olical/conjure", ft = {"clojure"}, keys = {{"<leader>eg", _7_, desc = "user/go!"}, {"<leader>es", _8_, desc = "clerk/show!"}, {"<leader>sS", shadow_select, desc = "Conjure Select Shadowcljs Environment"}}, opts = {config = {["client#clojure#nrepl#connection#auto_repl#enabled"] = false, ["client#clojure#nrepl#mapping#session_select"] = false}}}}
+return {{"neovim/nvim-lspconfig", opts = {servers = {clojure_lsp = {init_options = {["cljfmt-config-path"] = (vim.fn.stdpath("config") .. "/config/.cljfmt.edn")}}}}}, {"eraserhd/parinfer-rust", build = "cargo build --release"}, {"Olical/conjure", ft = {"clojure"}, keys = {{"<leader>eg", _7_, desc = "user/go!"}, {"<leader>eS", _8_, desc = "Sync deps.edn"}, {"<leader>es", _9_, desc = "clerk/show!"}, {"<leader>sS", shadow_select, desc = "Conjure Select Shadowcljs Environment"}}, opts = {config = {["client#clojure#nrepl#connection#auto_repl#enabled"] = false, ["client#clojure#nrepl#mapping#session_select"] = false}}}}
