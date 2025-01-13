@@ -1,8 +1,5 @@
 {brew/neovim {}
 
- ; Hidden dependency?
- brew/luarocks {}
-
 
  ; For Parinfer-rust in Clojure config
  brew/rustup-init {}
@@ -13,4 +10,5 @@
  ; For installing LSPs with nvim-lsp-installer
  brew/node {}
  brew/wget {}
- brew/ninja {}}; Lua
+ brew/ninja {} ; Lua
+ brew/luarocks {}} ; fennel_ls etc.
