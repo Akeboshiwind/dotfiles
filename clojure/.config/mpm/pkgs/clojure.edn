@@ -1,5 +1,0 @@
-{asdf/java {:version "temurin-17.0.4+101"}
- brew/clojure {}
- brew/leiningen {}
- brew/babashka {:tap "borkdude/brew"}
- brew/clj-kondo {:tap "borkdude/brew"}}

@@ -1,2 +1,0 @@
-{brew/alacritty {}
- brew/font-meslo-lg-nerd-font {:tap "homebrew/cask-fonts"}}
