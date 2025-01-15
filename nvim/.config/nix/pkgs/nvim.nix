@@ -1,4 +1,4 @@
-{ pkgs }: with pkgs; [
+{ pkgs, ... }: with pkgs; [
   neovim
 
   # For parinfer-rust in Clojure config
