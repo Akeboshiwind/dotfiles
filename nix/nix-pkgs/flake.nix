@@ -11,7 +11,18 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        lib = nixpkgs.lib;
+        lib = nixpkgs.lib // {
+          # Adapted from: https://lazamar.co.uk/nix-versions
+          # Use the above to find the right rev
+          withRevision = ({ name, rev, url ? "https://github.com/NixOS/nixpkgs/", ref ? "refs/heads/nixpkgs-unstable" }: let
+            versionPkgs = import (builtins.fetchGit {
+              name = "${name}-revision-${rev}";
+              url = url;
+              ref = ref;
+              rev = rev;
+            }) {};
+          in versionPkgs.${name});
+        };
 
         # Load dependencies from config files
         pkgsDir = ~/.config/nix/pkgs;
