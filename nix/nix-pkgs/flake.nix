@@ -18,8 +18,9 @@
         packages = lib.pipe pkgsDir [
           builtins.readDir
           builtins.attrNames # Get keys
+          (builtins.map (name: pkgsDir + "/${name}"))
           # Run `import` on all the found files
-          (builtins.map (name: import (pkgsDir + "/${name}") { inherit pkgs; }))
+          (builtins.map (path: import path { inherit pkgs; inherit lib; }))
           lib.flatten
           lib.unique
         ];
