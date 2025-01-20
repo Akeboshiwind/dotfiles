@@ -8,7 +8,7 @@ Used to install packages & manage config files.
 
 See [here](https://nix-community.github.io/home-manager/index.xhtml#sec-flakes-standalone) for more up to date information.
 
-1. Make sure both `nix-command` and `flakes` are enabled in nix
+1. Make sure both `nix-command` and `flakes` are enabled in nix (Try out [Determinate Systems Installer](https://determinate.systems/nix-installer/)?)
 2. Run: `nix run home-manager/master -- init --switch ~/dotfiles/home-manager`
 
 
@@ -41,3 +41,9 @@ tree -la result/home-files
 
 Nix flakes require files to be tracked by the git repo.
 Simply stage the file and the error should be fixed.
+
+## Useful links
+
+- [home-manager manual](https://nix-community.github.io/home-manager/index.xhtml#ch-writing-modules)
+- [nix builtins + nixpkgs lib documentation viewer](https://teu5us.github.io/nix-lib.html)
+- [Useful nix hacks](http://www.chriswarbo.net/projects/nixos/useful_hacks.html)
