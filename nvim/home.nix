@@ -17,7 +17,7 @@
     luajitPackages.luarocks # fennel_ls etc.
   ];
 
-  home.file = {
-    ".config/nvim".source = ./.config/nvim;
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix"]; }
+  ];
 }

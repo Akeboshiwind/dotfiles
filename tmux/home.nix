@@ -5,7 +5,7 @@
     tmux
   ];
 
-  home.file = {
-    ".tmux.conf".source = ./.tmux.conf;
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix"]; }
+  ];
 }

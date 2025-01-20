@@ -1,10 +1,7 @@
 { config, pkgs, ... }:
 
 {
-  home.file = {
-    ".ssh" = {
-      source = ./.ssh;
-      recursive = true;
-    };
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix"]; }
+  ];
 }

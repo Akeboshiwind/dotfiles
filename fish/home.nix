@@ -5,10 +5,7 @@
     fish
   ];
 
-  home.file = {
-    ".config/fish" = {
-      source = ./.config/fish;
-      recursive = true;
-    };
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix"]; }
+  ];
 }

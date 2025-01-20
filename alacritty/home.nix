@@ -7,7 +7,7 @@
     nerd-fonts.meslo-lg
   ];
 
-  home.file = {
-    ".config/alacritty".source = ./.config/alacritty;
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix"]; }
+  ];
 }

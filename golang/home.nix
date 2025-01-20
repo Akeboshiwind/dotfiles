@@ -8,7 +8,7 @@
     coreutils
   ];
 
-  home.file = {
-    ".zsh/golang.zsh".source = ./.zsh/golang.zsh;
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix"]; }
+  ];
 }

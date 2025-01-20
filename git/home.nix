@@ -5,8 +5,8 @@
     git
   ];
 
-  home.file = {
-    ".zsh/git.zsh".source = ./.zsh/git.zsh;
-    ".gitconfig".source = ./.gitconfig;
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix"]; }
+    #{ source = ./.gitconfig; }
+  ];
 }

@@ -6,7 +6,7 @@
     pinentry_mac
   ];
 
-  home.file = {
-    ".gnupg".source = ./.gnupg;
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix" ".gitignore"]; }
+  ];
 }

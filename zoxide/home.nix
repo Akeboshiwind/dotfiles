@@ -5,8 +5,7 @@
     zoxide
   ];
 
-  home.file = {
-    ".zsh/zoxide.zsh".source = ./.zsh/zoxide.zsh;
-    ".config/fish/conf.d/zoxide.fish".source = ./.config/fish/conf.d/zoxide.fish;
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix"]; }
+  ];
 }

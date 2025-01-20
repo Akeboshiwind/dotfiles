@@ -1,7 +1,7 @@
 { config, pkgs, ... }:
 
 {
-  home.file = {
-    ".vimrc".source = ./.vimrc;
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix"]; }
+  ];
 }

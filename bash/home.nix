@@ -9,9 +9,7 @@
     fzf
   ];
 
-  home.file = {
-    ".bashrc".source = ./.bashrc;
-    ".bash_profile".source = ./.bash_profile;
-    ".bash_aliases".source = ./.bash_aliases;
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix"]; }
+  ];
 }

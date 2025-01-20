@@ -10,7 +10,7 @@
     openssl
   ];
 
-  home.file = {
-    ".zsh/rust.zsh".source = ./.zsh/rust.zsh;
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix"]; }
+  ];
 }

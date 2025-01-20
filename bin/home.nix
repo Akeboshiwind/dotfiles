@@ -16,7 +16,7 @@
     imagemagick
   ];
 
-  home.file = {
-    "bin".source = ./bin;
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix"]; }
+  ];
 }

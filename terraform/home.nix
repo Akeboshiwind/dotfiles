@@ -8,7 +8,7 @@
     })
   ];
 
-  home.file = {
-    ".zsh/terraform.zsh".source = ./.zsh/terraform.zsh;
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix"]; }
+  ];
 }

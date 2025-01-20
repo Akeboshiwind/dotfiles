@@ -5,8 +5,7 @@
     fzf
   ];
 
-  home.file = {
-    ".zsh/fzf.zsh".source = ./.zsh/fzf.zsh;
-    ".config/fish/conf.d/fzf.fish".source = ./.config/fish/conf.d/fzf.fish;
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix"]; }
+  ];
 }

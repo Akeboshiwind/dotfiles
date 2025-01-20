@@ -6,11 +6,7 @@
     aws-vault
   ];
 
-  home.file = {
-    ".aws" = {
-      source = ./.aws;
-      recursive = true;
-    };
-    ".zsh/aws.zsh".source = ./.zsh/aws.zsh;
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix" "README.md" ".gitignore"]; }
+  ];
 }

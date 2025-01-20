@@ -8,8 +8,7 @@
     clj-kondo
   ];
 
-  home.file = {
-    ".clojure".source = ./.clojure;
-    ".shadow-cljs".source = ./.shadow-cljs;
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix"]; }
+  ];
 }

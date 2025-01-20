@@ -6,11 +6,7 @@
     zsh-syntax-highlighting
   ];
 
-  home.file = {
-    ".zsh" = {
-      source = ./.zsh;
-      recursive = true;
-    };
-    ".zshrc".source = ./.zshrc;
-  };
+  osm.home.folders = [
+    { source = ./.; exclude = ["home.nix"]; }
+  ];
 }
