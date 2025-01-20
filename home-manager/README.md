@@ -4,7 +4,7 @@ Used to install packages & manage config files.
 
 
 
-## Prerequisites
+## Setup
 
 See [here](https://nix-community.github.io/home-manager/index.xhtml#sec-flakes-standalone) for more up to date information.
 
