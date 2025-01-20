@@ -19,7 +19,7 @@ home-manager --flake ~/dotfiles/home-manager switch
 ```
 
 
-## Testing
+## Trying out config changes
 
 Home manager allows you to just run the build step:
 
@@ -41,6 +41,14 @@ tree -la result/home-files
 
 Nix flakes require files to be tracked by the git repo.
 Simply stage the file and the error should be fixed.
+
+
+## Running tests
+
+```sh
+./test/runTests.sh
+Success!
+```
 
 ## Useful links
 
