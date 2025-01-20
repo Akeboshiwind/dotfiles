@@ -33,3 +33,11 @@ This produces a `./result` symlink you can inspect:
 # See what will be put in the home directory
 tree -la result/home-files
 ```
+
+## Common errors
+
+
+### `error: path '<nix store path to file you imported>' does not exist
+
+Nix flakes require files to be tracked by the git repo.
+Simply stage the file and the error should be fixed.
