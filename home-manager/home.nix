@@ -11,12 +11,6 @@
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
-  home.packages = [
-  ];
-
-  home.file = {
-  };
-
   # If you want to use this then you have to manually source 'hm-session-vars.sh'
   #home.sessionVariables = { };
 }
