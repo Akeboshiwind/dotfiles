@@ -7,6 +7,8 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # NOTE: If I need to get into per-system config, look into https://flake.parts
   };
 
   outputs = { nixpkgs, home-manager, ... }:
