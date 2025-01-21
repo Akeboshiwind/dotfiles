@@ -3,6 +3,7 @@
 {
   home.packages = with pkgs; [
     git
+    git-lfs
   ];
 
   osm.home.folders = [
