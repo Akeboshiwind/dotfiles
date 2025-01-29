@@ -34,6 +34,13 @@ This produces a `./result` symlink you can inspect:
 tree -la result/home-files
 ```
 
+## Format
+
+```sh
+nix fmt .
+```
+
+
 ## Common errors
 
 
@@ -44,6 +51,8 @@ Simply stage the file and the error should be fixed.
 
 
 ## Running tests
+
+TODO: Make a command in the nix flake instead. [Using checks?](https://nix.dev/manual/nix/2.24/command-ref/new-cli/nix3-flake-check.html)
 
 ```sh
 ./test/runTests.sh

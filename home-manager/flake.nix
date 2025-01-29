@@ -11,12 +11,14 @@
     # NOTE: If I need to get into per-system config, look into https://flake.parts
   };
 
-  outputs = { nixpkgs, home-manager, ... }:
+  outputs =
+    { nixpkgs, home-manager, ... }:
     let
       system = "aarch64-darwin";
       pkgs = nixpkgs.legacyPackages.${system};
       lib = nixpkgs.lib;
-    in {
+    in
+    {
       homeConfigurations."osm" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
 
@@ -63,5 +65,6 @@
           userLib = (import ./lib/user.nix { inherit lib system; });
         };
       };
+      formatter.${system} = pkgs.nixfmt-rfc-style;
     };
 }

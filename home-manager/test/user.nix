@@ -1,8 +1,12 @@
 { lib, ... }:
 
 let
-  user = import ../lib/user.nix { inherit lib; system = "aarch64-darwin"; };
-in {
+  user = import ../lib/user.nix {
+    inherit lib;
+    system = "aarch64-darwin";
+  };
+in
+{
   test_readDirRecursive_1 = {
     expr = user.readDirRecursive ./folders;
     expected = [
