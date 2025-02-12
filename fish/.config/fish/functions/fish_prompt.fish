@@ -26,6 +26,12 @@ function fish_prompt --description 'Write out the prompt'
         set git_status " $git_status"
     end
 
+    # >> Detect Nix Shell
+    set -l nix_status ""
+    if set -q IN_NIX_SHELL
+        set nix_status " "$yellow"nix:"$name
+    end
+
     # >> Prompt Status
     set -l prompt_status ""
     # Color the prompt in red on error
@@ -46,6 +52,6 @@ function fish_prompt --description 'Write out the prompt'
     end
 
     echo
-    echo -s $pwd $git_status $prompt_status
+    echo -s $pwd $nix_status $git_status $prompt_status
     echo -n -s $status_color $prefix ' ' $normal
 end
