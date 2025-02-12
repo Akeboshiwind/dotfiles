@@ -23,6 +23,7 @@ function fish_prompt --description 'Write out the prompt'
     if test -n $git_status
         set git_status "$(string trim $git_status)"
         set git_status $yellow"git:$git_color$git_status$normal"
+        set git_status " $git_status"
     end
 
     # >> Prompt Status
@@ -31,6 +32,7 @@ function fish_prompt --description 'Write out the prompt'
     if test $last_status -ne 0
         set status_color (set_color $fish_color_error)
         set prompt_status $status_color "[" $last_status "]" $normal
+        set prompt_status " "$prompt_status
     end
 
     # >> Prompt Prefix
@@ -44,6 +46,6 @@ function fish_prompt --description 'Write out the prompt'
     end
 
     echo
-    echo -s $pwd ' ' $git_status ' ' $prompt_status
+    echo -s $pwd $git_status $prompt_status
     echo -n -s $status_color $prefix ' ' $normal
 end
