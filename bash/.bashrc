@@ -123,36 +123,10 @@ PATH="$PATH:~/bin/"
 
 
 
-# >> Sourceing
+# >> Sourcing
 
-for f in ~/bin/sources/*; do source $f; done
-
-
-
-# >> z
-
-. /usr/local/etc/profile.d/z.sh
-
-
-
-# >> asdf
-
-# Retrieve the variable from the cache
-asdf_dir_cache=~/.local/cache/asdf-dir
-asdf_dir=$(head -n 1 $asdf_dir_cache 2>/dev/null)
-
-# Chech if the cache is correct
-if [ -z "$asdf_dir" ] || [ ! -d "$asdf_dir" ]; then
-    # Ensure cache exists
-    mkdir -p '$(dirname "$asdf_dir_cache")'
-    touch "$asdf_dir_cache"
-
-    # Cache the variable
-    asdf_dir=`brew --prefix asdf`
-    echo "$asdf_dir" > "$asdf_dir_cache"
+if [ -d ~/bin/sources ]; then
+    for f in ~/bin/sources/*; do
+        source $f;
+    done
 fi
-
-export ASDF_DATA_DIR="$asdf_dir"
-source $ASDF_DATA_DIR/asdf.sh
-
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
