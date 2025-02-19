@@ -5,4 +5,4 @@ local conform = autoload("conform")
 local function _2_()
   return conform.format()
 end
-return {{"stevearc/conform.nvim", event = {"BufWritePre"}, cmd = {"ConformInfo"}, keys = {{"<leader>F", _2_, desc = "Format buffer"}}, opts = {formatters_by_ft = {}, formatters = {}}}}
+return {{"stevearc/conform.nvim", event = {"BufWritePre"}, cmd = {"ConformInfo"}, keys = {{"<leader>F", _2_, desc = "Format buffer"}}, opts = {formatters_by_ft = {}, formatters = {}, format_on_save = {timeout_ms = 500, lsp_format = "fallback"}}}}
