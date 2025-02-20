@@ -8,4 +8,4 @@ local function _2_(_, opts)
   end
   return wk.add({{"<leader>c", group = "display as comment"}, {"<leader>e", group = "eval"}, {"<leader>g", group = "goto"}, {"<leader>l", group = "log"}, {"<leader>r", group = "refresh"}, {"<leader>s", group = "session"}, {"<leader>t", group = "test"}, {"<leader>v", group = "view"}})
 end
-return {{"PaterJason/cmp-conjure", dependencies = {"hrsh7th/nvim-cmp"}}, {"Olical/conjure", version = "*", ft = {"python"}, dependencies = {"PaterJason/cmp-conjure"}, opts = {config = {["mapping#prefix"] = "<leader>", ["client#clojure#nrepl#refresh#backend"] = "clj-reload", ["highlight#enabled"] = true}}, config = _2_}}
+return {{"PaterJason/cmp-conjure", dependencies = {"hrsh7th/nvim-cmp"}}, {"Olical/conjure", branch = "main", ft = {"python"}, dependencies = {"PaterJason/cmp-conjure"}, opts = {config = {["mapping#prefix"] = "<leader>", ["client#clojure#nrepl#refresh#backend"] = "clj-reload", ["highlight#enabled"] = true}}, config = _2_}}

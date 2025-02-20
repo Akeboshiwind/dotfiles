@@ -5,7 +5,8 @@
 [{1 :PaterJason/cmp-conjure
   :dependencies [:hrsh7th/nvim-cmp]}
  {1 :Olical/conjure
-  :version "*"
+  ;:version "*"
+  :branch "main"
   :ft ["python"]
   :dependencies [:PaterJason/cmp-conjure]
   :opts {:config
