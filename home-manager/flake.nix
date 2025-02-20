@@ -29,6 +29,7 @@
         # the path to your home.nix.
         modules = [
           ./osm-files.nix
+          ./osm-symlinks.nix
           ./home.nix
 
           # >> Shell
