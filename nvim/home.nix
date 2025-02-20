@@ -5,7 +5,7 @@
     neovim
 
     # For parinfer-rust in Clojure config
-    rustup
+    cargo
 
     # For fuzzy searching
     ripgrep
