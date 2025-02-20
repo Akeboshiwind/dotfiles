@@ -18,6 +18,8 @@
   ];
 
   osm.home.folders = [
-    { source = ./.; exclude = ["home.nix"]; }
+    { source = ./.; exclude = ["home.nix" ".config/nvim/lazy-lock.json"]; }
   ];
+
+  osm.home.dotfileSymlinks.".config/nvim/lazy-lock.json" = "nvim/.config/nvim/lazy-lock.json";
 }
