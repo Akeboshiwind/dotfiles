@@ -1,10 +1,13 @@
-{ config, pkgs, userLib, ... }:
+{ config, pkgs, nix-pin, system, ... }:
 
 {
   home.packages = with pkgs; [
-    (userLib.withRevision {
+    # 1.2.9
+    # https://www.nixhub.io/packages/terraform
+    (nix-pin.lib.withRevision {
+      inherit system;
       pkg = "terraform";
-      rev = "c2c0373ae7abf25b7d69b2df05d3ef8014459ea3";
+      rev = "17f716dbf88d1c224e3a62d762de4aaea375218e";
     })
   ];
 

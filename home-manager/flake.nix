@@ -8,11 +8,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nix-pin.url = "github:akeboshiwind/nix-pin";
+
     # NOTE: If I need to get into per-system config, look into https://flake.parts
   };
 
   outputs =
-    { nixpkgs, home-manager, ... }:
+    { nixpkgs, home-manager, nix-pin, ... }:
     let
       system = "aarch64-darwin";
       pkgs = nixpkgs.legacyPackages.${system};
@@ -64,6 +66,8 @@
 
         extraSpecialArgs = {
           userLib = (import ./lib/user.nix { inherit lib system; });
+          inherit system;
+          inherit nix-pin;
         };
       };
       formatter.${system} = pkgs.nixfmt-rfc-style;

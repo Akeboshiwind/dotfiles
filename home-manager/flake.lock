@@ -20,6 +20,21 @@
         "type": "github"
       }
     },
+    "nix-pin": {
+      "locked": {
+        "lastModified": 1740491847,
+        "narHash": "sha256-ocFkWWnswbVGPbXzwqmPBj5eujNHimeFfYmW7emyi9M=",
+        "owner": "akeboshiwind",
+        "repo": "nix-pin",
+        "rev": "4012b76a1feef0d7316a3cfa59039364006508d9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "akeboshiwind",
+        "repo": "nix-pin",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1736883708,
@@ -39,6 +54,7 @@
     "root": {
       "inputs": {
         "home-manager": "home-manager",
+        "nix-pin": "nix-pin",
         "nixpkgs": "nixpkgs"
       }
     }
