@@ -46,7 +46,12 @@
                          true)))})]
     (picker:find)))
 
-[{1 :neovim/nvim-lspconfig
+[{1 :williamboman/mason.nvim
+  :opts {:ensure-installed {:zprint true}}}
+ {1 :stevearc/conform.nvim
+  :opts {:formatters_by_ft {:clojure [:zprint]}
+         :no_format_on_save {:clojure true}}}
+ {1 :neovim/nvim-lspconfig
   :opts {:servers
          {:clojure_lsp
           {:init_options
