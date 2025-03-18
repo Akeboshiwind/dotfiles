@@ -3,6 +3,20 @@
 (local {: get : assoc} (autoload :nfnl.core))
 (local conform (autoload :conform))
 
+(local create-command vim.api.nvim_create_user_command)
+(var enabled true)
+
+(create-command "ConformOff"
+                #(do
+                   (set enabled false)
+                   (print "Conform formatting disabled"))
+                {:desc "Disable Conform Formatting"})
+(create-command "ConformOn"
+                #(do 
+                   (set enabled true)
+                   (print "Conform formatting enabled"))
+                {:desc "Enable Conform Formatting"})
+
 [{1 :stevearc/conform.nvim
   :event [:BufWritePre]
   :cmd [:ConformInfo]
@@ -13,10 +27,9 @@
          :format_on_save {:lsp_fallback true
                           :timeout_ms 500}}
   :config (fn [_ opts]
-            (let [format_on_save (get opts :format_on_save {})]
+            (let [format-on-save (get opts :format_on_save {})]
               (-> opts
                   (assoc :format_on_save #(let [ft (vim.api.nvim_buf_get_option $ "filetype")]
-                                            (when (not (get opts.no_format_on_save ft))
-                                              (_G.P "format_on_save")
-                                              format_on_save)))
+                                            (when (and enabled (not (get opts.no_format_on_save ft)))
+                                              format-on-save)))
                   (conform.setup))))}]
