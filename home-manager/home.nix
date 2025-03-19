@@ -16,6 +16,9 @@
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
+  # Allow installing unfree packages
+  nixpkgs.config.allowUnfree = true;
+
   # If you want to use this then you have to manually source 'hm-session-vars.sh'
   #home.sessionVariables = { };
 }

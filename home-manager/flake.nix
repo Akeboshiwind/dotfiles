@@ -53,6 +53,7 @@
           ../gpg/home.nix
           ../bin/home.nix
           ../aws/home.nix
+          ../llm/home.nix
 
           # >> Apps
           ../alacritty/home.nix
