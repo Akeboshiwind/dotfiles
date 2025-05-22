@@ -58,6 +58,8 @@
 (fn _G.P [...]
   (print (vim.inspect ...)))
 
+(vim.api.nvim_create_user_command :Nohl :nohl {})
+
 
 
 ;; >> Usability

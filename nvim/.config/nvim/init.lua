@@ -7,7 +7,7 @@ local function ensure(user, repo, branch)
   if not vim.loop.fs_stat(install_path) then
     return vim.fn.system({"git", "clone", "--filter=blob:none", ("https://github.com/" .. user .. "/" .. repo .. ".git"), ("--branch=" .. branch0), install_path})
   else
-    return (vim.opt.rtp):prepend(install_path)
+    return vim.opt.rtp:prepend(install_path)
   end
 end
 ensure("folke", "lazy.nvim", "stable")
@@ -17,6 +17,7 @@ lazy.setup("plugins", {dev = {path = "~/prog/prog/nvim/"}, ui = {border = "singl
 _G.P = function(...)
   return print(vim.inspect(...))
 end
+vim.api.nvim_create_user_command("Nohl", "nohl", {})
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 vim.opt.splitright = true
