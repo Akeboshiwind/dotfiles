@@ -13,7 +13,7 @@
     help2man
     htop
     nmap
-    imagemagick
+    imagemagickBig
   ];
 
   osm.home.folders = [
