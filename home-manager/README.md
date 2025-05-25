@@ -12,6 +12,35 @@ See [here](https://nix-community.github.io/home-manager/index.xhtml#sec-flakes-s
 2. Run: `nix run home-manager/master -- init --switch ~/dotfiles/home-manager`
 
 
+> [!IMPORTANT]
+> <details><summary><h3>Setting up multiple user accounts on Nix</h3></summary>
+>
+> Nix stores the `Nix Store` encryption key in the [MacOS keychain](https://github.com/DeterminateSystems/nix-installer/blob/ff27099895e9a3ca55e440eb1599c754fa999655/src/action/macos/encrypt_apfs_volume.rs#L205).
+>
+> To use the same store with multiple users you'll need to export this key to your other users.
+>
+> Here's a quick script to export the existing key:
+> ```sh
+> service="$(security find-generic-password -a "Nix Store" | awk -F'"' '/"svce"/ {print $4}')"
+> password="$(security find-generic-password -a "Nix Store" -w)"
+>
+> echo "To import the Nix Store encryption password into the keychain, run the following command in your terminal:"
+>
+> echo "security add-generic-password \
+> -a 'Nix Store' \
+> -s '$service' \
+> -l 'Nix Store encryption password' \
+> -D 'Encrypted volume password' \
+> -j 'Added automatically by the Nix installer for use by /Library/LaunchDaemons/org.nixos.darwin-store.plist' \
+> -w '$password' \
+> -T '/System/Library/CoreServices/APFSUserAgent' \
+> -T '/System/Library/CoreServices/CSUserAgent' \
+> -T '/usr/bin/security'"
+> ```
+>
+> </details>
+
+
 ## Updating after config change
 
 ```sh
