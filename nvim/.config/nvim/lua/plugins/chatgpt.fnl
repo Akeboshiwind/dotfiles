@@ -20,14 +20,15 @@
                           "Follow these with up to 3 'generic' suggestions which can suggest general things the text could improve on."
                           "If you don't have enough suggestions you think are relevant, then include include less rather trying to fill out as many as possible."]})
 
-[{;1 :Bryley/neoai.nvim 
-  ; In case of emergency: 1 :Akeboshiwind/neoai.nvim
-  :dir "~/prog/prog/lua/neoai.nvim"
-  ; TODO: Lazy on keys?
-  :event :VeryLazy
-  :dependencies [:MunifTanjim/nui.nvim
-                 :nvim-telescope/telescope.nvim]
-  :opts {:chat {:enable true}
-         :inject {:enable true}}
-  :config (fn [_ opts]
-            (neoai2.setup opts))}]
+;[{;1 :Bryley/neoai.nvim 
+;  ; In case of emergency: 1 :Akeboshiwind/neoai.nvim
+;  :dir "~/prog/prog/lua/neoai.nvim"
+;  ; TODO: Lazy on keys?
+;  :event :VeryLazy
+;  :dependencies [:MunifTanjim/nui.nvim
+;                 :nvim-telescope/telescope.nvim]
+;  :opts {:chat {:enable true}
+;         :inject {:enable true}}
+;  :config (fn [_ opts]
+;            (neoai2.setup opts)))
+[]
