@@ -2,13 +2,15 @@
   config,
   pkgs,
   lib,
+  username,
+  homeDirectory,
   ...
 }:
 
 {
   # Required by Home Manager
-  home.username = "osm";
-  home.homeDirectory = "/Users/osm";
+  home.username = username;
+  home.homeDirectory = homeDirectory;
 
   # NOTE: Only change when the changelog says to
   home.stateVersion = "24.11";
