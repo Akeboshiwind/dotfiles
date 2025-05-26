@@ -11,9 +11,28 @@ See [here](https://nix-community.github.io/home-manager/index.xhtml#sec-flakes-s
 1. Make sure both `nix-command` and `flakes` are enabled in nix (Try out [Determinate Systems Installer](https://determinate.systems/nix-installer/)?)
 2. Run: `nix run home-manager/master -- init --switch ~/dotfiles/home-manager`
 
+> [!TIP]
+> ### Enable `nix-command` and `flakes`
+> Add a file `~/.config/nix/nix.conf` with the following contents:
+> ```
+> experimental-features = nix-command flakes
+> ```
 
 > [!IMPORTANT]
-> <details><summary><h3>Setting up multiple user accounts on Nix</h3></summary>
+> ### Multiple accounts
+> Make sure to use the multi-user installation for Nix.
+>
+> If the `nix` command doesn't work on your second account you can add the following snippet to `/etc/zshrc`:
+> ```zsh
+> # Nix
+> if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
+>   . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
+> fi
+> # End Nix
+> ```
+>
+> The following may be required (not sure, it was part of my debugging process)
+> <details><summary>Copy store encryption key</summary>
 >
 > Nix stores the `Nix Store` encryption key in the [MacOS keychain](https://github.com/DeterminateSystems/nix-installer/blob/ff27099895e9a3ca55e440eb1599c754fa999655/src/action/macos/encrypt_apfs_volume.rs#L205).
 >
