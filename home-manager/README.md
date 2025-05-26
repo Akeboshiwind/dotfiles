@@ -31,6 +31,11 @@ See [here](https://nix-community.github.io/home-manager/index.xhtml#sec-flakes-s
 > # End Nix
 > ```
 >
+> You may also need to add your new user to the `nixbld` group:
+> ```sh
+> sudo dseditgroup -o edit -a <username> -t user nixbld
+> ```
+>
 > The following may be required (not sure, it was part of my debugging process)
 > <details><summary>Copy store encryption key</summary>
 >
