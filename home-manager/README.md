@@ -36,6 +36,12 @@ See [here](https://nix-community.github.io/home-manager/index.xhtml#sec-flakes-s
 > sudo dseditgroup -o edit -a <username> -t user nixbld
 > ```
 >
+> You may also need to create the following folder:
+> ```sh
+> sudo mkdir -p /nix/var/nix/profiles/per-user/<username>
+> sudo chown <username>:staff /nix/var/nix/profiles/per-user/<username>
+> ```
+>
 > The following may be required (not sure, it was part of my debugging process)
 > <details><summary>Copy store encryption key</summary>
 >
