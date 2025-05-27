@@ -8,20 +8,25 @@ Used to install packages & manage config files.
 
 See [here](https://nix-community.github.io/home-manager/index.xhtml#sec-flakes-standalone) for more up to date information.
 
-1. Make sure both `nix-command` and `flakes` are enabled in nix (Try out [Determinate Systems Installer](https://determinate.systems/nix-installer/)?)
+1. Make sure both `nix-command` and `flakes` are enabled in nix (Use the [Determinate Systems Installer](https://determinate.systems/nix-installer/))
 2. Run: `nix run home-manager/master -- init --switch ~/dotfiles/home-manager`
 
-> [!TIP]
-> ### Enable `nix-command` and `flakes`
-> Add a file `~/.config/nix/nix.conf` with the following contents:
-> ```
-> experimental-features = nix-command flakes
-> ```
+<details><summary><h3>On running in multiple accounts</h3></summary>
 
-> [!IMPORTANT]
-> ### Multiple accounts
-> Make sure to use the multi-user installation for Nix.
->
+At time of writing I've just using the Determinate Systems installer and now have two MacOS accounts each with access to nix.
+
+My steps for this were:
+1. Setup both accounts
+  - I'm not sure if it's necessary to do this first
+  - Remember to sign into iCloud on both accounts
+2. Run the Determinate Systems MacOS installer (the one with the UI) on **one** account
+3. That's it! Once I logged into the second account nix just worked! I may have rebooted once
+
+Before I tried that, I used the official installer and ran into some issues.
+Below are some things I tried for debugging, I've left them here just in case:
+
+<details><summary><h4>If the `nix` command doesn't work</h4></summary>
+
 > If the `nix` command doesn't work on your second account you can add the following snippet to `/etc/zshrc`:
 > ```zsh
 > # Nix
@@ -30,21 +35,30 @@ See [here](https://nix-community.github.io/home-manager/index.xhtml#sec-flakes-s
 > fi
 > # End Nix
 > ```
->
+
+</details>
+
+<details><summary><h4>`nixbld` group</h4></summary>
+
 > You may also need to add your new user to the `nixbld` group:
 > ```sh
 > sudo dseditgroup -o edit -a <username> -t user nixbld
 > ```
->
+
+</details>
+
+<details><summary><h4>Profile folder doesn't exist</h4></summary>
+
 > You may also need to create the following folder:
 > ```sh
 > sudo mkdir -p /nix/var/nix/profiles/per-user/<username>
 > sudo chown <username>:staff /nix/var/nix/profiles/per-user/<username>
 > ```
->
-> The following may be required (not sure, it was part of my debugging process)
-> <details><summary>Copy store encryption key</summary>
->
+
+</details>
+
+<details><summary><h4>Copy Nix Store encryption key between accounts</h4></summary>
+
 > Nix stores the `Nix Store` encryption key in the [MacOS keychain](https://github.com/DeterminateSystems/nix-installer/blob/ff27099895e9a3ca55e440eb1599c754fa999655/src/action/macos/encrypt_apfs_volume.rs#L205).
 >
 > To use the same store with multiple users you'll need to export this key to your other users.
@@ -67,8 +81,11 @@ See [here](https://nix-community.github.io/home-manager/index.xhtml#sec-flakes-s
 > -T '/System/Library/CoreServices/CSUserAgent' \
 > -T '/usr/bin/security'"
 > ```
->
-> </details>
+
+</details>
+
+
+</details>
 
 
 ## Updating after config change
