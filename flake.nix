@@ -21,7 +21,7 @@
     # $ darwin-rebuild build --flake ~/dotfiles/nix-darwin
     darwinConfigurations."Olivers-MacBook-Air" = nix-darwin.lib.darwinSystem {
       modules = [
-        ./nix-darwin
+        ./modules/nix-darwin
         ./machines/Olivers-MacBook-Air.nix
       ];
       specialArgs = { 

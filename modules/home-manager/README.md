@@ -19,7 +19,10 @@ My steps for this were:
 1. Setup both accounts
   - I'm not sure if it's necessary to do this first
   - Remember to sign into iCloud on both accounts
-2. Run the Determinate Systems MacOS installer (the one with the UI) on **one** account
+2. Run the Determinate Systems command line installer
+  - Do this on **one** account
+  - Select "no" when prompted whether to install the "determinate" distribution
+    - This is to enable using nix-darwin in the future
 3. That's it! Once I logged into the second account nix just worked! I may have rebooted once
 
 Before I tried that, I used the official installer and ran into some issues.

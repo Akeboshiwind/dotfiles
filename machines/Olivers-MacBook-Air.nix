@@ -30,44 +30,44 @@ in
     inputs.home-manager.darwinModules.home-manager
   ];
   home-manager.extraSpecialArgs = {
-    userLib = (import ../home-manager/lib/user.nix { inherit lib system; });
+    userLib = (import ../modules/home-manager/lib/user.nix { inherit lib system; });
     inherit system;
     inherit nix-pin;
   };
   home-manager.sharedModules = [
-    ../home-manager/osm-files.nix
-    ../home-manager/osm-symlinks.nix
-    #../home-manager/home.nix
+    ../modules/home-manager/osm-files.nix
+    ../modules/home-manager/osm-symlinks.nix
+    #../modules/home-manager/home.nix
 
     # >> Shell
-    #../zsh/home.nix
-    ../fzf/home.nix
-    ../fish/home.nix
-    ../bash/home.nix
-    ../tmux/home.nix
+    #../modules/zsh/home.nix
+    ../modules/fzf/home.nix
+    ../modules/fish/home.nix
+    ../modules/bash/home.nix
+    ../modules/tmux/home.nix
 
     # >> Editor
-    ../nvim/home.nix
-    ../vim/home.nix
+    ../modules/nvim/home.nix
+    ../modules/vim/home.nix
 
     # >> Tools
-    ../terraform/home.nix
-    ../zoxide/home.nix
-    ../ssh/home.nix
-    ../git/home.nix
-    ../gpg/home.nix
-    ../bin/home.nix
-    ../aws/home.nix
-    ../llm/home.nix
+    ../modules/terraform/home.nix
+    ../modules/zoxide/home.nix
+    ../modules/ssh/home.nix
+    ../modules/git/home.nix
+    ../modules/gpg/home.nix
+    ../modules/bin/home.nix
+    ../modules/aws/home.nix
+    ../modules/llm/home.nix
 
     # >> Apps
-    ../alacritty/home.nix
+    ../modules/alacritty/home.nix
 
     # >> Language
-    ../clojure/home.nix
-    #../rust/home.nix
-    #../python/home.nix
-    #../golang/home.nix
+    ../modules/clojure/home.nix
+    #../modules/rust/home.nix
+    #../modules/python/home.nix
+    #../modules/golang/home.nix
   ];
   home-manager.users."osm" = (homeCfg { username = "osm"; homeDirectory = "/Users/osm"; });
   home-manager.users."personal" = (homeCfg { username = "personal"; homeDirectory = "/Users/personal"; });
