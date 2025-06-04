@@ -3,6 +3,8 @@
 {
   home.packages = with pkgs; [
     claude-code
+    llm
+    repomix
   ];
 
   osm.home.folders = [
