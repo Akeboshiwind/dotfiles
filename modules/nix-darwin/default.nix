@@ -20,14 +20,4 @@
 
   # The platform the configuration will be used on.
   nixpkgs.hostPlatform = "aarch64-darwin";
-
-  users.users.osm = {
-    name = "osm";
-    home = "/Users/osm";
-  };
-
-  users.users.personal = {
-    name = "personal";
-    home = "/Users/personal";
-  };
 }

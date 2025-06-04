@@ -2,32 +2,12 @@
   system = "aarch64-darwin";
   nix-pin = inputs.nix-pin;
   lib = inputs.nixpkgs.lib;
-  homeCfg = { username, homeDirectory }:
-    { config, pkgs, lib, ... }:
-    {
-      # Required by Home Manager
-      home.username = username;
-      home.homeDirectory = homeDirectory;
-    
-      # NOTE: Only change when the changelog says to
-      home.stateVersion = "24.11";
-    
-      # Let Home Manager install and manage itself.
-      programs.home-manager.enable = true;
-    
-      # Allow installing unfree packages
-      nixpkgs.config.allowUnfree = true;
-    
-      # Link Applications into the user environment
-      #targets.darwin.linkApps.directory = "Applications";
-    
-      # If you want to use this then you have to manually source 'hm-session-vars.sh'
-      #home.sessionVariables = { };
-    };
 in
 {
   imports = [
     inputs.home-manager.darwinModules.home-manager
+    ../users/osm.nix
+    ../users/personal.nix
   ];
   home-manager.extraSpecialArgs = {
     userLib = (import ../modules/home-manager/lib/user.nix { inherit lib system; });
@@ -69,6 +49,4 @@ in
     #../modules/python/home.nix
     #../modules/golang/home.nix
   ];
-  home-manager.users."osm" = (homeCfg { username = "osm"; homeDirectory = "/Users/osm"; });
-  home-manager.users."personal" = (homeCfg { username = "personal"; homeDirectory = "/Users/personal"; });
 }
