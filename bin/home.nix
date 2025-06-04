@@ -14,6 +14,7 @@
     htop
     nmap
     imagemagickBig
+    babashka
   ];
 
   osm.home.folders = [
