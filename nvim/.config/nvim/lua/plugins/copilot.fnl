@@ -11,8 +11,8 @@
   :config (fn []
             (copilot.setup
               {:panel {:enabled false}
-               :suggestion {:enabled false}})
+               :suggestion {:enabled false}}))}]
             ; Disable by default
             ; Enable using `:Copilot enable`
             ; TODO: Fix that this prints `[Copilot] Offline` on startup
-            (copilot-cmd.disable))}]
+            ;(copilot-cmd.disable))}]
