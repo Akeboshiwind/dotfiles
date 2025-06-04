@@ -17,36 +17,35 @@ in
   home-manager.sharedModules = [
     ../modules/home-manager/osm-files.nix
     ../modules/home-manager/osm-symlinks.nix
-    #../modules/home-manager/home.nix
 
     # >> Shell
-    #../modules/zsh/home.nix
-    ../modules/fzf/home.nix
-    ../modules/fish/home.nix
-    ../modules/bash/home.nix
-    ../modules/tmux/home.nix
+    #../modules/zsh
+    ../modules/fzf
+    ../modules/fish
+    ../modules/bash
+    ../modules/tmux
 
     # >> Editor
-    ../modules/nvim/home.nix
-    ../modules/vim/home.nix
+    ../modules/nvim
+    ../modules/vim
 
     # >> Tools
-    ../modules/terraform/home.nix
-    ../modules/zoxide/home.nix
-    ../modules/ssh/home.nix
-    ../modules/git/home.nix
-    ../modules/gpg/home.nix
-    ../modules/bin/home.nix
-    ../modules/aws/home.nix
-    ../modules/llm/home.nix
+    ../modules/terraform
+    ../modules/zoxide
+    ../modules/ssh
+    ../modules/git
+    ../modules/gpg
+    ../modules/bin
+    ../modules/aws
+    ../modules/llm
 
     # >> Apps
-    ../modules/alacritty/home.nix
+    ../modules/alacritty
 
     # >> Language
-    ../modules/clojure/home.nix
-    #../modules/rust/home.nix
-    #../modules/python/home.nix
-    #../modules/golang/home.nix
+    ../modules/clojure
+    #../modules/rust
+    #../modules/python
+    #../modules/golang
   ];
 }

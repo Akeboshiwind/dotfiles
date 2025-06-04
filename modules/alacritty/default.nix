@@ -2,12 +2,12 @@
 
 {
   home.packages = with pkgs; [
-    poetry
+    alacritty
 
-    python314
+    nerd-fonts.meslo-lg
   ];
 
   osm.home.folders = [
-    { source = ./.; exclude = ["home.nix" "README.md"]; }
+    { source = ./.; exclude = ["default.nix"]; }
   ];
 }

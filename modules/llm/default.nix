@@ -2,10 +2,12 @@
 
 {
   home.packages = with pkgs; [
-    zoxide
+    claude-code
+    llm
+    repomix
   ];
 
   osm.home.folders = [
-    { source = ./.; exclude = ["home.nix"]; }
+    { source = ./.; exclude = ["default.nix"]; }
   ];
 }

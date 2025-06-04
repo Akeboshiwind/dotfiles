@@ -7,6 +7,6 @@
   ];
 
   osm.home.folders = [
-    { source = ./.; exclude = ["home.nix" ".gitignore"]; }
+    { source = ./.; exclude = ["default.nix" ".gitignore"]; }
   ];
 }

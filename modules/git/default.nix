@@ -2,10 +2,12 @@
 
 {
   home.packages = with pkgs; [
-    fzf
+    git
+    git-lfs
   ];
 
   osm.home.folders = [
-    { source = ./.; exclude = ["home.nix"]; }
+    { source = ./.; exclude = ["default.nix"]; }
+    #{ source = ./.gitconfig; }
   ];
 }

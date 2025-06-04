@@ -12,6 +12,6 @@
   ];
 
   osm.home.folders = [
-    { source = ./.; exclude = ["home.nix"]; }
+    { source = ./.; exclude = ["default.nix"]; }
   ];
 }
