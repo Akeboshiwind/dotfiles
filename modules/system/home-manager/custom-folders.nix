@@ -1,12 +1,12 @@
 {
   config,
   lib,
-  userLib,
+  fs,
   ...
 }:
 
 let
-  homeFileRecursive = (import ./lib/folders.nix { inherit lib userLib; }).homeFileRecursive;
+  homeFileRecursive = (import ./lib/folders.nix { inherit lib fs; }).homeFileRecursive;
 
   # A path that is also a directory (for validation)
   directoryPath = lib.mkOptionType {

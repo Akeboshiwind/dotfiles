@@ -1,4 +1,4 @@
-{ lib, userLib, ... }:
+{ lib, fs, ... }:
 
 {
   # Given a `source` path returns all files in the directory recursively
@@ -29,7 +29,7 @@
       oldPrefix = ((toString source) + "/");
     in
     (lib.pipe source [
-      userLib.readDirRecursive
+      fs.readDirRecursive
       # Calculate target paths
       # They should either be relative to `source`, later they are altered by `target
       (builtins.map (

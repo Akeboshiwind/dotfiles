@@ -1,11 +1,11 @@
 { lib, ... }:
 
 let
-  userLib = import ../lib/user.nix {
+  fs = import ../../../../lib/fs.nix {
     inherit lib;
     system = "aarch64-darwin";
   };
-  folders = import ../lib/folders.nix { inherit lib userLib; };
+  folders = import ../lib/folders.nix { inherit lib fs; };
 in
 {
   test_homeFileRecursive_allFiles = {

@@ -1,5 +1,5 @@
 { user, ... }:
-{ config, pkgs, userLib, ... }:
+{ config, pkgs, ... }:
 
 {
   users.users."${user}" = {

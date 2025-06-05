@@ -1,14 +1,14 @@
 { lib, ... }:
 
 let
-  user = import ../lib/user.nix {
+  fs = import ../../../../lib/fs.nix {
     inherit lib;
     system = "aarch64-darwin";
   };
 in
 {
   test_readDirRecursive_1 = {
-    expr = user.readDirRecursive ./folders;
+    expr = fs.readDirRecursive ./folders;
     expected = [
       ./folders/a/A
       ./folders/a/b/B
@@ -18,7 +18,7 @@ in
   };
 
   test_readDirRecursive_2 = {
-    expr = user.readDirRecursive ./folders/a/c;
+    expr = fs.readDirRecursive ./folders/a/c;
     expected = [
       ./folders/a/c/C
       ./folders/a/c/D

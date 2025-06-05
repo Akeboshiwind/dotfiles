@@ -9,7 +9,7 @@
     useUserPackages = true;
     useGlobalPkgs = true;
     extraSpecialArgs = {
-      userLib = (import ./lib/user.nix { inherit lib system; });
+      fs = (import ../../../lib/fs.nix { inherit lib system; });
     };
     sharedModules = [
       ./custom-folders.nix
