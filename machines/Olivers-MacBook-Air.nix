@@ -18,11 +18,11 @@ in
     useUserPackages = true;
     useGlobalPkgs = true;
     extraSpecialArgs = {
-      userLib = (import ../modules/home-manager/lib/user.nix { inherit lib system; });
+      userLib = (import ../modules/system/home-manager/lib/user.nix { inherit lib system; });
     };
     sharedModules = [
-      ../modules/home-manager/osm-files.nix
-      ../modules/home-manager/osm-symlinks.nix
+      ../modules/system/home-manager/osm-files.nix
+      ../modules/system/home-manager/osm-symlinks.nix
     ];
   };
 
