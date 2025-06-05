@@ -8,6 +8,6 @@ in
   # Fun stuff :D
 
   imports = withUser user [
-    ../modules/llm
+    ../modules/user/llm
   ];
 }

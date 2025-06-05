@@ -9,13 +9,13 @@ in
 
   imports = withUser user [
     # >> Languages
-    ../modules/terraform
-    ../modules/clojure
-    #../modules/rust
-    #../modules/python
-    #../modules/golang
+    ../modules/user/terraform
+    ../modules/user/clojure
+    #../modules/user/rust
+    #../modules/user/python
+    #../modules/user/golang
 
     # >> Deployment
-    ../modules/aws
+    ../modules/user/aws
   ];
 }

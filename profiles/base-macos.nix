@@ -9,6 +9,6 @@ in
 
   imports = withUser user [
     # >> Terminal setup
-    ../modules/alacritty
+    ../modules/user/alacritty
   ];
 }

@@ -9,21 +9,21 @@ in
 
   imports = withUser user [
     # >> Terminal setup
-    ../modules/tmux
-    #../modules/zsh
-    ../modules/fish
-    ../modules/bash
+    ../modules/user/tmux
+    #../modules/user/zsh
+    ../modules/user/fish
+    ../modules/user/bash
 
     # >> Editor
-    ../modules/nvim
-    ../modules/vim
+    ../modules/user/nvim
+    ../modules/user/vim
 
     # >> Tools
-    ../modules/git
-    ../modules/ssh
-    ../modules/gpg
-    ../modules/fzf
-    ../modules/zoxide
-    ../modules/bin
+    ../modules/user/git
+    ../modules/user/ssh
+    ../modules/user/gpg
+    ../modules/user/fzf
+    ../modules/user/zoxide
+    ../modules/user/bin
   ];
 }
