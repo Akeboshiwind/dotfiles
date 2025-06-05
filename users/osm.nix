@@ -6,8 +6,6 @@
 
   home-manager.users.osm = {
     home = {
-      username = "osm";
-      homeDirectory = "/Users/osm";
       stateVersion = "24.11";
     };
 

@@ -6,8 +6,6 @@
 
   home-manager.users.personal = {
     home = {
-      username = "personal";
-      homeDirectory = "/Users/personal";
       stateVersion = "24.11";
     };
 
