@@ -1,8 +1,13 @@
 { user, ... }:
-{ ... }: {
+{ ... }: 
+
+let
+  withUser = import ../lib/withUser.nix;
+in
+{
   # Fun stuff :D
 
-  imports = [
-    (import ../modules/llm { inherit user; } )
+  imports = withUser user [
+    ../modules/llm
   ];
 }

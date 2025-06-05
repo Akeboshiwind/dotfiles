@@ -1,16 +1,21 @@
 { user, ... }:
-{ ... }: {
+{ ... }: 
+
+let
+  withUser = import ../lib/withUser.nix;
+in
+{
   # Setup for development
 
-  imports = [
+  imports = withUser user [
     # >> Languages
-    (import ../modules/terraform { inherit user; })
-    (import ../modules/clojure { inherit user; })
-    #(import ../modules/rust { inherit user; })
-    #(import ../modules/python { inherit user; })
-    #(import ../modules/golang { inherit user; })
+    ../modules/terraform
+    ../modules/clojure
+    #../modules/rust
+    #../modules/python
+    #../modules/golang
 
     # >> Deployment
-    (import ../modules/aws { inherit user; })
+    ../modules/aws
   ];
 }

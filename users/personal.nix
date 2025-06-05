@@ -1,11 +1,14 @@
-{ config, pkgs, ... }: let
+{ config, pkgs, ... }: 
+
+let
   user = "personal";
+  withUser = import ../lib/withUser.nix;
 in {
-  imports = [
-    (import ../profiles/base.nix { inherit user; })
-    (import ../profiles/base-macos.nix { inherit user; })
-    (import ../profiles/dev.nix { inherit user; })
-    (import ../profiles/fun.nix { inherit user; })
+  imports = withUser user [
+    ../profiles/base.nix
+    ../profiles/base-macos.nix
+    ../profiles/dev.nix
+    ../profiles/fun.nix
   ];
 
   users.users."${user}" = {

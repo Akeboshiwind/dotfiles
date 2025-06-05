@@ -1,24 +1,29 @@
 { user, ... }:
-{ ... }: {
+{ ... }: 
+
+let
+  withUser = import ../lib/withUser.nix;
+in
+{
   # Core tools needed everywhere
 
-  imports = [
+  imports = withUser user [
     # >> Terminal setup
-    (import ../modules/tmux { inherit user; })
-    #(import ../modules/zsh { inherit user; })
-    (import ../modules/fish { inherit user; })
-    (import ../modules/bash { inherit user; })
+    ../modules/tmux
+    #../modules/zsh
+    ../modules/fish
+    ../modules/bash
 
     # >> Editor
-    (import ../modules/nvim { inherit user; })
-    (import ../modules/vim { inherit user; })
+    ../modules/nvim
+    ../modules/vim
 
     # >> Tools
-    (import ../modules/git { inherit user; })
-    (import ../modules/ssh { inherit user; })
-    (import ../modules/gpg { inherit user; })
-    (import ../modules/fzf { inherit user; })
-    (import ../modules/zoxide { inherit user; })
-    (import ../modules/bin { inherit user; })
+    ../modules/git
+    ../modules/ssh
+    ../modules/gpg
+    ../modules/fzf
+    ../modules/zoxide
+    ../modules/bin
   ];
 }
