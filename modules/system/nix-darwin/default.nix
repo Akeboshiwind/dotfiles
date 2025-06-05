@@ -1,4 +1,4 @@
-{ self, ... }: {
+{ self, system, ... }: {
   # List packages installed in system profile. To search by name, run:
   # $ nix-env -qaP | grep wget
   #environment.systemPackages = [
@@ -19,7 +19,7 @@
   system.stateVersion = 6;
 
   # The platform the configuration will be used on.
-  nixpkgs.hostPlatform = "aarch64-darwin";
+  nixpkgs.hostPlatform = system;
   nixpkgs.config.allowUnfree = true;
 
   environment.systemPath = [

@@ -18,7 +18,7 @@
     #       https://github.com/zhaofengli/nix-homebrew/issues/96
   };
 
-  outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager, nix-pin }:
+  outputs = inputs@{ self, nix-darwin, ... }:
   {
     # Build darwin flake using:
     # $ darwin-rebuild build --flake ~/dotfiles/nix-darwin
@@ -28,8 +28,8 @@
         ./machines/Olivers-MacBook-Air.nix
       ];
       specialArgs = { 
-        inherit self;
-        inherit inputs;
+        system = "aarch64-darwin";
+        inherit self inputs;
       };
     };
   };
