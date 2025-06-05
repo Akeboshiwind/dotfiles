@@ -4,6 +4,13 @@
     home = "/Users/personal";
   };
 
+  home-manager.sharedModules = [
+    ../profiles/base.nix
+    ../profiles/base-macos.nix
+    ../profiles/dev.nix
+    ../profiles/fun.nix
+  ];
+
   home-manager.users.personal = {
     home = {
       stateVersion = "24.11";

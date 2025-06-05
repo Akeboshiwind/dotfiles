@@ -17,9 +17,5 @@ in
   home-manager.sharedModules = [
     ../modules/home-manager/osm-files.nix
     ../modules/home-manager/osm-symlinks.nix
-    ../profiles/base.nix
-    ../profiles/base-macos.nix
-    ../profiles/dev.nix
-    ../profiles/fun.nix
   ];
 }
