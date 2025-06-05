@@ -13,6 +13,9 @@
     };
 
     nix-pin.url = "github:akeboshiwind/nix-pin";
+
+    # TODO: Switch to nix-homebrew when the following is fixed:
+    #       https://github.com/zhaofengli/nix-homebrew/issues/96
   };
 
   outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager, nix-pin }:
