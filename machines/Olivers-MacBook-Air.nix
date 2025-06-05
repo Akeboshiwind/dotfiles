@@ -12,11 +12,14 @@ in
     ../users/osm.nix
     ../users/personal.nix
   ];
-  home-manager.extraSpecialArgs = {
-    userLib = (import ../modules/home-manager/lib/user.nix { inherit lib system; });
+  home-manager = {
+    useGlobalPkgs = true;
+    extraSpecialArgs = {
+      userLib = (import ../modules/home-manager/lib/user.nix { inherit lib system; });
+    };
+    sharedModules = [
+      ../modules/home-manager/osm-files.nix
+      ../modules/home-manager/osm-symlinks.nix
+    ];
   };
-  home-manager.sharedModules = [
-    ../modules/home-manager/osm-files.nix
-    ../modules/home-manager/osm-symlinks.nix
-  ];
 }
