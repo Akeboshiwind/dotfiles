@@ -1,15 +1,16 @@
+{ user, ... }:
 { ... }: {
   # Setup for development
 
   imports = [
     # >> Languages
-    ../modules/terraform
-    ../modules/clojure
-    #../modules/rust
-    #../modules/python
-    #../modules/golang
+    (import ../modules/terraform { inherit user; })
+    (import ../modules/clojure { inherit user; })
+    #(import ../modules/rust { inherit user; })
+    #(import ../modules/python { inherit user; })
+    #(import ../modules/golang { inherit user; })
 
     # >> Deployment
-    ../modules/aws
+    (import ../modules/aws { inherit user; })
   ];
 }

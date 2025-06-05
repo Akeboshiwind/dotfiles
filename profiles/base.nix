@@ -1,23 +1,24 @@
+{ user, ... }:
 { ... }: {
   # Core tools needed everywhere
 
   imports = [
     # >> Terminal setup
-    ../modules/tmux
-    #../modules/zsh
-    ../modules/fish
-    ../modules/bash
+    (import ../modules/tmux { inherit user; })
+    #(import ../modules/zsh { inherit user; })
+    (import ../modules/fish { inherit user; })
+    (import ../modules/bash { inherit user; })
 
     # >> Editor
-    ../modules/nvim
-    ../modules/vim
+    (import ../modules/nvim { inherit user; })
+    (import ../modules/vim { inherit user; })
 
     # >> Tools
-    ../modules/git
-    ../modules/ssh
-    ../modules/gpg
-    ../modules/fzf
-    ../modules/zoxide
-    ../modules/bin
+    (import ../modules/git { inherit user; })
+    (import ../modules/ssh { inherit user; })
+    (import ../modules/gpg { inherit user; })
+    (import ../modules/fzf { inherit user; })
+    (import ../modules/zoxide { inherit user; })
+    (import ../modules/bin { inherit user; })
   ];
 }

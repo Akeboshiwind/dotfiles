@@ -1,17 +1,19 @@
-{ config, pkgs, ... }: {
-  users.users.personal = {
-    name = "personal";
-    home = "/Users/personal";
-  };
-
-  home-manager.sharedModules = [
-    ../profiles/base.nix
-    ../profiles/base-macos.nix
-    ../profiles/dev.nix
-    ../profiles/fun.nix
+{ config, pkgs, ... }: let
+  user = "personal";
+in {
+  imports = [
+    (import ../profiles/base.nix { inherit user; })
+    (import ../profiles/base-macos.nix { inherit user; })
+    (import ../profiles/dev.nix { inherit user; })
+    (import ../profiles/fun.nix { inherit user; })
   ];
 
-  home-manager.users.personal = {
+  users.users."${user}" = {
+    name = user;
+    home = "/Users/${user}";
+  };
+
+  home-manager.users."${user}" = {
     home = {
       stateVersion = "24.11";
     };

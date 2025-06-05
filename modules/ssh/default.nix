@@ -1,7 +1,10 @@
+{ user, ... }:
 { config, pkgs, ... }:
 
 {
-  osm.home.folders = [
-    { source = ./.; exclude = ["default.nix"]; }
-  ];
+  home-manager.users."${user}" = {
+    osm.home.folders = [
+      { source = ./.; exclude = ["default.nix"]; }
+    ];
+  };
 }

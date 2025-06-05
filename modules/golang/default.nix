@@ -1,14 +1,17 @@
+{ user, ... }:
 { config, pkgs, ... }:
 
 {
-  home.packages = with pkgs; [
-    # golang
+  home-manager.users."${user}" = {
+    home.packages = with pkgs; [
+      # golang
 
-    # Requirements:
-    coreutils
-  ];
+      # Requirements:
+      coreutils
+    ];
 
-  osm.home.folders = [
-    { source = ./.; exclude = ["default.nix"]; }
-  ];
+    osm.home.folders = [
+      { source = ./.; exclude = ["default.nix"]; }
+    ];
+  };
 }

@@ -1,7 +1,8 @@
+{ user, ... }:
 { ... }: {
   # Fun stuff :D
 
   imports = [
-    ../modules/llm
+    (import ../modules/llm { inherit user; } )
   ];
 }

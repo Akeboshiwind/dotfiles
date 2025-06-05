@@ -1,25 +1,28 @@
+{ user, ... }:
 { config, pkgs, ... }:
 
 {
-  home.packages = with pkgs; [
-    neovim
+  home-manager.users."${user}" = {
+    home.packages = with pkgs; [
+      neovim
 
-    # For parinfer-rust in Clojure config
-    cargo
+      # For parinfer-rust in Clojure config
+      cargo
 
-    # For fuzzy searching
-    ripgrep
+      # For fuzzy searching
+      ripgrep
 
-    # For installing LSPs with nvim-lsp-installer
-    nodejs
-    wget
-    ninja # Lua
-    luajitPackages.luarocks # fennel_ls etc.
-  ];
+      # For installing LSPs with nvim-lsp-installer
+      nodejs
+      wget
+      ninja # Lua
+      luajitPackages.luarocks # fennel_ls etc.
+    ];
 
-  osm.home.folders = [
-    { source = ./.; exclude = ["default.nix" ".config/nvim/lazy-lock.json"]; }
-  ];
+    osm.home.folders = [
+      { source = ./.; exclude = ["default.nix" ".config/nvim/lazy-lock.json"]; }
+    ];
 
-  osm.home.dotfileSymlinks.".config/nvim/lazy-lock.json" = "nvim/.config/nvim/lazy-lock.json";
+    osm.home.dotfileSymlinks.".config/nvim/lazy-lock.json" = "nvim/.config/nvim/lazy-lock.json";
+  };
 }

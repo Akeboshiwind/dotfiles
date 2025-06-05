@@ -1,12 +1,15 @@
+{ user, ... }:
 { config, pkgs, ... }:
 
 {
-  home.packages = with pkgs; [
-    awscli2
-    aws-vault
-  ];
+  home-manager.users."${user}" = {
+    home.packages = with pkgs; [
+      awscli2
+      aws-vault
+    ];
 
-  osm.home.folders = [
-    { source = ./.; exclude = ["default.nix" "README.md" ".gitignore"]; }
-  ];
+    osm.home.folders = [
+      { source = ./.; exclude = ["default.nix" "README.md" ".gitignore"]; }
+    ];
+  };
 }

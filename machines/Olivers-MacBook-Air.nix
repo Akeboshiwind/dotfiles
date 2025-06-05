@@ -4,6 +4,9 @@
   lib = inputs.nixpkgs.lib;
 in
 {
+  _module.args = {
+    inherit system nix-pin;
+  };
   imports = [
     inputs.home-manager.darwinModules.home-manager
     ../users/osm.nix
@@ -11,8 +14,6 @@ in
   ];
   home-manager.extraSpecialArgs = {
     userLib = (import ../modules/home-manager/lib/user.nix { inherit lib system; });
-    inherit system;
-    inherit nix-pin;
   };
   home-manager.sharedModules = [
     ../modules/home-manager/osm-files.nix

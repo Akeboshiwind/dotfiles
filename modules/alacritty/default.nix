@@ -1,13 +1,16 @@
+{ user, ... }:
 { config, pkgs, ... }:
 
 {
-  home.packages = with pkgs; [
-    alacritty
+  home-manager.users."${user}" = {
+    home.packages = with pkgs; [
+      alacritty
 
-    nerd-fonts.meslo-lg
-  ];
+      nerd-fonts.meslo-lg
+    ];
 
-  osm.home.folders = [
-    { source = ./.; exclude = ["default.nix"]; }
-  ];
+    osm.home.folders = [
+      { source = ./.; exclude = ["default.nix"]; }
+    ];
+  };
 }

@@ -1,17 +1,19 @@
-{ config, pkgs, ... }: {
-  users.users.osm = {
-    name = "osm";
-    home = "/Users/osm";
-  };
-
-  home-manager.sharedModules = [
-    ../profiles/base.nix
-    ../profiles/base-macos.nix
-    ../profiles/dev.nix
-    ../profiles/fun.nix
+{ config, pkgs, ... }: let
+  user = "osm";
+in {
+  imports = [
+    (import ../profiles/base.nix { inherit user; })
+    (import ../profiles/base-macos.nix { inherit user; })
+    (import ../profiles/dev.nix { inherit user; })
+    (import ../profiles/fun.nix { inherit user; })
   ];
 
-  home-manager.users.osm = {
+  users.users."${user}" = {
+    name = user;
+    home = "/Users/${user}";
+  };
+
+  home-manager.users."${user}" = {
     home = {
       stateVersion = "24.11";
     };

@@ -1,11 +1,14 @@
+{ user, ... }:
 { config, pkgs, userLib, ... }:
 
 {
-  home.packages = with pkgs; [
-    fzf
-  ];
+  home-manager.users."${user}" = {
+    home.packages = with pkgs; [
+      fzf
+    ];
 
-  osm.home.folders = [
-    { source = ./.; exclude = ["default.nix"]; }
-  ];
+    osm.home.folders = [
+      { source = ./.; exclude = ["default.nix"]; }
+    ];
+  };
 }

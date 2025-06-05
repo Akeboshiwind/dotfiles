@@ -1,13 +1,16 @@
+{ user, ... }:
 { config, pkgs, ... }:
 
 {
-  home.packages = with pkgs; [
-    poetry
+  home-manager.users."${user}" = {
+    home.packages = with pkgs; [
+      poetry # use uv instead?
 
-    python314
-  ];
+      python314
+    ];
 
-  osm.home.folders = [
-    { source = ./.; exclude = ["default.nix" "README.md"]; }
-  ];
+    osm.home.folders = [
+      { source = ./.; exclude = ["default.nix" "README.md"]; }
+    ];
+  };
 }
