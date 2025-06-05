@@ -13,6 +13,7 @@ in
     ../users/personal.nix
   ];
   home-manager = {
+    useUserPackages = true;
     useGlobalPkgs = true;
     extraSpecialArgs = {
       userLib = (import ../modules/home-manager/lib/user.nix { inherit lib system; });

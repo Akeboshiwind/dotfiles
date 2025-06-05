@@ -2,14 +2,16 @@
 { config, pkgs, lib, ... }:
 
 {
-  home-manager.users."${user}" = {
-    home.packages = with pkgs; [
+  users.users."${user}" = {
+    packages = with pkgs; [
       openjdk17-bootstrap #  temurin-bin-17
       clojure
       babashka
       clj-kondo
     ];
+  };
 
+  home-manager.users."${user}" = {
     # TODO: Fix, I get permission errors for some reason
     #home.activation = {
     #  linkOpenJDK = lib.hm.dag.entryAfter ["writeBoundary"] ''

@@ -2,8 +2,8 @@
 { config, pkgs, ... }:
 
 {
-  home-manager.users."${user}" = {
-    home.packages = with pkgs; [
+  users.users."${user}" = {
+    packages = with pkgs; [
       neovim
 
       # For parinfer-rust in Clojure config
@@ -18,7 +18,9 @@
       ninja # Lua
       luajitPackages.luarocks # fennel_ls etc.
     ];
+  };
 
+  home-manager.users."${user}" = {
     osm.home.folders = [
       { source = ./.; exclude = ["default.nix" ".config/nvim/lazy-lock.json"]; }
     ];

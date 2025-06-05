@@ -2,8 +2,8 @@
 { config, pkgs, ... }:
 
 {
-  home-manager.users."${user}" = {
-    home.packages = with pkgs; [
+  users.users."${user}" = {
+    packages = with pkgs; [
       # TODO: Update scripts to either just use sh or babashka
       bash
       coreutils
@@ -18,7 +18,9 @@
       imagemagickBig
       babashka
     ];
+  };
 
+  home-manager.users."${user}" = {
     osm.home.folders = [
       { source = ./.; exclude = ["default.nix"]; }
     ];
