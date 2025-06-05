@@ -17,8 +17,8 @@ let
 in
 {
   options = {
-    osm.home.folders = lib.mkOption {
-      description = "Attribute set of folders to link into the user home.";
+    custom.home.folders = lib.mkOption {
+      description = "List of directories whose contents will be recursively linked into the home directory.";
       default = [ ];
       type =
         with lib.types;
@@ -46,7 +46,7 @@ in
   };
 
   config = {
-    home.file = lib.pipe config.osm.home.folders [
+    home.file = lib.pipe config.custom.home.folders [
       # Take each config & map to the `home.file` format
       (builtins.map homeFileRecursive)
       # Merge all configs together for `home.file`

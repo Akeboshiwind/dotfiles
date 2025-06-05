@@ -9,9 +9,9 @@ let
 in
 {
   options = {
-    osm.home.dotfileSymlinks = lib.mkOption {
-      description = "Attribute set of paths to link to the users home directory relative to the dotfiles root.";
-      default = [ ];
+    custom.home.liveLinks = lib.mkOption {
+      description = "Attribute set of files to symlink from the live dotfiles repository (not copied to Nix store).";
+      default = { };
       type =
         with lib.types;
         attrsOf str;
@@ -19,7 +19,7 @@ in
   };
 
   config = {
-    home.file = lib.pipe config.osm.home.dotfileSymlinks [
+    home.file = lib.pipe config.custom.home.liveLinks [
       (builtins.mapAttrs (_: v: { source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/${v}"; }))
     ];
   };

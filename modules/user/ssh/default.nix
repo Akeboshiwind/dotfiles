@@ -3,7 +3,7 @@
 
 {
   home-manager.users."${user}" = {
-    osm.home.folders = [
+    custom.home.folders = [
       { source = ./.; exclude = ["default.nix"]; }
     ];
   };

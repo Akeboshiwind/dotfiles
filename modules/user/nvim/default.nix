@@ -21,10 +21,10 @@
   };
 
   home-manager.users."${user}" = {
-    osm.home.folders = [
+    custom.home.folders = [
       { source = ./.; exclude = ["default.nix" ".config/nvim/lazy-lock.json"]; }
     ];
 
-    osm.home.dotfileSymlinks.".config/nvim/lazy-lock.json" = "nvim/.config/nvim/lazy-lock.json";
+    custom.home.liveLinks.".config/nvim/lazy-lock.json" = "nvim/.config/nvim/lazy-lock.json";
   };
 }

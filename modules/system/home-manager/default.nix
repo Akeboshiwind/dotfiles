@@ -12,8 +12,8 @@
       userLib = (import ./lib/user.nix { inherit lib system; });
     };
     sharedModules = [
-      ./osm-files.nix
-      ./osm-symlinks.nix
+      ./custom-folders.nix
+      ./custom-livelinks.nix
     ];
   };
 }
