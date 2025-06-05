@@ -10,20 +10,8 @@ in
 
   imports = [
     ../modules/system/home-manager
+    ../modules/system/homebrew
     ../users/osm.nix
     ../users/personal.nix
   ];
-
-  homebrew = {
-    enable = true;
-    user = "personal";
-    onActivation = {
-      autoUpdate = true;
-      upgrade = true;
-      cleanup = "zap";
-    };
-    brews = [
-      "mas" # To enable homebrew.masApps
-    ];
-  };
 }
