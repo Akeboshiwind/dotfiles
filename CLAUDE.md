@@ -16,8 +16,10 @@
 - One folder per application
 - Loose coupling between applications
 - Split config into multiple files where possible
-- Comment liberally
 - Prefer application defaults when reasonable
+- Never add comments to the code describing what you're doing
+- Never add "Generated with Claude Code" or the like to commits
+- Add the Co-author when we have worked on the commit, remove it when only I've worked on it
 
 
 ## Configuration File Format
