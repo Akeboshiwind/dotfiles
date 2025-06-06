@@ -37,12 +37,12 @@
     };
 
     checks.${system} = {
-      home-manager-tests = import ./lib/runPureTests.nix {
+      tests = import ./lib/runPureTests.nix {
         inherit (pkgs) lib;
         inherit system;
         tests = 
-          (import ./modules/system/home-manager/test/user.nix { inherit (pkgs) lib; inherit system; }) //
-          (import ./modules/system/home-manager/test/folders.nix { inherit (pkgs) lib; inherit system; });
+          (import ./lib/fs.test.nix { inherit (pkgs) lib; inherit system; }) //
+          (import ./modules/system/home-manager/lib/folders.test.nix { inherit (pkgs) lib; inherit system; });
       };
     };
   };
