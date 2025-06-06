@@ -41,8 +41,8 @@
         inherit (pkgs) lib;
         inherit system;
         tests = 
-          (import ./lib/fs.test.nix { inherit (pkgs) lib; inherit system; }) //
-          (import ./modules/system/home-manager/lib/folders.test.nix { inherit (pkgs) lib; inherit system; });
+          (import ./lib/fs.test.nix { inherit pkgs system; }) //
+          (import ./modules/system/home-manager/lib/folders.test.nix { inherit pkgs system; });
       };
     };
   };

@@ -1,8 +1,14 @@
-{ lib, system, ... }:
+{ pkgs, system, ... }:
 
 let
+  inherit (pkgs) lib;
   fs = import ./fs.nix { inherit lib system; };
-  testDir = ../modules/system/home-manager/test/folders;
+  
+  # Create test directory structure in the Nix store
+  testDir = pkgs.runCommand "fs-test-folders" {} ''
+    mkdir -p $out/a/b $out/a/c
+    touch $out/a/A $out/a/b/B $out/a/c/C $out/a/c/D
+  '';
 in
 {
   test_readDirRecursive_1 = {
