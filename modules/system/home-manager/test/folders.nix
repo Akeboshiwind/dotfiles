@@ -1,10 +1,7 @@
-{ lib, ... }:
+{ lib, system, ... }:
 
 let
-  fs = import ../../../../lib/fs.nix {
-    inherit lib;
-    system = "aarch64-darwin";
-  };
+  fs = import ../../../../lib/fs.nix { inherit lib system; };
   folders = import ../lib/folders.nix { inherit lib fs; };
 in
 {

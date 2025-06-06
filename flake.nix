@@ -18,7 +18,11 @@
     #       https://github.com/zhaofengli/nix-homebrew/issues/96
   };
 
-  outputs = inputs@{ self, nix-darwin, ... }:
+  outputs = inputs@{ self, nixpkgs, nix-darwin, ... }:
+  let
+    system = "aarch64-darwin";
+    pkgs = nixpkgs.legacyPackages.${system};
+  in
   {
     # Build darwin flake using:
     # $ darwin-rebuild build --flake ~/dotfiles/nix-darwin
@@ -28,8 +32,17 @@
         ./machines/Olivers-MacBook-Air.nix
       ];
       specialArgs = { 
-        system = "aarch64-darwin";
-        inherit self inputs;
+        inherit self inputs system;
+      };
+    };
+
+    checks.${system} = {
+      home-manager-tests = import ./lib/runPureTests.nix {
+        inherit (pkgs) lib;
+        inherit system;
+        tests = 
+          (import ./modules/system/home-manager/test/user.nix { inherit (pkgs) lib; inherit system; }) //
+          (import ./modules/system/home-manager/test/folders.nix { inherit (pkgs) lib; inherit system; });
       };
     };
   };
