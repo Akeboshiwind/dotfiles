@@ -1,6 +1,28 @@
 { lib, fs, ... }:
 
-{
+rec {
+  # Extract relative paths from a list of absolute paths
+  getRelativePaths = source: paths:
+    let
+      oldPrefix = (toString source) + "/";
+    in
+    map (path: lib.removePrefix oldPrefix (toString path)) paths;
+
+  # Filter paths based on exclude list
+  filterPaths = exclude: paths:
+    builtins.filter (path: !(builtins.elem path exclude)) paths;
+
+  # Create home.file attribute set from relative paths
+  createHomeFiles = source: target: paths:
+    builtins.listToAttrs (
+      map (path: {
+        name = target + path;
+        value = {
+          source = source + ("/" + path);
+        };
+      }) paths
+    );
+
   # Given a `source` path returns all files in the directory recursively
   # in the format of `home.file`.
   # `target` can be used to change the root of all the files relative to HOME (defaults to "")
@@ -17,39 +39,15 @@
   #   "../test.file" = { source = /tmp/test/test.file; };
   #   "../other/test.file" = { source = /tmp/test/other/test.file; };
   # }
-  homeFileRecursive = (
-    {
-      source,
-      target ? "",
-      exclude ? [ ],
-    }:
-    let
-      # For calculating target paths
-      newPrefix = target;
-      oldPrefix = ((toString source) + "/");
-    in
-    (lib.pipe source [
+  homeFileRecursive = {
+    source,
+    target ? "",
+    exclude ? []
+  }:
+    lib.pipe source [
       fs.readDirRecursive
-      # Calculate target paths
-      # They should either be relative to `source`, later they are altered by `target
-      (builtins.map (
-        path:
-        (lib.pipe path [
-          toString
-          (lib.removePrefix oldPrefix)
-        ])
-      ))
-      # Remove files in the `exclude` list
-      # TODO: Make fancier, allow regex matching etc
-      (builtins.filter (target: !(builtins.elem target exclude)))
-      # Map into the `home.file` format
-      (builtins.map (target: {
-        name = (newPrefix + target);
-        value = {
-          source = source + ("/" + target);
-        };
-      }))
-      builtins.listToAttrs
-    ])
-  );
+      (getRelativePaths source)
+      (filterPaths exclude)
+      (createHomeFiles source target)
+    ];
 }

@@ -63,4 +63,46 @@ in
       };
     };
   };
+
+  # Tests for individual functions
+  test_getRelativePaths = {
+    expr = folders.getRelativePaths "/home/user/test" [
+      "/home/user/test/file1.txt"
+      "/home/user/test/dir/file2.txt"
+      "/home/user/test/dir/subdir/file3.txt"
+    ];
+    expected = [
+      "file1.txt"
+      "dir/file2.txt"
+      "dir/subdir/file3.txt"
+    ];
+  };
+
+  test_filterPaths = {
+    expr = folders.filterPaths [ "file2.txt" "dir/excluded.txt" ] [
+      "file1.txt"
+      "file2.txt"
+      "dir/file3.txt"
+      "dir/excluded.txt"
+    ];
+    expected = [
+      "file1.txt"
+      "dir/file3.txt"
+    ];
+  };
+
+  test_createHomeFiles = {
+    expr = folders.createHomeFiles "/source" "target/" [
+      "file1.txt"
+      "dir/file2.txt"
+    ];
+    expected = {
+      "target/file1.txt" = {
+        source = "/source/file1.txt";
+      };
+      "target/dir/file2.txt" = {
+        source = "/source/dir/file2.txt";
+      };
+    };
+  };
 }
