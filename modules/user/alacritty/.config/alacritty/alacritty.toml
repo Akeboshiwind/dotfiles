@@ -8,6 +8,29 @@
 import = ["/Users/osm/.config/alacritty/kanagawa_theme.toml"]
 
 
+
+# >> Debugging
+
+# NOTE: You can log to a known location by doing the following:
+# ```sh
+# cd /Applications/Alacritty.app/Contents/MacOS
+# mv alacritty alacritty_executable
+# echo -e "#!/bin/bash\n/Applications/Alacritty.app/Contents/MacOS/alacritty_executable > /tmp/alog.txt 2>&1" > alacritty
+# chmod +x
+# ```
+#
+# With the above you can now find the logs in /tmp/alog.txt
+# To revert:
+# ```sh
+# cd /Applications/Alacritty.app/Contents/MacOS
+# mv alacritty_executable alacritty
+# ```
+
+#[debug]
+#persistent_logging = true
+
+
+
 # >> Font configuration
 
 [font]
