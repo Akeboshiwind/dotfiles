@@ -8,6 +8,7 @@ in {
     ../profiles/base.nix
     ../profiles/base-macos.nix
     ../profiles/dev.nix
+    ../profiles/work.nix
   ];
 
   users.users."${user}" = {

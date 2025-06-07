@@ -10,5 +10,7 @@ in
   imports = withUser user [
     # >> Terminal setup
     ../modules/user/alacritty
+
+    ../modules/user/macos-gui
   ];
 }
