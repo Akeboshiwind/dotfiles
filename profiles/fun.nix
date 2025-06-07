@@ -9,5 +9,6 @@ in
 
   imports = withUser user [
     ../modules/user/llm
+    ../modules/user/cursor
   ];
 }
