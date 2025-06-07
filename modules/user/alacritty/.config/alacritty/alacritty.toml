@@ -57,7 +57,11 @@ style = "Regular"
 # >> Shell
 
 [terminal.shell]
-program = "fish"
+program = "zsh"
+args = [
+  "--login",
+  "-c", "exec fish"
+]
 
 
 

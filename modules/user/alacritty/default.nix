@@ -3,14 +3,12 @@
 
 {
   fonts.packages = with pkgs; [
-      nerd-fonts.meslo-lg
+    nerd-fonts.meslo-lg
   ];
 
-  users.users."${user}" = {
-    packages = with pkgs; [
-      alacritty
-    ];
-  };
+  homebrew.casks = [
+    "alacritty"
+  ];
 
   home-manager.users."${user}" = {
     custom.home.folders = [
