@@ -12,5 +12,6 @@ in
     ../modules/user/alacritty
 
     ../modules/user/macos-gui
+    ../modules/user/macos-config
   ];
 }
