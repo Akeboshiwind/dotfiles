@@ -20,6 +20,7 @@
       };
       "com.apple.dock" = {
         autohide = true;
+        "show-recents" = false;
         tilesize = 72;
       };
       "com.apple.finder" = {
