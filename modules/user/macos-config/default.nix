@@ -29,6 +29,8 @@
       # Stage Manager
       "com.apple.WindowManager" = {
         GloballyEnabled = true;
+        # Don't group windows by application
+        AppWindowGroupingBehavior = false;
       };
     };
   };
