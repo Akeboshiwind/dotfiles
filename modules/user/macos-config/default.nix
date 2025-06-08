@@ -26,6 +26,10 @@
       "com.apple.finder" = {
         AppleShowAllFiles = true;
       };
+      # Stage Manager
+      "com.apple.WindowManager" = {
+        GloballyEnabled = true;
+      };
     };
   };
 }
