@@ -20,7 +20,7 @@
       };
       "com.apple.dock" = {
         autohide = true;
-        tilesize = 48;
+        tilesize = 72;
       };
       "com.apple.finder" = {
         AppleShowAllFiles = true;
