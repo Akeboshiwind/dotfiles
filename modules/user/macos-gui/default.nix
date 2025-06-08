@@ -6,6 +6,9 @@
 {
   homebrew.casks = [
     "raycast"
+    "docker"
+    "obsidian"
+    "tailscale"
   ];
 
   homebrew.masApps = {
