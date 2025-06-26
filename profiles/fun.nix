@@ -10,6 +10,7 @@ in
   homebrew.casks = [
     "godot"
     "telegram"
+    "musescore"
   ];
 
   imports = withUser user [
