@@ -6,7 +6,7 @@
 {
   homebrew.casks = [
     "raycast"
-    "docker-desktop"
+    "orbstack" #"docker-desktop"
     "obsidian"
   ];
 
