@@ -1,11 +1,18 @@
 { user, ... }:
-{ ... }: 
+{ pkgs, ... }: 
 
 let
   withUser = import ../lib/withUser.nix;
 in
 {
   # Setup for development
+
+  # Tools with no config
+  users.users."${user}" = {
+    packages = with pkgs; [
+      hyperfine
+    ];
+  };
 
   imports = withUser user [
     # >> Languages
