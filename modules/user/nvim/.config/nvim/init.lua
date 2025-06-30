@@ -1,4 +1,4 @@
--- [nfnl] Compiled from init.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] init.fnl
 vim.g.mapleader = ","
 local lazypath = (vim.fn.stdpath("data") .. "/lazy")
 local function ensure(user, repo, branch)
@@ -18,6 +18,14 @@ _G.P = function(...)
   return print(vim.inspect(...))
 end
 vim.api.nvim_create_user_command("Nohl", "nohl", {})
+local function _2_(opts)
+  local width = tonumber(opts.args)
+  vim.bo.tabstop = width
+  vim.bo.shiftwidth = width
+  vim.bo.softtabstop = width
+  return nil
+end
+vim.api.nvim_create_user_command("Tab", _2_, {nargs = 1, desc = "Set tab width for current buffer"})
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 vim.opt.splitright = true

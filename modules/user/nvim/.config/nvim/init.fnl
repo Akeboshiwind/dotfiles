@@ -60,6 +60,16 @@
 
 (vim.api.nvim_create_user_command :Nohl :nohl {})
 
+(vim.api.nvim_create_user_command
+  :Tab
+  (fn [opts]
+    (let [width (tonumber opts.args)]
+      (set vim.bo.tabstop width)
+      (set vim.bo.shiftwidth width) 
+      (set vim.bo.softtabstop width)))
+  {:nargs 1
+   :desc "Set tab width for current buffer"})
+
 
 
 ;; >> Usability
