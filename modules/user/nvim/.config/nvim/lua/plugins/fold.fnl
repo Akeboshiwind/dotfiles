@@ -1,6 +1,57 @@
 ; plugins/fold.fnl
 (local {: autoload} (require :nfnl.module))
+(local {: get : concat} (autoload :nfnl.core))
 (local ufo (autoload :ufo))
+(local ts-provider (autoload :ufo.provider.treesitter))
+(local foldingrange (autoload :ufo.model.foldingrange))
+
+(local ft->query
+  {:typescript
+   "(call_expression
+      function: (identifier) @_fn
+      (#match? @_fn \"^(test|it|beforeEach|afterEach)$\")) @fold.test
+
+    [(function_declaration)
+     (method_definition)
+     (generator_function_declaration)] @fold.test"})
+
+(comment
+  ; Load up fold.lua and use ,x to run this
+  (do
+    (each [ft query (pairs ft->query)]
+      (vim.treesitter.query.parse ft query))
+    (print "Success! 🎉")))
+
+(fn query-folds [bufnr ft->query]
+  (let [ft (vim.api.nvim_get_option_value :filetype {:buf bufnr})
+        query-str (get ft->query ft)
+        parser (vim.treesitter.get_parser bufnr ft)]
+    (when (and query-str parser)
+      (let [[tree] (parser:parse)
+            root (tree:root)
+            (ok query) (pcall vim.treesitter.query.parse ft query-str)]
+        (if (not ok)
+          (do
+            (vim.notify (.. "Error parsing custom query for " ft)
+                        vim.log.levels.ERROR)
+            nil)
+          (let [tbl []]
+            (each [id node (query:iter_captures root bufnr)]
+              (let [capture-name (. query.captures id)
+                    (start _ stop stop-col) (node:range)
+                    stop (if (= stop-col 0) (- stop 1) stop)]
+                (when (> stop start)
+                  (print capture-name start stop)
+                  (table.insert tbl (foldingrange.new start stop nil nil capture-name)))))
+            tbl))))))
+
+(fn treesitter+queries [ft->query]
+  (fn [bufnr]
+    (let [ranges (concat []
+                         (ts-provider.getFolds bufnr)
+                         (query-folds bufnr ft->query))]
+      (foldingrange.sortRanges ranges)
+      ranges)))
 
 [{1 :kevinhwang91/nvim-ufo
   :dependencies [:kevinhwang91/promise-async]
@@ -20,12 +71,15 @@
             (ufo.setup
               {:provider_selector
                (fn [_bufnr _filetype _buftype]
-                 [:treesitter :indent])
+                 [(treesitter+queries ft->query)
+                  :indent])
                :open_fold_hl_timeout 100
                :close_fold_kinds_for_ft
-               {:default [:function_definition
-                          :function_declaration
-                          :method_definition]}}))
+               {:default [;:function_definition
+                          ;:function_declaration
+                          ;:method_definition
+                          ;:generator_function_declaration
+                          :fold.test]}}))
   :keys [{1 "zR" 2 #(ufo.openAllFolds)
           :mode [:n]
           :desc "Open All Folds"}
