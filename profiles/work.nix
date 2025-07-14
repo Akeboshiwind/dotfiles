@@ -4,6 +4,8 @@
 {
   homebrew.casks = [
     "gather"
+    "slack"
+    "microsoft-teams"
   ];
 
   homebrew.masApps = {
