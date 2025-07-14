@@ -33,7 +33,6 @@ local function query_folds(bufnr, ft__3equery0)
           stop0 = stop
         end
         if (stop0 > start) then
-          print(capture_name, start, stop0)
           table.insert(tbl, foldingrange.new(start, stop0, nil, nil, capture_name))
         else
         end

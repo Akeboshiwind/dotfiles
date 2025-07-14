@@ -46,7 +46,6 @@
                     (start _ stop stop-col) (node:range)
                     stop (if (= stop-col 0) (- stop 1) stop)]
                 (when (> stop start)
-                  (print capture-name start stop)
                   (table.insert tbl (foldingrange.new start stop nil nil capture-name)))))
             tbl))))))
 
