@@ -13,7 +13,12 @@
 
     [(function_declaration)
      (method_definition)
-     (generator_function_declaration)] @fold.test"})
+     (generator_function_declaration)] @fold.custom"
+   :yaml
+   "(block_mapping_pair
+      key: (_ (_ (string_scalar) @service_key))
+      value: (_ (_ (block_mapping_pair) @fold.custom))
+      (#eq? @service_key \"services\"))"})
 
 (comment
   ; Load up fold.lua and use ,x to run this
@@ -75,11 +80,7 @@
                   :indent])
                :open_fold_hl_timeout 100
                :close_fold_kinds_for_ft
-               {:default [;:function_definition
-                          ;:function_declaration
-                          ;:method_definition
-                          ;:generator_function_declaration
-                          :fold.test]}}))
+               {:default [:fold.custom :fold.test]}}))
   :keys [{1 "zR" 2 #(ufo.openAllFolds)
           :mode [:n]
           :desc "Open All Folds"}
