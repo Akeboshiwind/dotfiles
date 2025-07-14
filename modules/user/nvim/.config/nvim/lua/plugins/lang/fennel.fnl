@@ -4,7 +4,6 @@
 (local test-harness (autoload :plenary.test_harness))
 (local wk (autoload :which-key))
 
-
 [{1 :Olical/nfnl
   :ft "fennel"
   :config (fn [_ _opts]
@@ -21,6 +20,8 @@
   :ft ["fennel"]}
  {1 :williamboman/mason.nvim
   :opts {:ensure-installed {:fennel-language-server true}}}
+ {1 :kevinhwang91/nvim-ufo
+  :opts {:close-kinds {:fennel [:fn_form]}}}
  {1 :neovim/nvim-lspconfig
   :opts {:servers
          {:fennel_language_server

@@ -61,6 +61,13 @@
  ;; TODO: Move to lisp specific?
  {1 :eraserhd/parinfer-rust
   :build "cargo build --release"}
+ {1 :kevinhwang91/nvim-ufo
+  :opts
+  {:fold-queries
+   {:clojure
+    "(list_lit
+       . (sym_lit name: (sym_name) @_fn)
+       (#match? @_fn \"^(deftest-?|use-fixtures|defn-?|defmethod|defmacro)$\")) @fold.custom"}}}
  {1 :Olical/conjure
   :ft ["clojure"]
   :keys [{1 "<leader>eg"

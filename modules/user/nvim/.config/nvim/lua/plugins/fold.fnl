@@ -1,35 +1,11 @@
 ; plugins/fold.fnl
 (local {: autoload} (require :nfnl.module))
-(local {: get : concat} (autoload :nfnl.core))
+(local {: get : concat : merge} (autoload :nfnl.core))
 (local ufo (autoload :ufo))
 (local ts-provider (autoload :ufo.provider.treesitter))
 (local foldingrange (autoload :ufo.model.foldingrange))
 
-(local ft->query
-  {:typescript
-   "(call_expression
-      function: (identifier) @_fn
-      (#match? @_fn \"^(test|it|beforeEach|afterEach)$\")) @fold.test
-
-    [(function_declaration)
-     (method_definition)
-     (generator_function_declaration)] @fold.custom"
-   :yaml
-   "(block_mapping_pair
-      key: (_ (_ (string_scalar) @service_key))
-      value: (_ (_ (block_mapping_pair) @fold.custom))
-      (#eq? @service_key \"services\"))"
-   :clojure
-   "(list_lit
-      . (sym_lit name: (sym_name) @_fn)
-      (#match? @_fn \"^(deftest-?|use-fixtures|defn-?|defmethod|defmacro)$\")) @fold.custom"})
-
-(comment
-  ; Load up fold.lua and use ,x to run this
-  (do
-    (each [ft query (pairs ft->query)]
-      (vim.treesitter.query.parse ft query))
-    (print "Success! 🎉")))
+; NOTE: The best way to write a query is to use :EditQuery in a buffer with what you want to fold
 
 (fn query-folds [bufnr ft->query]
   (let [ft (vim.api.nvim_get_option_value :filetype {:buf bufnr})
@@ -64,7 +40,11 @@
 [{1 :kevinhwang91/nvim-ufo
   :dependencies [:kevinhwang91/promise-async]
   :lazy false
-  :config (fn []
+  :opts {; Auto-fold things these queries mark with @fold.custom or @fold.test
+         :fold-queries {}
+         ; Auto-fold these treesitter node types
+         :close-kinds {}}
+  :config (fn [_ opts]
             (set vim.opt.foldenable true)
 
             ;; How folds look
@@ -76,15 +56,17 @@
             ;(set vim.opt.foldnestmax 4) ; max nesting
             (set vim.opt.foldopen "") ; disable vim auto-opening folds (e.g. '[' and search)
 
-            (ufo.setup
-              {:provider_selector
-               (fn [_bufnr _filetype _buftype]
-                 [(treesitter+queries ft->query)
-                  :indent])
-               :open_fold_hl_timeout 100
-               :close_fold_kinds_for_ft
-               {:default [:fold.custom :fold.test]
-                :fennel [:fn_form :fold.custom :fold.test]}}))
+            (let [default-close-kinds [:fold.custom :fold.test]
+                  close-kinds (merge (collect [lang kinds (pairs opts.close-kinds)]
+                                       (values lang (concat kinds default-close-kinds)))
+                                     {:default default-close-kinds})]
+              (ufo.setup
+                {:provider_selector
+                 (fn [_bufnr _filetype _buftype]
+                   [(treesitter+queries opts.fold-queries)
+                    :indent])
+                 :open_fold_hl_timeout 100
+                 :close_fold_kinds_for_ft close-kinds})))
   :keys [{1 "zR" 2 #(ufo.openAllFolds)
           :mode [:n]
           :desc "Open All Folds"}

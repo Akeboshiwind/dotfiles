@@ -1,4 +1,4 @@
--- [nfnl] Compiled from lua/plugins/lang/clojure.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] lua/plugins/lang/clojure.fnl
 local _local_1_ = require("nfnl.module")
 local autoload = _local_1_["autoload"]
 local _local_2_ = autoload("nfnl.core")
@@ -52,4 +52,4 @@ local function _9_()
   local filename = vim.fn.expand("%:p")
   return eval.command(string.format("(nextjournal.clerk/show! \"%s\")", filename))
 end
-return {{"williamboman/mason.nvim", opts = {["ensure-installed"] = {zprint = true}}}, {"stevearc/conform.nvim", opts = {formatters_by_ft = {clojure = {"zprint"}}, no_format_on_save = {clojure = true}}}, {"neovim/nvim-lspconfig", opts = {servers = {clojure_lsp = {init_options = {["cljfmt-config-path"] = (vim.fn.stdpath("config") .. "/config/.cljfmt.edn")}}}}}, {"eraserhd/parinfer-rust", build = "cargo build --release"}, {"Olical/conjure", ft = {"clojure"}, keys = {{"<leader>eg", _7_, desc = "user/go!"}, {"<leader>eS", _8_, desc = "Sync deps.edn"}, {"<leader>es", _9_, desc = "clerk/show!"}, {"<leader>sS", shadow_select, desc = "Conjure Select Shadowcljs Environment"}}, opts = {config = {["client#clojure#nrepl#connection#auto_repl#enabled"] = false, ["client#clojure#nrepl#mapping#session_select"] = false}}}}
+return {{"williamboman/mason.nvim", opts = {["ensure-installed"] = {zprint = true}}}, {"stevearc/conform.nvim", opts = {formatters_by_ft = {clojure = {"zprint"}}, no_format_on_save = {clojure = true}}}, {"neovim/nvim-lspconfig", opts = {servers = {clojure_lsp = {init_options = {["cljfmt-config-path"] = (vim.fn.stdpath("config") .. "/config/.cljfmt.edn")}}}}}, {"eraserhd/parinfer-rust", build = "cargo build --release"}, {"kevinhwang91/nvim-ufo", opts = {["fold-queries"] = {clojure = "(list_lit\n       . (sym_lit name: (sym_name) @_fn)\n       (#match? @_fn \"^(deftest-?|use-fixtures|defn-?|defmethod|defmacro)$\")) @fold.custom"}}}, {"Olical/conjure", ft = {"clojure"}, keys = {{"<leader>eg", _7_, desc = "user/go!"}, {"<leader>eS", _8_, desc = "Sync deps.edn"}, {"<leader>es", _9_, desc = "clerk/show!"}, {"<leader>sS", shadow_select, desc = "Conjure Select Shadowcljs Environment"}}, opts = {config = {["client#clojure#nrepl#connection#auto_repl#enabled"] = false, ["client#clojure#nrepl#mapping#session_select"] = false}}}}

@@ -14,6 +14,15 @@
                    :actionlint
                    {:condition (fn [{: dirname}]
                                  (string.match dirname ".github/workflows"))}}}}
+ {1 :kevinhwang91/nvim-ufo
+  :opts
+  {:fold-queries
+   {:yaml
+    "; services in docker-compose.yml
+     (block_mapping_pair
+       key: (_ (_ (string_scalar) @service_key))
+       value: (_ (_ (block_mapping_pair) @fold.custom))
+       (#eq? @service_key \"services\"))"}}}
 
  ;; I don't think this was really doing anything tbh
  ;; Really, the above linters work just fine for me
