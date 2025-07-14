@@ -1,4 +1,4 @@
--- [nfnl] lua/plugins/fold.fnl
+-- [nfnl] Compiled from lua/plugins/fold.fnl by https://github.com/Olical/nfnl, do not edit.
 local _local_1_ = require("nfnl.module")
 local autoload = _local_1_["autoload"]
 local _local_2_ = autoload("nfnl.core")
@@ -60,7 +60,7 @@ local function _9_()
   local function _10_(_bufnr, _filetype, _buftype)
     return {treesitter_2bqueries(ft__3equery), "indent"}
   end
-  return ufo.setup({provider_selector = _10_, open_fold_hl_timeout = 100, close_fold_kinds_for_ft = {default = {"fold.custom", "fold.test"}}})
+  return ufo.setup({provider_selector = _10_, open_fold_hl_timeout = 100, close_fold_kinds_for_ft = {default = {"fold.custom", "fold.test"}, fennel = {"fn_form", "fold.custom", "fold.test"}}})
 end
 local function _11_()
   return ufo.openAllFolds()

@@ -83,7 +83,8 @@
                   :indent])
                :open_fold_hl_timeout 100
                :close_fold_kinds_for_ft
-               {:default [:fold.custom :fold.test]}}))
+               {:default [:fold.custom :fold.test]
+                :fennel [:fn_form :fold.custom :fold.test]}}))
   :keys [{1 "zR" 2 #(ufo.openAllFolds)
           :mode [:n]
           :desc "Open All Folds"}
