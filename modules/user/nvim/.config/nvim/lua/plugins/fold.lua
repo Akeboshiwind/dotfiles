@@ -12,7 +12,7 @@ local ft__3equery = {typescript = "(call_expression\n      function: (identifier
 local function query_folds(bufnr, ft__3equery0)
   local ft = vim.api.nvim_get_option_value("filetype", {buf = bufnr})
   local query_str = get(ft__3equery0, ft)
-  local parser = vim.treesitter.get_parser(bufnr, ft)
+  local _, parser = pcall(vim.treesitter.get_parser, bufnr, ft)
   if (query_str and parser) then
     local _let_3_ = parser:parse()
     local tree = _let_3_[1]
@@ -25,7 +25,7 @@ local function query_folds(bufnr, ft__3equery0)
       local tbl = {}
       for id, node in query:iter_captures(root, bufnr) do
         local capture_name = query.captures[id]
-        local start, _, stop, stop_col = node:range()
+        local start, _0, stop, stop_col = node:range()
         local stop0
         if (stop_col == 0) then
           stop0 = (stop - 1)

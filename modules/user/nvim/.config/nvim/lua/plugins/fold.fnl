@@ -25,7 +25,7 @@
 (fn query-folds [bufnr ft->query]
   (let [ft (vim.api.nvim_get_option_value :filetype {:buf bufnr})
         query-str (get ft->query ft)
-        parser (vim.treesitter.get_parser bufnr ft)]
+        (_ parser) (pcall vim.treesitter.get_parser bufnr ft)]
     (when (and query-str parser)
       (let [[tree] (parser:parse)
             root (tree:root)
