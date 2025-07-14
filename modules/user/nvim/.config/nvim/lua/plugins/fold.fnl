@@ -18,7 +18,11 @@
    "(block_mapping_pair
       key: (_ (_ (string_scalar) @service_key))
       value: (_ (_ (block_mapping_pair) @fold.custom))
-      (#eq? @service_key \"services\"))"})
+      (#eq? @service_key \"services\"))"
+   :clojure
+   "(list_lit
+      . (sym_lit name: (sym_name) @_fn)
+      (#match? @_fn \"^(deftest-?|use-fixtures|defn-?|defmethod|defmacro)$\")) @fold.custom"})
 
 (comment
   ; Load up fold.lua and use ,x to run this

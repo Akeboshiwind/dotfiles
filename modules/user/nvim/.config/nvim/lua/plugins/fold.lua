@@ -7,7 +7,7 @@ local concat = _local_2_["concat"]
 local ufo = autoload("ufo")
 local ts_provider = autoload("ufo.provider.treesitter")
 local foldingrange = autoload("ufo.model.foldingrange")
-local ft__3equery = {typescript = "(call_expression\n      function: (identifier) @_fn\n      (#match? @_fn \"^(test|it|beforeEach|afterEach)$\")) @fold.test\n\n    [(function_declaration)\n     (method_definition)\n     (generator_function_declaration)] @fold.custom", yaml = "(block_mapping_pair\n      key: (_ (_ (string_scalar) @service_key))\n      value: (_ (_ (block_mapping_pair) @fold.custom))\n      (#eq? @service_key \"services\"))"}
+local ft__3equery = {typescript = "(call_expression\n      function: (identifier) @_fn\n      (#match? @_fn \"^(test|it|beforeEach|afterEach)$\")) @fold.test\n\n    [(function_declaration)\n     (method_definition)\n     (generator_function_declaration)] @fold.custom", yaml = "(block_mapping_pair\n      key: (_ (_ (string_scalar) @service_key))\n      value: (_ (_ (block_mapping_pair) @fold.custom))\n      (#eq? @service_key \"services\"))", clojure = "(list_lit\n      . (sym_lit name: (sym_name) @_fn)\n      (#match? @_fn \"^(deftest-?|use-fixtures|defn-?|defmethod|defmacro)$\")) @fold.custom"}
 --[[ (do (each [ft query (pairs ft->query)] (vim.treesitter.query.parse ft query)) (print "Success! 🎉")) ]]
 local function query_folds(bufnr, ft__3equery0)
   local ft = vim.api.nvim_get_option_value("filetype", {buf = bufnr})
