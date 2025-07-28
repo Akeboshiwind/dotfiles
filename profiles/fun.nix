@@ -13,6 +13,10 @@ in
     "musescore"
   ];
 
+  homebrew.masApps = {
+    "Xcode" = 497799835;
+  };
+
   imports = withUser user [
     ../modules/user/llm
     ../modules/user/cursor
