@@ -1,2 +1,2 @@
--- [nfnl] Compiled from lua/plugins/lang/markdown.fnl by https://github.com/Olical/nfnl, do not edit.
-return {{"davidmh/mdx.nvim", dependencies = {"nvim-treesitter"}, config = true}}
+-- [nfnl] lua/plugins/lang/markdown.fnl
+return {{"davidmh/mdx.nvim", dependencies = {"nvim-treesitter"}, config = true}, {"kevinhwang91/nvim-ufo", opts = {["close-kinds"] = {markdown = {"section", "fenced_code_block"}}}}}
