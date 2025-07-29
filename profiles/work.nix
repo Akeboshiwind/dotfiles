@@ -3,7 +3,6 @@
 
 {
   homebrew.casks = [
-    "gather"
     "slack"
   ];
 
