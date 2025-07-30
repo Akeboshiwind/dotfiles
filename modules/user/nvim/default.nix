@@ -25,6 +25,6 @@
       { source = ./.; exclude = ["default.nix" ".config/nvim/lazy-lock.json"]; }
     ];
 
-    custom.home.liveLinks.".config/nvim/lazy-lock.json" = "nvim/.config/nvim/lazy-lock.json";
+    custom.home.liveLinks.".config/nvim/lazy-lock.json" = "modules/user/nvim/.config/nvim/lazy-lock.json";
   };
 }
