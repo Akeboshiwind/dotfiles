@@ -12,7 +12,7 @@
   ];
 
   homebrew.masApps = {
-    "OmniFocus 4" = 1542143627;
+    #"OmniFocus 4" = 1542143627;
     #"Sofa" = 1276554886;
     "Timery" = 1425368544;
     "Bitwarden" = 1352778147;
