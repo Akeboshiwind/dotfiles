@@ -29,7 +29,15 @@
   "Remove the value from the set"
   (tset s v nil))
 
+(fn from [t]
+  (let [ret (new)]
+    (when t
+      (each [_ v (pairs t)]
+        (insert! ret v)))
+    ret))
+
 {: new
  : contains?
  : insert!
- : remove!}
+ : remove!
+ : from}

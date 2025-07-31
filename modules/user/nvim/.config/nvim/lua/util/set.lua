@@ -1,4 +1,4 @@
--- [nfnl] Compiled from lua/util/set.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] lua/util/set.fnl
 local function new()
   return {}
 end
@@ -13,4 +13,14 @@ local function remove_21(s, v)
   s[v] = nil
   return nil
 end
-return {new = new, ["contains?"] = contains_3f, ["insert!"] = insert_21, ["remove!"] = remove_21}
+local function from(t)
+  local ret = new()
+  if t then
+    for _, v in pairs(t) do
+      insert_21(ret, v)
+    end
+  else
+  end
+  return ret
+end
+return {new = new, ["contains?"] = contains_3f, ["insert!"] = insert_21, ["remove!"] = remove_21, from = from}
