@@ -17,6 +17,9 @@
       wget
       ninja # Lua
       luajitPackages.luarocks # fennel_ls etc.
+
+      # For tree-sitter
+      tree-sitter
     ];
   };
 

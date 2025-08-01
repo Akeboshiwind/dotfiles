@@ -6,12 +6,12 @@
 (local mason-lspconfig (autoload :mason-lspconfig))
 (local mr (autoload :mason-registry))
 
-[{1 :williamboman/mason.nvim
-  :dependencies [:williamboman/mason-lspconfig.nvim]
+[{1 :mason-org/mason.nvim
+  :dependencies [:mason-org/mason-lspconfig.nvim]
   :opts {; Ensure these tools are installed
          ; To add set it's value to anything truthy
          :ensure-installed {}
-         :mason-lspconfig {:automatic_installation true}}
+         :mason-lspconfig {}}
   :config (fn [_ opts]
             (mason.setup opts)
             (mason-lspconfig.setup opts.mason-lspconfig)

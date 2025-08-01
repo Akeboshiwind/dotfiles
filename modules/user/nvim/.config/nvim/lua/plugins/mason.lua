@@ -1,4 +1,4 @@
--- [nfnl] Compiled from lua/plugins/mason.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] lua/plugins/mason.fnl
 local _local_1_ = require("nfnl.module")
 local autoload = _local_1_["autoload"]
 local fun = autoload("vend.luafun")
@@ -25,4 +25,4 @@ local function _2_(_, opts)
   end
   return mr.refresh(_3_)
 end
-return {{"williamboman/mason.nvim", dependencies = {"williamboman/mason-lspconfig.nvim"}, opts = {["ensure-installed"] = {}, ["mason-lspconfig"] = {automatic_installation = true}}, config = _2_}}
+return {{"mason-org/mason.nvim", dependencies = {"mason-org/mason-lspconfig.nvim"}, opts = {["ensure-installed"] = {}, ["mason-lspconfig"] = {}}, config = _2_}}

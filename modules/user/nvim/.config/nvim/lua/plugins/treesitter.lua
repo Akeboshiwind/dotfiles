@@ -1,8 +1,20 @@
--- [nfnl] Compiled from lua/plugins/treesitter.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] lua/plugins/treesitter.fnl
 local _local_1_ = require("nfnl.module")
 local autoload = _local_1_["autoload"]
-local nvim_treesitter_config = autoload("nvim-treesitter.configs")
+local ts = autoload("nvim-treesitter")
+local Set = autoload("util.set")
 local function _2_(_, opts)
-  return nvim_treesitter_config.setup(opts)
+  local available = Set.from(ts.get_available())
+  ts.install(opts.ensure_installed)
+  for lang, _0 in pairs(available) do
+    local function _3_(ev)
+      local function _4_()
+        return vim.treesitter.start(ev.buf, lang)
+      end
+      return ts.install(lang):await(_4_)
+    end
+    vim.api.nvim_create_autocmd("FileType", {pattern = vim.treesitter.language.get_filetypes(lang), callback = _3_})
+  end
+  return nil
 end
-return {{"nvim-treesitter/nvim-treesitter", build = ":TSUpdate", dependencies = {{"nvim-treesitter/playground", cmd = "TSPlaygroundToggle"}}, opts = {ensure_installed = {"comment", "regex"}, auto_install = true, highlight = {enable = true}, indent = {enable = false}, query_linter = {enable = true, use_virtual_text = true, lint_events = {"BufWrite", "CursorHold"}}}, config = _2_}}
+return {{"nvim-treesitter/nvim-treesitter", branch = "main", build = ":TSUpdate", opts = {ensure_installed = {"comment", "regex"}}, config = _2_, lazy = false}}

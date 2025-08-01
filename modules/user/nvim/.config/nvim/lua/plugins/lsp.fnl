@@ -3,8 +3,6 @@
 (local util (autoload :util))
 (local wk (autoload :which-key))
 (local builtin (autoload :telescope.builtin))
-(local lspconfig (autoload :lspconfig))
-(local lsp-ui-window (autoload :lspconfig.ui.windows))
 (local nvim-lightbulb (autoload :nvim-lightbulb))
 (local cmp-nvim-lsp (autoload :cmp_nvim_lsp))
 
@@ -63,29 +61,18 @@
   :opts {; LSP Servers
          ; Put the lsp server (following the nvim-lspconfig naming)
          ; along with any associated config
-         :servers {}
-         ; (optional) Override setup function for lsp server
-         ; Defaults to lspconfig setup function
-         :setup {}}
+         :servers {}}
   :config (fn [_ opts]
-            (set lsp-ui-window.default_options {:border "rounded"})
-
             (util.lsp.on-attach
               (fn [_client bufnr]
                 (setup-mappings bufnr)))
 
-            ; TODO: Allow lsp servers to not use default functionality
-            ; TODO: Have some way of the other plugins setting this up
-            (let [capabilities (vim.tbl_deep_extend "force"
-                                 {}
-                                 (vim.lsp.protocol.make_client_capabilities)
-                                 (cmp-nvim-lsp.default_capabilities)
-                                 (or opts.capabilities {}))]
-              (each [server server-opts (pairs opts.servers)]
-                (let [final-server-opts
-                      (vim.tbl_deep_extend "force"
-                        {:capabilities (vim.deepcopy capabilities)}
-                        (or server-opts {}))]
-                  (if (. opts :setup server)
-                    ((. opts :setup server) server final-server-opts)
-                    ((. lspconfig server :setup) final-server-opts))))))}]
+            (vim.lsp.config :*
+              {:capabilities (vim.tbl_deep_extend "force"
+                               {}
+                               (vim.lsp.protocol.make_client_capabilities)
+                               (cmp-nvim-lsp.default_capabilities)
+                               (or opts.capabilities {}))})
+
+            (each [server server-opts (pairs opts.servers)]
+              (vim.lsp.config server (or server-opts {}))))}]

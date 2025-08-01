@@ -1,21 +1,23 @@
 ; plugins/treesitter.fnl
 (local {: autoload} (require :nfnl.module))
-(local nvim-treesitter-config (autoload :nvim-treesitter.configs))
+(local ts (autoload :nvim-treesitter))
+(local Set (autoload :util.set))
 
 [{1 :nvim-treesitter/nvim-treesitter
-  ;:dir "~/prog/prog/assorted/nvim-treesitter"}]
+  ;:dir "~/prog/prog/assorted/nvim-treesitter"
+  :lazy false
+  :branch :main
   :build ":TSUpdate"
-  :dependencies [{1 :nvim-treesitter/playground
-                  :cmd "TSPlaygroundToggle"}]
-  :opts {:ensure_installed ["comment" "regex"]
-         :auto_install true
-
-         :highlight {:enable true}
-         :indent {:enable false}
-
-         ;:playground {:enable true}
-         :query_linter {:enable true
-                        :use_virtual_text true
-                        :lint_events [:BufWrite :CursorHold]}}
+  :opts {:ensure_installed ["comment" "regex"]}
   :config (fn [_ opts]
-            (nvim-treesitter-config.setup opts))}]
+            (let [available (Set.from (ts.get_available))]
+              ; Recreate ensure_installed
+              (ts.install opts.ensure_installed)
+
+              ; Recreate auto_install
+              (each [lang _ (pairs available)]
+                (vim.api.nvim_create_autocmd :FileType
+                  {:pattern (vim.treesitter.language.get_filetypes lang)
+                   :callback (fn [ev]
+                               (-> (ts.install lang)
+                                   (: :await #(vim.treesitter.start ev.buf lang))))}))))}]

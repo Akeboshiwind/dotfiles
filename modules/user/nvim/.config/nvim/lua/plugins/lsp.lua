@@ -1,11 +1,9 @@
--- [nfnl] Compiled from lua/plugins/lsp.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] lua/plugins/lsp.fnl
 local _local_1_ = require("nfnl.module")
 local autoload = _local_1_["autoload"]
 local util = autoload("util")
 local wk = autoload("which-key")
 local builtin = autoload("telescope.builtin")
-local lspconfig = autoload("lspconfig")
-local lsp_ui_window = autoload("lspconfig.ui.windows")
 local nvim_lightbulb = autoload("nvim-lightbulb")
 local cmp_nvim_lsp = autoload("cmp_nvim_lsp")
 local function setup_mappings(bufnr)
@@ -31,20 +29,14 @@ local function _4_()
   return util.lsp["on-attach"](_5_)
 end
 local function _7_(_, opts)
-  lsp_ui_window.default_options = {border = "rounded"}
   local function _8_(_client, bufnr)
     return setup_mappings(bufnr)
   end
   util.lsp["on-attach"](_8_)
-  local capabilities = vim.tbl_deep_extend("force", {}, vim.lsp.protocol.make_client_capabilities(), cmp_nvim_lsp.default_capabilities(), (opts.capabilities or {}))
+  vim.lsp.config("*", {capabilities = vim.tbl_deep_extend("force", {}, vim.lsp.protocol.make_client_capabilities(), cmp_nvim_lsp.default_capabilities(), (opts.capabilities or {}))})
   for server, server_opts in pairs(opts.servers) do
-    local final_server_opts = vim.tbl_deep_extend("force", {capabilities = vim.deepcopy(capabilities)}, (server_opts or {}))
-    if opts.setup[server] then
-      opts.setup[server](server, final_server_opts)
-    else
-      lspconfig[server].setup(final_server_opts)
-    end
+    vim.lsp.config(server, (server_opts or {}))
   end
   return nil
 end
-return {{"j-hui/fidget.nvim", event = "LspAttach", opts = {}}, {"kosayoda/nvim-lightbulb", init = _4_}, {"neovim/nvim-lspconfig", dependencies = {"williamboman/mason-lspconfig.nvim", "folke/which-key.nvim", "nvim-telescope/telescope.nvim"}, opts = {servers = {}, setup = {}}, config = _7_}}
+return {{"j-hui/fidget.nvim", event = "LspAttach", opts = {}}, {"kosayoda/nvim-lightbulb", init = _4_}, {"neovim/nvim-lspconfig", dependencies = {"williamboman/mason-lspconfig.nvim", "folke/which-key.nvim", "nvim-telescope/telescope.nvim"}, opts = {servers = {}}, config = _7_}}

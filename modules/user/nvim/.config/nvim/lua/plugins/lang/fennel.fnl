@@ -25,9 +25,7 @@
  {1 :neovim/nvim-lspconfig
   :opts {:servers
          {:fennel_language_server
-          {:filetypes [:fennel]
-           :root_dir (lspconfig.util.root_pattern "lua" "fnl")
-           :single_file_support true
+          {:single_file_support true
            :settings
            {:fennel
             {:diagnostics {:globals [:jit :comment 
