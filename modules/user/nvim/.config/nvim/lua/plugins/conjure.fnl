@@ -1,6 +1,7 @@
 ; plugins/conjure.fnl
 (local {: autoload} (require :nfnl.module))
 (local wk (autoload :which-key))
+(local cfg (autoload :util.cfg))
 
 [{1 :PaterJason/cmp-conjure
   :dependencies [:hrsh7th/nvim-cmp]}
@@ -9,16 +10,15 @@
   :branch "main"
   :ft ["python"]
   :dependencies [:PaterJason/cmp-conjure]
-  :opts {:config
-         {"mapping#prefix" "<leader>"
-          "client#clojure#nrepl#refresh#backend" "clj-reload"
-          ; Briefly highlight evaluated forms
-          "highlight#enabled" true}}
-  :config (fn [_ opts]
+  :conjure/config {"mapping#prefix" "<leader>"
+                   "client#clojure#nrepl#refresh#backend" "clj-reload"
+                   ; Briefly highlight evaluated forms
+                   "highlight#enabled" true}
+  :config (fn [_ _ G]
             ; >> Configure
-            (each [k v (pairs opts.config)]
+            (each [k v (pairs (cfg.merge-all G.conjure/config))]
               (tset vim.g (string.format "conjure#%s" k) v))
-            ; >> Which-key groups
+            ; >> Which-keY groups
             (wk.add
               [{1 "<leader>c" :group "display as comment"}
                {1 "<leader>e" :group "eval"}

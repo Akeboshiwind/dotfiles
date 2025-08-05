@@ -1,4 +1,4 @@
--- [nfnl] Compiled from lua/plugins/which-key.fnl by https://github.com/Olical/nfnl, do not edit.
+-- [nfnl] lua/plugins/which-key.fnl
 local _local_1_ = require("nfnl.module")
 local autoload = _local_1_["autoload"]
 local wk = autoload("which-key")

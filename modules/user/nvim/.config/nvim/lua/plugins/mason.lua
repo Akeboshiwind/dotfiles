@@ -5,7 +5,8 @@ local fun = autoload("vend.luafun")
 local mason = autoload("mason")
 local mason_lspconfig = autoload("mason-lspconfig")
 local mr = autoload("mason-registry")
-local function _2_(_, opts)
+local cfg = autoload("util.cfg")
+local function _2_(_, opts, G)
   mason.setup(opts)
   mason_lspconfig.setup(opts["mason-lspconfig"])
   local function _3_()
@@ -21,8 +22,8 @@ local function _2_(_, opts)
     local function _7_(_tool, install_3f)
       return install_3f
     end
-    return fun.each(_4_, fun.filter(_5_, fun.map(_6_, fun.filter(_7_, fun.iter(opts["ensure-installed"])))))
+    return fun.each(_4_, fun.filter(_5_, fun.map(_6_, fun.filter(_7_, fun.iter(cfg["flatten-1"](G["mason/ensure-installed"]))))))
   end
   return mr.refresh(_3_)
 end
-return {{"mason-org/mason.nvim", dependencies = {"mason-org/mason-lspconfig.nvim"}, opts = {["ensure-installed"] = {}, ["mason-lspconfig"] = {}}, config = _2_}}
+return {{"mason-org/mason.nvim", dependencies = {"mason-org/mason-lspconfig.nvim"}, ["mason/ensure-installed"] = {}, opts = {["mason-lspconfig"] = {}}, config = _2_}}

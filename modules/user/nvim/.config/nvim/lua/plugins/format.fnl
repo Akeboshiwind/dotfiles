@@ -2,6 +2,7 @@
 (local {: autoload} (require :nfnl.module))
 (local {: get : assoc} (autoload :nfnl.core))
 (local conform (autoload :conform))
+(local cfg (autoload :util.cfg))
 
 (local create-command vim.api.nvim_create_user_command)
 (var enabled true)
@@ -21,15 +22,20 @@
   :event [:BufWritePre]
   :cmd [:ConformInfo]
   :keys [{1 "<leader>F" 2 #(conform.format) :desc "Format buffer"}]
-  :opts {:formatters_by_ft {}
-         :formatters {}
-         :no_format_on_save {}
-         :format_on_save {:lsp_fallback true
+  :format/by-ft {}
+  :format/formatters {}
+  :format/no-on-save {}
+  :opts {:format_on_save {:lsp_fallback true
                           :timeout_ms 500}}
-  :config (fn [_ opts]
-            (let [format-on-save (get opts :format_on_save {})]
-              (-> opts
-                  (assoc :format_on_save #(let [ft (vim.api.nvim_buf_get_option $ "filetype")]
-                                            (when (and enabled (not (get opts.no_format_on_save ft)))
-                                              format-on-save)))
-                  (conform.setup))))}]
+  :config (fn [_ opts G]
+            (let [format-on-save (or opts.format_on_save {})
+                  no-format-on-save (cfg.merge-all G.format/no-on-save)
+                  format-on-save-fn
+                  #(let [ft (vim.api.nvim_buf_get_option $ "filetype")]
+                     (when (and enabled (not (get no-format-on-save ft)))
+                       format-on-save))]
+              (conform.setup
+                (-> opts
+                    (assoc :format_on_save format-on-save-fn)
+                    (assoc :formatters_by_ft (cfg.merge-all G.format/by-ft))
+                    (assoc :formatters (cfg.merge-all G.format/formatters))))))}]

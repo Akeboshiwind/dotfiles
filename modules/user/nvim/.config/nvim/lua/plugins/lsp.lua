@@ -6,6 +6,7 @@ local wk = autoload("which-key")
 local builtin = autoload("telescope.builtin")
 local nvim_lightbulb = autoload("nvim-lightbulb")
 local cmp_nvim_lsp = autoload("cmp_nvim_lsp")
+local cfg = autoload("util.cfg")
 local function setup_mappings(bufnr)
   local filetype = vim.bo[bufnr].filetype
   if (filetype ~= "clojure") then
@@ -28,15 +29,15 @@ local function _4_()
   end
   return util.lsp["on-attach"](_5_)
 end
-local function _7_(_, opts)
+local function _7_(_, _0, G)
   local function _8_(_client, bufnr)
     return setup_mappings(bufnr)
   end
   util.lsp["on-attach"](_8_)
-  vim.lsp.config("*", {capabilities = vim.tbl_deep_extend("force", {}, vim.lsp.protocol.make_client_capabilities(), cmp_nvim_lsp.default_capabilities(), (opts.capabilities or {}))})
-  for server, server_opts in pairs(opts.servers) do
+  vim.lsp.config("*", {capabilities = vim.tbl_deep_extend("force", {}, vim.lsp.protocol.make_client_capabilities(), cmp_nvim_lsp.default_capabilities(), cfg["merge-all"]((G["lsp/capabilities"] or {})))})
+  for server, server_opts in pairs(cfg["merge-all"](G["lsp/servers"])) do
     vim.lsp.config(server, (server_opts or {}))
   end
   return nil
 end
-return {{"j-hui/fidget.nvim", event = "LspAttach", opts = {}}, {"kosayoda/nvim-lightbulb", init = _4_}, {"neovim/nvim-lspconfig", dependencies = {"williamboman/mason-lspconfig.nvim", "folke/which-key.nvim", "nvim-telescope/telescope.nvim"}, opts = {servers = {}}, config = _7_}}
+return {{"j-hui/fidget.nvim", event = "LspAttach", opts = {}}, {"kosayoda/nvim-lightbulb", init = _4_}, {"neovim/nvim-lspconfig", dependencies = {"williamboman/mason-lspconfig.nvim", "folke/which-key.nvim", "nvim-telescope/telescope.nvim"}, ["lsp/servers"] = {}, config = _7_}}

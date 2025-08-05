@@ -2,17 +2,18 @@
 (local {: autoload} (require :nfnl.module))
 (local ts (autoload :nvim-treesitter))
 (local Set (autoload :util.set))
+(local cfg (autoload :util.cfg))
 
 [{1 :nvim-treesitter/nvim-treesitter
   ;:dir "~/prog/prog/assorted/nvim-treesitter"
   :lazy false
   :branch :main
   :build ":TSUpdate"
-  :opts {:ensure_installed ["comment" "regex"]}
-  :config (fn [_ opts]
+  :treesitter/ensure-installed [:comment :regex]
+  :config (fn [_ _ G]
             (let [available (Set.from (ts.get_available))]
               ; Recreate ensure_installed
-              (ts.install opts.ensure_installed)
+              (ts.install (cfg.flatten-1 G.treesitter/ensure-installed))
 
               ; Recreate auto_install
               (each [lang _ (pairs available)]

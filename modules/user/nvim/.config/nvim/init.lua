@@ -13,19 +13,39 @@ end
 ensure("folke", "lazy.nvim", "stable")
 ensure("Olical", "nfnl")
 local lazy = require("lazy")
-lazy.setup("plugins", {dev = {path = "~/prog/prog/nvim/"}, ui = {border = "single", icons = {cmd = "\226\140\152", config = "\240\159\155\160", event = "\240\159\147\133", ft = "\240\159\147\130", init = "\226\154\153", keys = "\240\159\151\157", plugin = "\240\159\148\140", runtime = "\240\159\146\187", source = "\240\159\147\132", start = "\240\159\154\128", task = "\240\159\147\140"}}, checker = {enabled = true, check_pinned = true}, performance = {rtp = {disabled_plugins = {"gzip", "matchit", "matchparen", "netrwPlugin", "tarPlugin", "tohtml", "tutor", "zipPlugin"}}}})
+local _local_2_ = require("nfnl.core")
+local map = _local_2_["map"]
+local filter = _local_2_["filter"]
+local update = _local_2_["update"]
+local cfg = require("util.cfg")
+do
+  local path = "plugins"
+  local configs = map(cfg["ensure-table"], cfg["flatten-1"](map(require, cfg["find-modules"](path, true))))
+  local G = cfg["group-by-key"](configs)
+  local plugins
+  local function _3_(_241)
+    local function _4_(_2410)
+      return cfg["wrap-config"](_2410, G)
+    end
+    return update(_241, "config", _4_)
+  end
+  plugins = map(_3_, filter(cfg["plugin?"], configs, configs))
+  lazy.setup(plugins, {dev = {path = "~/prog/prog/nvim/"}, ui = {border = "single", icons = {cmd = "\226\140\152", config = "\240\159\155\160", event = "\240\159\147\133", ft = "\240\159\147\130", init = "\226\154\153", keys = "\240\159\151\157", plugin = "\240\159\148\140", runtime = "\240\159\146\187", source = "\240\159\147\132", start = "\240\159\154\128", task = "\240\159\147\140"}}, checker = {enabled = true, check_pinned = true}, performance = {rtp = {disabled_plugins = {"gzip", "matchit", "matchparen", "netrwPlugin", "tarPlugin", "tohtml", "tutor", "zipPlugin"}}}})
+  local colorscheme = cfg.only(G.colorscheme)
+  vim.cmd(("colorscheme " .. colorscheme))
+end
 _G.P = function(...)
   return print(vim.inspect(...))
 end
 vim.api.nvim_create_user_command("Nohl", "nohl", {})
-local function _2_(opts)
+local function _5_(opts)
   local width = tonumber(opts.args)
   vim.bo.tabstop = width
   vim.bo.shiftwidth = width
   vim.bo.softtabstop = width
   return nil
 end
-vim.api.nvim_create_user_command("Tab", _2_, {nargs = 1, desc = "Set tab width for current buffer"})
+vim.api.nvim_create_user_command("Tab", _5_, {nargs = 1, desc = "Set tab width for current buffer"})
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 vim.opt.splitright = true

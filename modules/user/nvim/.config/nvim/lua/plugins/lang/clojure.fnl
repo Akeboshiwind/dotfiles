@@ -46,28 +46,22 @@
                          true)))})]
     (picker:find)))
 
-[{1 :williamboman/mason.nvim
-  :opts {:ensure-installed {:zprint true}}}
- {1 :stevearc/conform.nvim
-  :opts {:formatters_by_ft {:clojure [:zprint]}
-         :no_format_on_save {:clojure true}}}
- {1 :neovim/nvim-lspconfig
-  :opts {:servers
-         {:clojure_lsp
-          {:init_options
-           {"cljfmt-config-path"
-            (.. (vim.fn.stdpath "config")
-                "/config/.cljfmt.edn")}}}}}
+[{:fold/queries
+  {:clojure
+   "(list_lit
+      . (sym_lit name: (sym_name) @_fn)
+      (#match? @_fn \"^(deftest-?|use-fixtures|defn-?|defmethod|defmacro)$\")) @fold.custom"}
+  :mason/ensure-installed [:zprint]
+  :format/by-ft {:clojure [:zprint]}
+  :format/no-on-save {:clojure true}
+  :lsp/servers {:clojure_lsp
+                {:init_options
+                 {"cljfmt-config-path"
+                  (.. (vim.fn.stdpath "config")
+                      "/config/.cljfmt.edn")}}}}
  ;; TODO: Move to lisp specific?
  {1 :eraserhd/parinfer-rust
   :build "cargo build --release"}
- {1 :kevinhwang91/nvim-ufo
-  :opts
-  {:fold-queries
-   {:clojure
-    "(list_lit
-       . (sym_lit name: (sym_name) @_fn)
-       (#match? @_fn \"^(deftest-?|use-fixtures|defn-?|defmethod|defmacro)$\")) @fold.custom"}}}
  {1 :Olical/conjure
   :ft ["clojure"]
   :keys [{1 "<leader>eg"
@@ -93,9 +87,9 @@
                    (string.format "(nextjournal.clerk/show! \"%s\")" filename))))
           :desc "clerk/show!"}
          {1 "<leader>sS" 2 shadow-select :desc "Conjure Select Shadowcljs Environment"}]
-  :opts {:config
-         {; Disable the mapping for selecting a session as that collides with searching)
-          ; files within a project
-          "client#clojure#nrepl#mapping#session_select" false
-          ; Disable auto-starting a babashka repl
-          "client#clojure#nrepl#connection#auto_repl#enabled" false}}}]
+  :conjure/config
+  {; Disable the mapping for selecting a session as that collides with searching)
+   ; files within a project
+   "client#clojure#nrepl#mapping#session_select" false
+   ; Disable auto-starting a babashka repl
+   "client#clojure#nrepl#connection#auto_repl#enabled" false}}]

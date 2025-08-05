@@ -5,6 +5,7 @@
 (local builtin (autoload :telescope.builtin))
 (local nvim-lightbulb (autoload :nvim-lightbulb))
 (local cmp-nvim-lsp (autoload :cmp_nvim_lsp))
+(local cfg (autoload :util.cfg))
 
 ; Register Generic LSP mapings
 (fn setup-mappings [bufnr]
@@ -58,11 +59,11 @@
   :dependencies [:williamboman/mason-lspconfig.nvim
                  :folke/which-key.nvim
                  :nvim-telescope/telescope.nvim]
-  :opts {; LSP Servers
-         ; Put the lsp server (following the nvim-lspconfig naming)
-         ; along with any associated config
-         :servers {}}
-  :config (fn [_ opts]
+  ; >> lsp/servers server-name->opts
+  ; Put the lsp server (following the nvim-lspconfig naming)
+  ; along with any associated config
+  :lsp/servers {}
+  :config (fn [_ _ G]
             (util.lsp.on-attach
               (fn [_client bufnr]
                 (setup-mappings bufnr)))
@@ -72,7 +73,7 @@
                                {}
                                (vim.lsp.protocol.make_client_capabilities)
                                (cmp-nvim-lsp.default_capabilities)
-                               (or opts.capabilities {}))})
+                               (cfg.merge-all (or G.lsp/capabilities [])))})
 
-            (each [server server-opts (pairs opts.servers)]
+            (each [server server-opts (pairs (cfg.merge-all G.lsp/servers))]
               (vim.lsp.config server (or server-opts {}))))}]

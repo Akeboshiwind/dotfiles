@@ -3,42 +3,45 @@
 (local {: update : kv-pairs : reduce : table? : get : assoc} (autoload :nfnl.core))
 (local util (autoload :util))
 (local lint (autoload :lint))
+(local cfg (autoload :util.cfg))
 
-[{1 :williamboman/mason.nvim
-  :opts {:ensure-installed {:commitlint true}}}
+[{:mason/ensure-installed [:commitlint]}
 
  {1 :mfussenegger/nvim-lint
+  ; >> lint/by-ft ft->linter
+  ; Add new linters here
+  :lint/by-ft {:gitcommit [:commitlint]}
+  ; >> lint/linters linter->config
+  ; Linter Settings
+  ; You can override the settings of a linter here
+  ; You can also add linters unknown to nvim-lint
+  ; An additional setting :condition is supported which only runs the linter when it returns true
+  ; It is passed a single argument, a table with the keys :filename and :dirname
+  ; For example, only run when the parents contain .github/workflows:
+  ; (fn [{: dirname}]
+  ;   (string.match dirname ".github/workflows")
+  :lint/linters
+  {:commitlint
+   {:args ["--config"
+           (.. (vim.fn.stdpath "config")
+               "/config/commitlint.config.js")
+           "--extends"
+           (.. (vim.fn.stdpath "data")
+               "/mason/packages/commitlint/node_modules/@commitlint/config-conventional")]}}
   :opts {; Event to trigger linters
-         :events [:BufWritePost :BufReadPost :InsertLeave]
-         ; Linters by Filetype
-         ; Add new linters here
-         :linters_by_ft {:gitcommit ["commitlint"]}
-         ; Linter Settings
-         ; You can override the settings of a linter here
-         ; You can also add linters unknown to nvim-lint
-         ; An additional setting :condition is supported which only runs the linter when it returns true
-         ; It is passed a single argument, a table with the keys :filename and :dirname
-         ; For example, only run when the parents contain .github/workflows:
-         ; (fn [{: dirname}]
-         ;   (string.match dirname ".github/workflows")
-         :linters {:commitlint
-                   {:args ["--config"
-                           (.. (vim.fn.stdpath "config")
-                               "/config/commitlint.config.js")
-                           "--extends"
-                           (.. (vim.fn.stdpath "data")
-                               "/mason/packages/commitlint/node_modules/@commitlint/config-conventional")]}}}
-  :config (fn [_ opts]
+         :events [:BufWritePost :BufReadPost :InsertLeave]}
+  :config (fn [_ opts G]
             ; Add new linters or override existing ones
-            (->> opts.linters
-                 kv-pairs
-                 (reduce (fn [acc [name linter]]
-                           (if (and (table? linter) (get acc name))
-                             (update acc name #(vim.tbl_deep_extend "force" $ linter))
-                             (assoc acc name linter)))
-                         lint.linters))
+            (reduce (fn [acc [name linter]]
+                      (if (and (table? linter) (get acc name))
+                        (update acc name #(vim.tbl_deep_extend "force" $ linter))
+                        (assoc acc name linter)))
+                    lint.linters
+                    (->> G.lint/linters
+                         cfg.merge-all
+                         kv-pairs))
 
-            (assoc lint :linters_by_ft opts.linters_by_ft)
+            (assoc lint :linters_by_ft (cfg.merge-all G.lint/by-ft))
 
             ; src: https://github.com/LazyVim/LazyVim/blob/a50f92f7550fb6e9f21c0852e6cb190e6fcd50f5/lua/lazyvim/plugins/linting.lua#L55
             ; Same as all of this tbh 😅

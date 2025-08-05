@@ -8,6 +8,7 @@ local merge = _local_2_["merge"]
 local ufo = autoload("ufo")
 local ts_provider = autoload("ufo.provider.treesitter")
 local foldingrange = autoload("ufo.model.foldingrange")
+local cfg = autoload("util.cfg")
 local function query_folds(bufnr, ft__3equery)
   local ft = vim.api.nvim_get_option_value("filetype", {buf = bufnr})
   local query_str = get(ft__3equery, ft)
@@ -50,7 +51,7 @@ local function treesitter_2bqueries(ft__3equery)
   end
   return _8_
 end
-local function _9_(_, opts)
+local function _9_(_, _0, G)
   vim.opt.foldenable = true
   vim.opt.foldcolumn = "0"
   vim.opt.foldlevel = 99
@@ -61,7 +62,7 @@ local function _9_(_, opts)
   local _10_
   do
     local tbl_16_ = {}
-    for lang, kinds in pairs(opts["close-kinds"]) do
+    for lang, kinds in pairs(cfg["merge-all"](G["fold/close-kinds"])) do
       local k_17_, v_18_ = lang, concat(kinds, default_close_kinds)
       if ((k_17_ ~= nil) and (v_18_ ~= nil)) then
         tbl_16_[k_17_] = v_18_
@@ -72,7 +73,7 @@ local function _9_(_, opts)
   end
   close_kinds = merge(_10_, {default = default_close_kinds})
   local function _12_(_bufnr, _filetype, _buftype)
-    return {treesitter_2bqueries(opts["fold-queries"]), "indent"}
+    return {treesitter_2bqueries(cfg["merge-all"](G["fold/queries"])), "indent"}
   end
   return ufo.setup({provider_selector = _12_, open_fold_hl_timeout = 100, close_fold_kinds_for_ft = close_kinds})
 end
@@ -82,4 +83,4 @@ end
 local function _14_()
   return ufo.closeAllFolds()
 end
-return {{"kevinhwang91/nvim-ufo", dependencies = {"kevinhwang91/promise-async"}, opts = {["fold-queries"] = {}, ["close-kinds"] = {}}, config = _9_, keys = {{"zR", _13_, mode = {"n"}, desc = "Open All Folds"}, {"zM", _14_, mode = {"n"}, desc = "Close All Folds"}}, lazy = false}}
+return {{"kevinhwang91/nvim-ufo", dependencies = {"kevinhwang91/promise-async"}, ["fold/queries"] = {}, ["fold/close-kinds"] = {}, config = _9_, keys = {{"zR", _13_, mode = {"n"}, desc = "Open All Folds"}, {"zM", _14_, mode = {"n"}, desc = "Close All Folds"}}, lazy = false}}

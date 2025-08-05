@@ -26,30 +26,44 @@
 (ensure :Olical :nfnl)
 
 (local lazy (require "lazy"))
-(lazy.setup "plugins"
-            {:dev {:path "~/prog/prog/nvim/"}
-             :ui {:border :single
-                  :icons {:cmd "⌘"
-                          :config "🛠"
-                          :event "📅"
-                          :ft "📂"
-                          :init "⚙"
-                          :keys "🗝"
-                          :plugin "🔌"
-                          :runtime "💻"
-                          :source "📄"
-                          :start "🚀"
-                          :task "📌"}}
-             :checker {:enabled true
-                       :check_pinned true}
-             :performance {:rtp {:disabled_plugins ["gzip"
-                                                    "matchit"
-                                                    "matchparen"
-                                                    "netrwPlugin"
-                                                    "tarPlugin"
-                                                    "tohtml"
-                                                    "tutor"
-                                                    "zipPlugin"]}}})
+(local {: map : filter : update} (require :nfnl.core))
+(local cfg (require :util.cfg))
+
+(let [path "plugins"
+      configs (->> (cfg.find-modules path true)
+                   (map require)
+                   cfg.flatten-1
+                   (map cfg.ensure-table))
+      G (cfg.group-by-key configs)
+      plugins (->> configs
+                   (filter cfg.plugin? configs)
+                   (map #(update $ :config #(cfg.wrap-config $ G))))]
+  (lazy.setup plugins
+              {:dev {:path "~/prog/prog/nvim/"}
+               :ui {:border :single
+                    :icons {:cmd "⌘"
+                            :config "🛠"
+                            :event "📅"
+                            :ft "📂"
+                            :init "⚙"
+                            :keys "🗝"
+                            :plugin "🔌"
+                            :runtime "💻"
+                            :source "📄"
+                            :start "🚀"
+                            :task "📌"}}
+               :checker {:enabled true
+                         :check_pinned true}
+               :performance {:rtp {:disabled_plugins ["gzip"
+                                                      "matchit"
+                                                      "matchparen"
+                                                      "netrwPlugin"
+                                                      "tarPlugin"
+                                                      "tohtml"
+                                                      "tutor"
+                                                      "zipPlugin"]}}})
+  (let [colorscheme (cfg.only G.colorscheme)]
+    (vim.cmd (.. "colorscheme " colorscheme))))
 
 
 

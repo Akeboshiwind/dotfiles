@@ -5,6 +5,7 @@
 (local actions (autoload :telescope.actions))
 (local file-browser-actions (autoload :telescope._extensions.file_browser.actions))
 (local wk (autoload :which-key))
+(local cfg (autoload :util.cfg))
 
 [{1 :nvim-telescope/telescope-fzf-native.nvim
   :build "make"}
@@ -48,7 +49,7 @@
          {1 "<leader>fB" 2 "<cmd>Telescope builtin<CR>" :desc "Builtins"}
 
          ; >> search
-         {1"<leader>ss" 2 "<cmd>Telescope live_grep<CR>" :desc "Search project file contents"}
+         {1 "<leader>ss" 2 "<cmd>Telescope live_grep<CR>" :desc "Search project file contents"}
          {1 "<leader>sr"
           2 #(let [; % gets the current buffer's path
                    ; :h gets the full path
@@ -78,6 +79,12 @@
 
          ; >> Git
          {1 "<leader>Gb" 2 "<cmd>Telescope git_branches<CR>" :desc "Branches"}]
+  :telescope/extensions
+  {:fzf {}
+   :ui-select {}
+   :emoji {:action #(vim.api.nvim_put [$.value] :c false true)}
+   :file_browser {:mappings
+                  {:i {"<C-c>" (fn [...] (file-browser-actions.create_from_prompt ...))}}}}
   :opts {:defaults
          {:mappings
           {:i {; Normally when you press <esc> it puts you in normal mode in
@@ -88,19 +95,13 @@
                "<C-k>" (fn [...] (actions.move_selection_previous ...))
 
                ; Show the mappings for the current picker
-               "<C-h>" (fn [...] actions.which_key ...)}}}
-         :extensions
-         {:fzf {}
-          :ui-select {}
-          :emoji {:action #(vim.api.nvim_put [$.value] :c false true)}
-          :file_browser {:mappings
-                         {:i {"<C-c>" (fn [...] (file-browser-actions.create_from_prompt ...))}}}}}
-  :config (fn [_ opts]
+               "<C-h>" (fn [...] actions.which_key ...)}}}}
+  :config (fn [_ opts G]
             ;; >> Setup
             (telescope.setup opts)
 
             ;; >> Add Telescope Extensions
-            (each [extension _cfg (pairs opts.extensions)]
+            (each [extension _cfg (pairs (cfg.merge-all G.telescope/extensions))]
               (telescope.load_extension extension))
             ; >> Which-key groups
             (wk.add

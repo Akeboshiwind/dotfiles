@@ -1,7 +1,6 @@
 ; plugins/ui.fnl
 (local {: autoload} (require :nfnl.module))
 (local util (autoload :util))
-(local kanagawa (autoload :kanagawa))
 (local lazy-status (autoload :lazy.status))
 (local notify (autoload :notify))
 (local nvim-tmux-navigation (autoload :nvim-tmux-navigation))
@@ -9,13 +8,10 @@
 [{1 :rebelot/kanagawa.nvim
   :enable true
   :priority 1000 ; Load early
-  :config #(do
-             (kanagawa.setup
-               {; dim inactive window `:h hl-NormalNC`
-                :dimInactive true
-                :overrides (fn [_]
-                             {"@comment.todo" {:link "@comment.note"}})})
-             (vim.cmd "colorscheme kanagawa"))}
+  :colorscheme :kanagawa
+  :opts {; dim inactive window `:h hl-NormalNC`
+         :dimInactive true
+         :overrides #{"@comment.todo" {:link "@comment.note"}}}}
 
  {1 :nvim-lualine/lualine.nvim
   :dependencies [:kyazdani42/nvim-web-devicons]

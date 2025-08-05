@@ -4,6 +4,7 @@
 (local ufo (autoload :ufo))
 (local ts-provider (autoload :ufo.provider.treesitter))
 (local foldingrange (autoload :ufo.model.foldingrange))
+(local cfg (autoload :util.cfg))
 
 ; NOTE: The best way to write a query is to use :EditQuery in a buffer with what you want to fold
 
@@ -40,11 +41,13 @@
 [{1 :kevinhwang91/nvim-ufo
   :dependencies [:kevinhwang91/promise-async]
   :lazy false
-  :opts {; Auto-fold things these queries mark with @fold.custom or @fold.test
-         :fold-queries {}
-         ; Auto-fold these treesitter node types
-         :close-kinds {}}
-  :config (fn [_ opts]
+  ; >> Fold/queries ft->query
+  ; Auto-fold things these queries mark with @fold.custom or @fold.test
+  :fold/queries {}
+  ; >> Fold/close-kinds ft->kinds[]
+  ; Auto-fold these treesitter node types
+  :fold/close-kinds {}
+  :config (fn [_ _ G]
             (set vim.opt.foldenable true)
 
             ;; How folds look
@@ -57,13 +60,13 @@
             (set vim.opt.foldopen "") ; disable vim auto-opening folds (e.g. '[' and search)
 
             (let [default-close-kinds [:fold.custom :fold.test]
-                  close-kinds (merge (collect [lang kinds (pairs opts.close-kinds)]
+                  close-kinds (merge (collect [lang kinds (pairs (cfg.merge-all G.fold/close-kinds))]
                                        (values lang (concat kinds default-close-kinds)))
                                      {:default default-close-kinds})]
               (ufo.setup
                 {:provider_selector
                  (fn [_bufnr _filetype _buftype]
-                   [(treesitter+queries opts.fold-queries)
+                   [(treesitter+queries (cfg.merge-all G.fold/queries))
                     :indent])
                  :open_fold_hl_timeout 100
                  :close_fold_kinds_for_ft close-kinds})))
