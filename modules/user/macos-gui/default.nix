@@ -8,7 +8,6 @@
     "raycast"
     "orbstack" #"docker-desktop"
     "obsidian"
-    "claude"
   ];
 
   homebrew.masApps = {
