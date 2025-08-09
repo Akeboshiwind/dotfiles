@@ -59,10 +59,8 @@ vim.filetype.add({extension = {mdx = "markdown"}, filename = {Jenkinsfile = "gro
 vim.opt.signcolumn = "yes"
 vim.cmd("highlight! link SignColumn LineNr")
 do
-  local sign__3esymbol = {DiagnosticSignError = "\238\170\135", DiagnosticSignWarn = "\238\169\172", DiagnosticSignInfo = "\238\169\180", DiagnosticSignHint = "\239\132\170"}
-  for sign, symbol in pairs(sign__3esymbol) do
-    vim.fn.sign_define(sign, {text = symbol, texthl = sign, linelh = "", numlh = ""})
-  end
+  local s = vim.diagnostic.severity
+  vim.diagnostic.config({signs = {text = {[s.ERROR] = "\238\170\135", [s.WARN] = "\238\169\172", [s.INFO] = "\238\169\180", [s.HINT] = "\239\132\170"}}})
 end
 if (0 ~= vim.fn.exists("+termguicolors")) then
   vim.opt.termguicolors = true

@@ -124,16 +124,12 @@
 ; TODO: Maybe move this to theme specific config?
 (vim.cmd "highlight! link SignColumn LineNr")
 
-(let [sign->symbol {:DiagnosticSignError ""
-                    :DiagnosticSignWarn ""
-                    :DiagnosticSignInfo ""
-                    :DiagnosticSignHint ""}]
-  (each [sign symbol (pairs sign->symbol)]
-    (vim.fn.sign_define sign
-                        {:text symbol
-                         :texthl sign
-                         :linelh ""
-                         :numlh ""})))
+(let [s vim.diagnostic.severity]
+  (vim.diagnostic.config
+    {:signs {:text {s.ERROR ""
+                    s.WARN ""
+                    s.INFO ""
+                    s.HINT ""}}}))
 
 
 
