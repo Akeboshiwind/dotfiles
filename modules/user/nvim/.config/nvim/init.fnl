@@ -108,22 +108,21 @@
   {:init_options {:cljfmt-config-path (.. (vim.fn.stdpath "config") "/config/.cljfmt.edn")}})
 
 (vim.lsp.config :lua_ls
-  {:settings {:Lua {:diagnostics {:globals ["vim"]}
+  {:settings {:Lua {:diagnostics {:globals [:vim]}
                     :workspace {:library (vim.api.nvim_list_runtime_paths)}}}})
 
 (vim.lsp.config :fennel_language_server
-  {:fennel_language_server
-   {:settings {:fennel {:diagnostics {:globals [:vim]}
-                        :workspace {:library (vim.api.nvim_list_runtime_paths)}}}}})
-
+  {:single_file_support true
+   :settings {:fennel {:diagnostics {:globals [:vim]}
+                       :workspace {:library (vim.api.nvim_list_runtime_paths)}}}})
 
 
 ;; >> Completion Keymaps
 
-;(vim.keymap.set :i :<C-Space> vim.lsp.completion.get)
-(vim.keymap.set :i :<Tab> :<C-n>)
-(vim.keymap.set :i :<S-Tab> :<C-p>)
-(vim.keymap.set :i :<C-l> vim.lsp.inline_completion.get)
+(vim.keymap.set :i :<C-Space> :<C-x><C-o>)
+(vim.keymap.set :i :<Tab> #(if (not= 0 (vim.fn.pumvisible)) :<C-n> :<Tab>) {:expr true})
+(vim.keymap.set :i :<S-Tab> #(if (not= 0 (vim.fn.pumvisible)) :<C-p> :<C-d>) {:expr true})
+(vim.keymap.set :i :<C-y> vim.lsp.inline_completion.get)
 
 
 
