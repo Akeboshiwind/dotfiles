@@ -154,7 +154,8 @@
       telescope-actions (autoload :telescope.actions)
       telescope-builtin (autoload :telescope.builtin)]
   (lazy.setup
-    [;; >> LSP & Language Support
+    [{1 :Olical/nfnl
+      :ft :fennel}
 
 
      ;; >> LSP & Language Support
