@@ -2,6 +2,8 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
+
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -18,7 +20,7 @@
     #       https://github.com/zhaofengli/nix-homebrew/issues/96
   };
 
-  outputs = inputs@{ self, nixpkgs, nix-darwin, ... }:
+  outputs = inputs@{ self, nixpkgs, nix-darwin, neovim-nightly-overlay, ... }:
   let
     system = "aarch64-darwin";
     pkgs = nixpkgs.legacyPackages.${system};
@@ -30,6 +32,11 @@
       modules = [
         ./modules/system/nix-darwin
         ./machines/Olivers-MacBook-Air.nix
+        {
+          nixpkgs.overlays = [
+            neovim-nightly-overlay.overlays.default
+          ];
+        }
       ];
       specialArgs = { 
         inherit self inputs system;
