@@ -111,6 +111,11 @@
   {:settings {:Lua {:diagnostics {:globals ["vim"]}
                     :workspace {:library (vim.api.nvim_list_runtime_paths)}}}})
 
+(vim.lsp.config :fennel_language_server
+  {:fennel_language_server
+   {:settings {:fennel {:diagnostics {:globals [:vim]}
+                        :workspace {:library (vim.api.nvim_list_runtime_paths)}}}}})
+
 
 
 ;; >> Completion Keymaps
@@ -323,6 +328,9 @@
      ;; >> Quality of Life
      :tpope/vim-fugitive        ; Git integration
      :arp242/auto_mkdir2.vim    ; Auto-create directories
+
+     {1 :eraserhd/parinfer-rust
+      :build "cargo build --release"}
 
      {1 :alexghergh/nvim-tmux-navigation
       :opts {}
