@@ -215,6 +215,7 @@
 
      ;; >> Clojure REPL (Essential)
      {1 :Olical/conjure
+      :branch :main
       :ft [:clojure :fennel :python]
       :keys [{1 :<leader>eg
               2 #(let [eval (require :conjure.eval)]
