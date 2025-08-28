@@ -104,10 +104,10 @@
                    (vim.lsp.inline_completion.enable true {:client_id client.id}))))})
 
 ;; Custom LSP servers (only for special cases)
-(vim.lsp.config "clojure_lsp"
+(vim.lsp.config :clojure_lsp
   {:init_options {:cljfmt-config-path (.. (vim.fn.stdpath "config") "/config/.cljfmt.edn")}})
 
-(vim.lsp.config "lua_ls"
+(vim.lsp.config :lua_ls
   {:settings {:Lua {:diagnostics {:globals ["vim"]}
                     :workspace {:library (vim.api.nvim_list_runtime_paths)}}}})
 
@@ -155,6 +155,9 @@
       telescope-builtin (autoload :telescope.builtin)]
   (lazy.setup
     [;; >> LSP & Language Support
+
+
+     ;; >> LSP & Language Support
      {1 :williamboman/mason.nvim
       :cmd "Mason"
       :keys [{1 :<leader>cm 2 :<cmd>Mason<cr> :desc "Mason"}]
@@ -204,6 +207,7 @@
                             (set vim.wo.foldexpr "v:lua.vim.treesitter.foldexpr()"))))})))}
 
 
+
      ;; >> Clojure REPL (Essential)
      {1 :Olical/conjure
       :ft [:clojure :fennel :python]
@@ -235,6 +239,8 @@
       :config (fn [_ opts]
                 (each [k v (pairs opts.config)]
                   (tset vim.g (string.format "conjure#%s" k) v)))}
+
+
 
      ;; >> File Navigation
      {1 :nvim-telescope/telescope.nvim
@@ -287,6 +293,8 @@
                 (each [name _ (pairs opts.extensions)]
                   (telescope.load_extension name)))}
 
+
+
      ;; >> UI & Theme
      {1 :rebelot/kanagawa.nvim
       :priority 1000 ; Load early
@@ -308,6 +316,8 @@
                                      :color {:fg "#ff9e64"}}]
                         :lualine_y []
                         :lualine_z [:location]}}}
+
+
 
      ;; >> Quality of Life
      :tpope/vim-fugitive        ; Git integration
