@@ -36,8 +36,8 @@ do
 end
 vim.filetype.add({extension = {mdx = "markdown"}, filename = {Jenkinsfile = "groovy"}})
 vim.opt.complete = "o,.,w,b,u,t,kspell"
-vim.opt.completeopt = {"menu", "menuone", "noselect", "fuzzy", "popup"}
-vim.opt.completefuzzycollect = "keyword,files,whole_line"
+vim.opt.completeopt = {"menu", "menuone", "popup", "noselect", "fuzzy"}
+vim.opt.completefuzzycollect = {"keyword", "files", "whole_line"}
 local function _2_(args)
   local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
   if client:supports_method("textDocument/completion") then
@@ -54,9 +54,12 @@ vim.api.nvim_create_autocmd("LspAttach", {callback = _2_})
 vim.lsp.config("clojure_lsp", {init_options = {["cljfmt-config-path"] = (vim.fn.stdpath("config") .. "/config/.cljfmt.edn")}})
 vim.lsp.config("lua_ls", {settings = {Lua = {diagnostics = {globals = {"vim"}}, workspace = {library = vim.api.nvim_list_runtime_paths()}}}})
 vim.lsp.config("fennel_language_server", {single_file_support = true, settings = {fennel = {diagnostics = {globals = {"vim"}}, workspace = {library = vim.api.nvim_list_runtime_paths()}}}})
+local function pumvisible()
+  return (0 ~= vim.fn.pumvisible())
+end
 vim.keymap.set("i", "<C-Space>", "<C-x><C-o>")
 local function _5_()
-  if (0 ~= vim.fn.pumvisible()) then
+  if pumvisible() then
     return "<C-n>"
   else
     return "<Tab>"
@@ -64,7 +67,7 @@ local function _5_()
 end
 vim.keymap.set("i", "<Tab>", _5_, {expr = true})
 local function _7_()
-  if (0 ~= vim.fn.pumvisible()) then
+  if pumvisible() then
     return "<C-p>"
   else
     return "<C-d>"
@@ -72,6 +75,22 @@ local function _7_()
 end
 vim.keymap.set("i", "<S-Tab>", _7_, {expr = true})
 vim.keymap.set("i", "<C-y>", vim.lsp.inline_completion.get)
+local function _9_()
+  if pumvisible() then
+    return string.rep("<C-n>", 5)
+  else
+    return "<C-d>"
+  end
+end
+vim.keymap.set("i", "<C-d>", _9_, {expr = true})
+local function _11_()
+  if pumvisible() then
+    return string.rep("<C-p>", 5)
+  else
+    return "<C-u>"
+  end
+end
+vim.keymap.set("i", "<C-u>", _11_, {expr = true})
 local lazypath = (vim.fn.stdpath("data") .. "/lazy")
 local function ensure(user, repo, branch)
   local install_path = (lazypath .. "/" .. repo)
@@ -86,25 +105,25 @@ ensure("folke", "lazy.nvim", "stable")
 ensure("Olical", "nfnl")
 do
   local lazy = require("lazy")
-  local _let_10_ = require("nfnl.module")
-  local autoload = _let_10_["autoload"]
+  local _let_14_ = require("nfnl.module")
+  local autoload = _let_14_["autoload"]
   local lazy_status = autoload("lazy.status")
   local ntn = autoload("nvim-tmux-navigation")
   local telescope = autoload("telescope")
   local telescope_actions = autoload("telescope.actions")
   local telescope_builtin = autoload("telescope.builtin")
-  local function _11_()
+  local function _15_()
     local ts = require("nvim-treesitter")
     local available = ts.get_available()
     ts.install({"comment", "regex", "dockerfile", "json", "yaml", "git_config", "git_rebase", "gitattributes", "gitcommit", "gitignore", "bash", "lua", "luadoc", "fennel", "clojure", "java", "javascript", "typescript", "python", "terraform", "html", "nix", "markdown"})
-    local function _12_(args)
+    local function _16_(args)
       local ft = args.match
       local lang = vim.treesitter.language.get_lang(ft)
       if vim.tbl_contains(available, lang) then
-        local function _13_()
+        local function _17_()
           return vim.treesitter.start(args.buf, lang)
         end
-        ts.install(lang):await(_13_)
+        ts.install(lang):await(_17_)
         vim.wo.foldmethod = "expr"
         vim.wo.foldexpr = "v:lua.vim.treesitter.foldexpr()"
         return nil
@@ -112,89 +131,89 @@ do
         return nil
       end
     end
-    return vim.api.nvim_create_autocmd("FileType", {callback = _12_})
+    return vim.api.nvim_create_autocmd("FileType", {callback = _16_})
   end
-  local function _15_()
+  local function _19_()
     local eval = require("conjure.eval")
     return eval.command("(when-let [go! (or (ns-resolve 'user 'go!)\n                                                     (ns-resolve 'user 'go))]\n                                    (go!))")
   end
-  local function _16_()
+  local function _20_()
     vim.cmd("w")
     local eval = require("conjure.eval")
     local filename = vim.fn.expand("%:p")
     return eval.command(string.format("(nextjournal.clerk/show! \"%s\")", filename))
   end
-  local function _17_(_, opts)
+  local function _21_(_, opts)
     for k, v in pairs(opts.config) do
       vim.g[string.format("conjure#%s", k)] = v
     end
     return nil
   end
-  local function _18_()
+  local function _22_()
     local buffer_relative_path = vim.call("expand", "%:h")
     return telescope.extensions.file_browser.file_browser({cwd = buffer_relative_path})
   end
-  local function _19_()
+  local function _23_()
     local buffer_relative_path = vim.call("expand", "%:h")
     return telescope_builtin.live_grep({cwd = buffer_relative_path})
   end
-  local function _20_()
+  local function _24_()
     return vim.diagnostic.goto_next({float = {border = "rounded"}})
   end
-  local function _21_()
+  local function _25_()
     return vim.diagnostic.goto_prev({float = {border = "rounded"}})
   end
-  local function _22_(...)
+  local function _26_(...)
     return telescope_actions.close(...)
   end
-  local function _23_(...)
+  local function _27_(...)
     return telescope_actions.move_selection_next(...)
   end
-  local function _24_(...)
+  local function _28_(...)
     return telescope_actions.move_selection_previous(...)
   end
-  local function _25_(...)
+  local function _29_(...)
     do local _ = telescope_actions.which_key end
     return ...
   end
-  local function _26_(_, opts)
+  local function _30_(_, opts)
     telescope.setup(opts)
     for name, _0 in pairs(opts.extensions) do
       telescope.load_extension(name)
     end
     return nil
   end
-  local function _27_()
+  local function _31_()
     return {["@comment.todo"] = {link = "@comment.note"}}
   end
-  local function _28_(_, opts)
+  local function _32_(_, opts)
     do
       local k = require("kanagawa")
       k.setup(opts)
     end
     return vim.cmd("colorscheme kanagawa")
   end
-  local function _29_()
+  local function _33_()
     return ntn.NvimTmuxNavigateLeft()
   end
-  local function _30_()
+  local function _34_()
     return ntn.NvimTmuxNavigateDown()
   end
-  local function _31_()
+  local function _35_()
     return ntn.NvimTmuxNavigateUp()
   end
-  local function _32_()
+  local function _36_()
     return ntn.NvimTmuxNavigateRight()
   end
-  lazy.setup({{"Olical/nfnl", ft = "fennel"}, {"williamboman/mason.nvim", cmd = "Mason", keys = {{"<leader>cm", "<cmd>Mason<cr>", desc = "Mason"}}, opts = {}}, {"williamboman/mason-lspconfig.nvim", dependencies = {"williamboman/mason.nvim", "neovim/nvim-lspconfig"}, opts = {ensure_installed = {"clojure_lsp", "fennel_language_server", "pyright", "rust_analyzer", "terraformls", "ts_ls", "copilot", "kotlin_lsp"}, automatic_enable = true}}, {"nvim-treesitter/nvim-treesitter", branch = "main", build = ":TSUpdate", config = _11_, lazy = false}, {"Olical/conjure", branch = "main", ft = {"clojure", "fennel", "python"}, keys = {{"<leader>eg", _15_, desc = "user/go!"}, {"<leader>es", _16_, desc = "clerk/show!"}}, opts = {config = {["mapping#prefix"] = "<leader>", ["client#clojure#nrepl#refresh#backend"] = "clj-reload", ["highlight#enabled"] = true, ["client#clojure#nrepl#connection#auto_repl#enabled"] = false, ["client#clojure#nrepl#mapping#session_select"] = false}}, config = _17_}, {"nvim-telescope/telescope.nvim", dependencies = {"nvim-lua/plenary.nvim", "nvim-telescope/telescope-fzf-native.nvim", "nvim-telescope/telescope-ui-select.nvim", "nvim-telescope/telescope-file-browser.nvim"}, keys = {{"<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find files"}, {"<leader>fr", _18_, desc = "Browse relative to buffer"}, {"<leader>fh", "<cmd>Telescope help_tags<CR>", desc = "Help tags"}, {"<leader>fb", "<cmd>Telescope buffers<cr>", desc = "Buffers"}, {"<leader>ss", "<cmd>Telescope live_grep<CR>", desc = "Search project file contents"}, {"<leader>sr", _19_}, {"<leader>dn", _20_, desc = "Next"}, {"<leader>dp", _21_, desc = "Previous"}}, opts = {defaults = {mappings = {i = {["<esc>"] = _22_, ["<C-j>"] = _23_, ["<C-k>"] = _24_, ["<C-h>"] = _25_}}}, extensions = {fzf = {}, ["ui-select"] = {}, file_browser = {}}}, config = _26_}, {"rebelot/kanagawa.nvim", priority = 1000, opts = {dimInactive = true, overrides = _27_}, config = _28_}, {"nvim-lualine/lualine.nvim", dependencies = {"kyazdani42/nvim-web-devicons"}, opts = {sections = {lualine_a = {"filename"}, lualine_b = {"branch", "diff", "diagnostics"}, lualine_c = {"searchcount"}, lualine_x = {{lazy_status.updates, cond = lazy_status.has_updates, color = {fg = "#ff9e64"}}}, lualine_y = {}, lualine_z = {"location"}}}}, "tpope/vim-fugitive", "arp242/auto_mkdir2.vim", {"eraserhd/parinfer-rust", build = "cargo build --release"}, {"alexghergh/nvim-tmux-navigation", opts = {}, keys = {{"<C-h>", _29_, desc = "Navigate Left"}, {"<C-j>", _30_, desc = "Navigate Left"}, {"<C-k>", _31_, desc = "Navigate Left"}, {"<C-l>", _32_, desc = "Navigate Left"}}}, {"folke/which-key.nvim", event = "VeryLazy", keys = {{"fd", "<ESC>", desc = "Quick Escape", mode = "i"}}, opts = {notify = false}}}, {ui = {border = "rounded"}, performance = {rtp = {disabled_plugins = {"gzip", "matchit", "matchparen", "netrwPlugin", "tarPlugin", "tohtml", "tutor", "zipPlugin"}}}})
+  lazy.setup({{"Olical/nfnl", ft = "fennel"}, {"williamboman/mason.nvim", cmd = "Mason", keys = {{"<leader>cm", "<cmd>Mason<cr>", desc = "Mason"}}, opts = {}}, {"williamboman/mason-lspconfig.nvim", dependencies = {"williamboman/mason.nvim", "neovim/nvim-lspconfig"}, opts = {ensure_installed = {"clojure_lsp", "fennel_language_server", "pyright", "rust_analyzer", "terraformls", "ts_ls", "copilot", "kotlin_lsp"}, automatic_enable = true}}, {"nvim-treesitter/nvim-treesitter", branch = "main", build = ":TSUpdate", config = _15_, lazy = false}, {"Olical/conjure", branch = "main", ft = {"clojure", "fennel", "python"}, keys = {{"<leader>eg", _19_, desc = "user/go!"}, {"<leader>es", _20_, desc = "clerk/show!"}}, opts = {config = {["mapping#prefix"] = "<leader>", ["client#clojure#nrepl#refresh#backend"] = "clj-reload", ["highlight#enabled"] = true, ["client#clojure#nrepl#connection#auto_repl#enabled"] = false, ["client#clojure#nrepl#mapping#session_select"] = false}}, config = _21_}, {"nvim-telescope/telescope.nvim", dependencies = {"nvim-lua/plenary.nvim", "nvim-telescope/telescope-fzf-native.nvim", "nvim-telescope/telescope-ui-select.nvim", "nvim-telescope/telescope-file-browser.nvim"}, keys = {{"<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find files"}, {"<leader>fr", _22_, desc = "Browse relative to buffer"}, {"<leader>fh", "<cmd>Telescope help_tags<CR>", desc = "Help tags"}, {"<leader>fb", "<cmd>Telescope buffers<cr>", desc = "Buffers"}, {"<leader>ss", "<cmd>Telescope live_grep<CR>", desc = "Search project file contents"}, {"<leader>sr", _23_}, {"<leader>dn", _24_, desc = "Next"}, {"<leader>dp", _25_, desc = "Previous"}}, opts = {defaults = {mappings = {i = {["<esc>"] = _26_, ["<C-j>"] = _27_, ["<C-k>"] = _28_, ["<C-h>"] = _29_}}}, extensions = {fzf = {}, ["ui-select"] = {}, file_browser = {}}}, config = _30_}, {"rebelot/kanagawa.nvim", priority = 1000, opts = {dimInactive = true, overrides = _31_}, config = _32_}, {"nvim-lualine/lualine.nvim", dependencies = {"kyazdani42/nvim-web-devicons"}, opts = {sections = {lualine_a = {"filename"}, lualine_b = {"branch", "diff", "diagnostics"}, lualine_c = {"searchcount"}, lualine_x = {{lazy_status.updates, cond = lazy_status.has_updates, color = {fg = "#ff9e64"}}}, lualine_y = {}, lualine_z = {"location"}}}}, "tpope/vim-fugitive", "arp242/auto_mkdir2.vim", {"eraserhd/parinfer-rust", build = "cargo build --release"}, {"alexghergh/nvim-tmux-navigation", opts = {}, keys = {{"<C-h>", _33_, desc = "Navigate Left"}, {"<C-j>", _34_, desc = "Navigate Left"}, {"<C-k>", _35_, desc = "Navigate Left"}, {"<C-l>", _36_, desc = "Navigate Left"}}}, {"folke/which-key.nvim", event = "VeryLazy", keys = {{"fd", "<ESC>", desc = "Quick Escape", mode = "i"}}, opts = {notify = false}}}, {ui = {border = "rounded"}, performance = {rtp = {disabled_plugins = {"gzip", "matchit", "matchparen", "netrwPlugin", "tarPlugin", "tohtml", "tutor", "zipPlugin"}}}})
 end
 vim.api.nvim_create_user_command("Nohl", "nohl", {})
-local function _33_(opts)
+local function _37_(opts)
   local width = tonumber(opts.args)
   vim.bo.tabstop = width
   vim.bo.shiftwidth = width
   vim.bo.softtabstop = width
   return nil
 end
-vim.api.nvim_create_user_command("Tab", _33_, {nargs = 1, desc = "Set tab width for current buffer"})
+vim.api.nvim_create_user_command("Tab", _37_, {nargs = 1, desc = "Set tab width for current buffer"})
 return nil

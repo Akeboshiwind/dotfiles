@@ -92,10 +92,13 @@
 ;; >> Built-in LSP & Completion Setup
 
 (set vim.opt.complete "o,.,w,b,u,t,kspell") ; lsp, current buffer, other buffers, tags, spelling
-(set vim.opt.completeopt [:menu :menuone :noselect :fuzzy :popup])
-(set vim.opt.completefuzzycollect "keyword,files,whole_line")
+(set vim.opt.completeopt [:menu :menuone :popup :noselect :fuzzy])
+(set vim.opt.completefuzzycollect [:keyword :files :whole_line])
 
 ;; Global LspAttach
+;; TODO: enable completion documentation in popup?
+;; https://github.com/konradmalik/neovim-flake/blob/98cae51386bbb3c47f935590c8a5129a79698084/config/nvim/lua/pde/lsp/capabilities/textDocument_completion.lua
+;; Might be too complex
 (vim.api.nvim_create_autocmd :LspAttach
   {:callback (fn [args]
                (let [client (assert (vim.lsp.get_client_by_id args.data.client_id))]
@@ -121,10 +124,13 @@
 
 ;; >> Completion Keymaps
 
+(fn pumvisible [] (not= 0 (vim.fn.pumvisible)))
 (vim.keymap.set :i :<C-Space> :<C-x><C-o>)
-(vim.keymap.set :i :<Tab> #(if (not= 0 (vim.fn.pumvisible)) :<C-n> :<Tab>) {:expr true})
-(vim.keymap.set :i :<S-Tab> #(if (not= 0 (vim.fn.pumvisible)) :<C-p> :<C-d>) {:expr true})
+(vim.keymap.set :i :<Tab> #(if (pumvisible) :<C-n> :<Tab>) {:expr true})
+(vim.keymap.set :i :<S-Tab> #(if (pumvisible) :<C-p> :<C-d>) {:expr true})
 (vim.keymap.set :i :<C-y> vim.lsp.inline_completion.get)
+(vim.keymap.set :i :<C-d> #(if (pumvisible) (string.rep :<C-n> 5) :<C-d>) {:expr true})
+(vim.keymap.set :i :<C-u> #(if (pumvisible) (string.rep :<C-p> 5) :<C-u>) {:expr true})
 
 
 
