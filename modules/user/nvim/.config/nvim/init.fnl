@@ -91,7 +91,9 @@
 
 ;; >> Built-in LSP & Completion Setup
 
-(set vim.opt.completeopt ["menu" "menuone" "noselect"])
+(set vim.opt.complete "o,.,w,b,u,t,kspell") ; lsp, current buffer, other buffers, tags, spelling
+(set vim.opt.completeopt [:menu :menuone :noselect :fuzzy :popup])
+(set vim.opt.completefuzzycollect "keyword,files,whole_line")
 
 ;; Global LspAttach
 (vim.api.nvim_create_autocmd :LspAttach

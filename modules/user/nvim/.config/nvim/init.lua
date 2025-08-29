@@ -35,7 +35,9 @@ do
   end
 end
 vim.filetype.add({extension = {mdx = "markdown"}, filename = {Jenkinsfile = "groovy"}})
-vim.opt.completeopt = {"menu", "menuone", "noselect"}
+vim.opt.complete = "o,.,w,b,u,t,kspell"
+vim.opt.completeopt = {"menu", "menuone", "noselect", "fuzzy", "popup"}
+vim.opt.completefuzzycollect = "keyword,files,whole_line"
 local function _2_(args)
   local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
   if client:supports_method("textDocument/completion") then
