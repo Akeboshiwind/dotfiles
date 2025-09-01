@@ -20,6 +20,8 @@ vim.opt.foldcolumn = "0"
 vim.opt.foldtext = ""
 vim.opt.foldlevelstart = 99
 vim.opt.foldopen = ""
+vim.opt.foldmethod = "marker"
+vim.opt.foldmarker = ">>,<<"
 vim.opt.viewoptions = "folds,cursor"
 vim.api.nvim_create_autocmd({"BufWinLeave"}, {pattern = "?*", command = "mkview"})
 vim.api.nvim_create_autocmd({"BufWinEnter"}, {pattern = "?*", command = "silent! loadview"})
@@ -52,7 +54,7 @@ local function _2_(args)
 end
 vim.api.nvim_create_autocmd("LspAttach", {callback = _2_})
 vim.lsp.config("clojure_lsp", {init_options = {["cljfmt-config-path"] = (vim.fn.stdpath("config") .. "/config/.cljfmt.edn")}})
-vim.lsp.config("lua_ls", {settings = {Lua = {diagnostics = {globals = {"vim"}}, workspace = {library = vim.api.nvim_list_runtime_paths()}}}})
+vim.lsp.config("lua_ls", {settings = {Lua = {diagnostics = {globals = {"vim", "P"}}, workspace = {library = vim.api.nvim_list_runtime_paths()}}}})
 vim.lsp.config("fennel_language_server", {single_file_support = true, settings = {fennel = {diagnostics = {globals = {"vim"}}, workspace = {library = vim.api.nvim_list_runtime_paths()}}}})
 local function pumvisible()
   return (0 ~= vim.fn.pumvisible())
@@ -124,96 +126,100 @@ do
           return vim.treesitter.start(args.buf, lang)
         end
         ts.install(lang):await(_17_)
-        vim.wo.foldmethod = "expr"
-        vim.wo.foldexpr = "v:lua.vim.treesitter.foldexpr()"
-        return nil
+        if (vim.fs.basename(args.file) ~= "init.fnl") then
+          vim.wo.foldmethod = "expr"
+          vim.wo.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+          return nil
+        else
+          return nil
+        end
       else
         return nil
       end
     end
     return vim.api.nvim_create_autocmd("FileType", {callback = _16_})
   end
-  local function _19_()
+  local function _20_()
     local eval = require("conjure.eval")
     return eval.command("(when-let [go! (or (ns-resolve 'user 'go!)\n                                                     (ns-resolve 'user 'go))]\n                                    (go!))")
   end
-  local function _20_()
+  local function _21_()
     vim.cmd("w")
     local eval = require("conjure.eval")
     local filename = vim.fn.expand("%:p")
     return eval.command(string.format("(nextjournal.clerk/show! \"%s\")", filename))
   end
-  local function _21_(_, opts)
+  local function _22_(_, opts)
     for k, v in pairs(opts.config) do
       vim.g[string.format("conjure#%s", k)] = v
     end
     return nil
   end
-  local function _22_()
+  local function _23_()
     local buffer_relative_path = vim.call("expand", "%:h")
     return telescope.extensions.file_browser.file_browser({cwd = buffer_relative_path})
   end
-  local function _23_()
+  local function _24_()
     local buffer_relative_path = vim.call("expand", "%:h")
     return telescope_builtin.live_grep({cwd = buffer_relative_path})
   end
-  local function _24_()
+  local function _25_()
     return vim.diagnostic.goto_next({float = {border = "rounded"}})
   end
-  local function _25_()
+  local function _26_()
     return vim.diagnostic.goto_prev({float = {border = "rounded"}})
   end
-  local function _26_(...)
+  local function _27_(...)
     return telescope_actions.close(...)
   end
-  local function _27_(...)
+  local function _28_(...)
     return telescope_actions.move_selection_next(...)
   end
-  local function _28_(...)
+  local function _29_(...)
     return telescope_actions.move_selection_previous(...)
   end
-  local function _29_(...)
+  local function _30_(...)
     do local _ = telescope_actions.which_key end
     return ...
   end
-  local function _30_(_, opts)
+  local function _31_(_, opts)
     telescope.setup(opts)
     for name, _0 in pairs(opts.extensions) do
       telescope.load_extension(name)
     end
     return nil
   end
-  local function _31_()
+  local function _32_()
     return {["@comment.todo"] = {link = "@comment.note"}}
   end
-  local function _32_(_, opts)
+  local function _33_(_, opts)
     do
       local k = require("kanagawa")
       k.setup(opts)
     end
     return vim.cmd("colorscheme kanagawa")
   end
-  local function _33_()
+  local function _34_()
     return ntn.NvimTmuxNavigateLeft()
   end
-  local function _34_()
+  local function _35_()
     return ntn.NvimTmuxNavigateDown()
   end
-  local function _35_()
+  local function _36_()
     return ntn.NvimTmuxNavigateUp()
   end
-  local function _36_()
+  local function _37_()
     return ntn.NvimTmuxNavigateRight()
   end
-  lazy.setup({{"Olical/nfnl", ft = "fennel"}, {"williamboman/mason.nvim", cmd = "Mason", keys = {{"<leader>cm", "<cmd>Mason<cr>", desc = "Mason"}}, opts = {}}, {"williamboman/mason-lspconfig.nvim", dependencies = {"williamboman/mason.nvim", "neovim/nvim-lspconfig"}, opts = {ensure_installed = {"clojure_lsp", "fennel_language_server", "pyright", "rust_analyzer", "terraformls", "ts_ls", "copilot", "kotlin_lsp"}, automatic_enable = true}}, {"nvim-treesitter/nvim-treesitter", branch = "main", build = ":TSUpdate", config = _15_, lazy = false}, {"Olical/conjure", branch = "main", ft = {"clojure", "fennel", "python"}, keys = {{"<leader>eg", _19_, desc = "user/go!"}, {"<leader>es", _20_, desc = "clerk/show!"}}, opts = {config = {["mapping#prefix"] = "<leader>", ["client#clojure#nrepl#refresh#backend"] = "clj-reload", ["highlight#enabled"] = true, ["client#clojure#nrepl#connection#auto_repl#enabled"] = false, ["client#clojure#nrepl#mapping#session_select"] = false}}, config = _21_}, {"nvim-telescope/telescope.nvim", dependencies = {"nvim-lua/plenary.nvim", "nvim-telescope/telescope-fzf-native.nvim", "nvim-telescope/telescope-ui-select.nvim", "nvim-telescope/telescope-file-browser.nvim"}, keys = {{"<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find files"}, {"<leader>fr", _22_, desc = "Browse relative to buffer"}, {"<leader>fh", "<cmd>Telescope help_tags<CR>", desc = "Help tags"}, {"<leader>fb", "<cmd>Telescope buffers<cr>", desc = "Buffers"}, {"<leader>ss", "<cmd>Telescope live_grep<CR>", desc = "Search project file contents"}, {"<leader>sr", _23_}, {"<leader>dn", _24_, desc = "Next"}, {"<leader>dp", _25_, desc = "Previous"}}, opts = {defaults = {mappings = {i = {["<esc>"] = _26_, ["<C-j>"] = _27_, ["<C-k>"] = _28_, ["<C-h>"] = _29_}}}, extensions = {fzf = {}, ["ui-select"] = {}, file_browser = {}}}, config = _30_}, {"rebelot/kanagawa.nvim", priority = 1000, opts = {dimInactive = true, overrides = _31_}, config = _32_}, {"nvim-lualine/lualine.nvim", dependencies = {"kyazdani42/nvim-web-devicons"}, opts = {sections = {lualine_a = {"filename"}, lualine_b = {"branch", "diff", "diagnostics"}, lualine_c = {"searchcount"}, lualine_x = {{lazy_status.updates, cond = lazy_status.has_updates, color = {fg = "#ff9e64"}}}, lualine_y = {}, lualine_z = {"location"}}}}, "tpope/vim-fugitive", "arp242/auto_mkdir2.vim", {"eraserhd/parinfer-rust", build = "cargo build --release"}, {"alexghergh/nvim-tmux-navigation", opts = {}, keys = {{"<C-h>", _33_, desc = "Navigate Left"}, {"<C-j>", _34_, desc = "Navigate Left"}, {"<C-k>", _35_, desc = "Navigate Left"}, {"<C-l>", _36_, desc = "Navigate Left"}}}, {"folke/which-key.nvim", event = "VeryLazy", keys = {{"fd", "<ESC>", desc = "Quick Escape", mode = "i"}}, opts = {notify = false}}}, {ui = {border = "rounded"}, performance = {rtp = {disabled_plugins = {"gzip", "matchit", "matchparen", "netrwPlugin", "tarPlugin", "tohtml", "tutor", "zipPlugin"}}}})
+  lazy.setup({{"Olical/nfnl", ft = "fennel"}, {"williamboman/mason.nvim", cmd = "Mason", keys = {{"<leader>cm", "<cmd>Mason<cr>", desc = "Mason"}}, opts = {}}, {"williamboman/mason-lspconfig.nvim", dependencies = {"williamboman/mason.nvim", "neovim/nvim-lspconfig"}, opts = {ensure_installed = {"clojure_lsp", "fennel_language_server", "pyright", "rust_analyzer", "terraformls", "ts_ls", "copilot", "kotlin_lsp"}, automatic_enable = true}}, {"nvim-treesitter/nvim-treesitter", branch = "main", build = ":TSUpdate", config = _15_, lazy = false}, {"Olical/conjure", branch = "main", ft = {"clojure", "fennel", "python"}, keys = {{"<leader>eg", _20_, desc = "user/go!"}, {"<leader>es", _21_, desc = "clerk/show!"}}, opts = {config = {["mapping#prefix"] = "<leader>", ["client#clojure#nrepl#refresh#backend"] = "clj-reload", ["highlight#enabled"] = true, ["client#clojure#nrepl#connection#auto_repl#enabled"] = false, ["client#clojure#nrepl#mapping#session_select"] = false}}, config = _22_}, {"nvim-telescope/telescope.nvim", dependencies = {"nvim-lua/plenary.nvim", "nvim-telescope/telescope-fzf-native.nvim", "nvim-telescope/telescope-ui-select.nvim", "nvim-telescope/telescope-file-browser.nvim"}, keys = {{"<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find files"}, {"<leader>fr", _23_, desc = "Browse relative to buffer"}, {"<leader>fh", "<cmd>Telescope help_tags<CR>", desc = "Help tags"}, {"<leader>fb", "<cmd>Telescope buffers<cr>", desc = "Buffers"}, {"<leader>ss", "<cmd>Telescope live_grep<CR>", desc = "Search project file contents"}, {"<leader>sr", _24_}, {"<leader>dn", _25_, desc = "Next"}, {"<leader>dp", _26_, desc = "Previous"}}, opts = {defaults = {mappings = {i = {["<esc>"] = _27_, ["<C-j>"] = _28_, ["<C-k>"] = _29_, ["<C-h>"] = _30_}}}, extensions = {fzf = {}, ["ui-select"] = {}, file_browser = {}}}, config = _31_}, {"rebelot/kanagawa.nvim", priority = 1000, opts = {dimInactive = true, overrides = _32_}, config = _33_}, {"nvim-lualine/lualine.nvim", dependencies = {"kyazdani42/nvim-web-devicons"}, opts = {sections = {lualine_a = {"filename"}, lualine_b = {"branch", "diff", "diagnostics"}, lualine_c = {"searchcount"}, lualine_x = {{lazy_status.updates, cond = lazy_status.has_updates, color = {fg = "#ff9e64"}}}, lualine_y = {}, lualine_z = {"location"}}}}, "tpope/vim-fugitive", "arp242/auto_mkdir2.vim", {"eraserhd/parinfer-rust", build = "cargo build --release"}, {"alexghergh/nvim-tmux-navigation", opts = {}, keys = {{"<C-h>", _34_, desc = "Navigate Left"}, {"<C-j>", _35_, desc = "Navigate Left"}, {"<C-k>", _36_, desc = "Navigate Left"}, {"<C-l>", _37_, desc = "Navigate Left"}}}, {"folke/which-key.nvim", event = "VeryLazy", keys = {{"fd", "<ESC>", desc = "Quick Escape", mode = "i"}}, opts = {notify = false}}}, {ui = {border = "rounded"}, performance = {rtp = {disabled_plugins = {"gzip", "matchit", "matchparen", "netrwPlugin", "tarPlugin", "tohtml", "tutor", "zipPlugin"}}}})
 end
 vim.api.nvim_create_user_command("Nohl", "nohl", {})
-local function _37_(opts)
+local function _38_(opts)
   local width = tonumber(opts.args)
   vim.bo.tabstop = width
   vim.bo.shiftwidth = width
   vim.bo.softtabstop = width
   return nil
 end
-vim.api.nvim_create_user_command("Tab", _37_, {nargs = 1, desc = "Set tab width for current buffer"})
+vim.api.nvim_create_user_command("Tab", _38_, {nargs = 1, desc = "Set tab width for current buffer"})
 return nil

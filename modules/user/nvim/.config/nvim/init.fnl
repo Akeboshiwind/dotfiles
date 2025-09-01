@@ -7,12 +7,14 @@
 
 
 
+; <<
 ;; >> Leader Key
 
 (set vim.g.mapleader ",")
 
 
 
+; <<
 ;; >> Basic Settings
 
 (set vim.opt.ignorecase true) ; In searches, ignore the case
@@ -28,6 +30,7 @@
 
 
 
+; <<
 ;; >> Indentation
 
 (set vim.opt.tabstop 4) ; Show existing tab with 4 spaces width
@@ -36,15 +39,19 @@
 
 
 
+; <<
 ;; >> Folds
 
 (set vim.opt.foldcolumn "0") ; disable
 (set vim.opt.foldtext "") ; show the first line syntax highlighted
 (set vim.opt.foldlevelstart 99) ; don't auto-close folds
 (set vim.opt.foldopen "") ; disable vim auto-opening folds (e.g. '[' and search)
+(set vim.opt.foldmethod "marker") ; default fold method
+(set vim.opt.foldmarker ">>,<<")
 
 
 
+; <<
 ;; >> Persistence
 
 ; Only save folds and cursor position
@@ -58,6 +65,7 @@
 
 
 
+; <<
 ;; >> Colors & UI
 
 (if (not= 0 (vim.fn.exists "+termguicolors"))
@@ -71,6 +79,7 @@
 
 
 
+; <<
 ;; >> Diagnostics Signs
 
 (let [signs {:DiagnosticSignError ""
@@ -82,6 +91,7 @@
 
 
 
+; <<
 ;; >> Filetype Additions
 
 (vim.filetype.add {:extension {:mdx "markdown"}
@@ -89,6 +99,7 @@
 
 
 
+; <<
 ;; >> Built-in LSP & Completion Setup
 
 (set vim.opt.complete "o,.,w,b,u,t,kspell") ; lsp, current buffer, other buffers, tags, spelling
@@ -122,6 +133,8 @@
                        :workspace {:library (vim.api.nvim_list_runtime_paths)}}}})
 
 
+
+; <<
 ;; >> Completion Keymaps
 
 (fn pumvisible [] (not= 0 (vim.fn.pumvisible)))
@@ -134,6 +147,7 @@
 
 
 
+; <<
 ;; >> Plugin Manager Bootstrap
 
 (local lazypath (.. (vim.fn.stdpath "data") "/lazy"))
@@ -156,6 +170,7 @@
 
 
 
+; <<
 ;; >> Plugins
 
 (let [lazy (require "lazy")
@@ -192,14 +207,14 @@
       :config (fn []
                 (let [ts (require :nvim-treesitter)
                       available (ts.get_available)]
-                  (ts.install [;; >> basic
+                  (ts.install [; basic
                                :comment :regex
-                               ;; >> Config files
+                               ; Config files
                                :dockerfile :json :yaml
-                               ;; >> Git
+                               ; Git
                                :git_config :git_rebase :gitattributes
                                :gitcommit :gitignore
-                               ;; >> Programming languages
+                               ; Programming languages
                                :bash :lua :luadoc :fennel :clojure :java
                                :javascript :typescript :python :terraform :html
                                :nix :markdown])
@@ -216,11 +231,13 @@
                                              (vim.treesitter.start args.buf lang))))
 
                             ;; Auto-enable folding for all files
-                            (set vim.wo.foldmethod "expr")
-                            (set vim.wo.foldexpr "v:lua.vim.treesitter.foldexpr()"))))})))}
+                            (when (not= (vim.fs.basename args.file) "init.fnl")
+                              (set vim.wo.foldmethod "expr")
+                              (set vim.wo.foldexpr "v:lua.vim.treesitter.foldexpr()")))))})))}
 
 
 
+     ; <<
      ;; >> Clojure REPL (Essential)
      {1 :Olical/conjure
       :branch :main
@@ -243,7 +260,7 @@
               ; Briefly highlight evaluated forms
               "highlight#enabled" true
 
-              ;; >> Clojure
+              ;; Clojure
               ; TODO: possibly remove
               ; Disable the mapping for selecting a session as that collides with searching)
               ; files within a project
@@ -256,13 +273,14 @@
 
 
 
+     ; <<
      ;; >> File Navigation
      {1 :nvim-telescope/telescope.nvim
       :dependencies [:nvim-lua/plenary.nvim
                      :nvim-telescope/telescope-fzf-native.nvim
                      :nvim-telescope/telescope-ui-select.nvim
                      :nvim-telescope/telescope-file-browser.nvim]
-      :keys [;; >> find
+      :keys [;; Find
              {1 :<leader>ff 2 "<cmd>Telescope find_files<cr>" :desc "Find files"}
              {1 "<leader>fr"
               2 #(let [; % gets the current buffer's path
@@ -273,7 +291,7 @@
               :desc "Browse relative to buffer"}
              {1 "<leader>fh" 2 "<cmd>Telescope help_tags<CR>" :desc "Help tags"}
              {1 :<leader>fb 2 "<cmd>Telescope buffers<cr>" :desc "Buffers"}
-             ;; >> Search
+             ;; Search
              {1 "<leader>ss" 2 "<cmd>Telescope live_grep<CR>" :desc "Search project file contents"}
              {1 "<leader>sr"
               2 #(let [; % gets the current buffer's path
@@ -281,7 +299,7 @@
                        buffer-relative-path (vim.call "expand" "%:h")]
                    (telescope-builtin.live_grep {:cwd buffer-relative-path}))}
 
-             ;; >> Diagnostics
+             ;; Diagnostics
              ;; TODO: Move these elsewhere?
              {1 "<leader>dn" 2 #(vim.diagnostic.goto_next {:float {:border "rounded"}})
               :desc "Next"}
@@ -309,6 +327,7 @@
 
 
 
+     ; <<
      ;; >> UI & Theme
      {1 :rebelot/kanagawa.nvim
       :priority 1000 ; Load early
@@ -333,6 +352,7 @@
 
 
 
+     ; <<
      ;; >> Quality of Life
      :tpope/vim-fugitive        ; Git integration
      :arp242/auto_mkdir2.vim    ; Auto-create directories
@@ -351,6 +371,7 @@
       :event :VeryLazy
       :keys [{1 "fd" 2 "<ESC>" :desc "Quick Escape" :mode :i}]
       :opts {:notify false}}]
+     ; <<
 
     ;; Lazy.nvim config
     {:ui {:border "rounded"}
@@ -360,6 +381,7 @@
 
 
 
+; <<
 ;; >> Utility Commands
 
 (vim.api.nvim_create_user_command :Nohl :nohl {})
@@ -371,4 +393,5 @@
       (set vim.bo.softtabstop width)))
   {:nargs 1 :desc "Set tab width for current buffer"})
 
+; <<
 nil
