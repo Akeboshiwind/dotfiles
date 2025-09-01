@@ -9,6 +9,7 @@ vim.opt.splitright = true
 vim.opt.inccommand = "nosplit"
 vim.opt.updatetime = 1000
 vim.opt.signcolumn = "yes"
+vim.opt.clipboard = "unnamedplus"
 vim.opt.spell = true
 vim.opt.spelllang = "en_gb"
 vim.opt.spelloptions = "camel"
