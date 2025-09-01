@@ -113,7 +113,7 @@
   {:init_options {:cljfmt-config-path (.. (vim.fn.stdpath "config") "/config/.cljfmt.edn")}})
 
 (vim.lsp.config :lua_ls
-  {:settings {:Lua {:diagnostics {:globals [:vim]}
+  {:settings {:Lua {:diagnostics {:globals [:vim :P]}
                     :workspace {:library (vim.api.nvim_list_runtime_paths)}}}})
 
 (vim.lsp.config :fennel_language_server
