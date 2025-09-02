@@ -4,7 +4,7 @@
 {
   homebrew.casks = [
     "claude"
-    "ollama"
+    #"ollama"
   ];
 
   users.users."${user}" = {
