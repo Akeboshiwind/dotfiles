@@ -281,6 +281,7 @@
                      :nvim-telescope/telescope-fzf-native.nvim
                      :nvim-telescope/telescope-ui-select.nvim
                      :nvim-telescope/telescope-file-browser.nvim]
+      :cmd "Telescope"
       :keys [;; Find
              {1 :<leader>ff 2 "<cmd>Telescope find_files<cr>" :desc "Find files"}
              {1 "<leader>fr"
@@ -294,6 +295,7 @@
              {1 :<leader>fb 2 "<cmd>Telescope buffers<cr>" :desc "Buffers"}
              ;; Search
              {1 "<leader>ss" 2 "<cmd>Telescope live_grep<CR>" :desc "Search project file contents"}
+             {1 "<leader>s*" 2 "<cmd>Telescope grep_string<CR>" :desc "Search current word"}
              {1 "<leader>sr"
               2 #(let [; % gets the current buffer's path
                        ; :h gets the full path
