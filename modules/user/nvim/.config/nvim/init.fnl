@@ -114,11 +114,16 @@
 (vim.api.nvim_create_autocmd :LspAttach
   {:callback (fn [args]
                (let [client (assert (vim.lsp.get_client_by_id args.data.client_id))]
-                 ;; Enable built-in auto-completion
+                 ; Enable built-in auto-completion
                  (when (client:supports_method :textDocument/completion)
                    (vim.lsp.completion.enable true client.id args.buf {:autotrigger true}))
                  (when (client:supports_method :textDocument/inlineCompletion)
                    (vim.lsp.inline_completion.enable true {:client_id client.id}))))})
+
+; LSP keymaps
+(vim.keymap.set [:n :v] :grf
+                #(vim.lsp.buf.format {:async true :timeout_ms 1000})
+                {:desc "vim.lsp.buf.format()"})
 
 ;; Custom LSP servers (only for special cases)
 (vim.lsp.config :clojure_lsp
@@ -284,6 +289,7 @@
       :cmd "Telescope"
       :keys [;; Find
              {1 :<leader>ff 2 "<cmd>Telescope find_files<cr>" :desc "Find files"}
+             {1 :<leader>fy 2 "<cmd>Telescope filetypes<cr>" :desc "Filetypes"}
              {1 "<leader>fr"
               2 #(let [; % gets the current buffer's path
                        ; :h gets the full path
