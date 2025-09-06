@@ -118,7 +118,7 @@
                  (when (client:supports_method :textDocument/completion)
                    (vim.lsp.completion.enable true client.id args.buf {:autotrigger true}))
                  (when (client:supports_method :textDocument/inlineCompletion)
-                   (vim.lsp.inline_completion.enable true {:client_id client.id}))))})
+                   (vim.lsp.inline_completion.enable true {:bufnr args.buf}))))})
 
 ; LSP keymaps
 (vim.keymap.set [:n :v] :grf

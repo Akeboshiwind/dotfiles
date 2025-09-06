@@ -48,7 +48,7 @@ local function _2_(args)
   else
   end
   if client:supports_method("textDocument/inlineCompletion") then
-    return vim.lsp.inline_completion.enable(true, {client_id = client.id})
+    return vim.lsp.inline_completion.enable(true, {bufnr = args.buf})
   else
     return nil
   end
