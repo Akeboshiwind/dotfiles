@@ -300,7 +300,9 @@
                     {:cwd buffer-relative-path}))
               :desc "Browse relative to buffer"}
              {1 "<leader>fh" 2 "<cmd>Telescope help_tags<CR>" :desc "Help tags"}
-             {1 :<leader>fb 2 "<cmd>Telescope buffers<cr>" :desc "Buffers"}
+             {1 :<leader>fb
+              2 #(telescope-builtin.buffers {:sort_mru true :sort_lastused true})
+              :desc "Buffers"}
              ;; Search
              {1 "<leader>ss" 2 "<cmd>Telescope live_grep<CR>" :desc "Search project file contents"}
              {1 "<leader>s*" 2 "<cmd>Telescope grep_string<CR>" :desc "Search current word"}
