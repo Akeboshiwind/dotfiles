@@ -200,9 +200,11 @@
      ; To support new languages, add it's language server here
      {1 :williamboman/mason-lspconfig.nvim
       :dependencies [:williamboman/mason.nvim :neovim/nvim-lspconfig]
-      :opts {:ensure_installed [:clojure_lsp :fennel_language_server :pyright
-                                :rust_analyzer :terraformls :ts_ls :copilot
+      :opts {:ensure_installed [:clojure_lsp :fennel_language_server
+                                :rust_analyzer :terraformls
                                 :kotlin_lsp]
+                                ; Disabled due to js exploit:
+                                ;:pyright :ts_ls :copilot
              :automatic_enable true}}
 
      ;; Treesitter (main branch with auto-install)
