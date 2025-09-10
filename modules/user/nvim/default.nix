@@ -12,11 +12,12 @@
       # For fuzzy searching
       ripgrep
 
-      # For installing LSPs with nvim-lsp-installer
+      # For installing LSPs with mason
       nodejs
       wget
       ninja # Lua
       luajitPackages.luarocks # fennel_ls etc.
+      maven # java_language_server
 
       # For tree-sitter
       tree-sitter
