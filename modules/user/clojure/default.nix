@@ -4,7 +4,8 @@
 {
   users.users."${user}" = {
     packages = with pkgs; [
-      openjdk17-bootstrap #  temurin-bin-17
+      #openjdk17-bootstrap #  temurin-bin-17
+      jdk
       clojure
       babashka
       clj-kondo
