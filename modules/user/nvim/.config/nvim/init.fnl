@@ -202,9 +202,9 @@
       :dependencies [:williamboman/mason.nvim :neovim/nvim-lspconfig]
       :opts {:ensure_installed [:clojure_lsp :fennel_language_server
                                 :rust_analyzer :terraformls
-                                :kotlin_lsp]
+                                :kotlin_lsp :copilot]
                                 ; Disabled due to js exploit:
-                                ;:pyright :ts_ls :copilot
+                                ;:pyright :ts_ls
              :automatic_enable true}}
 
      ;; Treesitter (main branch with auto-install)
