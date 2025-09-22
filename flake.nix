@@ -28,7 +28,7 @@
   {
     # Build darwin flake using:
     # $ darwin-rebuild build --flake ~/dotfiles/nix-darwin
-    darwinConfigurations."Olivers-MacBook-Air" = nix-darwin.lib.darwinSystem {
+    darwinConfigurations."C19608" = nix-darwin.lib.darwinSystem {
       modules = [
         ./modules/system/nix-darwin
         ./machines/Olivers-MacBook-Air.nix
