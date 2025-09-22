@@ -6,6 +6,7 @@
   "lualine.nvim": { "branch": "master", "commit": "b8c23159c0161f4b89196f74ee3a6d02cdc3a955" },
   "mason-lspconfig.nvim": { "branch": "main", "commit": "5e085efe67fccb13372d54331d849219662a7e93" },
   "mason.nvim": { "branch": "main", "commit": "7dc4facca9702f95353d5a1f87daf23d78e31c2a" },
+  "neogit": { "branch": "master", "commit": "704ed34e957c8702df994bdcc8404e134d1e8212" },
   "nfnl": { "branch": "main", "commit": "66409b6186a9e313f60f4690b0f46fa2da1ee476" },
   "nvim-lspconfig": { "branch": "master", "commit": "cb4765526f7201ce4ff0c49888f80c18da614e68" },
   "nvim-tmux-navigation": { "branch": "main", "commit": "4898c98702954439233fdaf764c39636681e2861" },
