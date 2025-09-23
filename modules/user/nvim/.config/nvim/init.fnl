@@ -374,7 +374,8 @@
       :dependencies [:nvim-lua/plenary.nvim
                      :sindrets/diffview.nvim
                      :nvim-telescope/telescope.nvim]
-      :opts {}}
+      :opts {:graph_style :unicode
+             :kind :floating}}
 
      {1 :eraserhd/parinfer-rust
       :build "cargo build --release"}
