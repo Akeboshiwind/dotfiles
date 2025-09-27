@@ -7,6 +7,10 @@ in
 {
   # Desktop-specific tools for macOS
 
+  homebrew.casks = [
+    "quitter"
+  ];
+
   imports = withUser user [
     # >> Terminal setup
     ../modules/user/alacritty
