@@ -60,7 +60,7 @@ end
 vim.keymap.set({"n", "v"}, "grf", _5_, {desc = "vim.lsp.buf.format()"})
 vim.lsp.config("clojure_lsp", {init_options = {["cljfmt-config-path"] = (vim.fn.stdpath("config") .. "/config/.cljfmt.edn")}})
 vim.lsp.config("lua_ls", {settings = {Lua = {diagnostics = {globals = {"vim", "P"}}, workspace = {library = vim.api.nvim_list_runtime_paths()}}}})
-vim.lsp.config("fennel_language_server", {single_file_support = true, settings = {fennel = {diagnostics = {globals = {"vim"}}, workspace = {library = vim.api.nvim_list_runtime_paths()}}}})
+vim.lsp.config("fennel_language_server", {single_file_support = true, settings = {fennel = {diagnostics = {globals = {"vim", "jit", "comment"}}, workspace = {library = vim.api.nvim_list_runtime_paths()}}}})
 local function pumvisible()
   return (0 ~= vim.fn.pumvisible())
 end
