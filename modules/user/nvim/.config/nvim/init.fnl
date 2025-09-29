@@ -367,7 +367,6 @@
 
      ; <<
      ;; >> Quality of Life
-     :tpope/vim-fugitive        ; Git integration
      :arp242/auto_mkdir2.vim    ; Auto-create directories
 
      {1 :NeogitOrg/neogit
