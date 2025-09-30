@@ -23,11 +23,22 @@
 (set vim.opt.inccommand "nosplit") ; Show live replacements with the :s command
 (set vim.opt.updatetime 1000) ; Make the CursorHold event trigger after 1 second not 4
 (set vim.opt.signcolumn "yes")
-(set vim.opt.clipboard "unnamedplus")
 (set vim.opt.spell true)
 (set vim.opt.spelllang "en_gb")
 (set vim.opt.spelloptions "camel") ; Include camel case words
 (set vim.opt.spellcapcheck "") ; Disable capitalization check
+
+
+
+; <<
+;; >> Clipboard
+
+;; Make y/p use system clipboard
+(vim.keymap.set [:n :v] :y "\"+y" {:desc "Yank to system clipboard"})
+(vim.keymap.set :n      :Y "\"+Y" {:desc "Yank line to system clipboard"})
+(vim.keymap.set [:n :v] :p "\"+p" {:desc "Paste from system clipboard"})
+(vim.keymap.set [:n :v] :P "\"+P" {:desc "Paste before from system clipboard"})
+; NOTE: Use "0p to paste from vim yank register
 
 
 
