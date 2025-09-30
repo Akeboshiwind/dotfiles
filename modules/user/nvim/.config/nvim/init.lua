@@ -27,7 +27,7 @@ vim.opt.foldopen = ""
 vim.opt.foldmethod = "marker"
 vim.opt.foldmarker = ">>,<<"
 vim.opt.viewoptions = "folds,cursor"
-vim.api.nvim_create_autocmd({"BufWinLeave"}, {pattern = "?*", command = "mkview"})
+vim.api.nvim_create_autocmd({"BufWinLeave"}, {pattern = "?*", command = "silent! mkview"})
 vim.api.nvim_create_autocmd({"BufWinEnter"}, {pattern = "?*", command = "silent! loadview"})
 if (0 ~= vim.fn.exists("+termguicolors")) then
   vim.opt.termguicolors = true

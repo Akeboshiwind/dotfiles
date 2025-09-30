@@ -71,7 +71,7 @@
 
 ;; Auto save/restore folds & cursor position
 (vim.api.nvim_create_autocmd [:BufWinLeave]
-  {:pattern "?*" :command "mkview"})
+  {:pattern "?*" :command "silent! mkview"})
 (vim.api.nvim_create_autocmd [:BufWinEnter]
   {:pattern "?*" :command "silent! loadview"})
 
