@@ -387,6 +387,12 @@
       :opts {:graph_style :unicode}}
              ;:kind :floating
 
+     {1 :folke/snacks.nvim
+      :priority 1000
+      :opts {:bigfile {:enabled true}
+             :input {:enabled true}
+             :notifier {:enabled true}}}
+
      {1 :eraserhd/parinfer-rust
       :build "cargo build --release"}
 
