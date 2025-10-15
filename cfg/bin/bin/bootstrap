@@ -1,0 +1,8 @@
+#!/bin/sh
+# bootstrap
+
+which brew >/dev/null 2>&1 || /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+which bb >/dev/null 2>&1 || brew install borkdude/brew/babashka
+
+cd "$HOME/dotfiles"
+bb -m main
