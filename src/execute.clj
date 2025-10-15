@@ -6,6 +6,8 @@
 (def ^:dynamic *dry-run* false)
 
 (def GRAY "\033[90m")
+(def GREEN "\033[32m")
+(def RED "\033[31m")
 (def RESET "\033[0m")
 
 (defn- prefix-print [stream]
@@ -25,7 +27,9 @@
       @err-future
       ;; Wait for completion
       (let [{:keys [exit]} @proc]
-        (println " └─" (if (zero? exit) "✓" "✗"))
+        (println " └─" (if (zero? exit)
+                         (str GREEN "✓" RESET)
+                         (str RED "✗" RESET)))
         (zero? exit)))
     (catch Exception _
       false)))
