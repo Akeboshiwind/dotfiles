@@ -15,10 +15,12 @@
 (def green #(str GREEN % RESET))
 (def red #(str RED % RESET))
 
-(defn- prefix-print [stream]
-  (with-open [rdr (io/reader stream)]
-    (doseq [line (line-seq rdr)]
-      (println " │" (gray line)))))
+(defn- prefix-print
+  ([stream] (prefix-print " │" stream))
+  ([prefix stream]
+   (with-open [rdr (io/reader stream)]
+     (doseq [line (line-seq rdr)]
+       (println prefix (gray line))))))
 
 (defn run-command'
   "Runs the given command, streaming the output, prefixing lines"
@@ -75,7 +77,8 @@
     (doseq [[domain settings] defaults]
       (println " ├─┬──" domain)
       (doseq [[idx [key value]] (zipmap (range) settings)]
-        (let [type-flag (->defaults-type value)
+        (let [last? (= idx (dec (count settings)))
+              type-flag (->defaults-type value)
               cmd ["defaults" "write" domain (name key) type-flag value]
               proc (process/process cmd)
               out-future (future (prefix-print (:out proc)))
@@ -83,18 +86,30 @@
           @out-future
           @err-future
           (let [{:keys [exit]} @proc]
-            (println (if (= idx (dec (count settings))) " │ └─" " │ ├─")
+            (println (if last? " │ └─" " │ ├─")
                      key value (if (zero? exit) (green "✓") (red "✗")))))))
     (catch Exception _
       (println " └─" (red "✗")))
     (println " └─" (green "✓"))))
 
-(defn- create-symlink [[target source]]
-  (let [target (.getAbsolutePath (io/file (u/expand-tilde target)))
-        source (.getAbsolutePath (io/file source))
-        cmd ["ln" "-s" source target]]
-    (println cmd)
-    (run-command (str "symlink -" target) cmd)))
+(defn create-symlinks [links]
+  (try
+    (println " ┌─ Creating Symlinks")
+    (doseq [[target source] links]
+      (println " │ ┌─" target)
+      (let [target (.getAbsolutePath (io/file (u/expand-tilde target)))
+            source (.getAbsolutePath (io/file source))
+            cmd ["ln" "-s" source target]
+            proc (process/process cmd)
+            out-future (future (prefix-print " │ │" (:out proc)))
+            err-future (future (prefix-print " │ │" (:err proc)))]
+        @out-future
+        @err-future
+        (let [{:keys [exit]} @proc]
+          (println " │ └─" (if (zero? exit) (green "✓") (red "✗"))))))
+    (catch Exception _
+      (println " └─" (red "✗")))
+    (println " └─" (green "✓"))))
 
 
 
@@ -109,8 +124,8 @@
   {:pkg/brew     (run-basic-actions! "Installing brew packages" install-brew-package)
    :pkg/mise     (run-basic-actions! "Installing mise packages" install-mise-tool)
    :pkg/mas      (run-basic-actions! "Installing MAS apps"      install-mas-package)
-   :osx/defaults (run-basic-actions! "Setting OSX defaults"     apply-default)
-   :fs/symlink   (run-basic-actions! "Creating symlinks"        create-symlink)})
+   :osx/defaults apply-defaults
+   :fs/symlink   create-symlinks})
 
 (defn- process-action [[action-type data]]
   (if-let [processor (action-processors action-type)]
