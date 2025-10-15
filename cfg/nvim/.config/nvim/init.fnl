@@ -196,7 +196,8 @@
       ntn (autoload :nvim-tmux-navigation)
       telescope (autoload :telescope)
       telescope-actions (autoload :telescope.actions)
-      telescope-builtin (autoload :telescope.builtin)]
+      telescope-builtin (autoload :telescope.builtin)
+      snacks (autoload :snacks)]
   (lazy.setup
     [{1 :Olical/nfnl
       :ft :fennel}
@@ -380,18 +381,15 @@
      ;; >> Quality of Life
      :arp242/auto_mkdir2.vim    ; Auto-create directories
 
-     {1 :NeogitOrg/neogit
-      :dependencies [:nvim-lua/plenary.nvim
-                     :sindrets/diffview.nvim
-                     :nvim-telescope/telescope.nvim]
-      :opts {:graph_style :unicode}}
-             ;:kind :floating
-
      {1 :folke/snacks.nvim
       :priority 1000
       :opts {:bigfile {:enabled true}
              :input {:enabled true}
-             :notifier {:enabled true}}}
+             :notifier {:enabled true}
+             :lazygit {:enabled true}}
+      :init #(vim.api.nvim_create_user_command :G
+               #(snacks.lazygit)
+               {:desc "Open lazygit in current repo root"})}
 
      {1 :eraserhd/parinfer-rust
       :build "cargo build --release"}

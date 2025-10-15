@@ -122,6 +122,7 @@ do
   local telescope = autoload("telescope")
   local telescope_actions = autoload("telescope.actions")
   local telescope_builtin = autoload("telescope.builtin")
+  local snacks = autoload("snacks")
   local function _16_()
     local ts = require("nvim-treesitter")
     local available = ts.get_available()
@@ -211,26 +212,32 @@ do
     return vim.cmd("colorscheme kanagawa")
   end
   local function _36_()
-    return ntn.NvimTmuxNavigateLeft()
-  end
-  local function _37_()
-    return ntn.NvimTmuxNavigateDown()
+    local function _37_()
+      return snacks.lazygit()
+    end
+    return vim.api.nvim_create_user_command("G", _37_, {desc = "Open lazygit in current repo root"})
   end
   local function _38_()
-    return ntn.NvimTmuxNavigateUp()
+    return ntn.NvimTmuxNavigateLeft()
   end
   local function _39_()
+    return ntn.NvimTmuxNavigateDown()
+  end
+  local function _40_()
+    return ntn.NvimTmuxNavigateUp()
+  end
+  local function _41_()
     return ntn.NvimTmuxNavigateRight()
   end
-  lazy.setup({{"Olical/nfnl", ft = "fennel"}, {"williamboman/mason.nvim", cmd = "Mason", keys = {{"<leader>cm", "<cmd>Mason<cr>", desc = "Mason"}}, opts = {}}, {"williamboman/mason-lspconfig.nvim", dependencies = {"williamboman/mason.nvim", "neovim/nvim-lspconfig"}, opts = {ensure_installed = {"clojure_lsp", "fennel_language_server", "rust_analyzer", "terraformls", "kotlin_lsp", "copilot"}, automatic_enable = true}}, {"nvim-treesitter/nvim-treesitter", branch = "main", build = ":TSUpdate", config = _16_, lazy = false}, {"Olical/conjure", branch = "main", ft = {"clojure", "fennel", "python"}, keys = {{"<leader>eg", _21_, desc = "user/go!"}, {"<leader>es", _22_, desc = "clerk/show!"}}, opts = {config = {["mapping#prefix"] = "<leader>", ["client#clojure#nrepl#refresh#backend"] = "clj-reload", ["highlight#enabled"] = true, ["client#clojure#nrepl#connection#auto_repl#enabled"] = false, ["client#clojure#nrepl#mapping#session_select"] = false}}, config = _23_}, {"nvim-telescope/telescope.nvim", dependencies = {"nvim-lua/plenary.nvim", "nvim-telescope/telescope-fzf-native.nvim", "nvim-telescope/telescope-ui-select.nvim", "nvim-telescope/telescope-file-browser.nvim"}, cmd = "Telescope", keys = {{"<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find files"}, {"<leader>fy", "<cmd>Telescope filetypes<cr>", desc = "Filetypes"}, {"<leader>fr", _24_, desc = "Browse relative to buffer"}, {"<leader>fh", "<cmd>Telescope help_tags<CR>", desc = "Help tags"}, {"<leader>fb", _25_, desc = "Buffers"}, {"<leader>ss", "<cmd>Telescope live_grep<CR>", desc = "Search project file contents"}, {"<leader>s*", "<cmd>Telescope grep_string<CR>", desc = "Search current word"}, {"<leader>sr", _26_}, {"<leader>dn", _27_, desc = "Next"}, {"<leader>dp", _28_, desc = "Previous"}}, opts = {defaults = {mappings = {i = {["<esc>"] = _29_, ["<C-j>"] = _30_, ["<C-k>"] = _31_, ["<C-h>"] = _32_}}}, extensions = {fzf = {}, ["ui-select"] = {}, file_browser = {}}}, config = _33_}, {"rebelot/kanagawa.nvim", priority = 1000, opts = {dimInactive = true, overrides = _34_}, config = _35_}, {"nvim-lualine/lualine.nvim", dependencies = {"kyazdani42/nvim-web-devicons"}, opts = {sections = {lualine_a = {"filename"}, lualine_b = {"branch", "diff", "diagnostics"}, lualine_c = {"searchcount"}, lualine_x = {{lazy_status.updates, cond = lazy_status.has_updates, color = {fg = "#ff9e64"}}}, lualine_y = {}, lualine_z = {"location"}}}}, "arp242/auto_mkdir2.vim", {"NeogitOrg/neogit", dependencies = {"nvim-lua/plenary.nvim", "sindrets/diffview.nvim", "nvim-telescope/telescope.nvim"}, opts = {graph_style = "unicode"}}, {"folke/snacks.nvim", priority = 1000, opts = {bigfile = {enabled = true}, input = {enabled = true}, notifier = {enabled = true}}}, {"eraserhd/parinfer-rust", build = "cargo build --release"}, {"alexghergh/nvim-tmux-navigation", opts = {}, keys = {{"<C-h>", _36_, desc = "Navigate Left"}, {"<C-j>", _37_, desc = "Navigate Left"}, {"<C-k>", _38_, desc = "Navigate Left"}, {"<C-l>", _39_, desc = "Navigate Left"}}}, {"folke/which-key.nvim", event = "VeryLazy", keys = {{"fd", "<ESC>", desc = "Quick Escape", mode = "i"}}, opts = {notify = false}}}, {ui = {border = "rounded"}, performance = {rtp = {disabled_plugins = {"gzip", "matchit", "matchparen", "netrwPlugin", "tarPlugin", "tohtml", "tutor", "zipPlugin"}}}})
+  lazy.setup({{"Olical/nfnl", ft = "fennel"}, {"williamboman/mason.nvim", cmd = "Mason", keys = {{"<leader>cm", "<cmd>Mason<cr>", desc = "Mason"}}, opts = {}}, {"williamboman/mason-lspconfig.nvim", dependencies = {"williamboman/mason.nvim", "neovim/nvim-lspconfig"}, opts = {ensure_installed = {"clojure_lsp", "fennel_language_server", "rust_analyzer", "terraformls", "kotlin_lsp", "copilot"}, automatic_enable = true}}, {"nvim-treesitter/nvim-treesitter", branch = "main", build = ":TSUpdate", config = _16_, lazy = false}, {"Olical/conjure", branch = "main", ft = {"clojure", "fennel", "python"}, keys = {{"<leader>eg", _21_, desc = "user/go!"}, {"<leader>es", _22_, desc = "clerk/show!"}}, opts = {config = {["mapping#prefix"] = "<leader>", ["client#clojure#nrepl#refresh#backend"] = "clj-reload", ["highlight#enabled"] = true, ["client#clojure#nrepl#connection#auto_repl#enabled"] = false, ["client#clojure#nrepl#mapping#session_select"] = false}}, config = _23_}, {"nvim-telescope/telescope.nvim", dependencies = {"nvim-lua/plenary.nvim", "nvim-telescope/telescope-fzf-native.nvim", "nvim-telescope/telescope-ui-select.nvim", "nvim-telescope/telescope-file-browser.nvim"}, cmd = "Telescope", keys = {{"<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find files"}, {"<leader>fy", "<cmd>Telescope filetypes<cr>", desc = "Filetypes"}, {"<leader>fr", _24_, desc = "Browse relative to buffer"}, {"<leader>fh", "<cmd>Telescope help_tags<CR>", desc = "Help tags"}, {"<leader>fb", _25_, desc = "Buffers"}, {"<leader>ss", "<cmd>Telescope live_grep<CR>", desc = "Search project file contents"}, {"<leader>s*", "<cmd>Telescope grep_string<CR>", desc = "Search current word"}, {"<leader>sr", _26_}, {"<leader>dn", _27_, desc = "Next"}, {"<leader>dp", _28_, desc = "Previous"}}, opts = {defaults = {mappings = {i = {["<esc>"] = _29_, ["<C-j>"] = _30_, ["<C-k>"] = _31_, ["<C-h>"] = _32_}}}, extensions = {fzf = {}, ["ui-select"] = {}, file_browser = {}}}, config = _33_}, {"rebelot/kanagawa.nvim", priority = 1000, opts = {dimInactive = true, overrides = _34_}, config = _35_}, {"nvim-lualine/lualine.nvim", dependencies = {"kyazdani42/nvim-web-devicons"}, opts = {sections = {lualine_a = {"filename"}, lualine_b = {"branch", "diff", "diagnostics"}, lualine_c = {"searchcount"}, lualine_x = {{lazy_status.updates, cond = lazy_status.has_updates, color = {fg = "#ff9e64"}}}, lualine_y = {}, lualine_z = {"location"}}}}, "arp242/auto_mkdir2.vim", {"folke/snacks.nvim", priority = 1000, opts = {bigfile = {enabled = true}, input = {enabled = true}, notifier = {enabled = true}, lazygit = {enabled = true}}, init = _36_}, {"eraserhd/parinfer-rust", build = "cargo build --release"}, {"alexghergh/nvim-tmux-navigation", opts = {}, keys = {{"<C-h>", _38_, desc = "Navigate Left"}, {"<C-j>", _39_, desc = "Navigate Left"}, {"<C-k>", _40_, desc = "Navigate Left"}, {"<C-l>", _41_, desc = "Navigate Left"}}}, {"folke/which-key.nvim", event = "VeryLazy", keys = {{"fd", "<ESC>", desc = "Quick Escape", mode = "i"}}, opts = {notify = false}}}, {ui = {border = "rounded"}, performance = {rtp = {disabled_plugins = {"gzip", "matchit", "matchparen", "netrwPlugin", "tarPlugin", "tohtml", "tutor", "zipPlugin"}}}})
 end
 vim.api.nvim_create_user_command("Nohl", "nohl", {})
-local function _40_(opts)
+local function _42_(opts)
   local width = tonumber(opts.args)
   vim.bo.tabstop = width
   vim.bo.shiftwidth = width
   vim.bo.softtabstop = width
   return nil
 end
-vim.api.nvim_create_user_command("Tab", _40_, {nargs = 1, desc = "Set tab width for current buffer"})
+vim.api.nvim_create_user_command("Tab", _42_, {nargs = 1, desc = "Set tab width for current buffer"})
 return nil
