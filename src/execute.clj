@@ -1,7 +1,8 @@
 (ns execute 
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
-            [babashka.process :as process]))
+            [babashka.process :as process]
+            [utils :as u]))
 
 (def ^:dynamic *dry-run* false)
 
@@ -46,12 +47,12 @@
 ;; >> Processors
 
 (defn- install-brew-package [[pkg {:keys [head]}]]
-  (let [cmd ["brew" "install" (name pkg) (when head " --HEAD")]]
-    (run-command (str "brew -" pkg) cmd)))
+  (let [cmd (into ["brew" "install" (name pkg)] (when head ["--HEAD"]))]
+    (run-command (str "brew - " (name pkg)) cmd)))
 
 (defn- install-mise-tool [[tool {:keys [version]}]]
   (let [cmd ["mise" "install" (str (name tool) "@" version)]]
-    (run-command (str "mise -" tool) cmd)))
+    (run-command (str "mise - " tool) cmd)))
 
 (defn- install-mas-package [[name id]]
   (let [cmd ["mas" "install" id]]
@@ -68,14 +69,17 @@
 
 (defn- apply-default [[domain settings]]
   (run! (fn [[key value]]
-          (let [type-flag (->defaults-type value)]
-            (when *dry-run*
-              (println "defaults write" domain (name key) type-flag value))))
+          (let [type-flag (->defaults-type value)
+                cmd ["defaults" "write" domain (name key) type-flag value]]
+            (run-command (str/join " - " ["defaults" domain key]) cmd)))
         settings))
 
 (defn- create-symlink [[target source]]
-  (when *dry-run*
-    (println "ln -s" source target)))
+  (let [target (.getAbsolutePath (io/file (u/expand-tilde target)))
+        source (.getAbsolutePath (io/file source))
+        cmd ["ln" "-s" source target]]
+    (println cmd)
+    (run-command (str "symlink -" target) cmd)))
 
 
 

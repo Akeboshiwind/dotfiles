@@ -1,6 +1,7 @@
 (ns optimise 
   (:require [clojure.string :as str]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [utils :as u]))
 
 
 ;; >> Resolve symlinks to root of repo
@@ -27,11 +28,8 @@
 
 ;; >> Breakdown :fs/symlink-folders into individual :fs/symlinks
 
-(defn- expand-tilde [path]
-  (str/replace path #"^~" (System/getProperty "user.home")))
-
 (defn- list-files [dir-path]
-  (let [dir (io/file (expand-tilde dir-path))]
+  (let [dir (io/file (u/expand-tilde dir-path))]
     (->> (file-seq dir)
          (filter #(.isFile %)))))
 
@@ -41,7 +39,7 @@
     (subs file-path (count base-path))))
 
 (defn- create-symlink-mapping [source-dir target-dir]
-  (let [base-dir (io/file (expand-tilde target-dir))
+  (let [base-dir (io/file (u/expand-tilde target-dir))
         files (list-files target-dir)]
     (->> files
          (map (fn [file]
