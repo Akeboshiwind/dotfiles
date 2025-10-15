@@ -11,10 +11,14 @@
 (def RED "\033[31m")
 (def RESET "\033[0m")
 
+(def gray #(str GRAY % RESET))
+(def green #(str GREEN % RESET))
+(def red #(str RED % RESET))
+
 (defn- prefix-print [stream]
   (with-open [rdr (io/reader stream)]
     (doseq [line (line-seq rdr)]
-      (println (str " │ " GRAY line RESET)))))
+      (println " │" (gray line)))))
 
 (defn run-command'
   "Runs the given command, streaming the output, prefixing lines"
@@ -28,9 +32,7 @@
       @err-future
       ;; Wait for completion
       (let [{:keys [exit]} @proc]
-        (println " └─" (if (zero? exit)
-                         (str GREEN "✓" RESET)
-                         (str RED "✗" RESET)))
+        (println " └─" (if (zero? exit) (green "✓") (red "✗")))
         (zero? exit)))
     (catch Exception _
       false)))
