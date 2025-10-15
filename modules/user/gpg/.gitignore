@@ -1,5 +1,0 @@
-.gnupg/openpgp-revocs.d/*
-.gnupg/private-keys-v1.d/*
-.gnupg/pubring.kbx
-.gnupg/pubring.kbx~
-.gnupg/trustdb.gpg

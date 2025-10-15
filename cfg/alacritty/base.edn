@@ -1,0 +1,3 @@
+{:pkg/brew {:alacritty {}
+            :font-meslo-lg-nerd-font {}}
+ :fs/symlink-folder {"~/.config" "./.config"}}

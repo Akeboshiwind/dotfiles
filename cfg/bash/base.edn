@@ -1,0 +1,5 @@
+{:pkg/brew {:bash {}
+            :bash-completion2 {}
+            :fzf {}}
+ :fs/symlink {"~/.bash_profile" "./.bash_profile"
+              "~/.bashrc" "./.bashrc"}}

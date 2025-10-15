@@ -1,0 +1,6 @@
+{:pkg/brew {:claude {}
+            ;:ollama {}
+            :claude-code {}
+            :llm {}
+            :repomix {}
+            :cursor {}}}

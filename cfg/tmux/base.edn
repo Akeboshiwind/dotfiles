@@ -1,0 +1,2 @@
+{:pkg/brew {:tmux {}}
+ :fs/symlink {"~/.tmux.conf" "./.tmux.conf"}}

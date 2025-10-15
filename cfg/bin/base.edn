@@ -1,0 +1,14 @@
+{:pkg/brew {; TODO: Update scripts to just use babashka
+            :bash {}
+            :coreutils {}
+            :git {}
+            :tree {}
+            :jq {}
+            :ffmpeg {}
+            :stow {}
+            :help2man {}
+            :htop {}
+            :nmap {}
+            ; TODO: What's the best way on brew now? Maybe using mise?
+            :imagemagickBig {}}
+ :fs/symlink-folder {"~/bin" "./bin"}}

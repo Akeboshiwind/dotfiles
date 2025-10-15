@@ -1,0 +1,8 @@
+{; TODO: https://mise.jdx.dev/lang/java.html#macos-java-home-integration
+ :pkg/mise {:jdk {:version "temurin-21"}}
+ :pkg/brew {:clojure {}
+            "borkdude/brew/babashka" {}
+            "borkdude/brew/clj-kondo" {}}
+ :fs/symlink-folder {"~/.clojure" "./.clojure"
+                     "~/.nrepl" "./.nrepl"
+                     "~/.shadow-cljs" "./.shadow-cljs"}}

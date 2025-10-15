@@ -1,0 +1,14 @@
+{:pkg/brew {:neovim {:head true}
+            ; For parinfer-rust in Clojure config
+            :rust {}
+            ; For fuzzy searching
+            :ripgrep {}
+            ; For installing LSPs with Mason
+            :nodejs {} ;TODO: Should this be in :pkg/mise?
+            :wget {}
+            :ninja {} ; Lua
+            :luarocks {} ; fennel_ls etc.
+            :maven {} ; java_language_server
+            ; For tree-sitter
+            :tree-sitter {}}
+ :fs/symlink-folder {"~/.config" "./.config"}}
