@@ -1,21 +1,57 @@
-(ns execute)
-
+(ns execute 
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
+            [babashka.process :as process]))
 
 (def ^:dynamic *dry-run* false)
+
+(def GRAY "\033[90m")
+(def RESET "\033[0m")
+
+(defn- prefix-print [stream]
+  (with-open [rdr (io/reader stream)]
+    (doseq [line (line-seq rdr)]
+      (println (str " │ " GRAY line RESET)))))
+
+(defn run-command'
+  "Runs the given command, streaming the output, prefixing lines"
+  [label args]
+  (try
+    (println " ┌─" label)
+    (let [proc (process/process args)
+          out-future (future (prefix-print (:out proc)))
+          err-future (future (prefix-print (:err proc)))]
+      @out-future
+      @err-future
+      ;; Wait for completion
+      (let [{:keys [exit]} @proc]
+        (println " └─" (if (zero? exit) "✓" "✗"))
+        (zero? exit)))
+    (catch Exception _
+      false)))
+
+(defn dry-run-command [_label args]
+  (println (str/join " " args))
+  true)
+
+(defn run-command [label args]
+  (let [run (if *dry-run* dry-run-command run-command')]
+    (run label args)))
+
 
 ;; >> Processors
 
 (defn- install-brew-package [[pkg {:keys [head]}]]
-  (when *dry-run*
-    (println (str "brew install " (name pkg) (when head " --HEAD")))))
+  (let [cmd ["brew" "install" (name pkg) (when head " --HEAD")]]
+    (run-command (str "brew -" pkg) cmd)))
 
 (defn- install-mise-tool [[tool {:keys [version]}]]
-  (when *dry-run*
-    (println "mise install" (str (name tool) "@" version))))
+  (let [cmd ["mise" "install" (str (name tool) "@" version)]]
+    (run-command (str "mise -" tool) cmd)))
 
 (defn- install-mas-package [[name id]]
-  (when *dry-run*
-    (println "mas install" id "#" name)))
+  (let [cmd ["mas" "install" id]]
+    (run-command (str "MAS -" name) cmd)))
 
 ; See `man defaults`, basically:
 ; No flag = -string
