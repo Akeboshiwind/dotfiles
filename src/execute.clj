@@ -69,12 +69,25 @@
     "-bool"
     "-string"))
 
-(defn- apply-default [[domain settings]]
-  (run! (fn [[key value]]
-          (let [type-flag (->defaults-type value)
-                cmd ["defaults" "write" domain (name key) type-flag value]]
-            (run-command (str/join " - " ["defaults" domain key]) cmd)))
-        settings))
+(defn apply-defaults [defaults]
+  (try
+    (println " ┌─ Setting OSX Defaults")
+    (doseq [[domain settings] defaults]
+      (println " ├─┬──" domain)
+      (doseq [[idx [key value]] (zipmap (range) settings)]
+        (let [type-flag (->defaults-type value)
+              cmd ["defaults" "write" domain (name key) type-flag value]
+              proc (process/process cmd)
+              out-future (future (prefix-print (:out proc)))
+              err-future (future (prefix-print (:err proc)))]
+          @out-future
+          @err-future
+          (let [{:keys [exit]} @proc]
+            (println (if (= idx (dec (count settings))) " │ └─" " │ ├─")
+                     key value (if (zero? exit) (green "✓") (red "✗")))))))
+    (catch Exception _
+      (println " └─" (red "✗")))
+    (println " └─" (green "✓"))))
 
 (defn- create-symlink [[target source]]
   (let [target (.getAbsolutePath (io/file (u/expand-tilde target)))
