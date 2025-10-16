@@ -54,9 +54,13 @@
   (let [cmd (into ["brew" "install" (name pkg)] (when head ["--HEAD"]))]
     (run-command (str "brew - " (name pkg)) cmd)))
 
-(defn- install-mise-tool [[tool {:keys [version]}]]
-  (let [cmd ["mise" "install" (str (name tool) "@" version)]]
-    (run-command (str "mise - " tool) cmd)))
+(defn- install-mise-tool [[tool {:keys [version global]}]]
+  (let [tool (str (name tool) "@" version)
+        cmd ["mise" "install" tool]]
+    (run-command (str "mise - " tool) cmd)
+    (when global
+      (let [cmd ["mise" "use" "--global" tool]]
+        (run-command (str "mise (use global) - " tool) cmd)))))
 
 (defn- install-mas-package [[name id]]
   (let [cmd ["mas" "install" id]]
