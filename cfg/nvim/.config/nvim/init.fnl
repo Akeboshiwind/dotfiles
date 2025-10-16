@@ -137,6 +137,9 @@
 (vim.keymap.set [:n :v] :grf
                 #(vim.lsp.buf.format {:async true :timeout_ms 1000})
                 {:desc "vim.lsp.buf.format()"})
+(vim.keymap.set [:n :v] :grd
+                #(vim.lsp.buf.definition {})
+                {:desc "vim.lsp.buf.definition()"})
 
 ;; Custom LSP servers (only for special cases)
 (vim.lsp.config :clojure_lsp
