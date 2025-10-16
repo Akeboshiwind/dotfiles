@@ -12,6 +12,7 @@
           ; >> Editor
           "cfg/nvim/base.edn"
           "cfg/vim/base.edn"
+          "cfg/intellij/base.edn"
 
           ; >> Tools
           "cfg/git/base.edn"
