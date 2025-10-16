@@ -9,6 +9,5 @@
             :help2man {}
             :htop {}
             :nmap {}
-            ; TODO: What's the best way on brew now? Maybe using mise?
-            :imagemagickBig {}}
+            :imagemagick {}}
  :fs/symlink-folder {"~/bin" "./bin"}}
