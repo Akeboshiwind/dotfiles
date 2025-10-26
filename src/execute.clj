@@ -2,7 +2,8 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [babashka.process :as process]
-            [utils :as u]))
+            [utils :as u])
+  (:import [java.nio.file Files Paths]))
 
 (def ^:dynamic *dry-run* false)
 
@@ -104,11 +105,19 @@
     (println " ┌─ Creating Symlinks")
     (doseq [[target source] links]
       (println " │ ┌─" target)
-      (let [target (.getAbsolutePath (io/file (u/expand-tilde target)))
-            source (.getAbsolutePath (io/file source))
-            cmd ["ln" "-s" source target]
-            {:keys [exit]} (exec! {:prefix " │ │"} cmd)]
-        (println " │ └─" (if (zero? exit) (green "✓") (red "✗")))))
+      (let [target (io/file (u/expand-tilde target))
+            source (io/file source)]
+        (if (.exists target)
+          (let [target-path (Paths/get (.toURI target))
+                source-path (Paths/get (.toURI source))]
+            (if (and (Files/isSymbolicLink target-path)
+                     (= (Files/readSymbolicLink target-path)
+                        source-path))
+              (println " │ └─" (green "✓"))
+              (println " │ └─" (red "✗"))))
+          (let [cmd ["ln" "-s" (.getAbsolutePath source (.getAbsolutePath target))]
+                {:keys [exit]} (exec! {:prefix " │ │"} cmd)]
+            (println " │ └─" (if (zero? exit) (green "✓") (red "✗")))))))
     (catch Exception _
       (println " └─" (red "✗")))
     (println " └─" (green "✓"))))
