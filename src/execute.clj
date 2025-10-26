@@ -22,21 +22,29 @@
      (doseq [line (line-seq rdr)]
        (println prefix (gray line))))))
 
+(defn exec!
+  ([args]
+   (exec! {} args))
+  ([{:keys [prefix] :or {prefix " │"}}
+    args]
+   (let [proc (process/process args)
+         out-future (future (prefix-print prefix (:out proc)))
+         err-future (future (prefix-print prefix (:err proc)))]
+     @out-future
+     @err-future
+     ;; Wait for completion
+     @proc)))
+
 (defn run-command'
   "Runs the given command, streaming the output, prefixing lines"
   [label args]
   (try
     (println " ┌─" label)
-    (let [proc (process/process args)
-          out-future (future (prefix-print (:out proc)))
-          err-future (future (prefix-print (:err proc)))]
-      @out-future
-      @err-future
-      ;; Wait for completion
-      (let [{:keys [exit]} @proc]
-        (println " └─" (if (zero? exit) (green "✓") (red "✗")))
-        (zero? exit)))
+    (let [{:keys [exit]} (exec! args)]
+      (println " └─" (if (zero? exit) (green "✓") (red "✗")))
+      (zero? exit))
     (catch Exception _
+      (println " └─" (red "✗"))
       false)))
 
 (defn dry-run-command [_label args]
@@ -84,14 +92,9 @@
         (let [last? (= idx (dec (count settings)))
               type-flag (->defaults-type value)
               cmd ["defaults" "write" domain (name key) type-flag value]
-              proc (process/process cmd)
-              out-future (future (prefix-print (:out proc)))
-              err-future (future (prefix-print (:err proc)))]
-          @out-future
-          @err-future
-          (let [{:keys [exit]} @proc]
-            (println (if last? " │ └─" " │ ├─")
-                     key value (if (zero? exit) (green "✓") (red "✗")))))))
+              {:keys [exit]} (exec! {:prefix " │ │"} cmd)]
+          (println (if last? " │ └─" " │ ├─")
+                   key value (if (zero? exit) (green "✓") (red "✗"))))))
     (catch Exception _
       (println " └─" (red "✗")))
     (println " └─" (green "✓"))))
@@ -104,13 +107,8 @@
       (let [target (.getAbsolutePath (io/file (u/expand-tilde target)))
             source (.getAbsolutePath (io/file source))
             cmd ["ln" "-s" source target]
-            proc (process/process cmd)
-            out-future (future (prefix-print " │ │" (:out proc)))
-            err-future (future (prefix-print " │ │" (:err proc)))]
-        @out-future
-        @err-future
-        (let [{:keys [exit]} @proc]
-          (println " │ └─" (if (zero? exit) (green "✓") (red "✗"))))))
+            {:keys [exit]} (exec! {:prefix " │ │"} cmd)]
+        (println " │ └─" (if (zero? exit) (green "✓") (red "✗")))))
     (catch Exception _
       (println " └─" (red "✗")))
     (println " └─" (green "✓"))))
