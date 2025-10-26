@@ -9,5 +9,6 @@
             :help2man {}
             :htop {}
             :nmap {}
-            :imagemagick {}}
+            :imagemagick {}
+            :watch {}}
  :fs/symlink-folder {"~/bin" "./bin"}}
