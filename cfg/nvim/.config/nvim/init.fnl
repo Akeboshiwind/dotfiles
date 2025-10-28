@@ -391,7 +391,8 @@
       :opts {:bigfile {:enabled true}
              :input {:enabled true}
              :notifier {:enabled true}
-             :lazygit {:enabled true}}
+             :lazygit {:enabled true
+                       :config {:gui {:scrollHeight 10}}}}
       :init #(vim.api.nvim_create_user_command :G
                #(snacks.lazygit)
                {:desc "Open lazygit in current repo root"})}
