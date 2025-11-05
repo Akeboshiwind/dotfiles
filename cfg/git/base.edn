@@ -1,4 +1,5 @@
 {:pkg/brew {:git {}
             :git-lfs {}
-            :lazygit {}}
+            :lazygit {}
+            :gh {}}
  :fs/symlink {"~/.gitconfig" "./.gitconfig"}}
