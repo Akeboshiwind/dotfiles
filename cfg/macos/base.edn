@@ -13,7 +13,8 @@
            ;"Fantastical" 975937182
            "Data Jar" 1453273600
            "Collections Database" 1568395334
-           "Save to Reader" 1640236961}
+           "Save to Reader" 1640236961
+           "Logger for Shortcuts" 1611554653}
 
  ; TODO: How can I setup mapping CapsLock to Control?
  :osx/defaults
