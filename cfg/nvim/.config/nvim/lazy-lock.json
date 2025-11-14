@@ -1,4 +1,5 @@
 {
+  "alabaster.nvim": { "branch": "main", "commit": "59f1a91fd204d96d163932dcada8559fc6aee8cd" },
   "auto_mkdir2.vim": { "branch": "master", "commit": "cb337429045d839c399093c86f1331582ce8a548" },
   "conjure": { "branch": "main", "commit": "c5da84f291ec7d9f9f6e449c8aeb28b4c2d01562" },
   "kanagawa.nvim": { "branch": "master", "commit": "aef7f5cec0a40dbe7f3304214850c472e2264b10" },

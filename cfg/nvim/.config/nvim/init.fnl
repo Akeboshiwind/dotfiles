@@ -360,6 +360,7 @@
      ; <<
      ;; >> UI & Theme
      {1 :rebelot/kanagawa.nvim
+      :enabled false
       :priority 1000 ; Load early
       :opts {; dim inactive window `:h hl-NormalNC`
              :dimInactive true
@@ -368,6 +369,11 @@
                 (let [k (require :kanagawa)]
                   (k.setup opts))
                 (vim.cmd "colorscheme kanagawa"))}
+     {1 :p00f/alabaster.nvim
+      :priority 1000 ; Load early
+      :config #(do
+                 (set vim.g.alabaster_floatborder true)
+                 (vim.cmd "colorscheme alabaster"))}
 
      {1 :nvim-lualine/lualine.nvim
       :dependencies [:kyazdani42/nvim-web-devicons]
