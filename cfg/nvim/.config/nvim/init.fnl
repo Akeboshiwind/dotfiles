@@ -403,7 +403,17 @@
              :notifier {:enabled true}
              :lazygit {:enabled true
                        :config {:gui {:scrollHeight 10}
-                                :git {:overrideGpg true}}}}
+                                :git {:overrideGpg true}
+                                ; Based on: https://github.com/jesseduffield/lazygit/blob/11c7203db6776427906fb0fd54890ded59001989/pkg/config/editor_presets.go#L56
+                                :os (let [base-cmd "nvim --server \"$NVIM\" "
+                                          combine (fn [parts] (table.concat parts "; "))]
+                                      {:edit (combine [(.. base-cmd "--remote-send \"q\"")
+                                                       (.. base-cmd "--remote {{filename}}")])
+                                       :editAtLine (combine [(.. base-cmd "--remote-send \"q\"")
+                                                             (.. base-cmd "--remote {{filename}}")
+                                                             (.. base-cmd "--remote-send \":{{line}}<CR>\"")])
+                                       :openDirInEditor (combine [(.. base-cmd "--remote-send \"q\"")
+                                                                  (.. base-cmd "--remote {{dir}}")])})}}}
       :init #(vim.api.nvim_create_user_command :G
                #(snacks.lazygit)
                {:desc "Open lazygit in current repo root"})}
