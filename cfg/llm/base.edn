@@ -1,5 +1,9 @@
-{:pkg/brew {:claude {}
+{:pkg/brew {; Anthropic
+            :claude {}
             :claude-code {}
+            ; OpenAI
+            :chatgpt {}
             :codex {}
+            ; Other
             :llm {}
             :repomix {}}}
