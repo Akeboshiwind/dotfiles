@@ -64,12 +64,10 @@
     (run-command (str "brew - " (name pkg)) cmd)))
 
 (defn- install-mise-tool [[tool {:keys [version global]}]]
-  (let [tool (str (name tool) "@" version)
-        cmd ["mise" "install" tool]]
-    (run-command (str "mise - " tool) cmd)
-    (when global
-      (let [cmd ["mise" "use" "--global" tool]]
-        (run-command (str "mise (use global) - " tool) cmd)))))
+  (let [tool (str (name tool) "@" version)]
+    (if global
+      (run-command (str "mise (use global) - " tool) ["mise" "use" "--global" tool])
+      (run-command (str "mise - " tool) ["mise" "install" tool]))))
 
 (defn- install-mas-package [[name id]]
   (let [cmd ["mas" "install" id]]
