@@ -115,7 +115,7 @@
                         source-path))
               (println " │ └─" (green "✓"))
               (println " │ └─" (red "✗"))))
-          (let [cmd ["ln" "-s" (.getAbsolutePath source (.getAbsolutePath target))]
+          (let [cmd ["ln" "-s" (.getAbsolutePath source) (.getAbsolutePath target)]
                 {:keys [exit]} (exec! {:prefix " │ │"} cmd)]
             (println " │ └─" (if (zero? exit) (green "✓") (red "✗")))))))
     (catch Exception _
