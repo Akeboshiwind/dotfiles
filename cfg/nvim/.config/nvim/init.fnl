@@ -364,15 +364,14 @@
      ; <<
      ;; >> UI & Theme
      {1 :rebelot/kanagawa.nvim
-      :enabled false
+      :enabled true
       :priority 1000 ; Load early
       :opts {; dim inactive window `:h hl-NormalNC`
              :dimInactive true
              :overrides #{"@comment.todo" {:link "@comment.note"}}}
       :config (fn [_ opts]
                 (let [k (require :kanagawa)]
-                  (k.setup opts))
-                (vim.cmd "colorscheme kanagawa"))}
+                  (k.setup opts)))}
      {1 :p00f/alabaster.nvim
       :priority 1000 ; Load early
       :config #(do
