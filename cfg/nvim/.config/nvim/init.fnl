@@ -37,7 +37,7 @@
 (vim.keymap.set [:n :v] :P "\"+P" {:desc "Paste before from system clipboard"})
 (vim.keymap.set [:n :v] :d "\"+d" {:desc "Delete to system clipboard"})
 (vim.keymap.set [:n :v] :D "\"+D" {:desc "Delete line to system clipboard"})
-; NOTE: Use "0p to paste from vim yank register})
+; NOTE: Use \"0p to paste from vim yank register (ignore slash, needed for parinfer to be happy)
 
 
 
