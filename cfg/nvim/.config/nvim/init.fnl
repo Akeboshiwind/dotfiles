@@ -382,8 +382,13 @@
                                        :openDirInEditor (combine [(.. base-cmd "--remote-send \"q\"")
                                                                   (.. base-cmd "--remote {{dir}}")])})}}}
       :init #(vim.api.nvim_create_user_command :G
-               #(snacks.lazygit)
-               {:desc "Open lazygit in current repo root"})}
+               (fn [opts]
+                 (if (= 0 (length opts.fargs))
+                   (snacks.lazygit)
+                   (case (. opts.fargs 1)
+                     "blame" (snacks.lazygit.log_file))))
+               {:nargs :? ; 0 or 1 argument
+                :desc "Open lazygit in current repo root"})}
 
      {1 :eraserhd/parinfer-rust
       :build "cargo build --release"}
