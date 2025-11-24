@@ -228,7 +228,7 @@
                                 ;:pyright :ts_ls
              :automatic_enable true}}
 
-     ;; Treesitter (main branch with auto-install)
+     ;; Treesitter
      {1 :nvim-treesitter/nvim-treesitter
       :branch "main"
       :build ":TSUpdate"
@@ -252,18 +252,15 @@
                       (fn [args]
                         (let [ft args.match
                               lang (vim.treesitter.language.get_lang ft)]
-                          (when (vim.tbl_contains available lang)
-                            ;; Auto-install parsers on demand
-                            (-> (ts.install lang)
-                                (: :await #(do
-                                             ;; Auto-enable highlighting for all files
-                                             (vim.treesitter.start args.buf lang))))
-
-                            ;; Auto-enable folding for all files
-                            (when (not= (vim.fs.basename args.file) "init.fnl")
-                              (set vim.wo.foldmethod "expr")
-                              (set vim.wo.foldexpr "v:lua.vim.treesitter.foldexpr()")))))})))}
-
+                          ;; Auto-enable folding on all files
+                          (when (and (vim.tbl_contains available lang)
+                                     (not= (vim.fs.basename args.file) "init.fnl"))
+                            (set vim.wo.foldmethod "expr")
+                            (set vim.wo.foldexpr "v:lua.vim.treesitter.foldexpr()"))))})))}
+     {1 :mks-h/treesitter-autoinstall.nvim
+      :lazy false
+      :dependencies [:nvim-treesitter/nvim-treesitter]
+      :opts {}}
 
 
      ; <<
