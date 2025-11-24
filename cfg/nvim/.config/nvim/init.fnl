@@ -7,14 +7,12 @@
 
 
 
-; <<
 ;; >> Leader Key
 
 (set vim.g.mapleader ",")
 
 
 
-; <<
 ;; >> Basic Settings
 
 (set vim.opt.ignorecase true) ; In searches, ignore the case
@@ -30,7 +28,6 @@
 
 
 
-; <<
 ;; >> Clipboard
 
 ;; Make y/p use system clipboard
@@ -44,7 +41,6 @@
 
 
 
-; <<
 ;; >> Indentation
 
 (set vim.opt.tabstop 4) ; Show existing tab with 4 spaces width
@@ -53,19 +49,17 @@
 
 
 
-; <<
 ;; >> Folds
 
 (set vim.opt.foldcolumn "0") ; disable
 (set vim.opt.foldtext "") ; show the first line syntax highlighted
 (set vim.opt.foldlevelstart 99) ; don't auto-close folds
 (set vim.opt.foldopen "") ; disable vim auto-opening folds (e.g. '[' and search)
-(set vim.opt.foldmethod "marker") ; default fold method
-(set vim.opt.foldmarker ">>,<<")
+(set vim.opt.foldmethod "expr")
+(set vim.wo.foldexpr "v:lua.vim.treesitter.foldexpr()")
 
 
 
-; <<
 ;; >> Persistence
 
 ; Only save folds and cursor position
@@ -79,7 +73,6 @@
 
 
 
-; <<
 ;; >> Colors & UI
 
 (if (not= 0 (vim.fn.exists "+termguicolors"))
@@ -93,7 +86,6 @@
 
 
 
-; <<
 ;; >> Diagnostics Signs
 
 (let [signs {:DiagnosticSignError ""
@@ -105,7 +97,6 @@
 
 
 
-; <<
 ;; >> Filetype Additions
 
 (vim.filetype.add {:extension {:mdx "markdown"}
@@ -113,7 +104,6 @@
 
 
 
-; <<
 ;; >> Built-in LSP & Completion Setup
 
 (set vim.opt.complete "o,.,w,b,u,t,kspell") ; lsp, current buffer, other buffers, tags, spelling
@@ -160,7 +150,6 @@
 
 
 
-; <<
 ;; >> Completion Keymaps
 
 (fn pumvisible [] (not= 0 (vim.fn.pumvisible)))
@@ -173,7 +162,6 @@
 
 
 
-; <<
 ;; >> Plugin Manager Bootstrap
 
 (local lazypath (.. (vim.fn.stdpath "data") "/lazy"))
@@ -196,7 +184,6 @@
 
 
 
-; <<
 ;; >> Plugins
 
 (let [lazy (require "lazy")
@@ -233,37 +220,24 @@
       :branch "main"
       :build ":TSUpdate"
       :lazy false
-      :config (fn []
-                (let [ts (require :nvim-treesitter)
-                      available (ts.get_available)]
-                  (ts.install [; basic
-                               :comment :regex
-                               ; Config files
-                               :dockerfile :json :yaml
-                               ; Git
-                               :git_config :git_rebase :gitattributes
-                               :gitcommit :gitignore
-                               ; Programming languages
-                               :bash :lua :luadoc :fennel :clojure :java
-                               :javascript :typescript :python :terraform :html
-                               :nix :markdown])
-                  (vim.api.nvim_create_autocmd :FileType
-                    {:callback
-                      (fn [args]
-                        (let [ft args.match
-                              lang (vim.treesitter.language.get_lang ft)]
-                          ;; Auto-enable folding on all files
-                          (when (and (vim.tbl_contains available lang)
-                                     (not= (vim.fs.basename args.file) "init.fnl"))
-                            (set vim.wo.foldmethod "expr")
-                            (set vim.wo.foldexpr "v:lua.vim.treesitter.foldexpr()"))))})))}
+      :config #(let [ts (require :nvim-treesitter)]
+                 (ts.install [; basic
+                              :comment :regex
+                              ; Config files
+                              :dockerfile :json :yaml
+                              ; Git
+                              :git_config :git_rebase :gitattributes
+                              :gitcommit :gitignore
+                              ; Programming languages
+                              :bash :lua :luadoc :fennel :clojure :java
+                              :javascript :typescript :python :terraform :html
+                              :nix :markdown]))}
      {1 :mks-h/treesitter-autoinstall.nvim
       :lazy false
       :dependencies [:nvim-treesitter/nvim-treesitter]
       :opts {}}
 
 
-     ; <<
      ;; >> Clojure REPL (Essential)
      {1 :Olical/conjure
       :branch :main
@@ -299,7 +273,6 @@
 
 
 
-     ; <<
      ;; >> File Navigation
      {1 :nvim-telescope/telescope.nvim
       :dependencies [:nvim-lua/plenary.nvim
@@ -358,7 +331,6 @@
 
 
 
-     ; <<
      ;; >> UI & Theme
      {1 :rebelot/kanagawa.nvim
       :enabled true
@@ -388,7 +360,6 @@
 
 
 
-     ; <<
      ;; >> Quality of Life
      :arp242/auto_mkdir2.vim    ; Auto-create directories
 
@@ -428,7 +399,6 @@
       :event :VeryLazy
       :keys [{1 "fd" 2 "<ESC>" :desc "Quick Escape" :mode :i}]
       :opts {:notify false}}]
-     ; <<
 
     ;; Lazy.nvim config
     {:ui {:border "rounded"}
@@ -438,7 +408,6 @@
 
 
 
-; <<
 ;; >> Utility Commands
 
 (vim.api.nvim_create_user_command :Nohl :nohl {})
@@ -450,5 +419,4 @@
       (set vim.bo.softtabstop width)))
   {:nargs 1 :desc "Set tab width for current buffer"})
 
-; <<
 nil
