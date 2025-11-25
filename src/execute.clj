@@ -135,9 +135,13 @@
                         source-path))
               (println " │ └─" (green "✓"))
               (println " │ └─" (red "✗"))))
-          (let [cmd ["ln" "-s" (.getAbsolutePath source) (.getAbsolutePath target)]
-                {:keys [exit]} (exec! {:prefix " │ │"} cmd)]
-            (println " │ └─" (if (zero? exit) (green "✓") (red "✗")))))))
+          (do
+            ;; Create parent directories if they don't exist
+            (when-let [parent (.getParentFile target)]
+              (.mkdirs parent))
+            (let [cmd ["ln" "-s" (.getAbsolutePath source) (.getAbsolutePath target)]
+                  {:keys [exit]} (exec! {:prefix " │ │"} cmd)]
+              (println " │ └─" (if (zero? exit) (green "✓") (red "✗"))))))))
     (catch Exception _
       (println " └─" (red "✗")))
     (println " └─" (green "✓"))))
