@@ -73,6 +73,28 @@
   (let [cmd ["mas" "install" id]]
     (run-command (str "MAS -" name) cmd)))
 
+(defn- install-bbin-package [[pkg opts]]
+  (let [pkg-name (name pkg)
+        package-arg (or (:url opts) pkg-name)
+        as-name (if (and (:url opts)
+                         (not (:as opts)))
+                  pkg-name
+                  (:as opts))
+        base-cmd ["bbin" "install" package-arg]
+        opts-flags (cond-> []
+                     as-name             (into ["--as" as-name])
+                     (:git/sha opts)     (into ["--git/sha" (:git/sha opts)])
+                     (:git/tag opts)     (into ["--git/tag" (:git/tag opts)])
+                     (:git/url opts)     (into ["--git/url" (:git/url opts)])
+                     (:latest-sha opts)  (conj "--latest-sha")
+                     (:local/root opts)  (into ["--local/root" (:local/root opts)])
+                     (:main-opts opts)   (into ["--main-opts" (str (:main-opts opts))])
+                     (:mvn/version opts) (into ["--mvn/version" (:mvn/version opts)])
+                     (:ns-default opts)  (into ["--ns-default" (:ns-default opts)])
+                     (:tool opts)        (conj "--tool"))
+        cmd (into base-cmd opts-flags)]
+    (run-command (str "bbin - " pkg-name) cmd)))
+
 ; See `man defaults`, basically:
 ; No flag = -string
 ; Flags: -string, -int, -float, -bool, -date, -array el el el, -array-add (append), -dict k1 v2 k2 v2, -dict-add
@@ -133,6 +155,7 @@
   {:pkg/brew     (run-basic-actions! "Installing brew packages" install-brew-package)
    :pkg/mise     (run-basic-actions! "Installing mise packages" install-mise-tool)
    :pkg/mas      (run-basic-actions! "Installing MAS apps"      install-mas-package)
+   :pkg/bbin     (run-basic-actions! "Installing bbin packages" install-bbin-package)
    :osx/defaults apply-defaults
    :fs/symlink   create-symlinks})
 

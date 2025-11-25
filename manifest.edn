@@ -1,5 +1,6 @@
 {:bootstrap {:pkg/brew {:mise {}
-                        :mas {}}}
+                        :mas {}
+                        "babashka/brew/bbin" {}}}
  :config [; >> OSX
           "cfg/macos/base.edn"
 
