@@ -5,6 +5,8 @@ if status is-interactive
     end
 end
 
+# Add local bin to PATH
+fish_add_path ~/.local/bin
 
 # TODO: Prompt to `fish_update_completions` occasionally
 
