@@ -6,4 +6,9 @@
             :codex {}
             ; Other
             :llm {}
-            :repomix {}}}
+            :repomix {}}
+ :pkg/bbin {"clj-paren-repair-claude-hook" {:url "https://github.com/bhauman/clojure-mcp-light.git"
+                                            :git/tag "v0.2.0"}
+            "clj-nrepl-eval" {:url "https://github.com/bhauman/clojure-mcp-light.git"
+                              :git/tag "v0.2.0"
+                              :main-opts "[\"-m\" \"clojure-mcp-light.nrepl-eval\"]"}}}
