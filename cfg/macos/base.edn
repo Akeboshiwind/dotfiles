@@ -1,5 +1,4 @@
-{:pkg/brew {:raycast {}
-            :orbstack {} ;:docker-desktop {}
+{:pkg/brew {:orbstack {} ;:docker-desktop {}
             :obsidian {}
             :quitter {}}
  :pkg/mas {;"OmniFocus 4" 1542143627
