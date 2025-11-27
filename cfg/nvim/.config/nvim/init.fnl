@@ -84,6 +84,15 @@
 
 (vim.cmd "highlight! link SignColumn LineNr")
 
+;; Clear generic LSP semantic token highlights to let treesitter show through
+;; Keep @lsp.mod.* for useful modifiers like deprecated, readonly, async, etc.
+(vim.api.nvim_create_autocmd :ColorScheme
+  {:callback (fn []
+               (each [_ group (ipairs (vim.fn.getcompletion "@lsp" "highlight"))]
+                 (when (or (group:match "^@lsp%.type%.")
+                           (group:match "^@lsp%.typemod%."))
+                   (vim.api.nvim_set_hl 0 group {}))))})
+
 
 
 ;; >> Diagnostics Signs
@@ -117,10 +126,6 @@
 (vim.api.nvim_create_autocmd :LspAttach
   {:callback (fn [args]
                (let [client (assert (vim.lsp.get_client_by_id args.data.client_id))]
-                 ; Disable semantic tokens for clojure_lsp to preserve treesitter highlighting
-                 ; TODO: migrate to setting :semantic-tokens? to false once Neovim is updated https://clojure-lsp.io/settings/#all-settings
-                 (when (= client.name "clojure_lsp")
-                   (tset client.server_capabilities :semanticTokensProvider nil))
                  ; Enable built-in auto-completion
                  (when (client:supports_method :textDocument/completion)
                    (vim.lsp.completion.enable true client.id args.buf {:autotrigger true}))
