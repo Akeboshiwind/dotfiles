@@ -1,6 +1,7 @@
 {:pkg/brew {:orbstack {} ;:docker-desktop {}
             :obsidian {}
-            :quitter {}}
+            :quitter {}
+            :rectangle-pro {}}
  :pkg/mas {;"OmniFocus 4" 1542143627
            ;"Sofa" 1276554886
            "Timelines" 1112433234
