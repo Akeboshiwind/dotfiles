@@ -84,14 +84,8 @@
 
 (vim.cmd "highlight! link SignColumn LineNr")
 
-;; Clear generic LSP semantic token highlights to let treesitter show through
-;; Keep @lsp.mod.* for useful modifiers like deprecated, readonly, async, etc.
-(vim.api.nvim_create_autocmd :ColorScheme
-  {:callback (fn []
-               (each [_ group (ipairs (vim.fn.getcompletion "@lsp" "highlight"))]
-                 (when (or (group:match "^@lsp%.type%.")
-                           (group:match "^@lsp%.typemod%."))
-                   (vim.api.nvim_set_hl 0 group {}))))})
+;; Disable LSP semantic tokens to let treesitter highlighting show through
+(vim.lsp.semantic_tokens.enable false)
 
 
 
