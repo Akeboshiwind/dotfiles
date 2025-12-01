@@ -233,6 +233,9 @@
       :dependencies [:nvim-treesitter/nvim-treesitter]
       :opts {}}
 
+     {1 :j-hui/fidget.nvim
+      :opts {}}
+
 
      ;; >> Clojure REPL (Essential)
      {1 :Olical/conjure
