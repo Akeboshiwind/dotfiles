@@ -36,7 +36,6 @@ if (0 ~= vim.fn.exists("+termguicolors")) then
 else
 end
 vim.cmd("highlight! link SignColumn LineNr")
-vim.lsp.semantic_tokens.enable(false)
 do
   local signs = {DiagnosticSignError = "", DiagnosticSignWarn = "", DiagnosticSignInfo = "", DiagnosticSignHint = ""}
   for sign, symbol in pairs(signs) do

@@ -84,9 +84,6 @@
 
 (vim.cmd "highlight! link SignColumn LineNr")
 
-;; Disable LSP semantic tokens to let treesitter highlighting show through
-(vim.lsp.semantic_tokens.enable false)
-
 
 
 ;; >> Diagnostics Signs
