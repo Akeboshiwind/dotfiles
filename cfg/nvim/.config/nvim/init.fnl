@@ -25,6 +25,9 @@
 (set vim.opt.spelllang "en_gb")
 (set vim.opt.spelloptions "camel") ; Include camel case words
 (set vim.opt.spellcapcheck "") ; Disable capitalization check
+(set vim.opt.number true) ; Show line numbers
+(set vim.opt.cursorline true) ; Highlight the cursor line
+(set vim.opt.cursorlineopt "number") ; Only highlight the line number, not the entire line
 
 
 
