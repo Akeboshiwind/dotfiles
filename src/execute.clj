@@ -1,7 +1,8 @@
-(ns execute 
+(ns execute
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [babashka.process :as process]
+            [babashka.fs :as fs]
             [utils :as u])
   (:import [java.nio.file Files Paths]))
 
@@ -120,6 +121,33 @@
       (println " └─" (red "✗")))
     (println " └─" (green "✓"))))
 
+(defn unlink-symlinks
+  "Removes stale symlinks. Takes a map of {target-path -> expected-source-path}.
+   Only removes if the symlink exists and points to the expected location."
+  [stale-symlinks]
+  (when (seq stale-symlinks)
+    (try
+      (println " ┌─ Cleaning stale symlinks")
+      (doseq [[target-str expected-source] stale-symlinks]
+        (println " │ ┌─" target-str)
+        (let [target-file (io/file (u/expand-tilde target-str))
+              target-path (.toPath target-file)]
+          ;; Use fs/exists? with :nofollow-links to check symlink itself, not its target
+          (if-not (fs/exists? target-file {:nofollow-links true})
+            (println " │ └─" (gray "skip (not found)"))
+            (let [expected-source-path (.toPath (io/file expected-source))]
+              (if-not (Files/isSymbolicLink target-path)
+                (println " │ └─" (red "⚠ skip (not a symlink)"))
+                (let [actual-link-target (Files/readSymbolicLink target-path)]
+                  (if-not (= actual-link-target expected-source-path)
+                    (println " │ └─" (red "⚠ skip (points elsewhere)"))
+                    (do
+                      (fs/delete target-file)
+                      (println " │ └─" (green "✓ removed"))))))))))
+      (catch Exception _
+        (println " └─" (red "✗")))
+      (println " └─" (green "✓")))))
+
 (defn create-symlinks [links]
   (try
     (println " ┌─ Creating Symlinks")
@@ -161,6 +189,7 @@
    :pkg/mas      (run-basic-actions! "Installing MAS apps"      install-mas-package)
    :pkg/bbin     (run-basic-actions! "Installing bbin packages" install-bbin-package)
    :osx/defaults apply-defaults
+   :fs/unlink    unlink-symlinks
    :fs/symlink   create-symlinks})
 
 (defn- process-action [[action-type data]]

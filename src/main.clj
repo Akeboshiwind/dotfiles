@@ -2,7 +2,8 @@
   (:require [clojure.string :as str]
             [manifest :as m]
             [optimise :as opt]
-            [execute :as e]))
+            [execute :as e]
+            [cache :as c]))
 
 (defn- stage-from-args [args]
   (when-let [stage (first args)]
@@ -24,13 +25,22 @@
     (let [stage (stage-from-args args)
           {:keys [bootstrap config]} (m/load-manifest)
           bootstrap-steps (filter-steps stage [bootstrap])
-          config-steps (->> config opt/optimize (filter-steps stage))]
-      (when (and stage (empty? bootstrap-steps) (empty? config-steps))
+          optimized (opt/optimize config)
+          filtered-steps (filter-steps stage optimized)
+          ;; Only process symlinks when :fs/symlink is in the steps
+          has-symlinks? (some :fs/symlink filtered-steps)
+          cache (when has-symlinks? (c/load-cache))
+          {:keys [steps symlinks]} (if has-symlinks?
+                                     (opt/inject-unlink cache filtered-steps)
+                                     {:steps filtered-steps :symlinks nil})]
+      (when (and stage (empty? bootstrap-steps) (empty? steps))
         (println "No actions found for stage" stage)
         (System/exit 1))
       (when (seq bootstrap-steps)
         (println "Applying bootstrap configurations...")
         (e/execute-plan bootstrap-steps))
-      (when (seq config-steps)
+      (when (seq steps)
         (println "Applying main configurations...")
-        (e/execute-plan config-steps)))))
+        (e/execute-plan steps))
+      (when has-symlinks?
+        (c/save-cache! (assoc cache :symlinks symlinks))))))

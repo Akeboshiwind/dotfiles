@@ -1,6 +1,7 @@
-(ns optimise 
+(ns optimise
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
+            [clojure.set :as set]
             [utils :as u]))
 
 
@@ -125,3 +126,31 @@
            drop-context
            merge-all
            remove-empty]))
+
+
+;; >> Symlink cache management
+
+(defn- collect-all-symlinks
+  "Extracts all symlinks from steps into a single map.
+   Values are converted to absolute paths for cache storage."
+  [steps]
+  (->> steps
+       (map :fs/symlink)
+       (apply merge)
+       (map (fn [[target source]]
+              [target (.getAbsolutePath (io/file source))]))
+       (into {})))
+
+(defn inject-unlink
+  "Given the current cache and steps, computes stale symlinks
+   and prepends an :fs/unlink action if needed.
+   Returns {:steps [...] :symlinks {...}}."
+  [cache steps]
+  (let [all-symlinks (collect-all-symlinks steps)
+        cached-symlinks (get cache :symlinks {})
+        stale (set/difference (set (keys cached-symlinks))
+                              (set (keys all-symlinks)))]
+    {:steps (if (seq stale)
+              (into [{:fs/unlink (select-keys cached-symlinks stale)}] steps)
+              steps)
+     :symlinks all-symlinks}))
