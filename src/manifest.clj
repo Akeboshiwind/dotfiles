@@ -35,6 +35,6 @@
   "Load all config files from manifest"
   []
   (let [raw-manifest (slurp "manifest.edn")
-        {:keys [bootstrap config]} (edn/read-string raw-manifest)]
+        {:keys [bootstrap plan]} (edn/read-string raw-manifest)]
     {:bootstrap bootstrap
-     :config (mapcat resolve-entry config)}))
+     :plan (mapcat resolve-entry plan)}))

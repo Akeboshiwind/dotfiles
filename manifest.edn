@@ -1,45 +1,45 @@
 {:bootstrap {:pkg/brew {:mise {}
                         :mas {}
                         "babashka/brew/bbin" {}}}
- :config [; >> OSX
-          "cfg/macos/base.edn"
+ :plan [; >> OSX
+        "cfg/macos/base.edn"
 
-          ; >> Terminal setup
-          "cfg/alacritty/base.edn"
-          "cfg/tmux/base.edn"
-          "cfg/fish/base.edn"
-          "cfg/bash/base.edn"
+        ; >> Terminal setup
+        "cfg/alacritty/base.edn"
+        "cfg/tmux/base.edn"
+        "cfg/fish/base.edn"
+        "cfg/bash/base.edn"
 
-          ; >> Editor
-          "cfg/nvim/base.edn"
-          "cfg/vim/base.edn"
-          "cfg/intellij/base.edn"
+        ; >> Editor
+        "cfg/nvim/base.edn"
+        "cfg/vim/base.edn"
+        "cfg/intellij/base.edn"
 
-          ; >> Tools
-          "cfg/git/base.edn"
-          "cfg/ssh/base.edn"
-          "cfg/gpg/base.edn"
-          "cfg/fzf/base.edn"
-          "cfg/zoxide/base.edn"
-          "cfg/bin/base.edn"
+        ; >> Tools
+        "cfg/git/base.edn"
+        "cfg/ssh/base.edn"
+        "cfg/gpg/base.edn"
+        "cfg/fzf/base.edn"
+        "cfg/zoxide/base.edn"
+        "cfg/bin/base.edn"
 
-          ; >> Tools
-          "cfg/clojure/base.edn"
-          "cfg/terraform/base.edn"
-          "cfg/python/base.edn"
+        ; >> Tools
+        "cfg/clojure/base.edn"
+        "cfg/terraform/base.edn"
+        "cfg/python/base.edn"
 
-          ; >> Deployment
-          "cfg/aws/base.edn"
+        ; >> Deployment
+        "cfg/aws/base.edn"
 
-          ; >> AI
-          "cfg/llm/base.edn"
+        ; >> AI
+        "cfg/llm/base.edn"
 
-          ;; >> Work
-          {:pkg/brew {:slack {}}
-           :pkg/mas {"Windows App" 1295203466}};
-          {:pkg/brew {"postgresql@18" {}}}
+        ;; >> Work
+        {:pkg/brew {:slack {}}
+         :pkg/mas {"Windows App" 1295203466}};
+        {:pkg/brew {"postgresql@18" {}}}
 
-          ;; >> Fun
-          {:pkg/brew {:godot {}
-                      :telegram {}
-                      :musescore {}}}]}
+        ;; >> Fun
+        {:pkg/brew {:godot {}
+                    :telegram {}
+                    :musescore {}}}]}

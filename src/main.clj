@@ -1,7 +1,7 @@
 (ns main
   (:require [clojure.string :as str]
             [manifest :as m]
-            [optimise :as opt]
+            [plan :as p]
             [execute :as e]
             [cache :as c]))
 
@@ -23,15 +23,15 @@
 (defn -main [& args]
   (binding [e/*dry-run* false]
     (let [stage (stage-from-args args)
-          {:keys [bootstrap config]} (m/load-manifest)
+          {:keys [bootstrap plan]} (m/load-manifest)
           bootstrap-steps (filter-steps stage [bootstrap])
-          optimized (opt/optimize config)
-          filtered-steps (filter-steps stage optimized)
+          built-plan (p/build plan)
+          filtered-steps (filter-steps stage built-plan)
           ;; Only process symlinks when :fs/symlink is in the steps
           has-symlinks? (some :fs/symlink filtered-steps)
           cache (when has-symlinks? (c/load-cache))
           {:keys [steps symlinks]} (if has-symlinks?
-                                     (opt/inject-unlink cache filtered-steps)
+                                     (p/inject-unlink cache filtered-steps)
                                      {:steps filtered-steps :symlinks nil})]
       (when (and stage (empty? bootstrap-steps) (empty? steps))
         (println "No actions found for stage" stage)

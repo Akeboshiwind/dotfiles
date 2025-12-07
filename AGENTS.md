@@ -7,9 +7,9 @@ Babashka-based dotfile manager. Installs packages and symlinks config files via 
 `manifest.edn` defines what to install:
 
 - `bootstrap` - runs first (e.g., install mise, mas, bbin)
-- `config` - list of paths to `cfg/*/base.edn` files or inline maps
+- `plan` - list of paths to `cfg/*/base.edn` files or inline maps
 
-Each config entry can use these actions:
+Each plan entry can use these actions:
 
 - `:pkg/brew` - Homebrew packages (supports `:head true`)
 - `:pkg/mise` - mise tools (`:version`, `:global`)
@@ -27,7 +27,7 @@ Each config entry can use these actions:
 ├── src/                # Installer code
 │   ├── main.clj        # Entry point, CLI args
 │   ├── manifest.clj    # Loads/parses manifest.edn
-│   ├── optimise.clj    # Merges actions, expands folders, handles stale symlinks
+│   ├── plan.clj        # Merges actions, expands folders, handles stale symlinks
 │   ├── execute.clj     # Runs actions (brew, symlinks, etc.)
 │   ├── cache.clj       # Tracks symlinks for cleanup
 │   └── utils.clj       # Helpers
@@ -41,7 +41,7 @@ Each config entry can use these actions:
 
 - **main.clj** - Entry point, CLI args, orchestrates the pipeline
 - **manifest.clj** - Loads and parses `manifest.edn`
-- **optimise.clj** - Merges actions, expands symlink folders, handles stale symlinks
+- **plan.clj** - Merges actions, expands symlink folders, handles stale symlinks
 - **execute.clj** - Runs each action type (brew install, symlink, etc.)
 - **cache.clj** - Tracks symlinks for cleanup
 

@@ -1,4 +1,4 @@
-(ns optimise
+(ns plan
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
             [clojure.set :as set]
@@ -116,9 +116,9 @@
 
 
 
-;; >> Optimiser
+;; >> Plan builder
 
-(defn optimize [steps]
+(defn build [steps]
   (reduce (fn [s opt] (opt s))
           steps
           [resolve-symlink-paths
