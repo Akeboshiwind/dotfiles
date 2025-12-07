@@ -2,4 +2,5 @@
             :git-lfs {}
             :lazygit {}
             :gh {}}
- :fs/symlink {"~/.gitconfig" "./.gitconfig"}}
+ :fs/symlink {"~/.gitconfig" "./.gitconfig"
+              "~/Library/Application Support/lazygit/config.yml" "./lazygit.yml"}}
