@@ -5,4 +5,6 @@
  {1 :LazyVim/LazyVim
   :opts {:colorscheme :alabaster}}
  {1 :folke/which-key.nvim
-  :opts {:preset :modern}}]
+  :opts {:preset :modern}}
+ {1 :snacks.nvim
+  :opts {:indent {:enabled false}}}]
