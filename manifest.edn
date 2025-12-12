@@ -43,7 +43,7 @@
 
         ;; >> Work
         {:pkg/brew {:slack {}}
-         :pkg/mas {"Windows App" {:id 1295203466}}}
+         :pkg/mas {"Windows App" 1295203466}}
 
         {:pkg/brew {"postgresql@18" {}}}
 
