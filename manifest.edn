@@ -1,7 +1,7 @@
 {:plan [;; >> Bootstrap (provides :pkg/brew, :pkg/mise, :pkg/mas, :pkg/bbin)
         {:pkg/script
          {:homebrew
-          {:src "command -v brew >/dev/null 2>&1 || /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+          {:path "scripts/install-homebrew.sh"
            :dep/provides #{:pkg/brew}}}
          :pkg/brew
          {:mise {:dep/provides #{:pkg/mise}}
