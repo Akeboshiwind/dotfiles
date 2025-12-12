@@ -1,42 +1,50 @@
-{:bootstrap {:pkg/brew {:mise {}
-                        :mas {}
-                        "babashka/brew/bbin" {}}}
- :plan [; >> OSX
-        "cfg/macos/base.edn"
+{:plan [;; >> Bootstrap (provides :pkg/brew, :pkg/mise, :pkg/mas, :pkg/bbin)
+        {:pkg/script
+         {:homebrew
+          {:src "command -v brew >/dev/null 2>&1 || /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+           :dep/provides #{:pkg/brew}}}
+         :pkg/brew
+         {:mise {:dep/provides #{:pkg/mise}}
+          :mas {:dep/provides #{:pkg/mas}}
+          "babashka/brew/bbin" {:dep/provides #{:pkg/bbin}}}}
 
-        ; >> Terminal setup
-        "cfg/alacritty/base.edn"
-        "cfg/tmux/base.edn"
-        "cfg/fish/base.edn"
-        "cfg/bash/base.edn"
+        ;; >> OSX
+        :macos
 
-        ; >> Editor
-        "cfg/nvim/base.edn"
-        "cfg/vim/base.edn"
-        "cfg/intellij/base.edn"
+        ;; >> Terminal setup
+        :alacritty
+        :tmux
+        :fish
+        :bash
 
-        ; >> Tools
-        "cfg/git/base.edn"
-        "cfg/ssh/base.edn"
-        "cfg/gpg/base.edn"
-        "cfg/fzf/base.edn"
-        "cfg/zoxide/base.edn"
-        "cfg/bin/base.edn"
+        ;; >> Editor
+        :nvim
+        :vim
+        :intellij
 
-        ; >> Tools
-        "cfg/clojure/base.edn"
-        "cfg/terraform/base.edn"
-        "cfg/python/base.edn"
+        ;; >> Tools
+        :git
+        :ssh
+        :gpg
+        :fzf
+        :zoxide
+        :bin
 
-        ; >> Deployment
-        "cfg/aws/base.edn"
+        ;; >> Languages
+        :clojure
+        :terraform
+        :python
 
-        ; >> AI
-        "cfg/llm/base.edn"
+        ;; >> Deployment
+        :aws
+
+        ;; >> AI
+        :llm
 
         ;; >> Work
         {:pkg/brew {:slack {}}
-         :pkg/mas {"Windows App" 1295203466}};
+         :pkg/mas {"Windows App" {:id 1295203466}}}
+
         {:pkg/brew {"postgresql@18" {}}}
 
         ;; >> Fun

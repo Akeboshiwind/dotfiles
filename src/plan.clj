@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
             [clojure.set :as set]
+            [graph :as g]
             [utils :as u]))
 
 
@@ -20,11 +21,10 @@
          (assoc step action))
     step))
 
-(defn resolve-symlink-paths [steps]
+(defn- resolve-symlink-paths [steps]
   (->> steps
        (mapv (partial resolve-paths-in-step :fs/symlink))
        (mapv (partial resolve-paths-in-step :fs/symlink-folder))))
-
 
 
 ;; >> Breakdown :fs/symlink-folders into individual :fs/symlinks
@@ -59,98 +59,57 @@
           (dissoc :fs/symlink-folder)))
     step))
 
-(defn expand-symlink-folders
-  "Breakdown :fs/symlink-folders into individual :fs/symlinks"
-  [steps]
+(defn- expand-symlink-folders [steps]
   (mapv expand-symlink-folder steps))
-
-(comment
-  (expand-symlink-folders
-    [{:pkg/brew {:gpg {}}
-      :fs/symlink {"a" "b"}
-      :fs/symlink-folder {"~/.gnupg" "./cfg/gpg/.gnupg"
-                          "~/.aws" "./cfg/aws/.aws"}}])
-  ;=>
-  [{:pkg/brew {:gpg {}}
-    :fs/symlink {"a" "b"
-                 "~/.gnupg/gpg-agent.conf" "./cfg/gpg/.gnupg/gpg-agent.conf"
-                 "~/.gnupg/gpg.conf" "./cfg/gpg/.gnupg/gpg.conf"
-                 "~/.aws/config" "./cfg/aws/.aws/config"}}])
-
 
 
 ;; >> Drop context key (no longer needed)
 
-(defn drop-context [steps]
+(defn- drop-context [steps]
   (mapv #(dissoc % :context) steps))
 
 
+;; >> Merge all steps into a single map
 
-;; >> Merge mergable actions
-;; TODO: Add more notes and tests for how this works
-
-;; Whitelist of action types that can be merged
-(def ^:private mergeable-action-types
-  #{:pkg/brew
-    :pkg/mise
-    :pkg/mas
-    :fs/symlink
-    :osx/defaults})
-
-(defn- remove-keys [m ks]
-  (apply dissoc m ks))
-
-(defn merge-all [action-maps]
-  (let [all-mergeable (map #(select-keys % mergeable-action-types) action-maps)
-        non-mergeable (map #(remove-keys % mergeable-action-types) action-maps)
-        merged (apply merge-with merge all-mergeable)]
-    (if (not-empty merged)
-      (into [merged] non-mergeable)
-      non-mergeable)))
+(defn- merge-steps
+  "Merge all step maps into a single map, combining same action types"
+  [steps]
+  (apply merge-with merge steps))
 
 
-;; >> Remove empty action maps
+;; >> Calculate stale symlinks to unlink
 
-(defn remove-empty [action-maps]
-  (filterv not-empty action-maps))
-
+(defn- calculate-unlinks
+  "Compare plan's symlinks with cache, return stale symlinks to unlink"
+  [cache plan]
+  (let [current (->> (:fs/symlink plan)
+                     (map (fn [[target source]]
+                            [target (.getAbsolutePath (io/file source))]))
+                     (into {}))
+        cached (get cache :symlinks {})
+        stale-keys (set/difference (set (keys cached))
+                                   (set (keys current)))]
+    {:unlinks (select-keys cached stale-keys)
+     :symlinks current}))
 
 
 ;; >> Plan builder
 
-(defn build [steps]
-  (reduce (fn [s opt] (opt s))
-          steps
-          [resolve-symlink-paths
-           expand-symlink-folders
-           drop-context
-           merge-all
-           remove-empty]))
-
-
-;; >> Symlink cache management
-
-(defn- collect-all-symlinks
-  "Extracts all symlinks from steps into a single map.
-   Values are converted to absolute paths for cache storage."
-  [steps]
-  (->> steps
-       (map :fs/symlink)
-       (apply merge)
-       (map (fn [[target source]]
-              [target (.getAbsolutePath (io/file source))]))
-       (into {})))
-
-(defn inject-unlink
-  "Given the current cache and steps, computes stale symlinks
-   and prepends an :fs/unlink action if needed.
-   Returns {:steps [...] :symlinks {...}}."
-  [cache steps]
-  (let [all-symlinks (collect-all-symlinks steps)
-        cached-symlinks (get cache :symlinks {})
-        stale (set/difference (set (keys cached-symlinks))
-                              (set (keys all-symlinks)))]
-    {:steps (if (seq stale)
-              (into [{:fs/unlink (select-keys cached-symlinks stale)}] steps)
-              steps)
-     :symlinks all-symlinks}))
+(defn build
+  "Build plan from steps. Returns {:plan map :order [[type key] ...] :symlinks map}"
+  [steps cache]
+  (let [processed (->> steps
+                       resolve-symlink-paths
+                       expand-symlink-folders
+                       drop-context)
+        merged (merge-steps processed)
+        {:keys [unlinks symlinks]} (calculate-unlinks cache merged)
+        plan (cond-> merged
+               (seq unlinks) (assoc :fs/unlink unlinks))]
+    ;; Validate the dependency graph
+    (when-let [errors (g/validate plan)]
+      (throw (ex-info "Invalid dependency graph" errors)))
+    ;; Return plan, execution order, and symlinks for cache
+    {:plan plan
+     :order (g/topological-sort plan)
+     :symlinks symlinks}))

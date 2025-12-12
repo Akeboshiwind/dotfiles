@@ -60,6 +60,13 @@
 
 ;; >> Processors
 
+(defn- run-script [[script-name {:keys [path src]}]]
+  (let [cmd (cond
+              path ["bash" path]
+              src  ["bash" "-c" src]
+              :else (throw (ex-info "Script must have :path or :src" {:script script-name})))]
+    (run-command (str "script - " (name script-name)) cmd)))
+
 (defn- install-brew-package [[pkg {:keys [head]}]]
   (let [cmd (into ["brew" "install" (name pkg)] (when head ["--HEAD"]))]
     (run-command (str "brew - " (name pkg)) cmd)))
@@ -184,7 +191,8 @@
     (run! f data)))
 
 (def ^:private action-processors
-  {:pkg/brew     (run-basic-actions! "Installing brew packages" install-brew-package)
+  {:pkg/script   (run-basic-actions! "Running scripts"          run-script)
+   :pkg/brew     (run-basic-actions! "Installing brew packages" install-brew-package)
    :pkg/mise     (run-basic-actions! "Installing mise packages" install-mise-tool)
    :pkg/mas      (run-basic-actions! "Installing MAS apps"      install-mas-package)
    :pkg/bbin     (run-basic-actions! "Installing bbin packages" install-bbin-package)
@@ -192,13 +200,18 @@
    :fs/unlink    unlink-symlinks
    :fs/symlink   create-symlinks})
 
-(defn- process-action [[action-type data]]
-  (if-let [processor (action-processors action-type)]
-    (processor data)
-    (println "⚠️ Unknown action type:" action-type)))
+(defn- execute-action
+  "Execute a single action [action-type action-key] using config from plan"
+  [plan [action-type action-key]]
+  (let [config (get-in plan [action-type action-key])]
+    (if-let [processor (action-processors action-type)]
+      ;; Pass as [key config] pair, same as the processors expect
+      (processor {action-key config})
+      (println "⚠️ Unknown action type:" action-type))))
 
-(defn- execute-step [actions]
-  (run! process-action actions))
-
-(defn execute-plan [steps]
-  (run! execute-step steps))
+(defn execute-plan
+  "Execute plan in dependency order.
+   Takes {:plan merged-map :order [[type key] ...]}"
+  [{:keys [plan order]}]
+  (doseq [action order]
+    (execute-action plan action)))

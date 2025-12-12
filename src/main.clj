@@ -5,42 +5,47 @@
             [execute :as e]
             [cache :as c]))
 
-(defn- stage-from-args [args]
+(defn- format-errors [errors]
+  (let [{:keys [cycles missing duplicates]} errors]
+    (str "Dependency graph errors:\n"
+         (when (seq cycles)
+           (str "  Cycles: " (pr-str cycles) "\n"))
+         (when (seq missing)
+           (str "  Missing providers: " (pr-str missing) "\n"))
+         (when (seq duplicates)
+           (str "  Duplicate providers: " (pr-str duplicates) "\n")))))
+
+(defn- parse-stage [args]
   (when-let [stage (first args)]
     (let [stage (if (str/starts-with? stage ":")
                   (subs stage 1)
                   stage)]
       (keyword stage))))
 
-(defn- filter-steps [stage steps]
+(defn- filter-order [stage order]
   (if stage
-    (->> steps
-         (map #(select-keys % [stage]))
-         (remove empty?)
-         vec)
-    steps))
+    (filterv #(= stage (first %)) order)
+    order))
 
 (defn -main [& args]
   (binding [e/*dry-run* false]
-    (let [stage (stage-from-args args)
-          {:keys [bootstrap plan]} (m/load-manifest)
-          bootstrap-steps (filter-steps stage [bootstrap])
-          built-plan (p/build plan)
-          filtered-steps (filter-steps stage built-plan)
-          ;; Only process symlinks when :fs/symlink is in the steps
-          has-symlinks? (some :fs/symlink filtered-steps)
-          cache (when has-symlinks? (c/load-cache))
-          {:keys [steps symlinks]} (if has-symlinks?
-                                     (p/inject-unlink cache filtered-steps)
-                                     {:steps filtered-steps :symlinks nil})]
-      (when (and stage (empty? bootstrap-steps) (empty? steps))
-        (println "No actions found for stage" stage)
-        (System/exit 1))
-      (when (seq bootstrap-steps)
-        (println "Applying bootstrap configurations...")
-        (e/execute-plan bootstrap-steps))
-      (when (seq steps)
-        (println "Applying main configurations...")
-        (e/execute-plan steps))
-      (when has-symlinks?
-        (c/save-cache! (assoc cache :symlinks symlinks))))))
+    (try
+      (let [stage (parse-stage args)
+            steps (m/load-manifest)
+            cache (c/load-cache)
+            {:keys [plan order symlinks]} (p/build steps cache)
+            filtered-order (filter-order stage order)]
+        (when (and stage (empty? filtered-order))
+          (println "No actions found for stage" stage)
+          (System/exit 1))
+        (println "Applying configurations...")
+        (e/execute-plan {:plan plan :order filtered-order})
+        ;; Only update symlink cache if we processed symlinks
+        (when (or (nil? stage) (= stage :fs/symlink))
+          (c/save-cache! (assoc cache :symlinks symlinks))))
+      (catch clojure.lang.ExceptionInfo e
+        (if (:missing (ex-data e))
+          (do
+            (println (format-errors (ex-data e)))
+            (System/exit 1))
+          (throw e))))))
