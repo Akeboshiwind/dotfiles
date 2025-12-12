@@ -26,6 +26,7 @@
   "mini.icons": { "branch": "main", "commit": "ff2e4f1d29f659cc2bad0f9256f2f6195c6b2428" },
   "mini.pairs": { "branch": "main", "commit": "472ec50092a3314ec285d2db2baa48602d71fe93" },
   "neotest": { "branch": "master", "commit": "deadfb1af5ce458742671ad3a013acb9a6b41178" },
+  "neotest-kotlin": { "branch": "v2.0.0-backticks-fix", "commit": "aaf84c74b56292ae376e6f046150cd808a3d95b3" },
   "nfnl": { "branch": "main", "commit": "fecf731e02bc51d88372c4f992fe1ef0c19c02ae" },
   "noice.nvim": { "branch": "main", "commit": "7bfd942445fb63089b59f97ca487d605e715f155" },
   "nui.nvim": { "branch": "main", "commit": "de740991c12411b663994b2860f1a4fd0937c130" },
