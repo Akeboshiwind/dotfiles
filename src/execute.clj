@@ -200,18 +200,14 @@
    :fs/unlink    unlink-symlinks
    :fs/symlink   create-symlinks})
 
-(defn- execute-action
-  "Execute a single action [action-type action-key] using config from plan"
-  [plan [action-type action-key]]
-  (let [config (get-in plan [action-type action-key])]
-    (if-let [processor (action-processors action-type)]
-      ;; Pass as [key config] pair, same as the processors expect
-      (processor {action-key config})
-      (println "⚠️ Unknown action type:" action-type))))
-
 (defn execute-plan
   "Execute plan in dependency order.
-   Takes {:plan merged-map :order [[type key] ...]}"
+   Takes {:plan merged-map :order [[type key] ...]}
+   Batches contiguous same-type actions for grouped output."
   [{:keys [plan order]}]
-  (doseq [action order]
-    (execute-action plan action)))
+  (doseq [batch (partition-by first order)]
+    (let [action-type (ffirst batch)
+          data (into {} (map (fn [[_ k]] [k (get-in plan [action-type k])]) batch))]
+      (if-let [processor (action-processors action-type)]
+        (processor data)
+        (println "⚠️ Unknown action type:" action-type)))))
