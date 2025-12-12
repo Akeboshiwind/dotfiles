@@ -103,6 +103,15 @@
         cmd (into base-cmd opts-flags)]
     (run-command (str "bbin - " pkg-name) cmd)))
 
+(defn- add-claude-marketplace [[marketplace-name {:keys [source]}]]
+  (let [src (or source (name marketplace-name))
+        cmd ["claude" "plugin" "marketplace" "add" src]]
+    (run-command (str "claude marketplace - " (name marketplace-name)) cmd)))
+
+(defn- install-claude-plugin [[plugin _opts]]
+  (let [cmd ["claude" "plugin" "install" (name plugin)]]
+    (run-command (str "claude plugin - " (name plugin)) cmd)))
+
 ; See `man defaults`, basically:
 ; No flag = -string
 ; Flags: -string, -int, -float, -bool, -date, -array el el el, -array-add (append), -dict k1 v2 k2 v2, -dict-add
@@ -191,14 +200,16 @@
     (run! f data)))
 
 (def ^:private action-processors
-  {:pkg/script   (run-basic-actions! "Running scripts"          run-script)
-   :pkg/brew     (run-basic-actions! "Installing brew packages" install-brew-package)
-   :pkg/mise     (run-basic-actions! "Installing mise packages" install-mise-tool)
-   :pkg/mas      (run-basic-actions! "Installing MAS apps"      install-mas-package)
-   :pkg/bbin     (run-basic-actions! "Installing bbin packages" install-bbin-package)
-   :osx/defaults apply-defaults
-   :fs/unlink    unlink-symlinks
-   :fs/symlink   create-symlinks})
+  {:pkg/script        (run-basic-actions! "Running scripts"            run-script)
+   :pkg/brew          (run-basic-actions! "Installing brew packages"   install-brew-package)
+   :pkg/mise          (run-basic-actions! "Installing mise packages"   install-mise-tool)
+   :pkg/mas           (run-basic-actions! "Installing MAS apps"        install-mas-package)
+   :pkg/bbin          (run-basic-actions! "Installing bbin packages"   install-bbin-package)
+   :claude/marketplace (run-basic-actions! "Adding Claude marketplaces" add-claude-marketplace)
+   :claude/plugin     (run-basic-actions! "Installing Claude plugins"  install-claude-plugin)
+   :osx/defaults      apply-defaults
+   :fs/unlink         unlink-symlinks
+   :fs/symlink        create-symlinks})
 
 (defn execute-plan
   "Execute plan in dependency order.
