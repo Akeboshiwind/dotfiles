@@ -79,7 +79,7 @@
 
 (defn- install-mas-package [[name id]]
   (let [cmd ["mas" "install" id]]
-    (run-command (str "MAS -" name) cmd)))
+    (run-command (str "MAS - " name) cmd)))
 
 (defn- install-bbin-package [[pkg opts]]
   (let [pkg-name (name pkg)
