@@ -1,6 +1,15 @@
-{:paths ["src"]
+{:paths ["src" "test"]
+ :deps {weavejester/dependency {:mvn/version "1.0.0"}}
  :tasks
- {nrepl
+ {test
+  {:doc "Run tests"
+   :requires [[clojure.test :as t]
+              [graph-test]]
+   :task (let [result (t/run-tests 'graph-test)]
+           (when (or (pos? (:fail result)) (pos? (:error result)))
+             (System/exit 1)))}
+
+  nrepl
   {:requires [[babashka.fs :as fs]
               [babashka.nrepl.server :as srv]]
    :path ["src" "test"]
