@@ -103,6 +103,10 @@
         cmd (into base-cmd opts-flags)]
     (run-command (str "bbin - " pkg-name) cmd)))
 
+(defn- install-npm-package [[pkg _opts]]
+  (let [cmd ["npm" "install" "-g" (name pkg)]]
+    (run-command (str "npm - " (name pkg)) cmd)))
+
 (defn- add-claude-marketplace [[marketplace-name {:keys [source]}]]
   (let [src (or source (name marketplace-name))
         cmd ["claude" "plugin" "marketplace" "add" src]]
@@ -205,6 +209,7 @@
    :pkg/mise          (run-basic-actions! "Installing mise packages"   install-mise-tool)
    :pkg/mas           (run-basic-actions! "Installing MAS apps"        install-mas-package)
    :pkg/bbin          (run-basic-actions! "Installing bbin packages"   install-bbin-package)
+   :pkg/npm           (run-basic-actions! "Installing npm packages"    install-npm-package)
    :claude/marketplace (run-basic-actions! "Adding Claude marketplaces" add-claude-marketplace)
    :claude/plugin     (run-basic-actions! "Installing Claude plugins"  install-claude-plugin)
    :osx/defaults      apply-defaults
