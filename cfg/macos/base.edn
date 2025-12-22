@@ -20,7 +20,12 @@
  ; TODO: How can I setup mapping CapsLock to Control?
  :osx/defaults
  {"NSGlobalDomain" {"com.apple.sound.beep.volume" 0.0
-                    "com.apple.sound.beep.feedback" 0}
+                    "com.apple.sound.beep.feedback" 0
+                    ;; Keyboard settings
+                    "NSAutomaticSpellingCorrectionEnabled" false
+                    "NSAutomaticCapitalizationEnabled" false
+                    "NSAutomaticInlinePredictionEnabled" false
+                    "NSAutomaticPeriodSubstitutionEnabled" false}
   "com.apple.Safari" {"IncludeDevelopMenu" true}
   "com.apple.dock" {"autohide" true
                     "show-recents" false
