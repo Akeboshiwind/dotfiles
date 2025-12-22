@@ -119,11 +119,38 @@
 ; See `man defaults`, basically:
 ; No flag = -string
 ; Flags: -string, -int, -float, -bool, -date, -array el el el, -array-add (append), -dict k1 v2 k2 v2, -dict-add
+
+(defn- map->plist-xml
+  "Convert a Clojure map to plist XML string for use with defaults -array"
+  [m]
+  (str "<dict>"
+       (apply str
+              (for [[k v] m]
+                (str "<key>" (name k) "</key>"
+                     (cond
+                       (string? v) (str "<string>" v "</string>")
+                       (int? v) (str "<integer>" v "</integer>")
+                       (float? v) (str "<real>" v "</real>")
+                       (boolean? v) (if v "<true/>" "<false/>")
+                       :else (str "<string>" v "</string>")))))
+       "</dict>"))
+
 (defn- ->defaults-type [value]
-  ; NOTE: For some reason `case` wouldn't work here? May need to update babashka
-  (if (= java.lang.Boolean (type value))
-    "-bool"
-    "-string"))
+  (cond
+    (boolean? value) "-bool"
+    (int? value) "-int"
+    (float? value) "-float"
+    (vector? value) "-array"
+    (map? value) "-dict"
+    :else "-string"))
+
+(defn- ->defaults-args
+  "Convert a value to the appropriate arguments for defaults command"
+  [value]
+  (cond
+    (vector? value) (mapv #(if (map? %) (map->plist-xml %) (str %)) value)
+    (map? value) (vec (mapcat (fn [[k v]] [(name k) (str v)]) value))
+    :else [value]))
 
 (defn apply-defaults [defaults]
   (try
@@ -133,7 +160,7 @@
       (doseq [[idx [key value]] (zipmap (range) settings)]
         (let [last? (= idx (dec (count settings)))
               type-flag (->defaults-type value)
-              cmd ["defaults" "write" domain (name key) type-flag value]
+              cmd (into ["defaults" "write" domain (name key) type-flag] (->defaults-args value))
               {:keys [exit]} (exec! {:prefix " │ │"} cmd)]
           (println (if last? " │ └─" " │ ├─")
                    key value (if (zero? exit) (green "✓") (red "✗"))))))
