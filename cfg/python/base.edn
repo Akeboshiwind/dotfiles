@@ -1,1 +1,2 @@
-{:pkg/brew {:python {}}}
+{:pkg/brew {:python {}
+            :uv {}}}
