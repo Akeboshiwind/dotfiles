@@ -1,13 +1,30 @@
 (ns manifest
   (:require [clojure.edn :as edn]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [babashka.fs :as fs]))
+
+(def ^:private secrets
+  (delay
+    (let [secrets-file "secrets.edn"]
+      (if (fs/exists? secrets-file)
+        (edn/read-string (slurp secrets-file))
+        {}))))
+
+(defn- secret-reader
+  "Reader function for #secret tag - looks up key in secrets.edn"
+  [key]
+  (if-let [value (get @secrets key)]
+    value
+    (throw (ex-info (str "Secret not found: " key) {:key key}))))
+
+(def ^:private edn-readers
+  {'secret secret-reader})
 
 (defn- read-edn-file
   "Read EDN file, adding :context with source directory"
   [file]
   (let [base-dir (.getParent (io/file file))]
-    (-> (slurp file)
-        edn/read-string
+    (-> (edn/read-string {:readers edn-readers} (slurp file))
         (assoc :context {:source-dir base-dir}))))
 
 (defn- resolve-entry
