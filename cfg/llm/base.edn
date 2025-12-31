@@ -15,4 +15,10 @@
                               :main-opts "[\"-m\" \"clojure-mcp-light.nrepl-eval\"]"}}
  :claude/marketplace {:taches {:source "glittercowboy/taches-cc-resources"}}
  :claude/plugin {:taches-cc-resources {:dep/requires #{[:claude/marketplace :taches]}}}
+ :claude/mcp {:morph-mcp {:dep/requires #{[:pkg/brew :claude-code]
+                                          [:pkg/mise :node]}
+                          :command "npx"
+                          :args ["-y" "@morphllm/morphmcp"]
+                          :env {:MORPH_API_KEY #secret :morph-api-key
+                                :ENABLED_TOOLS "edit_file,warpgrep_codebase_search"}}}
  :fs/symlink-folder {"~/.claude" "./.claude"}}
