@@ -1,6 +1,6 @@
 {:pkg/brew {; Anthropic
             :claude {}
-            :claude-code {:dep/provides #{:claude/marketplace :claude/plugin}}
+            :claude-code {:dep/provides #{:claude/marketplace :claude/plugin :claude/mcp}}
             ; OpenAI
             :chatgpt {}
             :codex {}

@@ -116,6 +116,19 @@
   (let [cmd ["claude" "plugin" "install" (name plugin)]]
     (run-command (str "claude plugin - " (name plugin)) cmd)))
 
+(defn- add-claude-mcp [[server-name {:keys [command args env scope] :or {scope "user"}}]]
+  (let [name-str (name server-name)
+        env-args (mapcat (fn [[k v]] ["-e" (str (name k) "=" v)]) env)
+        cmd-args (if args (into [command] args) [command])
+        remove-cmd ["claude" "mcp" "remove" name-str "--scope" scope]
+        add-cmd (vec (concat ["claude" "mcp" "add" name-str "--scope" scope]
+                             env-args
+                             ["--"]
+                             cmd-args))]
+    ;; Remove first (ignore errors if doesn't exist), then add
+    (exec! remove-cmd)
+    (run-command (str "claude mcp - " name-str) add-cmd)))
+
 ; See `man defaults`, basically:
 ; No flag = -string
 ; Flags: -string, -int, -float, -bool, -date, -array el el el, -array-add (append), -dict k1 v2 k2 v2, -dict-add
@@ -239,6 +252,7 @@
    :pkg/npm           (run-basic-actions! "Installing npm packages"    install-npm-package)
    :claude/marketplace (run-basic-actions! "Adding Claude marketplaces" add-claude-marketplace)
    :claude/plugin     (run-basic-actions! "Installing Claude plugins"  install-claude-plugin)
+   :claude/mcp        (run-basic-actions! "Adding Claude MCP servers"  add-claude-mcp)
    :osx/defaults      apply-defaults
    :fs/unlink         unlink-symlinks
    :fs/symlink        create-symlinks})
