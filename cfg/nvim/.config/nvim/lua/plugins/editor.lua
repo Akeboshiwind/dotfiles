@@ -9,4 +9,4 @@ end
 local function _3_(...)
   return telescope_actions.which_key(...)
 end
-return {{"chrisgrieser/nvim-spider", keys = {{"w", "<cmd>lua require('spider').motion('w', { skipInsignificantPunctuation = true })<CR>", mode = {"n", "o", "x"}}, {"e", "<cmd>lua require('spider').motion('e', { skipInsignificantPunctuation = true })<CR>", mode = {"n", "o", "x"}}, {"b", "<cmd>lua require('spider').motion('b', { skipInsignificantPunctuation = true })<CR>", mode = {"n", "o", "x"}}}}, {"nvim-telescope/telescope.nvim", opts = {defaults = {mappings = {i = {["<C-j>"] = _1_, ["<C-k>"] = _2_, ["<C-h>"] = _3_}}}}}}
+return {{"nvim-telescope/telescope.nvim", opts = {defaults = {mappings = {i = {["<C-j>"] = _1_, ["<C-k>"] = _2_, ["<C-h>"] = _3_}}}}}}
