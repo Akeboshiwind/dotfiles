@@ -22,6 +22,7 @@
         :intellij
 
         ;; >> Tools
+        :tailscale
         :git
         :ssh
         :gpg
