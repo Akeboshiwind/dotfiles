@@ -1,6 +1,9 @@
 # Theme
 theme = Kanagawa Wave
 
+# Behavior
+confirm-close-surface = false
+
 # Font
 font-size = 17
 
