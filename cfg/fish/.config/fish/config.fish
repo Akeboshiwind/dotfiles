@@ -1,8 +1,4 @@
 if status is-interactive
-    # Start tmux if not already running
-    if command -qv tmux; and test -z "$TMUX"
-        tmux attach || tmux new
-    end
 end
 
 # Add local bin to PATH
@@ -21,12 +17,3 @@ fish_add_path ~/.local/bin
 for config in $__fish_config_dir/conf.d.after/*
     source $config
 end
-
-
-# >> Note to future me: asdf shims broken
-# tags: asdf, shim, java
-
-# If you accidentially exit tmux completely then restart it, for some reason the asdf shims to to the back of the PATH
-# This means they get overshadowed by /usr/bin.
-# The solution is: Just restart Alacritty.
-# Not really sure why 🤷
