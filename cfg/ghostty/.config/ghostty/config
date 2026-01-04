@@ -14,6 +14,7 @@ keybind = shift+enter=text:\n
 keybind = ctrl+a>shift+backslash=new_split:right
 keybind = ctrl+a>h=goto_split:left
 keybind = ctrl+a>l=goto_split:right
+keybind = ctrl+a>x=close_surface
 
 # Tabs (tmux-style)
 keybind = ctrl+a>c=new_tab
