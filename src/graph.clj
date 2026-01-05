@@ -108,3 +108,28 @@
         sorted (dep/topo-sort action-comparator graph)
         orphans (sort action-comparator (remove (set sorted) actions))]
     (vec (concat orphans sorted))))
+
+(defn transitive-deps
+  "Given a plan and a set of target actions, return all actions needed
+   (targets + their transitive dependencies) as a set."
+  [plan targets]
+  (let [{:keys [providers requires]} (parse-plan plan)]
+    (loop [needed (set targets)
+           queue (vec targets)]
+      (if (empty? queue)
+        needed
+        (let [action (peek queue)
+              deps (->> (get requires action)
+                        (keep #(resolve-dep providers %))
+                        (remove needed))]
+          (recur (into needed deps)
+                 (into (pop queue) deps)))))))
+
+(defn filter-order
+  "Filter execution order to only include actions of the given type,
+   plus any actions they transitively depend on.
+   Returns actions in dependency order (dependencies first)."
+  [plan order action-type]
+  (let [targets (filterv #(= action-type (first %)) order)
+        needed (transitive-deps plan (set targets))]
+    (filterv needed order)))

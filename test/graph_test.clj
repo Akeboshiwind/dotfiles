@@ -172,3 +172,93 @@
               [:osx/defaults :bar]
               [:pkg/script :baz]]
              (g/topological-sort plan))))))
+
+;; =============================================================================
+;; transitive-deps tests
+;; =============================================================================
+
+(deftest transitive-deps-test
+  (testing "empty targets returns empty set"
+    (is (= #{} (g/transitive-deps bootstrap-plan #{}))))
+
+  (testing "no-dep actions return only themselves"
+    (is (= #{[:fs/symlink "~/.gitconfig"]}
+           (g/transitive-deps simple-plan #{[:fs/symlink "~/.gitconfig"]}))))
+
+  (testing "single level dependency"
+    ;; :pkg/brew :neovim only requires :pkg/brew (provided by :pkg/script :homebrew)
+    ;; It doesn't chain further
+    (is (= #{[:pkg/brew :neovim] [:pkg/script :homebrew]}
+           (g/transitive-deps bootstrap-plan #{[:pkg/brew :neovim]}))))
+
+  (testing "transitive chain: mise -> brew -> script"
+    ;; :pkg/mise :node requires :pkg/mise (provided by :pkg/brew :mise)
+    ;; :pkg/brew :mise requires :pkg/brew (provided by :pkg/script :homebrew)
+    (is (= #{[:pkg/mise :node]
+             [:pkg/brew :mise]
+             [:pkg/script :homebrew]}
+           (g/transitive-deps bootstrap-plan #{[:pkg/mise :node]}))))
+
+  (testing "multiple targets with shared deps"
+    ;; Both mise actions share the same dependency chain
+    (let [plan {:pkg/script {:homebrew {:dep/provides #{:pkg/brew}}}
+                :pkg/brew {:mise {:dep/provides #{:pkg/mise}}}
+                :pkg/mise {:node {} :python {}}}]
+      (is (= #{[:pkg/mise :node]
+               [:pkg/mise :python]
+               [:pkg/brew :mise]
+               [:pkg/script :homebrew]}
+             (g/transitive-deps plan #{[:pkg/mise :node] [:pkg/mise :python]})))))
+
+  (testing "explicit requires on specific action"
+    (let [plan {:pkg/script {:a {:dep/provides #{:pkg/brew}}}
+                :pkg/brew {:b {}
+                           :c {:dep/requires #{[:pkg/brew :b]}}}}]
+      ;; :c explicitly requires [:pkg/brew :b], which requires :pkg/brew
+      (is (= #{[:pkg/brew :c]
+               [:pkg/brew :b]
+               [:pkg/script :a]}
+             (g/transitive-deps plan #{[:pkg/brew :c]}))))))
+
+;; =============================================================================
+;; filter-order tests
+;; =============================================================================
+
+(deftest filter-order-test
+  (testing "filters to action type with dependencies in correct order"
+    (let [order (g/topological-sort bootstrap-plan)]
+      ;; Should be: script first, then brew, then mise
+      (is (= [[:pkg/script :homebrew]
+              [:pkg/brew :mise]
+              [:pkg/mise :node]]
+             (g/filter-order bootstrap-plan order :pkg/mise)))))
+
+  (testing "complex chain maintains dependency order"
+    (let [order (g/topological-sort full-plan)]
+      ;; Verify order: script -> brew -> marketplace -> plugin
+      (is (= [[:pkg/script :homebrew]
+              [:pkg/brew :claude-code]
+              [:claude/marketplace :glittercowboy/taches-cc-resources]
+              [:claude/plugin :taches]]
+             (g/filter-order full-plan order :claude/plugin)))))
+
+  (testing "multiple targets from same type share dependencies"
+    (let [plan {:pkg/script {:homebrew {:dep/provides #{:pkg/brew}}}
+                :pkg/brew {:mise {:dep/provides #{:pkg/mise}}
+                           :other {}}
+                :pkg/mise {:node {} :python {}}}
+          order (g/topological-sort plan)
+          filtered (g/filter-order plan order :pkg/mise)]
+      ;; Both mise packages share the same deps
+      (is (= [[:pkg/script :homebrew]
+              [:pkg/brew :mise]
+              [:pkg/mise :node]
+              [:pkg/mise :python]]
+             filtered))
+      ;; :pkg/brew :other should NOT be included
+      (is (not (some #{[:pkg/brew :other]} filtered)))))
+
+  (testing "no-dep action type returns only those actions"
+    (is (= [[:fs/symlink "~/.gitconfig"]
+            [:fs/symlink "~/.zshrc"]]
+           (g/filter-order simple-plan (g/topological-sort simple-plan) :fs/symlink)))))

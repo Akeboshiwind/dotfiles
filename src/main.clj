@@ -3,7 +3,8 @@
             [manifest :as m]
             [plan :as p]
             [execute :as e]
-            [cache :as c]))
+            [cache :as c]
+            [graph :as g]))
 
 (defn- format-errors [errors]
   (let [{:keys [cycles missing duplicates]} errors]
@@ -22,11 +23,6 @@
                   stage)]
       (keyword stage))))
 
-(defn- filter-order [stage order]
-  (if stage
-    (filterv #(= stage (first %)) order)
-    order))
-
 (defn -main [& args]
   (binding [e/*dry-run* false]
     (try
@@ -34,7 +30,9 @@
             steps (m/load-manifest)
             cache (c/load-cache)
             {:keys [plan order symlinks]} (p/build steps cache)
-            filtered-order (filter-order stage order)]
+            filtered-order (if stage
+                             (g/filter-order plan order stage)
+                             order)]
         (when (and stage (empty? filtered-order))
           (println "No actions found for stage" stage)
           (System/exit 1))
