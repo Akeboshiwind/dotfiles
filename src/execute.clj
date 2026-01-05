@@ -3,6 +3,7 @@
             [clojure.string :as str]
             [babashka.process :as process]
             [actions.core :as a]
+            [display :as d]
             ;; Load all action implementations
             [actions.script]
             [actions.brew]
@@ -16,21 +17,12 @@
 
 (def ^:dynamic *dry-run* false)
 
-(def GRAY "\033[90m")
-(def GREEN "\033[32m")
-(def RED "\033[31m")
-(def RESET "\033[0m")
-
-(def gray #(str GRAY % RESET))
-(def green #(str GREEN % RESET))
-(def red #(str RED % RESET))
-
 (defn- prefix-print
   ([stream] (prefix-print " │" stream))
   ([prefix stream]
    (with-open [rdr (io/reader stream)]
      (doseq [line (line-seq rdr)]
-       (println prefix (gray line))))))
+       (println prefix (d/gray line))))))
 
 (defn exec!
   ([args]
@@ -50,10 +42,10 @@
   (try
     (println " ┌─" label)
     (let [{:keys [exit]} (exec! args)]
-      (println " └─" (if (zero? exit) (green "✓") (red "✗")))
+      (println " └─" (if (zero? exit) (d/green "✓") (d/red "✗")))
       (zero? exit))
     (catch Exception _
-      (println " └─" (red "✗"))
+      (println " └─" (d/red "✗"))
       false)))
 
 (defn dry-run-command [_label args]

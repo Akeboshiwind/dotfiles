@@ -1,13 +1,6 @@
 (ns actions.osx
-  (:require [actions.core :as a]))
-
-(def ^:private GRAY "\033[90m")
-(def ^:private GREEN "\033[32m")
-(def ^:private RED "\033[31m")
-(def ^:private RESET "\033[0m")
-
-(defn- green [s] (str GREEN s RESET))
-(defn- red [s] (str RED s RESET))
+  (:require [actions.core :as a]
+            [display :as d]))
 
 (defn- map->plist-xml
   "Convert a Clojure map to plist XML string for use with defaults -array"
@@ -52,7 +45,7 @@
               cmd (into ["defaults" "write" domain (name key) type-flag] (->defaults-args value))
               {:keys [exit]} (exec! {:prefix " │ │"} cmd)]
           (println (if last? " │ └─" " │ ├─")
-                   key value (if (zero? exit) (green "✓") (red "✗"))))))
+                   key value (if (zero? exit) (d/green "✓") (d/red "✗"))))))
     (catch Exception _
-      (println " └─" (red "✗"))))
-  (println " └─" (green "✓")))
+      (println " └─" (d/red "✗"))))
+  (println " └─" (d/green "✓")))
