@@ -4,7 +4,8 @@
             [plan :as p]
             [execute :as e]
             [cache :as c]
-            [graph :as g]))
+            [graph :as g]
+            [actions.core :as a]))
 
 (defn- format-errors [errors]
   (let [{:keys [cycles missing duplicates]} errors]
@@ -24,7 +25,7 @@
       (keyword stage))))
 
 (defn -main [& args]
-  (binding [e/*dry-run* false]
+  (binding [a/*dry-run* false]
     (try
       (let [stage (parse-stage args)
             steps (m/load-manifest)

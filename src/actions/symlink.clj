@@ -6,7 +6,7 @@
             [utils :as u])
   (:import [java.nio.file Files Paths]))
 
-(defmethod a/install! :fs/unlink [_ items _ctx]
+(defmethod a/install! :fs/unlink [_ items]
   (when (seq items)
     (try
       (println " ┌─ Cleaning stale symlinks")
@@ -29,7 +29,7 @@
         (println " └─" (d/red "✗")))
       (println " └─" (d/green "✓")))))
 
-(defmethod a/install! :fs/symlink [_ items {:keys [exec!]}]
+(defmethod a/install! :fs/symlink [_ items]
   (try
     (println " ┌─ Creating Symlinks")
     (doseq [[target source] items]
@@ -49,7 +49,7 @@
             (when-let [parent (.getParentFile target)]
               (.mkdirs parent))
             (let [cmd ["ln" "-s" (.getAbsolutePath source) (.getAbsolutePath target)]
-                  {:keys [exit]} (exec! {:prefix " │ │"} cmd)]
+                  {:keys [exit]} (a/exec! {:prefix " │ │"} cmd)]
               (println " │ └─" (if (zero? exit) (d/green "✓") (d/red "✗"))))))))
     (catch Exception _
       (println " └─" (d/red "✗")))

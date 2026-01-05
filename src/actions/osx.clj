@@ -34,7 +34,7 @@
     (map? value) (vec (mapcat (fn [[k v]] [(name k) (str v)]) value))
     :else [value]))
 
-(defmethod a/install! :osx/defaults [_ items {:keys [exec!]}]
+(defmethod a/install! :osx/defaults [_ items]
   (try
     (println " ┌─ Setting OSX Defaults")
     (doseq [[domain settings] items]
@@ -43,7 +43,7 @@
         (let [last? (= idx (dec (count settings)))
               type-flag (->defaults-type value)
               cmd (into ["defaults" "write" domain (name key) type-flag] (->defaults-args value))
-              {:keys [exit]} (exec! {:prefix " │ │"} cmd)]
+              {:keys [exit]} (a/exec! {:prefix " │ │"} cmd)]
           (println (if last? " │ └─" " │ ├─")
                    key value (if (zero? exit) (d/green "✓") (d/red "✗"))))))
     (catch Exception _

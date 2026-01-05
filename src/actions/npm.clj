@@ -1,6 +1,6 @@
 (ns actions.npm
   (:require [actions.core :as a]))
 
-(defmethod a/install! :pkg/npm [_ items {:keys [run-command]}]
+(defmethod a/install! :pkg/npm [_ items]
   (doseq [[pkg _opts] items]
-    (run-command (str "npm - " (name pkg)) ["npm" "install" "-g" (name pkg)])))
+    (a/with-label (str "npm - " (name pkg)) ["npm" "install" "-g" (name pkg)])))

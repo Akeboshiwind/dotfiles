@@ -1,7 +1,7 @@
 (ns actions.bbin
   (:require [actions.core :as a]))
 
-(defmethod a/install! :pkg/bbin [_ items {:keys [run-command]}]
+(defmethod a/install! :pkg/bbin [_ items]
   (doseq [[pkg opts] items]
     (let [pkg-name (name pkg)
           package-arg (or (:url opts) pkg-name)
@@ -21,4 +21,4 @@
                        (:ns-default opts)  (into ["--ns-default" (:ns-default opts)])
                        (:tool opts)        (conj "--tool"))
           cmd (into base-cmd opts-flags)]
-      (run-command (str "bbin - " pkg-name) cmd))))
+      (a/with-label (str "bbin - " pkg-name) cmd))))
