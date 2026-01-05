@@ -1,6 +1,12 @@
 (ns actions.npm
-  (:require [actions.core :as a]))
+  (:require [actions.core :as a]
+            [display :as d]))
+
+(defn- install-one [pkg _opts]
+  (let [{:keys [exit]} (a/exec! ["npm" "install" "-g" (name pkg)])]
+    {:label (name pkg)
+     :status (if (zero? exit) :ok :error)}))
 
 (defmethod a/install! :pkg/npm [_ items]
-  (doseq [[pkg _opts] items]
-    (a/with-label (str "npm - " (name pkg)) ["npm" "install" "-g" (name pkg)])))
+  (d/section "Installing npm packages"
+             (map (fn [[pkg opts]] (install-one pkg opts)) items)))

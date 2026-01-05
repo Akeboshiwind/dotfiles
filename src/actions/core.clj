@@ -13,7 +13,7 @@
 (def ^:dynamic *dry-run* false)
 
 (defn- prefix-print
-  ([stream] (prefix-print " │" stream))
+  ([stream] (prefix-print "    " stream))
   ([prefix stream]
    (with-open [rdr (io/reader stream)]
      (doseq [line (line-seq rdr)]
@@ -21,10 +21,10 @@
 
 (defn exec!
   "Execute a command. Respects *dry-run* binding.
-   Options: :prefix for output line prefix (default \" │\")"
+   Options: :prefix for output line prefix (default \"    \")"
   ([args]
    (exec! {} args))
-  ([{:keys [prefix] :or {prefix " │"}}
+  ([{:keys [prefix] :or {prefix "    "}}
     args]
    (if *dry-run*
      (do
@@ -36,14 +36,6 @@
        @out-future
        @err-future
        @proc))))
-
-(defn with-label
-  "Run command with standard display chrome: ┌─ label ... └─ ✓/✗"
-  [label cmd]
-  (println " ┌─" label)
-  (let [{:keys [exit]} (exec! cmd)]
-    (println " └─" (if (zero? exit) (d/green "✓") (d/red "✗")))
-    (zero? exit)))
 
 ;; =============================================================================
 ;; Multimethods

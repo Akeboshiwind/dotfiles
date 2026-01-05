@@ -1,7 +1,13 @@
 (ns actions.brew
-  (:require [actions.core :as a]))
+  (:require [actions.core :as a]
+            [display :as d]))
+
+(defn- install-one [pkg {:keys [head]}]
+  (let [cmd (into ["brew" "install" (name pkg)] (when head ["--HEAD"]))
+        {:keys [exit]} (a/exec! cmd)]
+    {:label (name pkg)
+     :status (if (zero? exit) :ok :error)}))
 
 (defmethod a/install! :pkg/brew [_ items]
-  (doseq [[pkg {:keys [head]}] items]
-    (let [cmd (into ["brew" "install" (name pkg)] (when head ["--HEAD"]))]
-      (a/with-label (str "brew - " (name pkg)) cmd))))
+  (d/section "Installing brew packages"
+             (map (fn [[pkg opts]] (install-one pkg opts)) items)))
