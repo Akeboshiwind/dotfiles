@@ -34,18 +34,15 @@
     (map? value) (vec (mapcat (fn [[k v]] [(name k) (str v)]) value))
     :else [value]))
 
+(defn- set-default [domain key value]
+  (let [type-flag (->defaults-type value)
+        cmd (into ["defaults" "write" domain (name key) type-flag] (->defaults-args value))
+        {:keys [exit]} (a/exec! cmd)]
+    {:label (str domain " " (name key) " = " value)
+     :status (if (zero? exit) :ok :error)}))
+
 (defmethod a/install! :osx/defaults [_ items]
-  (try
-    (println " ┌─ Setting OSX Defaults")
-    (doseq [[domain settings] items]
-      (println " ├─┬──" domain)
-      (doseq [[idx [key value]] (zipmap (range) settings)]
-        (let [last? (= idx (dec (count settings)))
-              type-flag (->defaults-type value)
-              cmd (into ["defaults" "write" domain (name key) type-flag] (->defaults-args value))
-              {:keys [exit]} (a/exec! {:prefix " │ │"} cmd)]
-          (println (if last? " │ └─" " │ ├─")
-                   key value (if (zero? exit) (d/green "✓") (d/red "✗"))))))
-    (catch Exception _
-      (println " └─" (d/red "✗"))))
-  (println " └─" (d/green "✓")))
+  (d/section "Setting OSX defaults"
+             (for [[domain settings] items
+                   [key value] settings]
+               (set-default domain key value))))
