@@ -11,9 +11,10 @@
 ;; =============================================================================
 
 (def ^:dynamic *dry-run* false)
+(def ^:private default-prefix "    ")
 
 (defn- prefix-print
-  ([stream] (prefix-print "    " stream))
+  ([stream] (prefix-print default-prefix stream))
   ([prefix stream]
    (with-open [rdr (io/reader stream)]
      (doseq [line (line-seq rdr)]
@@ -25,7 +26,7 @@
    Returns {:exit int :err string-or-nil}"
   ([args]
    (exec! {} args))
-  ([{:keys [prefix] :or {prefix "    "}}
+  ([{:keys [prefix] :or {prefix default-prefix}}
     args]
    (if *dry-run*
      (do
