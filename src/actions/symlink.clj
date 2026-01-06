@@ -16,6 +16,7 @@
       (not (Files/isSymbolicLink target-path))
       {:label target-str :status :error :message "not a symlink"}
 
+      ;; Strict check - see note in link-one for lenient alternative
       (not= (Files/readSymbolicLink target-path)
             (.toPath (io/file expected-source)))
       {:label target-str :status :error :message "points elsewhere"}
@@ -31,6 +32,9 @@
         target-path (.toPath target)]
     (cond
       ;; Symlink exists and points to correct source
+      ;; Note: This is a strict check - the symlink must literally match the
+      ;; expected path. A relative symlink resolving to the same file would
+      ;; fail. For lenient matching, compare canonical paths instead.
       (and (fs/exists? target {:nofollow-links true})
            (Files/isSymbolicLink target-path)
            (= (Files/readSymbolicLink target-path) (.toPath source)))
