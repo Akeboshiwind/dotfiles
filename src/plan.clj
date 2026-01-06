@@ -5,10 +5,9 @@
             [graph :as g]
             [utils :as u]))
 
-
 ;; >> Resolve symlinks to root of repo
 
-(defn- resolve-path [base-dir path]
+(defn- resolve-path! [base-dir path]
   (if (or (str/starts-with? path "/")    ; absolute
           (str/starts-with? path "~"))   ; home
     path
@@ -23,22 +22,21 @@
                          :base base-canonical})))
       canonical)))
 
-(defn- resolve-paths-in-action [step source-dir action]
+(defn- resolve-paths-in-action! [step source-dir action]
   (if-let [symlinks (action step)]
     (->> symlinks
-         (map (fn [[target source]] [target (resolve-path source-dir source)]))
+         (map (fn [[target source]] [target (resolve-path! source-dir source)]))
          (into {})
          (assoc step action))
     step))
 
-(defn- resolve-symlink-paths [entries]
+(defn- resolve-symlink-paths! [entries]
   (mapv (fn [{:keys [step source]}]
           {:step (-> step
-                     (resolve-paths-in-action source :fs/symlink)
-                     (resolve-paths-in-action source :fs/symlink-folder))
+                     (resolve-paths-in-action! source :fs/symlink)
+                     (resolve-paths-in-action! source :fs/symlink-folder))
            :source source})
         entries))
-
 
 ;; >> Breakdown :fs/symlink-folders into individual :fs/symlinks
 
@@ -51,7 +49,7 @@
         file-path (.getPath file)]
     (subs file-path (count base-path))))
 
-(defn- create-symlink-mapping [link-prefix content-dir]
+(defn- create-symlink-mapping! [link-prefix content-dir]
   (let [base-dir (io/file (u/expand-tilde content-dir))
         files (list-files! base-dir)]
     (->> files
@@ -61,22 +59,21 @@
                    (.getCanonicalPath file)])))
          (into {}))))
 
-(defn- expand-symlink-folder [step]
+(defn- expand-symlink-folder! [step]
   (if-let [folder-symlinks (:fs/symlink-folder step)]
     (let [new-symlinks (->> folder-symlinks
-                            (mapcat (fn [[s t]] (create-symlink-mapping s t)))
+                            (mapcat (fn [[s t]] (create-symlink-mapping! s t)))
                             (into {}))]
       (-> step
           (update :fs/symlink merge new-symlinks)
           (dissoc :fs/symlink-folder)))
     step))
 
-(defn- expand-symlink-folders [entries]
+(defn- expand-symlink-folders! [entries]
   (mapv (fn [{:keys [step source]}]
-          {:step (expand-symlink-folder step)
+          {:step (expand-symlink-folder! step)
            :source source})
         entries))
-
 
 ;; >> Validate and merge steps
 
@@ -108,7 +105,6 @@
   [entries]
   (apply merge-with merge (map :step entries)))
 
-
 ;; >> Calculate stale symlinks to unlink
 
 (defn- calculate-unlinks
@@ -121,17 +117,16 @@
     {:unlinks (select-keys cached stale-keys)
      :symlinks current}))
 
-
 ;; >> Plan builder
 
-(defn build
+(defn build!
   "Build plan from entries. Takes [{:step map :source string} ...].
-   Returns {:plan map :order [[type key] ...] :symlinks map :errors [...]}"
+   Returns {:plan map :order [[type key] ...] :symlinks map :errors [...]}
+   Impure: reads filesystem for path canonicalization and directory listing."
   [entries cache]
   (let [processed (->> entries
-                       resolve-symlink-paths
-                       expand-symlink-folders)
-        ;; Check for duplicates after expansion (catches symlink-folder conflicts)
+                       resolve-symlink-paths!
+                       expand-symlink-folders!)
         duplicate-errors (find-duplicate-keys processed)
         merged (merge-steps processed)
         {:keys [unlinks symlinks]} (calculate-unlinks cache merged)

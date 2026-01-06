@@ -60,7 +60,7 @@
     (try
       (let [entries (m/load-manifest)
             cache (c/load-cache)
-            {:keys [plan order symlinks errors]} (p/build entries cache)
+            {:keys [plan order symlinks errors]} (p/build! entries cache)
             filtered-order (if action
                              (g/filter-order plan order action)
                              order)]
