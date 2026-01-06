@@ -43,6 +43,27 @@
                      (str/replace #"\s*\n\s*" " "))))}))))
 
 ;; =============================================================================
+;; Helpers
+;; =============================================================================
+
+(defn simple-install
+  "Helper for actions that follow the common pattern: run a command for each item.
+   - title: section title
+   - cmd-fn: (fn [key opts] -> command vector)
+   - items: map of {key opts}
+   Optional label-fn: (fn [key opts] -> string), defaults to (name key)"
+  ([title cmd-fn items]
+   (simple-install title (fn [k _] (name k)) cmd-fn items))
+  ([title label-fn cmd-fn items]
+   (d/section title
+     (map (fn [[k opts]]
+            (let [{:keys [exit err]} (exec! (cmd-fn k opts))]
+              {:label (label-fn k opts)
+               :status (if (zero? exit) :ok :error)
+               :message err}))
+          items))))
+
+;; =============================================================================
 ;; Multimethods
 ;; =============================================================================
 

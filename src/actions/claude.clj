@@ -3,19 +3,19 @@
             [actions :as a]
             [display :as d]))
 
-(defn- add-marketplace [marketplace-name {:keys [source]}]
-  (let [src (or source (name marketplace-name))
-        {:keys [exit err]} (a/exec! ["claude" "plugin" "marketplace" "add" src])]
-    {:label (name marketplace-name)
-     :status (if (zero? exit) :ok :error)
-     :message err}))
+(defmethod a/install! :claude/marketplace [_ items]
+  (a/simple-install "Adding Claude marketplaces"
+    (fn [marketplace-name {:keys [source]}]
+      ["claude" "plugin" "marketplace" "add" (or source (name marketplace-name))])
+    items))
 
-(defn- install-plugin [plugin _opts]
-  (let [{:keys [exit err]} (a/exec! ["claude" "plugin" "install" (name plugin)])]
-    {:label (name plugin)
-     :status (if (zero? exit) :ok :error)
-     :message err}))
+(defmethod a/install! :claude/plugin [_ items]
+  (a/simple-install "Installing Claude plugins"
+    (fn [plugin _opts]
+      ["claude" "plugin" "install" (name plugin)])
+    items))
 
+;; MCP has special remove-then-add logic, doesn't fit simple-install
 (defn- add-mcp [server-name {:keys [command args env scope] :or {scope "user"}}]
   (let [name-str (name server-name)
         env-args (mapcat (fn [[k v]] ["-e" (str (name k) "=" v)]) env)
@@ -38,14 +38,6 @@
           {:label name-str
            :status (if (zero? exit) :ok :error)
            :message err})))))
-
-(defmethod a/install! :claude/marketplace [_ items]
-  (d/section "Adding Claude marketplaces"
-             (map (fn [[name opts]] (add-marketplace name opts)) items)))
-
-(defmethod a/install! :claude/plugin [_ items]
-  (d/section "Installing Claude plugins"
-             (map (fn [[name opts]] (install-plugin name opts)) items)))
 
 (defmethod a/install! :claude/mcp [_ items]
   (d/section "Adding Claude MCP servers"

@@ -1,13 +1,8 @@
 (ns actions.mas
-  (:require [actions :as a]
-            [display :as d]))
-
-(defn- install-one [app-name app-id]
-  (let [{:keys [exit err]} (a/exec! ["mas" "install" app-id])]
-    {:label (str app-name)
-     :status (if (zero? exit) :ok :error)
-     :message err}))
+  (:require [actions :as a]))
 
 (defmethod a/install! :pkg/mas [_ items]
-  (d/section "Installing Mac App Store apps"
-             (map (fn [[app-name app-id]] (install-one app-name app-id)) items)))
+  (a/simple-install "Installing Mac App Store apps"
+    (fn [app-name _] (str app-name))
+    (fn [_app-name app-id] ["mas" "install" app-id])
+    items))

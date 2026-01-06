@@ -1,13 +1,10 @@
 (ns actions.bbin
-  (:require [actions :as a]
-            [display :as d]))
+  (:require [actions :as a]))
 
-(defn- install-one [pkg opts]
+(defn- build-cmd [pkg opts]
   (let [pkg-name (name pkg)
         package-arg (or (:url opts) pkg-name)
-        as-name (if (and (:url opts) (not (:as opts)))
-                  pkg-name
-                  (:as opts))
+        as-name (or (:as opts) (when (:url opts) pkg-name))
         base-cmd ["bbin" "install" package-arg]
         opts-flags (cond-> []
                      as-name             (into ["--as" as-name])
@@ -19,13 +16,8 @@
                      (:main-opts opts)   (into ["--main-opts" (str (:main-opts opts))])
                      (:mvn/version opts) (into ["--mvn/version" (:mvn/version opts)])
                      (:ns-default opts)  (into ["--ns-default" (:ns-default opts)])
-                     (:tool opts)        (conj "--tool"))
-        cmd (into base-cmd opts-flags)
-        {:keys [exit err]} (a/exec! cmd)]
-    {:label pkg-name
-     :status (if (zero? exit) :ok :error)
-     :message err}))
+                     (:tool opts)        (conj "--tool"))]
+    (into base-cmd opts-flags)))
 
 (defmethod a/install! :pkg/bbin [_ items]
-  (d/section "Installing bbin packages"
-             (map (fn [[pkg opts]] (install-one pkg opts)) items)))
+  (a/simple-install "Installing bbin packages" build-cmd items))
