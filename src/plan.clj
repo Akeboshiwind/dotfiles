@@ -42,7 +42,7 @@
 
 ;; >> Breakdown :fs/symlink-folders into individual :fs/symlinks
 
-(defn- list-files [dir-path]
+(defn- list-files! [dir-path]
   (let [dir (io/file (u/expand-tilde dir-path))]
     (->> (file-seq dir)
          (filter #(.isFile %)))))
@@ -54,7 +54,7 @@
 
 (defn- create-symlink-mapping [source-dir target-dir]
   (let [base-dir (io/file (u/expand-tilde target-dir))
-        files (list-files target-dir)]
+        files (list-files! target-dir)]
     (->> files
          (map (fn [file]
                 (let [rel-path (relative-path base-dir file)]
