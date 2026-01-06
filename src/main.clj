@@ -35,9 +35,9 @@
   (binding [a/*dry-run* false]
     (try
       (let [stage (parse-stage args)
-            steps (m/load-manifest)
+            entries (m/load-manifest)
             cache (c/load-cache)
-            {:keys [plan order symlinks]} (p/build steps cache)
+            {:keys [plan order symlinks]} (p/build entries cache)
             filtered-order (if stage
                              (g/filter-order plan order stage)
                              order)]

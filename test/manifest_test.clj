@@ -54,20 +54,24 @@
 
 (deftest resolve-entry-test
   (testing "string entries call read-fn with string"
-    (let [calls (atom [])]
-      (m/resolve-entry' #(do (swap! calls conj %) {:read %}) "custom.edn")
-      (is (= ["custom.edn"] @calls))))
+    (let [calls (atom [])
+          read-fn #(do (swap! calls conj %) {:step {:read %} :source "test"})
+          result (m/resolve-entry' read-fn "custom.edn")]
+      (is (= ["custom.edn"] @calls))
+      (is (= {:step {:read "custom.edn"} :source "test"} result))))
 
   (testing "keyword entries call read-fn with expanded path"
-    (let [calls (atom [])]
-      (m/resolve-entry' #(do (swap! calls conj %) {:read %}) :git)
-      (is (= ["cfg/git/base.edn"] @calls))))
-
-  (testing "map entries return as-is without calling read-fn"
     (let [calls (atom [])
-          result (m/resolve-entry' #(do (swap! calls conj %) {:read %})
-                                   {:pkg/brew {:neovim {}}})]
-      (is (= {:pkg/brew {:neovim {}}} result))
+          read-fn #(do (swap! calls conj %) {:step {:read %} :source "test"})
+          result (m/resolve-entry' read-fn :git)]
+      (is (= ["cfg/git/base.edn"] @calls))
+      (is (= {:step {:read "cfg/git/base.edn"} :source "test"} result))))
+
+  (testing "map entries return wrapped with nil source, no read-fn call"
+    (let [calls (atom [])
+          read-fn #(do (swap! calls conj %) {:step % :source "test"})
+          result (m/resolve-entry' read-fn {:pkg/brew {:neovim {}}})]
+      (is (= {:step {:pkg/brew {:neovim {}}} :source nil} result))
       (is (empty? @calls))))
 
   (testing "invalid entries throw"

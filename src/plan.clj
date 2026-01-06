@@ -21,7 +21,7 @@
       canonical)
     path))
 
-(defn- resolve-paths-in-step [action {{:keys [source-dir]} :context :as step}]
+(defn- resolve-paths-in-action [step source-dir action]
   (if-let [symlinks (action step)]
     (->> symlinks
          (map (fn [[target source]] [target (resolve-path source-dir source)]))
@@ -29,10 +29,13 @@
          (assoc step action))
     step))
 
-(defn- resolve-symlink-paths [steps]
-  (->> steps
-       (mapv (partial resolve-paths-in-step :fs/symlink))
-       (mapv (partial resolve-paths-in-step :fs/symlink-folder))))
+(defn- resolve-symlink-paths [entries]
+  (mapv (fn [{:keys [step source]}]
+          {:step (-> step
+                     (resolve-paths-in-action source :fs/symlink)
+                     (resolve-paths-in-action source :fs/symlink-folder))
+           :source source})
+        entries))
 
 
 ;; >> Breakdown :fs/symlink-folders into individual :fs/symlinks
@@ -67,22 +70,19 @@
           (dissoc :fs/symlink-folder)))
     step))
 
-(defn- expand-symlink-folders [steps]
-  (mapv expand-symlink-folder steps))
-
-
-;; >> Drop context key (no longer needed)
-
-(defn- drop-context [steps]
-  (mapv #(dissoc % :context) steps))
+(defn- expand-symlink-folders [entries]
+  (mapv (fn [{:keys [step source]}]
+          {:step (expand-symlink-folder step)
+           :source source})
+        entries))
 
 
 ;; >> Merge all steps into a single map
 
 (defn- merge-steps
   "Merge all step maps into a single map, combining same action types"
-  [steps]
-  (apply merge-with merge steps))
+  [entries]
+  (apply merge-with merge (map :step entries)))
 
 
 ;; >> Calculate stale symlinks to unlink
@@ -101,12 +101,12 @@
 ;; >> Plan builder
 
 (defn build
-  "Build plan from steps. Returns {:plan map :order [[type key] ...] :symlinks map}"
-  [steps cache]
-  (let [processed (->> steps
+  "Build plan from entries. Takes [{:step map :source string} ...].
+   Returns {:plan map :order [[type key] ...] :symlinks map}"
+  [entries cache]
+  (let [processed (->> entries
                        resolve-symlink-paths
-                       expand-symlink-folders
-                       drop-context)
+                       expand-symlink-folders)
         merged (merge-steps processed)
         {:keys [unlinks symlinks]} (calculate-unlinks cache merged)
         plan (cond-> merged

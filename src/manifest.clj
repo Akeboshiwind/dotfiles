@@ -51,28 +51,31 @@
     :else nil))
 
 (defn resolve-entry'
-  "Pure entry resolution. Takes a read function for file entries."
+  "Pure entry resolution. Takes a read function for file entries.
+   Returns {:step map :source string-or-nil}."
   [read-fn entry]
   (cond
     (string? entry)  (read-fn entry)
     (keyword? entry) (read-fn (str "cfg/" (name entry) "/base.edn"))
-    (map? entry)     entry
+    (map? entry)     {:step entry :source nil}
     :else (throw (ex-info "Invalid entry in manifest" {:entry entry}))))
 
 (defn- read-edn-file
-  "Read EDN file, adding :context with source directory"
+  "Read EDN file, returning {:step content :source dir}."
   [file]
   (let [base-dir (.getParent (io/file file))]
-    (-> (edn/read-string {:readers edn-readers} (slurp file))
-        (assoc :context {:source-dir base-dir}))))
+    {:step (edn/read-string {:readers edn-readers} (slurp file))
+     :source base-dir}))
 
 (defn- resolve-entry
-  "Resolve a plan entry: string/keyword -> file, map -> inline"
+  "Resolve a plan entry: string/keyword -> file, map -> inline.
+   Returns {:step map :source string-or-nil}."
   [entry]
   (resolve-entry' read-edn-file entry))
 
 (defn load-manifest
-  "Load plan from manifest.edn, resolving all entries"
+  "Load plan from manifest.edn, resolving all entries.
+   Returns [{:step map :source string-or-nil} ...]."
   []
   (let [{:keys [plan]} (edn/read-string (slurp "manifest.edn"))]
     (mapv resolve-entry plan)))
