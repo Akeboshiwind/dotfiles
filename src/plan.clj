@@ -77,7 +77,30 @@
         entries))
 
 
-;; >> Merge all steps into a single map
+;; >> Validate and merge steps
+
+(defn find-duplicate-keys
+  "Find keys that appear in multiple entries within the same action type.
+   Takes [{:step map :source string} ...]. Returns seq of error maps."
+  [entries]
+  (let [steps (map :step entries)
+        action-types (->> steps (mapcat keys) distinct)]
+    (for [action-type action-types
+          :let [;; Collect [key source] pairs for this action type
+                key-sources (->> entries
+                                 (mapcat (fn [{:keys [step source]}]
+                                           (for [k (keys (get step action-type))]
+                                             [k source])))
+                                 (group-by first))
+                ;; Find keys with multiple sources
+                duplicates (->> key-sources
+                                (filter (fn [[_ pairs]] (> (count pairs) 1))))]
+          [k pairs] duplicates
+          :let [sources (->> pairs (map second) distinct)]]
+      {:action action-type
+       :key k
+       :sources sources
+       :error (str "Defined in " (str/join ", " sources))})))
 
 (defn- merge-steps
   "Merge all step maps into a single map, combining same action types"
@@ -102,11 +125,13 @@
 
 (defn build
   "Build plan from entries. Takes [{:step map :source string} ...].
-   Returns {:plan map :order [[type key] ...] :symlinks map}"
+   Returns {:plan map :order [[type key] ...] :symlinks map :errors [...]}"
   [entries cache]
   (let [processed (->> entries
                        resolve-symlink-paths
                        expand-symlink-folders)
+        ;; Check for duplicates after expansion (catches symlink-folder conflicts)
+        duplicate-errors (find-duplicate-keys processed)
         merged (merge-steps processed)
         {:keys [unlinks symlinks]} (calculate-unlinks cache merged)
         plan (cond-> merged
@@ -114,7 +139,8 @@
     ;; Validate the dependency graph
     (when-let [errors (g/validate plan)]
       (throw (ex-info "Invalid dependency graph" errors)))
-    ;; Return plan, execution order, and symlinks for cache
+    ;; Return plan, execution order, symlinks for cache, and any errors
     {:plan plan
      :order (g/topological-sort plan)
-     :symlinks symlinks}))
+     :symlinks symlinks
+     :errors duplicate-errors}))

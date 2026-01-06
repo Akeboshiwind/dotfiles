@@ -3,6 +3,47 @@
             [plan :as p]))
 
 ;; =============================================================================
+;; find-duplicate-keys tests
+;; =============================================================================
+
+(deftest find-duplicate-keys-test
+  (testing "no duplicates returns empty"
+    (is (empty? (p/find-duplicate-keys [])))
+    (is (empty? (p/find-duplicate-keys [{:step {:pkg/brew {:neovim {}}} :source "cfg/a"}])))
+    (is (empty? (p/find-duplicate-keys [{:step {:pkg/brew {:neovim {}}} :source "cfg/a"}
+                                        {:step {:pkg/brew {:ripgrep {}}} :source "cfg/b"}]))))
+
+  (testing "same key in same action type is duplicate"
+    (let [errors (p/find-duplicate-keys [{:step {:pkg/brew {:neovim {}}} :source "cfg/a"}
+                                         {:step {:pkg/brew {:neovim {:head true}}} :source "cfg/b"}])]
+      (is (= 1 (count errors)))
+      (is (= :pkg/brew (:action (first errors))))
+      (is (= :neovim (:key (first errors))))
+      (is (= ["cfg/a" "cfg/b"] (:sources (first errors))))
+      (is (re-find #"cfg/a" (:error (first errors))))
+      (is (re-find #"cfg/b" (:error (first errors))))))
+
+  (testing "same key in different action types is not duplicate"
+    (is (empty? (p/find-duplicate-keys [{:step {:pkg/brew {:node {}}} :source "cfg/a"}
+                                        {:step {:pkg/mise {:node {}}} :source "cfg/b"}]))))
+
+  (testing "multiple duplicates across action types"
+    (let [errors (p/find-duplicate-keys [{:step {:pkg/brew {:neovim {} :git {}}} :source "cfg/a"}
+                                         {:step {:pkg/brew {:neovim {} :ripgrep {}}} :source "cfg/b"}
+                                         {:step {:pkg/mise {:node {}}} :source "cfg/c"}
+                                         {:step {:pkg/mise {:node {}}} :source "cfg/d"}])]
+      (is (= 2 (count errors)))
+      (is (= #{[:pkg/brew :neovim] [:pkg/mise :node]}
+             (set (map (juxt :action :key) errors))))))
+
+  (testing "key in 3+ files reports all sources"
+    (let [errors (p/find-duplicate-keys [{:step {:pkg/brew {:neovim {}}} :source "cfg/a"}
+                                         {:step {:pkg/brew {:neovim {}}} :source "cfg/b"}
+                                         {:step {:pkg/brew {:neovim {}}} :source "cfg/c"}])]
+      (is (= 1 (count errors)))
+      (is (= 3 (count (:sources (first errors))))))))
+
+;; =============================================================================
 ;; PATH-001: Path traversal vulnerability
 ;; =============================================================================
 

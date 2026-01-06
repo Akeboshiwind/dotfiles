@@ -37,16 +37,17 @@
       (let [stage (parse-stage args)
             entries (m/load-manifest)
             cache (c/load-cache)
-            {:keys [plan order symlinks]} (p/build entries cache)
+            {:keys [plan order symlinks errors]} (p/build entries cache)
             filtered-order (if stage
                              (g/filter-order plan order stage)
                              order)]
         (when (and stage (empty? filtered-order))
           (println "No actions found for stage" stage)
           (System/exit 1))
-        (when-let [errors (seq (concat (m/validate-secrets)
-                                       (e/validate-plan plan)))]
-          (println (format-validation-errors errors))
+        (when-let [all-errors (seq (concat (m/validate-secrets)
+                                           errors
+                                           (e/validate-plan plan)))]
+          (println (format-validation-errors all-errors))
           (System/exit 1))
         (println "Applying configurations...")
         (e/execute-plan {:plan plan :order filtered-order})
