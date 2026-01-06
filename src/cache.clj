@@ -18,8 +18,12 @@
   (let [tmp (fs/create-temp-file {:dir cache-dir
                                   :prefix "cache-"
                                   :suffix ".edn"})]
-    (spit (str tmp) (pr-str data))
-    (fs/move tmp cache-file {:replace-existing true})))
+    (try
+      (spit (str tmp) (pr-str data))
+      (fs/move tmp cache-file {:replace-existing true})
+      (finally
+        (when (fs/exists? tmp)
+          (fs/delete tmp))))))
 
 (defn load-cache
   "Loads the cache from disk. Returns nil if file doesn't exist.
