@@ -107,8 +107,9 @@
 
 ;; >> Calculate stale symlinks to unlink
 
-(defn- calculate-unlinks
-  "Compare plan's symlinks with cache, return stale symlinks to unlink"
+(defn calculate-unlinks
+  "Compare plan's symlinks with cache, return stale symlinks to unlink.
+   Returns {:unlinks {target source ...} :symlinks {target source ...}}"
   [cache plan]
   (let [current (:fs/symlink plan)
         cached (get cache :symlinks {})

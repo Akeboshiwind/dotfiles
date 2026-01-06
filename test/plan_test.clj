@@ -95,3 +95,58 @@
           result (p/build! entries {})]
       (is (= "~/some/config"
              (get-in result [:plan :fs/symlink "~/.config/app"]))))))
+
+;; =============================================================================
+;; calculate-unlinks: stale symlink detection
+;; =============================================================================
+
+(deftest calculate-unlinks-test
+  (testing "no cache returns empty unlinks"
+    (let [plan {:fs/symlink {"~/.config/a" "/src/a"}}
+          result (p/calculate-unlinks {} plan)]
+      (is (= {} (:unlinks result)))
+      (is (= {"~/.config/a" "/src/a"} (:symlinks result)))))
+
+  (testing "no cache symlinks returns empty unlinks"
+    (let [plan {:fs/symlink {"~/.config/a" "/src/a"}}
+          result (p/calculate-unlinks {:symlinks {}} plan)]
+      (is (= {} (:unlinks result)))))
+
+  (testing "cached symlink still in plan is not stale"
+    (let [cache {:symlinks {"~/.config/a" "/src/a"}}
+          plan {:fs/symlink {"~/.config/a" "/src/a"}}
+          result (p/calculate-unlinks cache plan)]
+      (is (= {} (:unlinks result)))))
+
+  (testing "cached symlink not in plan is stale"
+    (let [cache {:symlinks {"~/.config/old" "/src/old"}}
+          plan {:fs/symlink {"~/.config/new" "/src/new"}}
+          result (p/calculate-unlinks cache plan)]
+      (is (= {"~/.config/old" "/src/old"} (:unlinks result)))
+      (is (= {"~/.config/new" "/src/new"} (:symlinks result)))))
+
+  (testing "mix of stale and current symlinks"
+    (let [cache {:symlinks {"~/.config/a" "/src/a"
+                            "~/.config/b" "/src/b"
+                            "~/.config/c" "/src/c"}}
+          plan {:fs/symlink {"~/.config/a" "/src/a"
+                             "~/.config/d" "/src/d"}}
+          result (p/calculate-unlinks cache plan)]
+      (is (= {"~/.config/b" "/src/b"
+              "~/.config/c" "/src/c"} (:unlinks result)))
+      (is (= {"~/.config/a" "/src/a"
+              "~/.config/d" "/src/d"} (:symlinks result)))))
+
+  (testing "empty plan symlinks marks all cached as stale"
+    (let [cache {:symlinks {"~/.config/a" "/src/a"
+                            "~/.config/b" "/src/b"}}
+          plan {:fs/symlink {}}
+          result (p/calculate-unlinks cache plan)]
+      (is (= {"~/.config/a" "/src/a"
+              "~/.config/b" "/src/b"} (:unlinks result)))))
+
+  (testing "nil plan symlinks marks all cached as stale"
+    (let [cache {:symlinks {"~/.config/a" "/src/a"}}
+          plan {}
+          result (p/calculate-unlinks cache plan)]
+      (is (= {"~/.config/a" "/src/a"} (:unlinks result))))))
