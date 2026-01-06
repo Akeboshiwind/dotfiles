@@ -40,8 +40,8 @@
     {:actions (set actions)
      :providers (into {} (map (juxt first (comp second first second))) by-cap)
      :requires requires
-     :duplicates (for [[cap provs] by-cap :when (> (count provs) 1)]
-                   {:capability cap :providers (mapv second provs)})}))
+     :duplicates (for [[cap providers] by-cap :when (> (count providers) 1)]
+                   {:capability cap :providers (mapv second providers)})}))
 
 (defn- resolve-dep
   "Resolve a requirement to an action. Keywords lookup provider, vectors pass through."
