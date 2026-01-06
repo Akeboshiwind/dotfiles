@@ -54,7 +54,7 @@
          (map (fn [file]
                 (let [rel-path (relative-path base-dir file)]
                   [(str source-dir rel-path)
-                   (str target-dir rel-path)])))
+                   (.getCanonicalPath file)])))
          (into {}))))
 
 (defn- expand-symlink-folder [step]
@@ -90,10 +90,7 @@
 (defn- calculate-unlinks
   "Compare plan's symlinks with cache, return stale symlinks to unlink"
   [cache plan]
-  (let [current (->> (:fs/symlink plan)
-                     (map (fn [[target source]]
-                            [target (.getAbsolutePath (io/file source))]))
-                     (into {}))
+  (let [current (:fs/symlink plan)
         cached (get cache :symlinks {})
         stale-keys (set/difference (set (keys cached))
                                    (set (keys current)))]
