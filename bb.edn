@@ -5,8 +5,9 @@
   {:doc "Run tests"
    :requires [[clojure.test :as t]
               [graph-test]
-              [plan-test]]
-   :task (let [result (t/run-tests 'graph-test 'plan-test)]
+              [plan-test]
+              [manifest-test]]
+   :task (let [result (t/run-tests 'graph-test 'plan-test 'manifest-test)]
            (when (or (pos? (:fail result)) (pos? (:error result)))
              (System/exit 1)))}
 

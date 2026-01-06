@@ -10,18 +10,23 @@
         (edn/read-string (slurp secrets-file))
         {}))))
 
-(defn- secret-reader
-  "Reader function for #secret tag - looks up key in secrets.edn"
-  [key]
-  (let [value (get @secrets key ::not-found)]
+(defn secret-reader'
+  "Pure secret lookup. Returns value or throws if not found."
+  [secrets-map key]
+  (let [value (get secrets-map key ::not-found)]
     (if (= value ::not-found)
       (throw (ex-info (str "Secret not found: " key) {:key key}))
       value)))
 
-(defn validate-secrets
-  "Validate all secrets. Returns seq of error maps for empty values."
-  []
-  (for [[key value] @secrets
+(defn- secret-reader
+  "Reader function for #secret tag - looks up key in secrets.edn"
+  [key]
+  (secret-reader' @secrets key))
+
+(defn validate-secrets'
+  "Pure validation of secrets map. Returns seq of error maps for empty values."
+  [secrets-map]
+  (for [[key value] secrets-map
         :when (and (not= value :secret/disabled)
                    (or (nil? value)
                        (and (string? value) (empty? value))))]
@@ -29,8 +34,30 @@
      :key key
      :error "Empty value (use :secret/disabled to disable)"}))
 
+(defn validate-secrets
+  "Validate all secrets. Returns seq of error maps for empty values."
+  []
+  (validate-secrets' @secrets))
+
 (def ^:private edn-readers
   {'secret secret-reader})
+
+(defn entry->path
+  "Convert manifest entry to file path. Returns nil for maps."
+  [entry]
+  (cond
+    (string? entry)  entry
+    (keyword? entry) (str "cfg/" (name entry) "/base.edn")
+    :else nil))
+
+(defn resolve-entry'
+  "Pure entry resolution. Takes a read function for file entries."
+  [read-fn entry]
+  (cond
+    (string? entry)  (read-fn entry)
+    (keyword? entry) (read-fn (str "cfg/" (name entry) "/base.edn"))
+    (map? entry)     entry
+    :else (throw (ex-info "Invalid entry in manifest" {:entry entry}))))
 
 (defn- read-edn-file
   "Read EDN file, adding :context with source directory"
@@ -42,11 +69,7 @@
 (defn- resolve-entry
   "Resolve a plan entry: string/keyword -> file, map -> inline"
   [entry]
-  (cond
-    (string? entry)  (read-edn-file entry)
-    (keyword? entry) (read-edn-file (str "cfg/" (name entry) "/base.edn"))
-    (map? entry)     entry
-    :else (throw (ex-info "Invalid entry in manifest" {:entry entry}))))
+  (resolve-entry' read-edn-file entry))
 
 (defn load-manifest
   "Load plan from manifest.edn, resolving all entries"

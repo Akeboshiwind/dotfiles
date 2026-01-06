@@ -44,7 +44,8 @@
         (when (and stage (empty? filtered-order))
           (println "No actions found for stage" stage)
           (System/exit 1))
-        (when-let [errors (e/validate-plan plan)]
+        (when-let [errors (seq (concat (m/validate-secrets)
+                                       (e/validate-plan plan)))]
           (println (format-validation-errors errors))
           (System/exit 1))
         (println "Applying configurations...")
