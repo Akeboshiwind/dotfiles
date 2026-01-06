@@ -1,5 +1,5 @@
 (ns actions.claude
-  (:require [actions.core :as a]
+  (:require [actions :as a]
             [display :as d]))
 
 (defn- add-marketplace [marketplace-name {:keys [source]}]

@@ -1,5 +1,5 @@
 (ns actions.bbin
-  (:require [actions.core :as a]
+  (:require [actions :as a]
             [display :as d]))
 
 (defn- install-one [pkg opts]

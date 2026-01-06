@@ -1,5 +1,5 @@
 (ns execute
-  (:require [actions.core :as a]
+  (:require [actions :as a]
             ;; Load all action implementations
             [actions.script]
             [actions.brew]

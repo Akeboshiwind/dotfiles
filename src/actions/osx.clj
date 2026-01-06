@@ -1,5 +1,5 @@
 (ns actions.osx
-  (:require [actions.core :as a]
+  (:require [actions :as a]
             [display :as d]))
 
 (defn- map->plist-xml

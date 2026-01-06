@@ -1,5 +1,5 @@
 (ns actions.mas
-  (:require [actions.core :as a]
+  (:require [actions :as a]
             [display :as d]))
 
 (defn- install-one [app-name app-id]

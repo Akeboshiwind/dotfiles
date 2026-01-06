@@ -1,5 +1,5 @@
 (ns actions.npm
-  (:require [actions.core :as a]
+  (:require [actions :as a]
             [display :as d]))
 
 (defn- install-one [pkg _opts]

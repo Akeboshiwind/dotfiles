@@ -1,5 +1,5 @@
 (ns actions.symlink
-  (:require [actions.core :as a]
+  (:require [actions :as a]
             [clojure.java.io :as io]
             [babashka.fs :as fs]
             [display :as d]

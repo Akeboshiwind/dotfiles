@@ -1,4 +1,4 @@
-(ns actions.core
+(ns actions
   "Action multimethod registry for dotfile management.
    Each action type (e.g. :pkg/brew) implements install! in its own namespace."
   (:require [clojure.java.io :as io]

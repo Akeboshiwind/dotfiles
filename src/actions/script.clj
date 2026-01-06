@@ -1,5 +1,5 @@
 (ns actions.script
-  (:require [actions.core :as a]
+  (:require [actions :as a]
             [display :as d]))
 
 (defn- run-one [script-name {:keys [path src]}]

@@ -5,7 +5,7 @@
             [execute :as e]
             [cache :as c]
             [graph :as g]
-            [actions.core :as a]))
+            [actions :as a]))
 
 (defn- format-errors [errors]
   (let [{:keys [cycles missing duplicates]} errors]
