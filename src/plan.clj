@@ -52,13 +52,13 @@
         file-path (.getPath file)]
     (subs file-path (count base-path))))
 
-(defn- create-symlink-mapping [source-dir target-dir]
-  (let [base-dir (io/file (u/expand-tilde target-dir))
-        files (list-files! target-dir)]
+(defn- create-symlink-mapping [link-prefix content-dir]
+  (let [base-dir (io/file (u/expand-tilde content-dir))
+        files (list-files! content-dir)]
     (->> files
          (map (fn [file]
                 (let [rel-path (relative-path base-dir file)]
-                  [(str source-dir rel-path)
+                  [(str link-prefix rel-path)
                    (.getCanonicalPath file)])))
          (into {}))))
 
