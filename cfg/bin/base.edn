@@ -1,7 +1,6 @@
 {:pkg/brew {; TODO: Update scripts to just use babashka
             :bash {}
             :coreutils {}
-            :git {}
             :tree {}
             :jq {}
             :ffmpeg {}
