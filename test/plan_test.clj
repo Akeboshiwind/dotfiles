@@ -61,3 +61,37 @@
                     :source "/Users/test/dotfiles/cfg/app"}]]
       ;; This should not throw (file doesn't need to exist for path resolution)
       (is (map? (p/build entries {}))))))
+
+;; =============================================================================
+;; PATH-002: Plain relative paths not handled
+;; =============================================================================
+
+(deftest relative-path-handling-test
+  (testing "plain relative paths (no ./ prefix) should resolve"
+    (let [entries [{:step {:fs/symlink {"~/.config/app" "config/settings.json"}}
+                    :source "/Users/test/dotfiles/cfg/app"}]
+          result (p/build entries {})]
+      (is (= "/Users/test/dotfiles/cfg/app/config/settings.json"
+             (get-in result [:plan :fs/symlink "~/.config/app"])))))
+
+  (testing "../ paths that escape base directory should throw"
+    (let [entries [{:step {:fs/symlink {"~/.config/shared" "../shared/config.json"}}
+                    :source "/Users/test/dotfiles/cfg/app"}]]
+      (is (thrown-with-msg?
+            clojure.lang.ExceptionInfo
+            #"Path escapes base directory"
+            (p/build entries {})))))
+
+  (testing "absolute paths pass through unchanged"
+    (let [entries [{:step {:fs/symlink {"~/.config/app" "/etc/some/config"}}
+                    :source "/Users/test/dotfiles/cfg/app"}]
+          result (p/build entries {})]
+      (is (= "/etc/some/config"
+             (get-in result [:plan :fs/symlink "~/.config/app"])))))
+
+  (testing "home paths pass through unchanged"
+    (let [entries [{:step {:fs/symlink {"~/.config/app" "~/some/config"}}
+                    :source "/Users/test/dotfiles/cfg/app"}]
+          result (p/build entries {})]
+      (is (= "~/some/config"
+             (get-in result [:plan :fs/symlink "~/.config/app"]))))))

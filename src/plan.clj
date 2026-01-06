@@ -9,17 +9,19 @@
 ;; >> Resolve symlinks to root of repo
 
 (defn- resolve-path [base-dir path]
-  (if (str/starts-with? path "./")
-    (let [resolved (str base-dir "/" (subs path 2))
-          canonical (.getCanonicalPath (io/file resolved))
+  (if (or (str/starts-with? path "/")    ; absolute
+          (str/starts-with? path "~"))   ; home
+    path
+    ;; Relative path - resolve against base-dir
+    (let [resolved (io/file base-dir path)
+          canonical (.getCanonicalPath resolved)
           base-canonical (.getCanonicalPath (io/file base-dir))]
       (when-not (str/starts-with? canonical base-canonical)
         (throw (ex-info "Path escapes base directory"
                         {:path path
                          :resolved canonical
                          :base base-canonical})))
-      canonical)
-    path))
+      canonical)))
 
 (defn- resolve-paths-in-action [step source-dir action]
   (if-let [symlinks (action step)]
