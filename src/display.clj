@@ -10,9 +10,9 @@
 (def ^:private RED "\033[31m")
 (def ^:private RESET "\033[0m")
 
-(defn gray [s] (str GRAY s RESET))
-(defn green [s] (str GREEN s RESET))
-(defn red [s] (str RED s RESET))
+(defn gray "Wrap string in gray ANSI color." [s] (str GRAY s RESET))
+(defn green "Wrap string in green ANSI color." [s] (str GREEN s RESET))
+(defn red "Wrap string in red ANSI color." [s] (str RED s RESET))
 
 ;; =============================================================================
 ;; Section formatting

@@ -49,7 +49,11 @@
           {:action nil :dry-run false :help false}
           args))
 
-(defn -main [& args]
+(defn -main
+  "Main entry point for the dotfile manager.
+   Loads manifest, builds execution plan, validates dependencies, and executes actions.
+   Supports --dry-run to preview changes and :<action> to filter by action type."
+  [& args]
   (let [{:keys [action dry-run help]} (parse-args args)]
     (when help
       (print-help)
