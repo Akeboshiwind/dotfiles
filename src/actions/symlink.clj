@@ -48,7 +48,7 @@
       :else
       (do
         (when-let [parent (.getParentFile target)]
-          (.mkdirs parent))
+          (fs/create-dirs parent))
         (let [{:keys [exit]} (a/exec! ["ln" "-s" (.getAbsolutePath source) (.getAbsolutePath target)])]
           (if (zero? exit)
             {:label target-str :status :ok}
