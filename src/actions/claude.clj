@@ -1,5 +1,6 @@
 (ns actions.claude
-  (:require [actions :as a]
+  (:require [clojure.string :as str]
+            [actions :as a]
             [display :as d]))
 
 (defn- add-marketplace [marketplace-name {:keys [source]}]
@@ -24,12 +25,19 @@
                              env-args
                              ["--"]
                              cmd-args))]
-    ;; Remove first (ignore errors if doesn't exist), then add
-    (a/exec! remove-cmd)
-    (let [{:keys [exit err]} (a/exec! add-cmd)]
-      {:label name-str
-       :status (if (zero? exit) :ok :error)
-       :message err})))
+    ;; Remove first, then add
+    (let [{remove-exit :exit remove-err :err} (a/exec! remove-cmd)
+          ;; Ignore "not found" errors, but fail on unexpected remove errors
+          remove-failed? (and (not (zero? remove-exit))
+                              (not (str/includes? (or remove-err "") "No such server")))]
+      (if remove-failed?
+        {:label name-str
+         :status :error
+         :message remove-err}
+        (let [{:keys [exit err]} (a/exec! add-cmd)]
+          {:label name-str
+           :status (if (zero? exit) :ok :error)
+           :message err})))))
 
 (defmethod a/install! :claude/marketplace [_ items]
   (d/section "Adding Claude marketplaces"
