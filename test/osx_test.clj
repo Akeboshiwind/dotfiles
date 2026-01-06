@@ -31,4 +31,24 @@
 
   (testing "multiple special characters"
     (is (= "<dict><key>html</key><string>&lt;a href=&quot;test&quot;&gt;link&lt;/a&gt;</string></dict>"
-           (osx/map->plist-xml {:html "<a href=\"test\">link</a>"})))))
+           (osx/map->plist-xml {:html "<a href=\"test\">link</a>"}))))
+
+  (testing "nested map"
+    (is (= "<dict><key>outer</key><dict><key>inner</key><string>value</string></dict></dict>"
+           (osx/map->plist-xml {:outer {:inner "value"}}))))
+
+  (testing "array of primitives"
+    (is (= "<dict><key>items</key><array><integer>1</integer><integer>2</integer><integer>3</integer></array></dict>"
+           (osx/map->plist-xml {:items [1 2 3]}))))
+
+  (testing "array of strings"
+    (is (= "<dict><key>names</key><array><string>foo</string><string>bar</string></array></dict>"
+           (osx/map->plist-xml {:names ["foo" "bar"]}))))
+
+  (testing "array of maps"
+    (is (= "<dict><key>users</key><array><dict><key>name</key><string>alice</string></dict><dict><key>name</key><string>bob</string></dict></array></dict>"
+           (osx/map->plist-xml {:users [{:name "alice"} {:name "bob"}]}))))
+
+  (testing "deeply nested structure"
+    (is (= "<dict><key>config</key><dict><key>items</key><array><dict><key>id</key><integer>1</integer></dict></array></dict></dict>"
+           (osx/map->plist-xml {:config {:items [{:id 1}]}})))))

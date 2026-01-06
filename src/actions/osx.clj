@@ -10,20 +10,28 @@
       (str/replace ">" "&gt;")
       (str/replace "\"" "&quot;")))
 
+(defn value->plist-xml
+  "Convert any Clojure value to plist XML"
+  [v]
+  (cond
+    (map? v)     (str "<dict>"
+                      (apply str (for [[k val] v]
+                                   (str "<key>" (name k) "</key>"
+                                        (value->plist-xml val))))
+                      "</dict>")
+    (vector? v)  (str "<array>"
+                      (apply str (map value->plist-xml v))
+                      "</array>")
+    (string? v)  (str "<string>" (xml-escape v) "</string>")
+    (int? v)     (str "<integer>" v "</integer>")
+    (float? v)   (str "<real>" v "</real>")
+    (boolean? v) (if v "<true/>" "<false/>")
+    :else        (str "<string>" (xml-escape v) "</string>")))
+
 (defn map->plist-xml
   "Convert a Clojure map to plist XML string for use with defaults -array"
   [m]
-  (str "<dict>"
-       (apply str
-              (for [[k v] m]
-                (str "<key>" (name k) "</key>"
-                     (cond
-                       (string? v) (str "<string>" (xml-escape v) "</string>")
-                       (int? v) (str "<integer>" v "</integer>")
-                       (float? v) (str "<real>" v "</real>")
-                       (boolean? v) (if v "<true/>" "<false/>")
-                       :else (str "<string>" (xml-escape v) "</string>")))))
-       "</dict>"))
+  (value->plist-xml m))
 
 (defn- ->defaults-type [value]
   (cond
