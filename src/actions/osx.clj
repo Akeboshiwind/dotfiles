@@ -1,8 +1,16 @@
 (ns actions.osx
-  (:require [actions :as a]
+  (:require [clojure.string :as str]
+            [actions :as a]
             [display :as d]))
 
-(defn- map->plist-xml
+(defn- xml-escape [s]
+  (-> (str s)
+      (str/replace "&" "&amp;")
+      (str/replace "<" "&lt;")
+      (str/replace ">" "&gt;")
+      (str/replace "\"" "&quot;")))
+
+(defn map->plist-xml
   "Convert a Clojure map to plist XML string for use with defaults -array"
   [m]
   (str "<dict>"
@@ -10,11 +18,11 @@
               (for [[k v] m]
                 (str "<key>" (name k) "</key>"
                      (cond
-                       (string? v) (str "<string>" v "</string>")
+                       (string? v) (str "<string>" (xml-escape v) "</string>")
                        (int? v) (str "<integer>" v "</integer>")
                        (float? v) (str "<real>" v "</real>")
                        (boolean? v) (if v "<true/>" "<false/>")
-                       :else (str "<string>" v "</string>")))))
+                       :else (str "<string>" (xml-escape v) "</string>")))))
        "</dict>"))
 
 (defn- ->defaults-type [value]
