@@ -43,8 +43,22 @@
         (when (or (nil? stage) (= stage :fs/symlink))
           (c/save-cache! (assoc cache :symlinks symlinks))))
       (catch clojure.lang.ExceptionInfo e
-        (if (:missing (ex-data e))
+        (let [data (ex-data e)]
+          (cond
+            (:missing data)
+            (println (format-errors data))
+
+            (str/includes? (ex-message e) "Path escapes")
+            (println "ERROR:" (ex-message e) "\n      " (pr-str data))
+
+            :else (throw e)))
+        (System/exit 1))
+      (catch Exception e
+        (if (str/includes? (str (type e)) "EOF")
           (do
-            (println (format-errors (ex-data e)))
+            (println "")
+            (println "ERROR: Cache file is corrupt:" c/cache-file)
+            (println "       Parse error:" (ex-message e))
+            (println "       Delete the cache file and re-run.")
             (System/exit 1))
           (throw e))))))

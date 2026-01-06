@@ -22,14 +22,8 @@
     (fs/move tmp cache-file {:replace-existing true})))
 
 (defn load-cache
-  "Loads the cache from disk. Returns nil and prints error if corrupt."
+  "Loads the cache from disk. Returns nil if file doesn't exist.
+   Throws on corrupt cache."
   []
   (when (fs/exists? cache-file)
-    (try
-      (edn/read-string (slurp cache-file))
-      (catch Exception e
-        (println "")
-        (println "ERROR: Cache file is corrupt:" cache-file)
-        (println "       Parse error:" (.getMessage e))
-        (println "       Delete or repair the cache file and re-run to continue.")
-        (System/exit 1)))))
+    (edn/read-string (slurp cache-file))))
