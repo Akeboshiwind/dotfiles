@@ -10,7 +10,15 @@
 
 (defn- resolve-path [base-dir path]
   (if (str/starts-with? path "./")
-    (str base-dir "/" (subs path 2))
+    (let [resolved (str base-dir "/" (subs path 2))
+          canonical (.getCanonicalPath (io/file resolved))
+          base-canonical (.getCanonicalPath (io/file base-dir))]
+      (when-not (str/starts-with? canonical base-canonical)
+        (throw (ex-info "Path escapes base directory"
+                        {:path path
+                         :resolved canonical
+                         :base base-canonical})))
+      canonical)
     path))
 
 (defn- resolve-paths-in-step [action {{:keys [source-dir]} :context :as step}]
