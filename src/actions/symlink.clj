@@ -4,7 +4,7 @@
             [babashka.fs :as fs]
             [display :as d]
             [utils :as u])
-  (:import [java.nio.file Files Paths]))
+  (:import [java.nio.file Files]))
 
 (defn- unlink-one [target-str expected-source]
   (let [target-file (io/file (u/expand-tilde target-str))
@@ -27,14 +27,21 @@
 
 (defn- link-one [target-str source-str]
   (let [target (io/file (u/expand-tilde target-str))
-        source (io/file source-str)]
-    (if (.exists target)
-      (let [target-path (Paths/get (.toURI target))
-            source-path (Paths/get (.toURI source))]
-        (if (and (Files/isSymbolicLink target-path)
-                 (= (Files/readSymbolicLink target-path) source-path))
-          {:label target-str :status :ok}
-          {:label target-str :status :error :message "exists but wrong"}))
+        source (io/file source-str)
+        target-path (.toPath target)]
+    (cond
+      ;; Symlink exists and points to correct source
+      (and (fs/exists? target {:nofollow-links true})
+           (Files/isSymbolicLink target-path)
+           (= (Files/readSymbolicLink target-path) (.toPath source)))
+      {:label target-str :status :ok}
+
+      ;; Something exists at target (file, dir, or wrong/broken symlink)
+      (fs/exists? target {:nofollow-links true})
+      {:label target-str :status :error :message "exists but wrong"}
+
+      ;; Nothing exists, create symlink
+      :else
       (do
         (when-let [parent (.getParentFile target)]
           (.mkdirs parent))
