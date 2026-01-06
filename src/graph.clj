@@ -38,7 +38,9 @@
                              :when (seq reqs)]
                          [action reqs]))]
     {:actions (set actions)
-     :providers (into {} (map (juxt first (comp second first second))) by-cap)
+     :providers (->> by-cap
+                     (map (fn [[cap [[_ action]]]] [cap action]))
+                     (into {}))
      :requires requires
      :duplicates (for [[cap providers] by-cap :when (> (count providers) 1)]
                    {:capability cap :providers (mapv second providers)})}))
