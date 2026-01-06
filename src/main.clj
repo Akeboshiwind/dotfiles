@@ -81,7 +81,7 @@
         (catch clojure.lang.ExceptionInfo e
           (let [data (ex-data e)]
             (cond
-              (:missing data)
+              (or (:missing data) (:cycles data) (:duplicates data))
               (println (format-graph-errors data))
 
               (str/includes? (ex-message e) "Path escapes")
