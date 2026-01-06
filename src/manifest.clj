@@ -13,9 +13,21 @@
 (defn- secret-reader
   "Reader function for #secret tag - looks up key in secrets.edn"
   [key]
-  (if-let [value (get @secrets key)]
-    value
-    (throw (ex-info (str "Secret not found: " key) {:key key}))))
+  (let [value (get @secrets key ::not-found)]
+    (if (= value ::not-found)
+      (throw (ex-info (str "Secret not found: " key) {:key key}))
+      value)))
+
+(defn validate-secrets
+  "Validate all secrets. Returns seq of error maps for empty values."
+  []
+  (for [[key value] @secrets
+        :when (and (not= value :secret/disabled)
+                   (or (nil? value)
+                       (and (string? value) (empty? value))))]
+    {:action :secret
+     :key key
+     :error "Empty value (use :secret/disabled to disable)"}))
 
 (def ^:private edn-readers
   {'secret secret-reader})
