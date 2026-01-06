@@ -21,7 +21,8 @@
 
 (defn exec!
   "Execute a command. Respects *dry-run* binding.
-   Options: :prefix for output line prefix (default \"    \")"
+   Options: :prefix for output line prefix (default \"    \")
+   Returns {:exit int :err string-or-nil}"
   ([args]
    (exec! {} args))
   ([{:keys [prefix] :or {prefix "    "}}
@@ -29,13 +30,17 @@
    (if *dry-run*
      (do
        (println prefix (d/gray (str/join " " args)))
-       {:exit 0})
-     (let [proc (process/process args)
+       {:exit 0 :err nil})
+     (let [proc (process/process args {:err :string})
            out-future (future (prefix-print prefix (:out proc)))
-           err-future (future (prefix-print prefix (:err proc)))]
+           result @proc]
        @out-future
-       @err-future
-       @proc))))
+       {:exit (:exit result)
+        :err (let [e (:err result)]
+               (when (and e (seq (str/trim e)))
+                 (-> e
+                     str/trim
+                     (str/replace #"\s*\n\s*" " "))))}))))
 
 ;; =============================================================================
 ;; Multimethods

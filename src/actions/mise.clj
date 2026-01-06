@@ -7,9 +7,10 @@
         cmd (if global
               ["mise" "use" "--global" tool-str]
               ["mise" "install" tool-str])
-        {:keys [exit]} (a/exec! cmd)]
+        {:keys [exit err]} (a/exec! cmd)]
     {:label tool-str
-     :status (if (zero? exit) :ok :error)}))
+     :status (if (zero? exit) :ok :error)
+     :message err}))
 
 (defmethod a/validate :pkg/mise [_ items]
   (for [[tool opts] items

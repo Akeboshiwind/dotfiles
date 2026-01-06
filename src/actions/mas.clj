@@ -3,9 +3,10 @@
             [display :as d]))
 
 (defn- install-one [app-name app-id]
-  (let [{:keys [exit]} (a/exec! ["mas" "install" app-id])]
+  (let [{:keys [exit err]} (a/exec! ["mas" "install" app-id])]
     {:label (str app-name)
-     :status (if (zero? exit) :ok :error)}))
+     :status (if (zero? exit) :ok :error)
+     :message err}))
 
 (defmethod a/install! :pkg/mas [_ items]
   (d/section "Installing Mac App Store apps"

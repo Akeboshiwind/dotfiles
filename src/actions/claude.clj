@@ -4,14 +4,16 @@
 
 (defn- add-marketplace [marketplace-name {:keys [source]}]
   (let [src (or source (name marketplace-name))
-        {:keys [exit]} (a/exec! ["claude" "plugin" "marketplace" "add" src])]
+        {:keys [exit err]} (a/exec! ["claude" "plugin" "marketplace" "add" src])]
     {:label (name marketplace-name)
-     :status (if (zero? exit) :ok :error)}))
+     :status (if (zero? exit) :ok :error)
+     :message err}))
 
 (defn- install-plugin [plugin _opts]
-  (let [{:keys [exit]} (a/exec! ["claude" "plugin" "install" (name plugin)])]
+  (let [{:keys [exit err]} (a/exec! ["claude" "plugin" "install" (name plugin)])]
     {:label (name plugin)
-     :status (if (zero? exit) :ok :error)}))
+     :status (if (zero? exit) :ok :error)
+     :message err}))
 
 (defn- add-mcp [server-name {:keys [command args env scope] :or {scope "user"}}]
   (let [name-str (name server-name)
@@ -24,9 +26,10 @@
                              cmd-args))]
     ;; Remove first (ignore errors if doesn't exist), then add
     (a/exec! remove-cmd)
-    (let [{:keys [exit]} (a/exec! add-cmd)]
+    (let [{:keys [exit err]} (a/exec! add-cmd)]
       {:label name-str
-       :status (if (zero? exit) :ok :error)})))
+       :status (if (zero? exit) :ok :error)
+       :message err})))
 
 (defmethod a/install! :claude/marketplace [_ items]
   (d/section "Adding Claude marketplaces"

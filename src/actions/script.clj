@@ -7,9 +7,10 @@
               path ["bash" path]
               src  ["bash" "-c" src]
               :else (throw (ex-info "Script must have :path or :src" {:script script-name})))
-        {:keys [exit]} (a/exec! cmd)]
+        {:keys [exit err]} (a/exec! cmd)]
     {:label (name script-name)
-     :status (if (zero? exit) :ok :error)}))
+     :status (if (zero? exit) :ok :error)
+     :message err}))
 
 (defmethod a/validate :pkg/script [_ items]
   (for [[script-name opts] items

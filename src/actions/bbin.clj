@@ -21,9 +21,10 @@
                      (:ns-default opts)  (into ["--ns-default" (:ns-default opts)])
                      (:tool opts)        (conj "--tool"))
         cmd (into base-cmd opts-flags)
-        {:keys [exit]} (a/exec! cmd)]
+        {:keys [exit err]} (a/exec! cmd)]
     {:label pkg-name
-     :status (if (zero? exit) :ok :error)}))
+     :status (if (zero? exit) :ok :error)
+     :message err}))
 
 (defmethod a/install! :pkg/bbin [_ items]
   (d/section "Installing bbin packages"

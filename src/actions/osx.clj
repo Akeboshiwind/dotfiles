@@ -45,9 +45,10 @@
 (defn- set-default [domain key value]
   (let [type-flag (->defaults-type value)
         cmd (into ["defaults" "write" domain (name key) type-flag] (->defaults-args value))
-        {:keys [exit]} (a/exec! cmd)]
+        {:keys [exit err]} (a/exec! cmd)]
     {:label (str domain " " (name key) " = " value)
-     :status (if (zero? exit) :ok :error)}))
+     :status (if (zero? exit) :ok :error)
+     :message err}))
 
 (defmethod a/install! :osx/defaults [_ items]
   (d/section "Setting OSX defaults"

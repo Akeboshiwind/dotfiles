@@ -24,7 +24,7 @@
                :skip (gray "·")
                :error (red "✗"))
         msg (case status
-              :ok (if message (str label " " message) label)
+              :ok (if message (str label " " (gray message)) label)
               :skip (gray (str label " " (or message "skipped")))
               :error (if message (str label " " (red message)) label))]
     (println " " icon msg)))
