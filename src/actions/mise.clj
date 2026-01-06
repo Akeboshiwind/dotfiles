@@ -11,6 +11,13 @@
     {:label tool-str
      :status (if (zero? exit) :ok :error)}))
 
+(defmethod a/validate :pkg/mise [_ items]
+  (for [[tool opts] items
+        :when (not (:version opts))]
+    {:action :pkg/mise
+     :key tool
+     :error "Version required"}))
+
 (defmethod a/install! :pkg/mise [_ items]
   (d/section "Installing mise tools"
              (map (fn [[tool opts]] (install-one tool opts)) items)))

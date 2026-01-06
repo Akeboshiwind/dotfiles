@@ -41,6 +41,13 @@
 ;; Multimethods
 ;; =============================================================================
 
+(defmulti validate
+  "Validate items of a given action type.
+   Returns seq of error maps {:action :key :error}, or nil if valid."
+  (fn [type _items] type))
+
+(defmethod validate :default [_ _] nil)
+
 (defmulti install!
   "Install items of a given action type.
    Dispatches on action type keyword (e.g. :pkg/brew).

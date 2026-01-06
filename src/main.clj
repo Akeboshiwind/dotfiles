@@ -7,7 +7,7 @@
             [graph :as g]
             [actions :as a]))
 
-(defn- format-errors [errors]
+(defn- format-graph-errors [errors]
   (let [{:keys [cycles missing duplicates]} errors]
     (str "Dependency graph errors:\n"
          (when (seq cycles)
@@ -16,6 +16,13 @@
            (str "  Missing providers: " (pr-str missing) "\n"))
          (when (seq duplicates)
            (str "  Duplicate providers: " (pr-str duplicates) "\n")))))
+
+(defn- format-validation-errors [errors]
+  (str "Validation errors:\n"
+       (->> errors
+            (map (fn [{:keys [action key error]}]
+                   (str "  " (name action) " " (name key) ": " error)))
+            (str/join "\n"))))
 
 (defn- parse-stage [args]
   (when-let [stage (first args)]
@@ -37,6 +44,9 @@
         (when (and stage (empty? filtered-order))
           (println "No actions found for stage" stage)
           (System/exit 1))
+        (when-let [errors (e/validate-plan plan)]
+          (println (format-validation-errors errors))
+          (System/exit 1))
         (println "Applying configurations...")
         (e/execute-plan {:plan plan :order filtered-order})
         ;; Only update symlink cache if we processed symlinks
@@ -46,7 +56,7 @@
         (let [data (ex-data e)]
           (cond
             (:missing data)
-            (println (format-errors data))
+            (println (format-graph-errors data))
 
             (str/includes? (ex-message e) "Path escapes")
             (println "ERROR:" (ex-message e) "\n      " (pr-str data))

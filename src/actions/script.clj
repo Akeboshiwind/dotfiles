@@ -11,6 +11,13 @@
     {:label (name script-name)
      :status (if (zero? exit) :ok :error)}))
 
+(defmethod a/validate :pkg/script [_ items]
+  (for [[script-name opts] items
+        :when (not (or (:path opts) (:src opts)))]
+    {:action :pkg/script
+     :key script-name
+     :error "Either :path or :src required"}))
+
 (defmethod a/install! :pkg/script [_ items]
   (d/section "Running scripts"
              (map (fn [[name opts]] (run-one name opts)) items)))
