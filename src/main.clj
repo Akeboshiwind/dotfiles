@@ -24,53 +24,77 @@
                    (str "  " (name action) " " (name key) ": " error)))
             (str/join "\n"))))
 
-(defn- parse-stage [args]
-  (when-let [stage (first args)]
-    (let [stage (if (str/starts-with? stage ":")
-                  (subs stage 1)
-                  stage)]
-      (keyword stage))))
+(defn- print-help []
+  (println "Usage: bootstrap [:<action>] [--dry-run]")
+  (println "")
+  (println "Options:")
+  (println "  :<action>   Run only this action type (e.g., :pkg/brew, :fs/symlink)")
+  (println "  --dry-run   Show what would be done without making changes")
+  (println "  --help      Show this help message")
+  (println "")
+  (println "Examples:")
+  (println "  bootstrap              Install everything")
+  (println "  bootstrap :pkg/brew    Install only brew packages")
+  (println "  bootstrap --dry-run    Preview all changes"))
+
+(defn- parse-args
+  "Parse CLI args. Returns {:action keyword-or-nil :dry-run bool :help bool}"
+  [args]
+  (reduce (fn [acc arg]
+            (cond
+              (= arg "--help") (assoc acc :help true)
+              (= arg "--dry-run") (assoc acc :dry-run true)
+              (str/starts-with? arg ":") (assoc acc :action (keyword (subs arg 1)))
+              :else acc))
+          {:action nil :dry-run false :help false}
+          args))
 
 (defn -main [& args]
-  (binding [a/*dry-run* false]
-    (try
-      (let [stage (parse-stage args)
-            entries (m/load-manifest)
-            cache (c/load-cache)
-            {:keys [plan order symlinks errors]} (p/build entries cache)
-            filtered-order (if stage
-                             (g/filter-order plan order stage)
-                             order)]
-        (when (and stage (empty? filtered-order))
-          (println "No actions found for stage" stage)
-          (System/exit 1))
-        (when-let [all-errors (seq (concat (m/validate-secrets)
-                                           errors
-                                           (e/validate-plan plan)))]
-          (println (format-validation-errors all-errors))
-          (System/exit 1))
-        (println "Applying configurations...")
-        (e/execute-plan {:plan plan :order filtered-order})
-        ;; Only update symlink cache if we processed symlinks
-        (when (or (nil? stage) (= stage :fs/symlink))
-          (c/save-cache! (assoc cache :symlinks symlinks))))
-      (catch clojure.lang.ExceptionInfo e
-        (let [data (ex-data e)]
-          (cond
-            (:missing data)
-            (println (format-graph-errors data))
-
-            (str/includes? (ex-message e) "Path escapes")
-            (println "ERROR:" (ex-message e) "\n      " (pr-str data))
-
-            :else (throw e)))
-        (System/exit 1))
-      (catch Exception e
-        (if (str/includes? (str (type e)) "EOF")
-          (do
-            (println "")
-            (println "ERROR: Cache file is corrupt:" c/cache-file)
-            (println "       Parse error:" (ex-message e))
-            (println "       Delete the cache file and re-run.")
+  (let [{:keys [action dry-run help]} (parse-args args)]
+    (when help
+      (print-help)
+      (System/exit 0))
+    (binding [a/*dry-run* dry-run]
+      (try
+        (let [entries (m/load-manifest)
+              cache (c/load-cache)
+              {:keys [plan order symlinks errors]} (p/build entries cache)
+              filtered-order (if action
+                               (g/filter-order plan order action)
+                               order)]
+          (when (and action (empty? filtered-order))
+            (println "No actions found for action" action)
             (System/exit 1))
-          (throw e))))))
+          (when-let [all-errors (seq (concat (m/validate-secrets)
+                                             errors
+                                             (e/validate-plan plan)))]
+            (println (format-validation-errors all-errors))
+            (System/exit 1))
+          (println (if dry-run
+                     "Dry run - showing what would be done..."
+                     "Applying configurations..."))
+          (e/execute-plan {:plan plan :order filtered-order})
+          ;; Only update symlink cache if we processed symlinks (and not dry-run)
+          (when (and (not dry-run)
+                     (or (nil? action) (= action :fs/symlink)))
+            (c/save-cache! (assoc cache :symlinks symlinks))))
+        (catch clojure.lang.ExceptionInfo e
+          (let [data (ex-data e)]
+            (cond
+              (:missing data)
+              (println (format-graph-errors data))
+
+              (str/includes? (ex-message e) "Path escapes")
+              (println "ERROR:" (ex-message e) "\n      " (pr-str data))
+
+              :else (throw e)))
+          (System/exit 1))
+        (catch Exception e
+          (if (str/includes? (str (type e)) "EOF")
+            (do
+              (println "")
+              (println "ERROR: Cache file is corrupt:" c/cache-file)
+              (println "       Parse error:" (ex-message e))
+              (println "       Delete the cache file and re-run.")
+              (System/exit 1))
+            (throw e)))))))
