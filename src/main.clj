@@ -4,8 +4,7 @@
             [plan :as p]
             [execute :as e]
             [cache :as c]
-            [graph :as g]
-            [actions :as a]))
+            [graph :as g]))
 
 (defn- format-graph-errors [errors]
   (let [{:keys [cycles missing duplicates]} errors]
@@ -58,47 +57,46 @@
     (when help
       (print-help)
       (System/exit 0))
-    (binding [a/*dry-run* dry-run]
-      (try
-        (let [entries (m/load-manifest)
-              cache (c/load-cache)
-              {:keys [plan order symlinks errors]} (p/build entries cache)
-              filtered-order (if action
-                               (g/filter-order plan order action)
-                               order)]
-          (when (and action (empty? filtered-order))
-            (println "No actions found for action" action)
-            (System/exit 1))
-          (when-let [all-errors (seq (concat (m/validate-secrets)
-                                             errors
-                                             (e/validate-plan plan)))]
-            (println (format-validation-errors all-errors))
-            (System/exit 1))
-          (println (if dry-run
-                     "Dry run - showing what would be done..."
-                     "Applying configurations..."))
-          (e/execute-plan {:plan plan :order filtered-order})
-          ;; Only update symlink cache if we processed symlinks (and not dry-run)
-          (when (and (not dry-run)
-                     (or (nil? action) (= action :fs/symlink)))
-            (c/save-cache! (assoc cache :symlinks symlinks))))
-        (catch clojure.lang.ExceptionInfo e
-          (let [data (ex-data e)]
-            (cond
-              (or (:missing data) (:cycles data) (:duplicates data))
-              (println (format-graph-errors data))
-
-              (str/includes? (ex-message e) "Path escapes")
-              (println "ERROR:" (ex-message e) "\n      " (pr-str data))
-
-              :else (throw e)))
+    (try
+      (let [entries (m/load-manifest)
+            cache (c/load-cache)
+            {:keys [plan order symlinks errors]} (p/build entries cache)
+            filtered-order (if action
+                             (g/filter-order plan order action)
+                             order)]
+        (when (and action (empty? filtered-order))
+          (println "No actions found for action" action)
           (System/exit 1))
-        (catch Exception e
-          (if (str/includes? (str (type e)) "EOF")
-            (do
-              (println "")
-              (println "ERROR: Cache file is corrupt:" c/cache-file)
-              (println "       Parse error:" (ex-message e))
-              (println "       Delete the cache file and re-run.")
-              (System/exit 1))
-            (throw e)))))))
+        (when-let [all-errors (seq (concat (m/validate-secrets)
+                                           errors
+                                           (e/validate-plan plan)))]
+          (println (format-validation-errors all-errors))
+          (System/exit 1))
+        (println (if dry-run
+                   "Dry run - showing what would be done..."
+                   "Applying configurations..."))
+        (e/execute-plan {:plan plan :order filtered-order :dry-run dry-run})
+        ;; Only update symlink cache if we processed symlinks (and not dry-run)
+        (when (and (not dry-run)
+                   (or (nil? action) (= action :fs/symlink)))
+          (c/save-cache! (assoc cache :symlinks symlinks))))
+      (catch clojure.lang.ExceptionInfo e
+        (let [data (ex-data e)]
+          (cond
+            (or (:missing data) (:cycles data) (:duplicates data))
+            (println (format-graph-errors data))
+
+            (str/includes? (ex-message e) "Path escapes")
+            (println "ERROR:" (ex-message e) "\n      " (pr-str data))
+
+            :else (throw e)))
+        (System/exit 1))
+      (catch Exception e
+        (if (str/includes? (str (type e)) "EOF")
+          (do
+            (println "")
+            (println "ERROR: Cache file is corrupt:" c/cache-file)
+            (println "       Parse error:" (ex-message e))
+            (println "       Delete the cache file and re-run.")
+            (System/exit 1))
+          (throw e))))))

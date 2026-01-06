@@ -10,7 +10,6 @@
 ;; Execution
 ;; =============================================================================
 
-(def ^:dynamic *dry-run* false)
 (def ^:private default-prefix "    ")
 
 (defn- prefix-print
@@ -21,27 +20,24 @@
        (println prefix (d/gray line))))))
 
 (defn exec!
-  "Execute a command. Respects *dry-run* binding.
-   Options: :prefix for output line prefix (default \"    \")
+  "Execute a command.
+   Options: :dry-run to preview, :prefix for output line prefix (default \"    \")
    Returns {:exit int :err string-or-nil}"
-  ([args]
-   (exec! {} args))
-  ([{:keys [prefix] :or {prefix default-prefix}}
-    args]
-   (if *dry-run*
-     (do
-       (println prefix (d/gray (str/join " " args)))
-       {:exit 0 :err nil})
-     (let [proc (process/process args {:err :string})
-           out-future (future (prefix-print prefix (:out proc)))
-           result @proc]
-       @out-future
-       {:exit (:exit result)
-        :err (let [e (:err result)]
-               (when (and e (seq (str/trim e)))
-                 (-> e
-                     str/trim
-                     (str/replace #"\s*\n\s*" " "))))}))))
+  [{:keys [dry-run prefix] :or {prefix default-prefix}} args]
+  (if dry-run
+    (do
+      (println prefix (d/gray (str/join " " args)))
+      {:exit 0 :err nil})
+    (let [proc (process/process args {:err :string})
+          out-future (future (prefix-print prefix (:out proc)))
+          result @proc]
+      @out-future
+      {:exit (:exit result)
+       :err (let [e (:err result)]
+              (when (and e (seq (str/trim e)))
+                (-> e
+                    str/trim
+                    (str/replace #"\s*\n\s*" " "))))})))
 
 ;; =============================================================================
 ;; Helpers
@@ -49,17 +45,18 @@
 
 (defn simple-install
   "Helper for actions that follow the common pattern: run a command for each item.
+   - opts: execution options (passed to exec!, includes :dry-run)
    - title: section title
-   - cmd-fn: (fn [key opts] -> command vector)
-   - items: map of {key opts}
-   Optional label-fn: (fn [key opts] -> string), defaults to (name key)"
-  ([title cmd-fn items]
-   (simple-install title (fn [k _] (name k)) cmd-fn items))
-  ([title label-fn cmd-fn items]
+   - label-fn: (fn [key item-opts] -> string)
+   - cmd-fn: (fn [key item-opts] -> command vector)
+   - items: map of {key item-opts}"
+  ([opts title cmd-fn items]
+   (simple-install opts title (fn [k _] (name k)) cmd-fn items))
+  ([opts title label-fn cmd-fn items]
    (d/section title
-     (map (fn [[k opts]]
-            (let [{:keys [exit err]} (exec! (cmd-fn k opts))]
-              {:label (label-fn k opts)
+     (map (fn [[k item-opts]]
+            (let [{:keys [exit err]} (exec! opts (cmd-fn k item-opts))]
+              {:label (label-fn k item-opts)
                :status (if (zero? exit) :ok :error)
                :message err}))
           items))))
@@ -78,12 +75,13 @@
 (defmulti install!
   "Install items of a given action type.
    Dispatches on action type keyword (e.g. :pkg/brew).
-   Receives [type items] where:
+   Receives [type opts items] where:
    - type: action keyword
-   - items: map of {name opts}"
-  (fn [type _items] type))
+   - opts: execution options (includes :dry-run)
+   - items: map of {name item-opts}"
+  (fn [type _opts _items] type))
 
-(defmethod install! :default [type _items]
+(defmethod install! :default [type _opts _items]
   (println "Warning: no install! implementation for" type))
 
 ;; =============================================================================

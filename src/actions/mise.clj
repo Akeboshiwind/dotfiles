@@ -8,9 +8,9 @@
      :key tool
      :error "Version required"}))
 
-(defmethod a/install! :pkg/mise [_ items]
-  (a/simple-install "Installing mise tools"
-    (fn [tool opts] (str (name tool) "@" (:version opts)))
+(defmethod a/install! :pkg/mise [_ opts items]
+  (a/simple-install opts "Installing mise tools"
+    (fn [tool item-opts] (str (name tool) "@" (:version item-opts)))
     (fn [tool {:keys [version global]}]
       (let [tool-str (str (name tool) "@" version)]
         (if global

@@ -26,7 +26,7 @@
         (fs/delete target-file)
         {:label target-str :status :ok :message "removed"}))))
 
-(defn- link-one [target-str source-str]
+(defn- link-one [opts target-str source-str]
   (let [target (io/file (u/expand-tilde target-str))
         source (io/file source-str)
         target-path (.toPath target)]
@@ -49,16 +49,16 @@
       (do
         (when-let [parent (.getParentFile target)]
           (fs/create-dirs parent))
-        (let [{:keys [exit]} (a/exec! ["ln" "-s" (.getAbsolutePath source) (.getAbsolutePath target)])]
+        (let [{:keys [exit]} (a/exec! opts ["ln" "-s" (.getAbsolutePath source) (.getAbsolutePath target)])]
           (if (zero? exit)
             {:label target-str :status :ok}
             {:label target-str :status :error}))))))
 
-(defmethod a/install! :fs/unlink [_ items]
+(defmethod a/install! :fs/unlink [_ _opts items]
   (when (seq items)
     (d/section "Cleaning stale symlinks"
                (map (fn [[target source]] (unlink-one target source)) items))))
 
-(defmethod a/install! :fs/symlink [_ items]
+(defmethod a/install! :fs/symlink [_ opts items]
   (d/section "Creating symlinks"
-             (map (fn [[target source]] (link-one target source)) items)))
+             (map (fn [[target source]] (link-one opts target source)) items)))

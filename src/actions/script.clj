@@ -8,8 +8,8 @@
      :key script-name
      :error "Either :path or :src required"}))
 
-(defmethod a/install! :pkg/script [_ items]
-  (a/simple-install "Running scripts"
+(defmethod a/install! :pkg/script [_ opts items]
+  (a/simple-install opts "Running scripts"
     (fn [script-name {:keys [path src]}]
       (cond
         path ["bash" path]

@@ -21,12 +21,12 @@
 
 (defn execute-plan
   "Execute plan in dependency order.
-   Takes {:plan merged-map :order [[type key] ...]}
+   Takes {:plan merged-map :order [[type key] ...] :dry-run bool}
    Batches contiguous same-type actions for grouped output."
-  [{:keys [plan order]}]
+  [{:keys [plan order dry-run]}]
   (doseq [batch (partition-by first order)]
     (let [action-type (ffirst batch)
           data (into {} (map (fn [[_ k]] [k (get-in plan [action-type k])]) batch))]
       (if (a/supports? action-type)
-        (a/install! action-type data)
+        (a/install! action-type {:dry-run dry-run} data)
         (println "Warning: Unknown action type:" action-type)))))

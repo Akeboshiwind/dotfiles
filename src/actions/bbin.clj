@@ -19,5 +19,5 @@
                      (:tool opts)        (conj "--tool"))]
     (into base-cmd opts-flags)))
 
-(defmethod a/install! :pkg/bbin [_ items]
-  (a/simple-install "Installing bbin packages" build-cmd items))
+(defmethod a/install! :pkg/bbin [_ opts items]
+  (a/simple-install opts "Installing bbin packages" build-cmd items))

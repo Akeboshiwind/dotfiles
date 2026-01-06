@@ -50,16 +50,16 @@
     (map? value) (vec (mapcat (fn [[k v]] [(name k) (str v)]) value))
     :else [value]))
 
-(defn- set-default [domain key value]
+(defn- set-default [opts domain key value]
   (let [type-flag (->defaults-type value)
         cmd (into ["defaults" "write" domain (name key) type-flag] (->defaults-args value))
-        {:keys [exit err]} (a/exec! cmd)]
+        {:keys [exit err]} (a/exec! opts cmd)]
     {:label (str domain " " (name key) " = " value)
      :status (if (zero? exit) :ok :error)
      :message err}))
 
-(defmethod a/install! :osx/defaults [_ items]
+(defmethod a/install! :osx/defaults [_ opts items]
   (d/section "Setting OSX defaults"
              (for [[domain settings] items
                    [key value] settings]
-               (set-default domain key value))))
+               (set-default opts domain key value))))
