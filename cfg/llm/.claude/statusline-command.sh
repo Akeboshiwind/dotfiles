@@ -15,6 +15,9 @@ get_lines_removed() { echo "$input" | jq -r '.cost.total_lines_removed'; }
 get_input_tokens() { echo "$input" | jq -r '.context_window.total_input_tokens'; }
 get_output_tokens() { echo "$input" | jq -r '.context_window.total_output_tokens'; }
 get_context_window_size() { echo "$input" | jq -r '.context_window.context_window_size'; }
+get_cache_read() { echo "$input" | jq -r '.context_window.current_usage.cache_read_input_tokens // 0'; }
+get_cache_creation() { echo "$input" | jq -r '.context_window.current_usage.cache_creation_input_tokens // 0'; }
+get_current_input() { echo "$input" | jq -r '.context_window.current_usage.input_tokens // 0'; }
 
 # Colors
 RED='\033[0;31m'
@@ -162,11 +165,15 @@ if git -C "$current_dir" rev-parse --git-dir > /dev/null 2>&1; then
     git_info="${MAGENTA}${branch}${RESET}[${git_status}${RESET}]"
 fi
 
-# Context window with sparkline
-total_tokens=$((input_tokens + output_tokens))
-context_percent=$((total_tokens * 100 / context_size))
+# Context window with sparkline - bar shows fill against total window, number shows raw k
+cache_read=$(get_cache_read)
+cache_creation=$(get_cache_creation)
+current_input=$(get_current_input)
+actual_context=$((cache_read + cache_creation + current_input))
+context_percent=$((actual_context * 100 / context_size))
+context_k=$((actual_context / 1000))
 context_spark=$(sparkline "$context_percent" 10)
-context_info="${context_spark} ${DIM}${context_percent}%${RESET}"
+context_info="${context_spark} ${DIM}${context_k}k${RESET}"
 
 # Build output
 output=""
