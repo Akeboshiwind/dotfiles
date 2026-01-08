@@ -28,33 +28,56 @@ BOLD='\033[1m'
 DIM='\033[2m'
 RESET='\033[0m'
 
-# Sparkline function - converts percentage to a bar
+# Background colors
+BG_DARK='\033[48;5;236m'  # Dark gray background
+
+# Foreground-only colors (no reset, for use with backgrounds)
+FG_GREEN='\033[32m'
+FG_YELLOW='\033[33m'
+FG_RED='\033[31m'
+
+# Bar characters from 1/8 to 8/8 height
+BAR_CHARS=("▁" "▂" "▃" "▄" "▅" "▆" "▇" "█")
+
+# Sparkline function - converts percentage to a bar with graduations
 sparkline() {
     local percent=$1
     local width=${2:-10}
-    local filled=$((percent * width / 100))
-    local empty=$((width - filled))
     local bar=""
-
-    # Choose color based on percentage
+    
+    # Choose color based on percentage (foreground-only, no reset)
     local color
     if [ "$percent" -lt 50 ]; then
-        color="$GREEN"
+        color="$FG_GREEN"
     elif [ "$percent" -lt 75 ]; then
-        color="$YELLOW"
+        color="$FG_YELLOW"
     else
-        color="$RED"
+        color="$FG_RED"
     fi
-
-    # Build the sparkline using block characters
-    for ((i=0; i<filled; i++)); do
-        bar="${bar}█"
+    
+    # Calculate fill: each cell has 8 graduations
+    # Total graduations = width * 8
+    local total_graduations=$((width * 8))
+    local filled_graduations=$((percent * total_graduations / 100))
+    
+    # Build the sparkline
+    for ((i=0; i<width; i++)); do
+        local cell_start=$((i * 8))
+        local cell_fill=$((filled_graduations - cell_start))
+        
+        if [ "$cell_fill" -ge 8 ]; then
+            # Full block
+            bar="${bar}${BAR_CHARS[7]}"
+        elif [ "$cell_fill" -le 0 ]; then
+            # Empty cell - just space with background
+            bar="${bar} "
+        else
+            # Partial fill (1-7)
+            bar="${bar}${BAR_CHARS[$((cell_fill - 1))]}"
+        fi
     done
-    for ((i=0; i<empty; i++)); do
-        bar="${bar}░"
-    done
-
-    printf "%b%s%b" "$color" "$bar" "$RESET"
+    
+    printf "%b%b%s%b" "$BG_DARK" "$color" "$bar" "$RESET"
 }
 
 # Extract values using helpers
@@ -115,13 +138,13 @@ if git -C "$current_dir" rev-parse --git-dir > /dev/null 2>&1; then
     branch=$(git -C "$current_dir" --no-optional-locks rev-parse --abbrev-ref HEAD 2>/dev/null)
 
     if git -C "$current_dir" --no-optional-locks diff --quiet 2>/dev/null; then
-        git_status="${GREEN}✓${RESET}"
+        git_status="${GREEN}✓"
     else
-        git_status="${YELLOW}●${RESET}"
+        git_status="${YELLOW}●"
     fi
 
     if [ -n "$(git -C "$current_dir" --no-optional-locks ls-files --others --exclude-standard 2>/dev/null)" ]; then
-        git_status="${git_status}${CYAN}+${RESET}"
+        git_status="${git_status}${CYAN}+"
     fi
 
     ahead_behind=$(git -C "$current_dir" --no-optional-locks rev-list --left-right --count HEAD...@{upstream} 2>/dev/null)
@@ -129,14 +152,14 @@ if git -C "$current_dir" rev-parse --git-dir > /dev/null 2>&1; then
         ahead=$(echo "$ahead_behind" | cut -f1)
         behind=$(echo "$ahead_behind" | cut -f2)
         if [ "$ahead" -gt 0 ]; then
-            git_status="${git_status}${GREEN}↑${ahead}${RESET}"
+            git_status="${git_status}${GREEN}↑${ahead}"
         fi
         if [ "$behind" -gt 0 ]; then
-            git_status="${git_status}${RED}↓${behind}${RESET}"
+            git_status="${git_status}${RED}↓${behind}"
         fi
     fi
 
-    git_info="${MAGENTA}${branch}${RESET}[${git_status}]"
+    git_info="${MAGENTA}${branch}${RESET}[${git_status}${RESET}]"
 fi
 
 # Context window with sparkline
