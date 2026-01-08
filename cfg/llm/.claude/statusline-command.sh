@@ -32,7 +32,7 @@ DIM='\033[2m'
 RESET='\033[0m'
 
 # Background colors
-BG_DARK='\033[48;5;236m'  # Dark gray background
+BG_DARK='\033[48;5;236m' # Dark gray background
 
 # Foreground-only colors (no reset, for use with backgrounds)
 FG_GREEN='\033[32m'
@@ -45,44 +45,44 @@ BAR_CHARS=("▁" "▂" "▃" "▄" "▅" "▆" "▇" "█")
 # Sparkline function - converts percentage to a bar with graduations
 # Color thresholds based on k value (compaction ~130k)
 sparkline() {
-    local percent=$1
-    local width=${2:-10}
-    local context_k=${3:-0}
-    local bar=""
+  local percent=$1
+  local width=${2:-10}
+  local context_k=${3:-0}
+  local bar=""
 
-    # Choose color based on raw k value (compaction happens ~130k)
-    local color
-    if [ "$context_k" -lt 100 ]; then
-        color="$FG_GREEN"
-    elif [ "$context_k" -lt 120 ]; then
-        color="$FG_YELLOW"
+  # Choose color based on raw k value (compaction happens ~130k)
+  local color
+  if [ "$context_k" -lt 100 ]; then
+    color="$FG_GREEN"
+  elif [ "$context_k" -lt 120 ]; then
+    color="$FG_YELLOW"
+  else
+    color="$FG_RED"
+  fi
+
+  # Calculate fill: each cell has 8 graduations
+  # Total graduations = width * 8
+  local total_graduations=$((width * 8))
+  local filled_graduations=$((percent * total_graduations / 100))
+
+  # Build the sparkline
+  for ((i = 0; i < width; i++)); do
+    local cell_start=$((i * 8))
+    local cell_fill=$((filled_graduations - cell_start))
+
+    if [ "$cell_fill" -ge 8 ]; then
+      # Full block
+      bar="${bar}${BAR_CHARS[7]}"
+    elif [ "$cell_fill" -le 0 ]; then
+      # Empty cell - just space with background
+      bar="${bar} "
     else
-        color="$FG_RED"
+      # Partial fill (1-7)
+      bar="${bar}${BAR_CHARS[$((cell_fill - 1))]}"
     fi
-    
-    # Calculate fill: each cell has 8 graduations
-    # Total graduations = width * 8
-    local total_graduations=$((width * 8))
-    local filled_graduations=$((percent * total_graduations / 100))
-    
-    # Build the sparkline
-    for ((i=0; i<width; i++)); do
-        local cell_start=$((i * 8))
-        local cell_fill=$((filled_graduations - cell_start))
-        
-        if [ "$cell_fill" -ge 8 ]; then
-            # Full block
-            bar="${bar}${BAR_CHARS[7]}"
-        elif [ "$cell_fill" -le 0 ]; then
-            # Empty cell - just space with background
-            bar="${bar} "
-        else
-            # Partial fill (1-7)
-            bar="${bar}${BAR_CHARS[$((cell_fill - 1))]}"
-        fi
-    done
-    
-    printf "%b%b%s%b" "$BG_DARK" "$color" "$bar" "$RESET"
+  done
+
+  printf "%b%b%s%b" "$BG_DARK" "$color" "$bar" "$RESET"
 }
 
 # Extract values using helpers
@@ -100,71 +100,71 @@ context_size=$(get_context_window_size)
 
 # Format duration
 if [ "$duration_ms" != "null" ] && [ -n "$duration_ms" ]; then
-    duration_sec=$((duration_ms / 1000))
-    if [ "$duration_sec" -ge 60 ]; then
-        duration_min=$((duration_sec / 60))
-        duration_sec=$((duration_sec % 60))
-        duration="${duration_min}m${duration_sec}s"
-    else
-        duration="${duration_sec}s"
-    fi
+  duration_sec=$((duration_ms / 1000))
+  if [ "$duration_sec" -ge 60 ]; then
+    duration_min=$((duration_sec / 60))
+    duration_sec=$((duration_sec % 60))
+    duration="${duration_min}m${duration_sec}s"
+  else
+    duration="${duration_sec}s"
+  fi
 else
-    duration="0s"
+  duration="0s"
 fi
 
 # Format cost
 if [ "$cost" != "null" ] && [ -n "$cost" ]; then
-    cost_formatted=$(printf "$%.2f" "$cost")
+  cost_formatted=$(printf "$%.2f" "$cost")
 else
-    cost_formatted="$0.00"
+  cost_formatted="$0.00"
 fi
 
 # Format lines changed
 lines_info=""
 if [ "$lines_added" != "null" ] && [ "$lines_added" -gt 0 ]; then
-    lines_info="${GREEN}+${lines_added}${RESET}"
+  lines_info="${GREEN}+${lines_added}${RESET}"
 fi
 if [ "$lines_removed" != "null" ] && [ "$lines_removed" -gt 0 ]; then
-    [ -n "$lines_info" ] && lines_info="${lines_info}/"
-    lines_info="${lines_info}${RED}-${lines_removed}${RESET}"
+  [ -n "$lines_info" ] && lines_info="${lines_info}/"
+  lines_info="${lines_info}${RED}-${lines_removed}${RESET}"
 fi
 
 # Directory info
 dir_name=$(basename "$current_dir")
 if [ "$current_dir" = "$project_dir" ]; then
-    location="$dir_name"
+  location="$dir_name"
 else
-    location="$(basename "$project_dir")→$dir_name"
+  location="$(basename "$project_dir")→$dir_name"
 fi
 
 # Git info
 git_info=""
-if git -C "$current_dir" rev-parse --git-dir > /dev/null 2>&1; then
-    branch=$(git -C "$current_dir" --no-optional-locks rev-parse --abbrev-ref HEAD 2>/dev/null)
+if git -C "$current_dir" rev-parse --git-dir >/dev/null 2>&1; then
+  branch=$(git -C "$current_dir" --no-optional-locks rev-parse --abbrev-ref HEAD 2>/dev/null)
 
-    if git -C "$current_dir" --no-optional-locks diff --quiet 2>/dev/null; then
-        git_status="${GREEN}✓"
-    else
-        git_status="${YELLOW}●"
+  if git -C "$current_dir" --no-optional-locks diff --quiet 2>/dev/null; then
+    git_status="${GREEN}✓"
+  else
+    git_status="${YELLOW}●"
+  fi
+
+  if [ -n "$(git -C "$current_dir" --no-optional-locks ls-files --others --exclude-standard 2>/dev/null)" ]; then
+    git_status="${git_status}${CYAN}+"
+  fi
+
+  ahead_behind=$(git -C "$current_dir" --no-optional-locks rev-list --left-right --count HEAD...@{upstream} 2>/dev/null)
+  if [ -n "$ahead_behind" ]; then
+    ahead=$(echo "$ahead_behind" | cut -f1)
+    behind=$(echo "$ahead_behind" | cut -f2)
+    if [ "$ahead" -gt 0 ]; then
+      git_status="${git_status}${GREEN}↑${ahead}"
     fi
-
-    if [ -n "$(git -C "$current_dir" --no-optional-locks ls-files --others --exclude-standard 2>/dev/null)" ]; then
-        git_status="${git_status}${CYAN}+"
+    if [ "$behind" -gt 0 ]; then
+      git_status="${git_status}${RED}↓${behind}"
     fi
+  fi
 
-    ahead_behind=$(git -C "$current_dir" --no-optional-locks rev-list --left-right --count HEAD...@{upstream} 2>/dev/null)
-    if [ -n "$ahead_behind" ]; then
-        ahead=$(echo "$ahead_behind" | cut -f1)
-        behind=$(echo "$ahead_behind" | cut -f2)
-        if [ "$ahead" -gt 0 ]; then
-            git_status="${git_status}${GREEN}↑${ahead}"
-        fi
-        if [ "$behind" -gt 0 ]; then
-            git_status="${git_status}${RED}↓${behind}"
-        fi
-    fi
-
-    git_info="${MAGENTA}${branch}${RESET}[${git_status}${RESET}]"
+  git_info="${MAGENTA}${branch}${RESET}[${git_status}${RESET}]"
 fi
 
 # Context window with sparkline - bar shows fill against total window, number shows raw k
