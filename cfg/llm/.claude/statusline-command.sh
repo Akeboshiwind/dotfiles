@@ -43,18 +43,18 @@ FG_RED='\033[31m'
 BAR_CHARS=("▁" "▂" "▃" "▄" "▅" "▆" "▇" "█")
 
 # Sparkline function - converts percentage to a bar with graduations
-# Color thresholds based on k value (compaction ~130k)
+# Color thresholds based on k value (compaction ~150k)
 sparkline() {
   local percent=$1
   local width=${2:-10}
   local context_k=${3:-0}
   local bar=""
 
-  # Choose color based on raw k value (compaction happens ~130k)
+  # Choose color based on raw k value
   local color
   if [ "$context_k" -lt 100 ]; then
     color="$FG_GREEN"
-  elif [ "$context_k" -lt 120 ]; then
+  elif [ "$context_k" -lt 140 ]; then
     color="$FG_YELLOW"
   else
     color="$FG_RED"
