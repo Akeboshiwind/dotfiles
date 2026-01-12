@@ -1,4 +1,4 @@
-{:pkg/mas {"Tailscale" 1475387142}
- :osx/defaults
- {"io.tailscale.ipn.macos" {"TailscaleStartOnLogin" true
-                           "OnboardingFlow" "hide"}}}
+{; NOTE: Not a cask so that we can enable ssh access
+ ;       Downside is that we have no UI
+ :pkg/brew {:tailscale {}}
+ :brew/service {:tailscale {:sudo true}}}
