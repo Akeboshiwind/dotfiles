@@ -13,6 +13,7 @@
 
         ;; >> Terminal setup
         :ghostty
+        :tmux
         :fish
         :bash
 
