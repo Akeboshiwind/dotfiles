@@ -1,1 +1,2 @@
-{:fs/symlink-folder {"~/.ssh" "./.ssh"}}
+{:pkg/brew {:mosh {}}
+ :fs/symlink-folder {"~/.ssh" "./.ssh"}}
