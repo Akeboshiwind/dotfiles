@@ -1,10 +1,14 @@
 (ns actions.bbin
-  (:require [actions :as a]))
+  (:require [actions :as a]
+            [babashka.fs :as fs]))
 
 (defn- build-cmd [pkg opts]
   (let [pkg-name (name pkg)
-        package-arg (or (:url opts) pkg-name)
-        as-name (or (:as opts) (when (:url opts) pkg-name))
+        ;; For local projects, use the directory path as the package arg
+        package-arg (if-let [local (:local opts)]
+                      (str (fs/canonicalize local))
+                      (or (:url opts) pkg-name))
+        as-name (or (:as opts) (when (or (:url opts) (:local opts)) pkg-name))
         base-cmd ["bbin" "install" package-arg]
         opts-flags (cond-> []
                      as-name             (into ["--as" as-name])
