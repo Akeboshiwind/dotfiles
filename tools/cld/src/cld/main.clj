@@ -65,13 +65,13 @@
         (apply sh/tmux! (core/build-tmux-args {:op :new-session
                                                :name session-name
                                                :path (:path plan)
-                                               :cmd "claude"}))
+                                               :cmd "claude --dangerously-skip-permissions"}))
         ;; Add more windows if requested
         (dotimes [_ (dec windows)]
           (apply sh/tmux! (core/build-tmux-args {:op :new-window
                                                  :name session-name
                                                  :path (:path plan)
-                                                 :cmd "claude"})))
+                                                 :cmd "claude --dangerously-skip-permissions"})))
         (sh/print! (core/format-ok "Session created"))
         (sh/exec-tmux-attach! session-name)))))
 
