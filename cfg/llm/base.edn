@@ -15,8 +15,10 @@
             "clj-nrepl-eval" {:url "https://github.com/bhauman/clojure-mcp-light.git"
                               :git/tag "v0.2.0"
                               :main-opts "[\"-m\" \"clojure-mcp-light.nrepl-eval\"]"}}
- :claude/marketplace {:taches {:source "glittercowboy/taches-cc-resources"}}
- :claude/plugin {:taches-cc-resources {:dep/requires #{[:claude/marketplace :taches]}}}
+ :claude/marketplace {:taches {:source "glittercowboy/taches-cc-resources"}
+                      :notion {:source "FlorinPopaCodes/claude-code-notion-plugin"}} ;"makenotion/claude-code-notion-plugin"}}
+ :claude/plugin {:taches-cc-resources {:dep/requires #{[:claude/marketplace :taches]}}
+                 :notion-workspace-plugin {:dep/requires #{[:claude/marketplace :notion]}}}
  :claude/mcp {:morph-mcp {:dep/requires #{[:pkg/brew :claude-code]
                                           [:pkg/mise :node]}
                           :command "npx"

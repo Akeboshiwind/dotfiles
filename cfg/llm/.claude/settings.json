@@ -36,12 +36,13 @@
       }
     ]
   },
-  "enabledPlugins": {
-    "taches-cc-resources@taches-cc-resources": true
-  },
-  "alwaysThinkingEnabled": true,
   "statusLine": {
     "type": "command",
     "command": "/Users/osm/.claude/statusline-command.sh"
-  }
+  },
+  "enabledPlugins": {
+    "taches-cc-resources@taches-cc-resources": true,
+    "notion-workspace-plugin@notion-plugin-marketplace": true
+  },
+  "alwaysThinkingEnabled": true
 }
