@@ -17,30 +17,37 @@
 
  ; TODO: How can I setup mapping CapsLock to Control?
  :osx/defaults
- {"NSGlobalDomain" {"com.apple.sound.beep.volume" 0.0
-                    "com.apple.sound.beep.feedback" 0
-                    ;; Keyboard settings
-                    "NSAutomaticSpellingCorrectionEnabled" false
-                    "NSAutomaticCapitalizationEnabled" false
-                    "NSAutomaticInlinePredictionEnabled" false
-                    "NSAutomaticPeriodSubstitutionEnabled" false}
-  "com.apple.Safari" {"IncludeDevelopMenu" true}
-  "com.apple.dock" {"autohide" true
+ {:global {:domain "NSGlobalDomain"
+           :settings {"com.apple.sound.beep.volume" 0.0
+                      "com.apple.sound.beep.feedback" 0
+                      ;; Keyboard settings
+                      "NSAutomaticSpellingCorrectionEnabled" false
+                      "NSAutomaticCapitalizationEnabled" false
+                      "NSAutomaticInlinePredictionEnabled" false
+                      "NSAutomaticPeriodSubstitutionEnabled" false}}
+  :safari {:domain "com.apple.Safari"
+           :settings {"IncludeDevelopMenu" true}}
+  :dock {:domain "com.apple.dock"
+         :settings {"autohide" true
                     "show-recents" false
-                    "tilesize" 72}
-  "com.apple.finder" {"AppleShowAllFiles" true}
+                    "tilesize" 72}}
+  :finder {:domain "com.apple.finder"
+           :settings {"AppleShowAllFiles" true}}
   ;; Use compact emoji picker instead of full Character Viewer
-  "com.apple.CharacterPaletteIM" {"CVStartAsLargeWindow" false}
+  :emoji {:domain "com.apple.CharacterPaletteIM"
+          :settings {"CVStartAsLargeWindow" false}}
   ; Stage Manager
-  "com.apple.WindowManager" {"GloballyEnabled" true
+  :stage-manager {:domain "com.apple.WindowManager"
+                  :settings {"GloballyEnabled" true
                              ; Don't group windows by application
-                             "AppWindowGroupingBehavior" false}
+                             "AppWindowGroupingBehavior" false}}
   ;; Keyboard input sources
-  "com.apple.HIToolbox" {"AppleEnabledInputSources"
-                         [{"InputSourceKind" "Keyboard Layout"
-                           "KeyboardLayout ID" 15
-                           "KeyboardLayout Name" "Australian"}]
-                         "AppleSelectedInputSources"
-                         [{"InputSourceKind" "Keyboard Layout"
-                           "KeyboardLayout ID" 15
-                           "KeyboardLayout Name" "Australian"}]}}}
+  :keyboard {:domain "com.apple.HIToolbox"
+             :settings {"AppleEnabledInputSources"
+                        [{"InputSourceKind" "Keyboard Layout"
+                          "KeyboardLayout ID" 15
+                          "KeyboardLayout Name" "Australian"}]
+                        "AppleSelectedInputSources"
+                        [{"InputSourceKind" "Keyboard Layout"
+                          "KeyboardLayout ID" 15
+                          "KeyboardLayout Name" "Australian"}]}}}}

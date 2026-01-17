@@ -60,6 +60,10 @@
 
 (defmethod a/install! :osx/defaults [_ opts items]
   (d/section "Setting OSX defaults"
-             (for [[domain settings] items
+             (for [[_name cfg] items
+                   :let [domain (:domain cfg)
+                         ;; Support both :settings map and single :key/:value
+                         settings (or (:settings cfg)
+                                      {(:key cfg) (:value cfg)})]
                    [key value] settings]
                (set-default opts domain key value))))
