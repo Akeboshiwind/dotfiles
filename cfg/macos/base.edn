@@ -1,7 +1,10 @@
 {:pkg/brew {:orbstack {} ;:docker-desktop {}
             :obsidian {}
             :quitter {}
-            :rectangle-pro {}}
+            :rectangle-pro {}
+            :music-decoy {}
+            :spotify {}}
+
  :pkg/mas {;"OmniFocus 4" 1542143627
            ;"Sofa" 1276554886
            "Timelines" 1112433234
@@ -50,4 +53,8 @@
                         "AppleSelectedInputSources"
                         [{"InputSourceKind" "Keyboard Layout"
                           "KeyboardLayout ID" 15
-                          "KeyboardLayout Name" "Australian"}]}}}}
+                          "KeyboardLayout Name" "Australian"}]}}
+  :music-decoy {:domain "com.lowtechguys.MusicDecoy"
+                :settings {"mediaAppPath" "/Applications/Spotify.app"}
+                :dep/requires #{[:pkg/brew :music-decoy]
+                                [:pkg/brew :spotify]}}}}
