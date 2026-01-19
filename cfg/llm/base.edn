@@ -19,10 +19,4 @@
                       :notion {:source "FlorinPopaCodes/claude-code-notion-plugin"}} ;"makenotion/claude-code-notion-plugin"}}
  :claude/plugin {:taches-cc-resources {:dep/requires #{[:claude/marketplace :taches]}}
                  :notion-workspace-plugin {:dep/requires #{[:claude/marketplace :notion]}}}
- :claude/mcp {:morph-mcp {:dep/requires #{[:pkg/brew :claude-code]
-                                          [:pkg/mise :node]}
-                          :command "npx"
-                          :args ["-y" "@morphllm/morphmcp"]
-                          :env {:MORPH_API_KEY #secret :morph-api-key
-                                :ENABLED_TOOLS "edit_file,warpgrep_codebase_search"}}}
  :fs/symlink-folder {"~/.claude" "./.claude"}}
