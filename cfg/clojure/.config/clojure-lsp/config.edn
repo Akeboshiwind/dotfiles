@@ -1,0 +1,5 @@
+{:hover {:clojuredocs true}
+ :project-specs [{:project-path "build.gradle.kts"
+                  :classpath-cmd ["./gradlew" "-q" "printClasspath"]}
+                 {:project-path "build.gradle"
+                  :classpath-cmd ["./gradlew" "-q" "printClasspath"]}]}

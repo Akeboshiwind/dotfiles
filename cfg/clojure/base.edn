@@ -5,4 +5,6 @@
             "borkdude/brew/clj-kondo" {}}
  :fs/symlink-folder {"~/.clojure" "./.clojure"
                      "~/.nrepl" "./.nrepl"
-                     "~/.shadow-cljs" "./.shadow-cljs"}}
+                     "~/.shadow-cljs" "./.shadow-cljs"
+                     "~/.config/clojure-lsp" "./.config/clojure-lsp"
+                     "~/.gradle/init.d" "./.gradle/init.d"}}
