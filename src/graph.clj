@@ -13,7 +13,7 @@
   (:require [weavejester.dependency :as dep]))
 
 (def ^:private no-dep-actions
-  #{:pkg/script :osx/defaults :fs/symlink :fs/unlink :brew/service})
+  #{:pkg/script :osx/defaults :fs/symlink :fs/unlink})
 
 (defn parse-plan
   "Parse plan into normalized dependency data. Returns:
