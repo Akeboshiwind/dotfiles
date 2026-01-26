@@ -5,15 +5,11 @@
    - :dep/provides #{:pkg/mise :pkg/mas} - enables these action types
    - :dep/requires #{[:action/type :specific-key]} - depends on specific actions
 
-   Static no-dependency action types:
-   - :pkg/script, :osx/defaults, :fs/symlink, :fs/unlink
-
-   Implicit requirements (by action type):
-   - All other action types implicitly require their type to be provided"
-  (:require [weavejester.dependency :as dep]))
-
-(def ^:private no-dep-actions
-  #{:pkg/script :osx/defaults :fs/symlink :fs/unlink :git/clone})
+   Actions declare their own requirements via (a/requires type):
+   - Returns nil for standalone actions (no dependencies)
+   - Returns a capability keyword for actions that need a provider"
+  (:require [weavejester.dependency :as dep]
+            [actions :as a]))
 
 (defn parse-plan
   "Parse plan into normalized dependency data. Returns:
@@ -32,7 +28,7 @@
         requires (into {}
                        (for [[type acts] plan, [key cfg] acts
                              :let [action [type key]
-                                   implicit (when-not (no-dep-actions type) type)
+                                   implicit (a/requires type)
                                    explicit (when (map? cfg) (:dep/requires cfg))
                                    reqs (cond-> #{} implicit (conj implicit) explicit (into explicit))]
                              :when (seq reqs)]

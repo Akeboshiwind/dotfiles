@@ -65,6 +65,14 @@
 ;; Multimethods
 ;; =============================================================================
 
+(defmulti requires
+  "Return the capability keyword this action type requires, or nil if standalone.
+   Non-nil values must be provided by another action via :dep/provides.
+   Default: requires its own type (must be explicitly provided)."
+  identity)
+
+(defmethod requires :default [type] type)
+
 (defmulti validate
   "Validate items of a given action type.
    Returns seq of error maps {:action :key :error}, or nil if valid."

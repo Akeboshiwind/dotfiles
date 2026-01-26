@@ -1,6 +1,8 @@
 (ns actions.mise
   (:require [actions :as a]))
 
+(defmethod a/requires :pkg/mise [_] :pkg/mise)
+
 (defmethod a/validate :pkg/mise [_ items]
   (for [[tool opts] items
         :when (not (:version opts))]

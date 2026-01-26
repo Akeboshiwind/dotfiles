@@ -3,6 +3,8 @@
             [actions :as a]
             [display :as d]))
 
+(defmethod a/requires :osx/defaults [_] nil)
+
 (defn- xml-escape [s]
   (-> (str s)
       (str/replace "&" "&amp;")

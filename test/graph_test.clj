@@ -1,6 +1,8 @@
 (ns graph-test
   (:require [clojure.test :refer [deftest testing is]]
-            [graph :as g]))
+            [graph :as g]
+            ;; Load action implementations so a/requires works
+            [execute]))
 
 ;; =============================================================================
 ;; Test Data
@@ -155,13 +157,13 @@
 ;; =============================================================================
 
 (deftest edge-cases-test
-  (testing "custom action types require their capability"
+  (testing "unknown action types require their capability"
     (let [plan {:my/custom {:foo {}}}
           errors (g/validate plan)]
       (is (some? (:missing errors)))
       (is (= :my/custom (:missing-capability (first (:missing errors)))))))
 
-  (testing "no-dep action types have no implicit requirements"
+  (testing "standalone action types have no implicit requirements"
     (let [plan {:fs/symlink {"~/.foo" "./foo"}
                 :fs/unlink {"~/.old" {}}
                 :osx/defaults {:bar {:domain "com.example" :key "bar" :value 1}}

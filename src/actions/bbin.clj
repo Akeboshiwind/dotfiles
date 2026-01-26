@@ -2,6 +2,8 @@
   (:require [actions :as a]
             [babashka.fs :as fs]))
 
+(defmethod a/requires :pkg/bbin [_] :pkg/bbin)
+
 (defn- build-cmd [pkg opts]
   (let [pkg-name (name pkg)
         ;; For local projects, use the directory path as the package arg

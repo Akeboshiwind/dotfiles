@@ -1,6 +1,9 @@
 (ns actions.brew
   (:require [actions :as a]))
 
+(defmethod a/requires :pkg/brew [_] :pkg/brew)
+(defmethod a/requires :brew/service [_] :brew/service)
+
 (defmethod a/install! :pkg/brew [_ opts items]
   (a/simple-install opts "Installing brew packages"
     (fn [pkg {:keys [head cask]}]

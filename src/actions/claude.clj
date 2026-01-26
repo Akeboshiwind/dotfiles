@@ -3,6 +3,10 @@
             [actions :as a]
             [display :as d]))
 
+(defmethod a/requires :claude/marketplace [_] :claude/marketplace)
+(defmethod a/requires :claude/plugin [_] :claude/plugin)
+(defmethod a/requires :claude/mcp [_] :claude/mcp)
+
 (defmethod a/install! :claude/marketplace [_ opts items]
   (a/simple-install opts "Adding Claude marketplaces"
     (fn [marketplace-name {:keys [source]}]

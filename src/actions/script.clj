@@ -1,6 +1,8 @@
 (ns actions.script
   (:require [actions :as a]))
 
+(defmethod a/requires :pkg/script [_] nil)
+
 (defmethod a/validate :pkg/script [_ items]
   (for [[script-name opts] items
         :when (not (or (:path opts) (:src opts)))]

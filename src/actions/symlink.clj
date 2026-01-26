@@ -6,6 +6,9 @@
             [utils :as u])
   (:import [java.nio.file Files]))
 
+(defmethod a/requires :fs/symlink [_] nil)
+(defmethod a/requires :fs/unlink [_] nil)
+
 (defn- unlink-one [target-str expected-source]
   (let [target-file (io/file (u/expand-tilde target-str))
         target-path (.toPath target-file)]
