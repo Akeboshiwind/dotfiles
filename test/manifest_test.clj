@@ -36,9 +36,9 @@
     (is (= "cfg/custom/path.edn" (m/entry->path "cfg/custom/path.edn"))))
 
   (testing "keyword entries expand to cfg path"
-    (is (= "cfg/git/base.edn" (m/entry->path :git)))
-    (is (= "cfg/neovim/base.edn" (m/entry->path :neovim)))
-    (is (= "cfg/some-app/base.edn" (m/entry->path :some-app))))
+    (is (= "cfg/git/manifest.edn" (m/entry->path :git)))
+    (is (= "cfg/neovim/manifest.edn" (m/entry->path :neovim)))
+    (is (= "cfg/some-app/manifest.edn" (m/entry->path :some-app))))
 
   (testing "maps return nil"
     (is (nil? (m/entry->path {})))
@@ -64,8 +64,8 @@
     (let [calls (atom [])
           read-fn #(do (swap! calls conj %) {:step {:read %} :source "test"})
           result (m/resolve-entry' read-fn :git)]
-      (is (= ["cfg/git/base.edn"] @calls))
-      (is (= {:step {:read "cfg/git/base.edn"} :source "test"} result))))
+      (is (= ["cfg/git/manifest.edn"] @calls))
+      (is (= {:step {:read "cfg/git/manifest.edn"} :source "test"} result))))
 
   (testing "map entries return wrapped with nil source, no read-fn call"
     (let [calls (atom [])

@@ -47,7 +47,7 @@
   [entry]
   (cond
     (string? entry)  entry
-    (keyword? entry) (str "cfg/" (name entry) "/base.edn")
+    (keyword? entry) (str "cfg/" (name entry) "/manifest.edn")
     :else nil))
 
 (defn resolve-entry'
@@ -56,7 +56,7 @@
   [read-fn entry]
   (cond
     (string? entry)  (read-fn entry)
-    (keyword? entry) (read-fn (str "cfg/" (name entry) "/base.edn"))
+    (keyword? entry) (read-fn (str "cfg/" (name entry) "/manifest.edn"))
     (map? entry)     {:step entry :source nil}
     :else (throw (ex-info "Invalid entry in manifest" {:entry entry}))))
 

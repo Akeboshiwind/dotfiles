@@ -38,7 +38,7 @@ bootstrap --dry-run    # Preview without executing
 ├── src/                # Installer code
 └── cfg/                # Dotfile configs
     └── <app>/
-        ├── base.edn    # Package/symlink definitions
+        ├── manifest.edn    # Package/symlink definitions
         └── .config/    # Actual config files to symlink
 ```
 
@@ -47,7 +47,7 @@ bootstrap --dry-run    # Preview without executing
 `manifest.edn` has a `:plan` key containing entries to process:
 
 ```clojure
-{:plan [:ghostty                           ; keyword -> cfg/ghostty/base.edn
+{:plan [:ghostty                           ; keyword -> cfg/ghostty/manifest.edn
         "cfg/custom/config.edn"            ; string -> explicit path
         {:pkg/brew {:ripgrep {}}}]}        ; map -> inline actions
 ```

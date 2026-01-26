@@ -7,7 +7,7 @@ Babashka-based dotfile manager. Installs packages and symlinks config files via 
 `manifest.edn` defines what to install:
 
 - `bootstrap` - runs first (e.g., install mise, mas, bbin)
-- `plan` - list of paths to `cfg/*/base.edn` files or inline maps
+- `plan` - list of paths to `cfg/*/manifest.edn` files or inline maps
 
 Each plan entry can use these actions:
 
@@ -33,7 +33,7 @@ Each plan entry can use these actions:
 │   └── utils.clj       # Helpers
 └── cfg/                # Dotfile configs
     └── <app>/
-        ├── base.edn    # Package/symlink definitions
+        ├── manifest.edn    # Package/symlink definitions
         └── .config/    # Actual config files to symlink
 ```
 
