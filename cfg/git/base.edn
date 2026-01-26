@@ -1,4 +1,4 @@
-{:pkg/brew {:git {}
+{:pkg/brew {:git {:dep/provides #{:git}}
             :git-lfs {}
             :lazygit {}
             :gh {}}

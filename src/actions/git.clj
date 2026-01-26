@@ -4,6 +4,8 @@
             [babashka.fs :as fs]
             [display :as d]))
 
+(defmethod a/requires :git/clone [_] :git)
+
 (defn- clone! [opts url target ref]
   (let [{:keys [exit err]} (a/exec! opts ["git" "clone" url target])]
     (if (zero? exit)
