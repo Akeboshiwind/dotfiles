@@ -1,0 +1,4 @@
+{:pkg/brew {:flyctl {}}
+ :pkg/script
+ {:sprite {:src "curl -fsSL https://sprites.dev/install.sh | bash"
+           :env {"SETUP_SPRITE_TOKEN" #secret :sprite-token}}}}
