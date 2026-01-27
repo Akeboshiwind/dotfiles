@@ -77,5 +77,5 @@
   "Load plan from manifest.edn, resolving all entries.
    Returns [{:step map :source string-or-nil} ...]."
   []
-  (let [{:keys [plan]} (edn/read-string (slurp "manifest.edn"))]
+  (let [{:keys [plan]} (edn/read-string {:readers edn-readers} (slurp "manifest.edn"))]
     (mapv resolve-entry plan)))
