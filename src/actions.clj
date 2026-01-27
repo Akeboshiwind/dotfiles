@@ -21,14 +21,16 @@
 
 (defn exec!
   "Execute a command.
-   Options: :dry-run to preview, :prefix for output line prefix (default \"    \")
+   Options: :dry-run to preview, :prefix for output line prefix (default \"    \"),
+            :env map of extra environment variables to pass to the process.
    Returns {:exit int :err string-or-nil}"
-  [{:keys [dry-run prefix] :or {prefix default-prefix}} args]
+  [{:keys [dry-run prefix env] :or {prefix default-prefix}} args]
   (if dry-run
     (do
       (println prefix (d/gray (str/join " " args)))
       {:exit 0 :err nil})
-    (let [proc (process/process args {:err :string})
+    (let [proc (process/process args (cond-> {:err :string}
+                                       env (assoc :extra-env env)))
           out-future (future (prefix-print prefix (:out proc)))
           result @proc]
       @out-future

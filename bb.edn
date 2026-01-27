@@ -7,8 +7,9 @@
               [graph-test]
               [plan-test]
               [manifest-test]
-              [osx-test]]
-   :task (let [result (t/run-tests 'graph-test 'plan-test 'manifest-test 'osx-test)]
+              [osx-test]
+              [script-test]]
+   :task (let [result (t/run-tests 'graph-test 'plan-test 'manifest-test 'osx-test 'script-test)]
            (when (or (pos? (:fail result)) (pos? (:error result)))
              (System/exit 1)))}
 
