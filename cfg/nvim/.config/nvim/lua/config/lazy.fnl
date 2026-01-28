@@ -17,7 +17,7 @@
                    (.. "https://github.com/" user "/" repo ".git")
                    (.. "--branch=" branch)
                    install-path])]
-        (when (not= (vim.v.shell_error) 0)
+        (when (not= vim.v.shell_error 0)
           (vim.api.nvim_echo
             [[(.. "Failed to clone " repo newline) :ErrorMsg]
              [out :WarningMsg]
