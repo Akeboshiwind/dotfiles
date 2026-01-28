@@ -23,7 +23,8 @@
         :intellij
 
         ;; >> Tools
-        {:pkg/bbin {:hello {:local "./tools/hello"}}}
+        {:pkg/bbin {:hello {:local "./tools/hello"}
+                    :rnvim {:local "./tools/rnvim"}}}
         :tailscale
         :git
         :ssh
