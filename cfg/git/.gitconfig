@@ -22,6 +22,7 @@
 [push]
     # Assume `--set-upstream` when doing a `git push origin <branch>`
 	autoSetupRemote = true
+	default = upstream
 
 [includeIf "gitdir:~/prog/work/"]
     path = ~/work.gitconfig
