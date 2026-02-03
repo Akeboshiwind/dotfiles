@@ -19,4 +19,8 @@
  ;:claude/marketplace {:taches {:source "glittercowboy/taches-cc-resources"}}
  ;:claude/plugin {:taches-cc-resources {:dep/requires #{[:claude/marketplace :taches]}}}
  :fs/symlink-folder {"~/.claude" "./.claude"}
- :git/clone {"~/.claude/skills/allium" {:url "https://github.com/juxt/allium.git"}}}
+ :git/clone {"~/.claude/skills/allium" {:url "https://github.com/juxt/allium.git"}
+             "~/.claude/skills/claudeception" {:url "https://github.com/blader/Claudeception.git"
+                                               :ref "7d7f5915f90db26e1a3fc52db6ac2e68d6d705a2"}}
+ :pkg/script {:claudeception-hooks {:src "chmod +x ~/.claude/skills/claudeception/scripts/*.sh"
+                                    :dep/requires #{[:git/clone "~/.claude/skills/claudeception"]}}}}
