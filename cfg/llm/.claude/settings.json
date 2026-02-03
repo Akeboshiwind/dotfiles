@@ -62,8 +62,6 @@
     "type": "command",
     "command": "/Users/osm/.claude/statusline-command.sh"
   },
-  "enabledPlugins": {
-    "taches-cc-resources@taches-cc-resources": true
-  },
+  "enabledPlugins": {},
   "alwaysThinkingEnabled": true
 }
