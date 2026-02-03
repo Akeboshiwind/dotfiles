@@ -1,1 +1,1 @@
-set -gx HAPPY_SERVER_URL "https://happy-server.bythe.rocks"
+set -gx HAPPY_SERVER_URL "https://happy.bythe.rocks"
