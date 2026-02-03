@@ -10,8 +10,7 @@
             "steveyegge/beads/bd" {}}
 
  ;; Using fork with fix for https://github.com/slopus/happy-cli/issues/124
- :pkg/npm {"https://github.com/ake-forks/happy-cli/releases/download/v0.13.0-patched/happy-coder-0.13.0.tgz" {}
-           :openclaw {}}
+ :pkg/npm {"https://github.com/ake-forks/happy-cli/releases/download/v0.13.0-patched/happy-coder-0.13.0.tgz" {}}
  :pkg/bbin {"clj-paren-repair-claude-hook" {:url "https://github.com/bhauman/clojure-mcp-light.git"
                                             :git/tag "v0.2.0"}
             "clj-nrepl-eval" {:url "https://github.com/bhauman/clojure-mcp-light.git"
