@@ -72,6 +72,8 @@
     "type": "command",
     "command": "/Users/osm/.claude/statusline-command.sh"
   },
-  "enabledPlugins": {},
+  "enabledPlugins": {
+    "playground@claude-plugins-official": true
+  },
   "alwaysThinkingEnabled": true
 }

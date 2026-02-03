@@ -16,8 +16,8 @@
             "clj-nrepl-eval" {:url "https://github.com/bhauman/clojure-mcp-light.git"
                               :git/tag "v0.2.0"
                               :main-opts "[\"-m\" \"clojure-mcp-light.nrepl-eval\"]"}}
- ;:claude/marketplace {:taches {:source "glittercowboy/taches-cc-resources"}}
- ;:claude/plugin {:taches-cc-resources {:dep/requires #{[:claude/marketplace :taches]}}}
+ :claude/marketplace {:claude-plugins-official {:source "anthropics/claude-plugins-official"}}
+ :claude/plugin {:playground {:dep/requires #{[:claude/marketplace :claude-plugins-official]}}}
  :fs/symlink-folder {"~/.claude" "./.claude"}
  :git/clone {"~/.claude/skills/allium" {:url "https://github.com/juxt/allium.git"}
              "~/.claude/skills/claudeception" {:url "https://github.com/blader/Claudeception.git"
