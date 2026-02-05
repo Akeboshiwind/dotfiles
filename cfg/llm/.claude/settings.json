@@ -73,7 +73,8 @@
     "command": "/Users/osm/.claude/statusline-command.sh"
   },
   "enabledPlugins": {
-    "playground@claude-plugins-official": true
+    "playground@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true
   },
   "alwaysThinkingEnabled": true
 }
