@@ -11,13 +11,18 @@ font-size = 17
 keybind = shift+enter=text:\n
 
 # Splits (tmux-style with ctrl+a prefix)
-# NOTE: Only side splits configured. Vertical splits (ctrl+a>-) and full hjkl
-# navigation omitted to avoid conflict with quick terminal (ctrl+a>j).
-# Revisit if vertical splits needed.
+# TODO: enable after upgrading to Ghostty 3.3.0+
+# split-preserve-zoom = navigation
 keybind = ctrl+a>shift+five=new_split:right
-keybind = ctrl+a>h=goto_split:left
-keybind = ctrl+a>l=goto_split:right
+keybind = ctrl+a>shift+quote=new_split:down
 keybind = ctrl+a>x>y=close_surface
+keybind = ctrl+a>z=toggle_split_zoom
+
+# Split navigation
+keybind = ctrl+a>h=goto_split:left
+keybind = ctrl+a>j=goto_split:down
+keybind = ctrl+a>k=goto_split:up
+keybind = ctrl+a>l=goto_split:right
 
 # Tabs (tmux-style)
 keybind = ctrl+a>c=new_tab
