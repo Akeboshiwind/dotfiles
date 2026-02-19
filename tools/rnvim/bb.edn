@@ -1,3 +1,0 @@
-{:paths ["src"]
- :deps {}
- :bbin/bin {rnvim {:main-opts ["-m" "rnvim.main"]}}}
