@@ -1,2 +1,2 @@
-{:pkg/brew {:ghostty {}}
+{:pkg/brew {"ghostty@tip" {}}
  :fs/symlink-folder {"~/.config" "./.config"}}
