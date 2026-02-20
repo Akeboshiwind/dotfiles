@@ -74,7 +74,8 @@
   },
   "enabledPlugins": {
     "playground@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true
+    "superpowers@claude-plugins-official": true,
+    "allium@juxt-plugins": true
   },
   "alwaysThinkingEnabled": true
 }
