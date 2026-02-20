@@ -20,7 +20,8 @@
                       :claude-plugins-juxt {:source "juxt/claude-plugins"}}
  :claude/plugin {:playground {:dep/requires #{[:claude/marketplace :claude-plugins-official]}}
                  :superpowers {:dep/requires #{[:claude/marketplace :claude-plugins-official]}}
-                 :allium {:dep/requires #{[:claude/marketplace :claude-plugins-juxt]}}}
+                 :allium {:dep/requires #{[:claude/marketplace :claude-plugins-juxt]}}
+                 :chalk {:dep/requires #{[:claude/marketplace :claude-plugins-juxt]}}}
  :fs/symlink-folder {"~/.claude" "./.claude"}
  :git/clone {"~/.claude/skills/claudeception" {:url "https://github.com/blader/Claudeception.git"
                                                :ref "7d7f5915f90db26e1a3fc52db6ac2e68d6d705a2"}}
