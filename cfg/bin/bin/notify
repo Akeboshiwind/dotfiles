@@ -1,0 +1,8 @@
+#!/bin/sh
+# notify - send a macOS notification
+# Usage: my-cmd; notify "Title" "Description"
+
+title="${1:-Command finished}"
+body="${2:-}"
+
+osascript -e "display notification \"$body\" with title \"$title\""
