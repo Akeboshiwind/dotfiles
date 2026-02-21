@@ -76,7 +76,8 @@
     "playground@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
     "allium@juxt-plugins": true,
-    "chalk@juxt-plugins": true
+    "chalk@juxt-plugins": true,
+    "glance@glance-marketplace": true
   },
   "alwaysThinkingEnabled": true,
   "skipDangerousModePermissionPrompt": true,
