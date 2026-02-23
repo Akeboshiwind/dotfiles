@@ -9,5 +9,6 @@
             :htop {}
             :nmap {}
             :imagemagick {}
+            :ghostscript {} ; PDF manipulation
             :watch {}}
  :fs/symlink-folder {"~/bin" "./bin"}}
