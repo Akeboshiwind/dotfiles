@@ -3,3 +3,8 @@ gui:
 
 git:
   overrideGpg: true
+
+os:
+  edit: 'sh -c ''[ -z "$NVIM" ] && nvim -- "{{filename}}" || { nvim --server "$NVIM" --remote-send "<C-\\><C-n>:close<CR>:edit {{filename}}<CR>"; }'''
+  editAtLine: 'sh -c ''[ -z "$NVIM" ] && nvim +{{line}} -- "{{filename}}" || { nvim --server "$NVIM" --remote-send "<C-\\><C-n>:close<CR>:edit +{{line}} {{filename}}<CR>"; }'''
+  openDirInEditor: 'sh -c ''[ -z "$NVIM" ] && nvim -- "{{dir}}" || { nvim --server "$NVIM" --remote-send "<C-\\><C-n>:close<CR>:edit {{dir}}<CR>"; }'''
