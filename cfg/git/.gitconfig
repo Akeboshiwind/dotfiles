@@ -24,8 +24,6 @@
 	autoSetupRemote = true
 	default = upstream
 
-[includeIf "gitdir:~/prog/work/"]
-    path = ~/work.gitconfig
 [filter "lfs"]
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
