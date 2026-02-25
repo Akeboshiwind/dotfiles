@@ -9,6 +9,7 @@
             :ninja {} ; Lua
             :luarocks {} ; fennel_ls etc.
             :maven {} ; java_language_server
+            :elixir {} ; elixir extra
             ; For tree-sitter
             :tree-sitter {}}
  :fs/symlink-folder {"~/.config" "./.config"}}

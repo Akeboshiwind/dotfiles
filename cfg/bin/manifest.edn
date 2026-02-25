@@ -10,5 +10,6 @@
             :nmap {}
             :imagemagick {}
             :ghostscript {} ; PDF manipulation
-            :watch {}}
+            :watch {}
+            :yt-dlp {}}
  :fs/symlink-folder {"~/bin" "./bin"}}

@@ -1,6 +1,7 @@
 {:pkg/brew {:git {:dep/provides #{:git}}
             :git-lfs {}
             :lazygit {}
-            :gh {}}
+            :gh {}
+            :git-crypt {}}
  :fs/symlink {"~/.gitconfig" "./.gitconfig"
               "~/Library/Application Support/lazygit/config.yml" "./lazygit.yml"}}
