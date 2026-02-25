@@ -3,7 +3,10 @@
             :quitter {}
             :rectangle-pro {}
             :music-decoy {}
-            :spotify {}}
+            :spotify {}
+            :notion {}
+            :macwhisper {}
+            :google-drive {}}
 
  :pkg/mas {;"OmniFocus 4" 1542143627
            ;"Sofa" 1276554886
