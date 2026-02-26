@@ -1,0 +1,3 @@
+{:paths ["src"]
+ :deps {}
+ :bbin/bin {cc {:main-opts ["-m" "cc.main"]}}}

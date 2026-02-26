@@ -1,3 +1,0 @@
-{:paths ["src"]
- :deps {}
- :bbin/bin {code {:main-opts ["-m" "code.main"]}}}

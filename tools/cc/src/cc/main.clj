@@ -1,4 +1,4 @@
-(ns code.main
+(ns cc.main
   (:require [babashka.process :as p]
             [clojure.string :as str]
             [babashka.fs :as fs]))
@@ -47,7 +47,7 @@
       (sanitize cwd))))
 
 (defn tmux-config-path []
-  (let [candidates [(str (fs/home) "/dotfiles/tools/code/tmux.conf")]]
+  (let [candidates [(str (fs/home) "/dotfiles/tools/cc/tmux.conf")]]
     (first (filter fs/exists? candidates))))
 
 (defn session-exists? [name]
@@ -120,7 +120,7 @@
                    true (into ["new-session" "-s" name claude-cmd])))
         ;; tmux has exited — back in the caller's terminal
         (println)
-        (println (str "To resume: code --resume " session-id))))))
+        (println (str "To resume: cc --resume " session-id))))))
 
 (defn -main [& args]
   (if (= (first args) "ls")
