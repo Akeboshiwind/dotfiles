@@ -52,7 +52,7 @@
 
 (defn session-exists? [name]
   (zero? (:exit (p/shell {:out :string :err :string :continue true}
-                         "tmux" "has-session" "-t" name))))
+                         "tmux" "has-session" "-t" (str "=" name)))))
 
 (defn tmux-sessions
   "Returns a list of tmux session lines, or nil if tmux server isn't running."
@@ -113,7 +113,7 @@
     (if (session-exists? name)
       (do
         (println (str "Attaching to existing session: " name))
-        (p/exec "tmux" "attach-session" "-t" name))
+        (p/exec "tmux" "attach-session" "-t" (str "=" name)))
       (do
         (p/shell (cond-> ["tmux"]
                    conf (into ["-f" conf])
