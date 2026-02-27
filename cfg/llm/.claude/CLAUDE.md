@@ -26,6 +26,10 @@ Oliver prefers a deliberate, two-phase approach:
 - If something unexpected happens or goes wrong: **pause immediately** and return to planning mode
 - Don't try to "fix forward" without discussing first
 
+### Mode transitions
+- When discussing review findings or design options, stay in discussion mode until explicitly told to implement. Don't make code changes while still talking through options.
+- Even mid-implementation, if the conversation shifts to exploring alternatives or trade-offs, return to planning mode. Don't assume implementation mode persists.
+
 ### The key principle
 Always talk first, act second. When in doubt, stay in planning mode.
 
