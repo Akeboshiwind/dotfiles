@@ -1,12 +1,19 @@
-{:plan [;; >> Bootstrap (provides :pkg/brew, :pkg/mise, :pkg/mas, :pkg/bbin)
+{:plan [;; >> Bootstrap (provides :pkg/brew, :pkg/mise, :pkg/mas, :pkg/bbin, :brew/service)
         {:pkg/script
          {:homebrew
           {:path "scripts/install-homebrew.sh"
            :dep/provides #{:pkg/brew :brew/service}}}
          :pkg/brew
          {:mise {:dep/provides #{:pkg/mise}}
-          :mas {:dep/provides #{:pkg/mas}}
-          "babashka/brew/bbin" {:dep/provides #{:pkg/bbin}}}}
+          :mas {:dep/provides #{:mas/installed}}
+          "babashka/brew/bbin" {:dep/provides #{:pkg/bbin}}}
+         :assert
+         {:app-store-signed-in
+          {:src "mas account 2>/dev/null | grep -q @"
+           :message "Not signed in to the App Store"
+           :instructions ["Open App Store.app and sign in with your Apple ID"]
+           :dep/requires #{:mas/installed}
+           :dep/provides #{:pkg/mas}}}}
 
         ;; >> OSX
         :macos
