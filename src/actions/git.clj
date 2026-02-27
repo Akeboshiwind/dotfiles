@@ -30,7 +30,8 @@
                  {:keys [exit err]} (if exists?
                                       (update! opts expanded ref)
                                       (clone! opts url expanded ref))]
-             {:label (str (name target) (when ref (str " @ " ref)))
+             {:action [:git/clone target]
+              :label (str (name target) (when ref (str " @ " ref)))
               :status (if (zero? exit) :ok :error)
               :message err}))
          items)))

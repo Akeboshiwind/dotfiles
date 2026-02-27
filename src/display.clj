@@ -18,7 +18,7 @@
 ;; Section formatting
 ;; =============================================================================
 
-(defn- render-result [{:keys [label status message]}]
+(defn render-result [{:keys [label status message]}]
   (let [icon (case status
                :ok (green "✓")
                :skip (gray "·")
@@ -31,8 +31,11 @@
 
 (defn section
   "Print a section with title and render results.
-   Results are maps with :label, :status (:ok/:skip/:error), and optional :message"
+   Results are maps with :label, :status (:ok/:skip/:error), and optional :message.
+   Returns the results as a vector."
   [title results]
   (println title)
-  (doseq [result results]
-    (render-result result)))
+  (reduce (fn [acc result]
+            (render-result result)
+            (conj acc result))
+          [] results))

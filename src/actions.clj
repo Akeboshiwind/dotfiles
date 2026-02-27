@@ -47,18 +47,20 @@
 
 (defn simple-install
   "Helper for actions that follow the common pattern: run a command for each item.
+   - action-type: the action type keyword (e.g. :pkg/brew), used for :action in results
    - opts: execution options (passed to exec!, includes :dry-run)
    - title: section title
    - label-fn: (fn [key item-opts] -> string)
    - cmd-fn: (fn [key item-opts] -> command vector)
    - items: map of {key item-opts}"
-  ([opts title cmd-fn items]
-   (simple-install opts title (fn [k _] (name k)) cmd-fn items))
-  ([opts title label-fn cmd-fn items]
+  ([action-type opts title cmd-fn items]
+   (simple-install action-type opts title (fn [k _] (name k)) cmd-fn items))
+  ([action-type opts title label-fn cmd-fn items]
    (d/section title
      (map (fn [[k item-opts]]
             (let [{:keys [exit err]} (exec! opts (cmd-fn k item-opts))]
-              {:label (label-fn k item-opts)
+              {:action [action-type k]
+               :label (label-fn k item-opts)
                :status (if (zero? exit) :ok :error)
                :message err}))
           items))))
@@ -112,3 +114,35 @@
        keys
        (remove #{:default})
        set))
+
+;; =============================================================================
+;; Result validation
+;; =============================================================================
+
+(defn validate-result!
+  "Validate a single result map from install!. Throws with a specific message on failure."
+  [action-type result]
+  (when-not (map? result)
+    (throw (ex-info (str "install! for " action-type " returned non-map result: " (pr-str result))
+                    {:action-type action-type :result result})))
+  (when-not (string? (:label result))
+    (throw (ex-info (str "install! for " action-type " result missing string :label, got: " (pr-str (:label result)))
+                    {:action-type action-type :result result})))
+  (when-not (#{:ok :skip :error} (:status result))
+    (throw (ex-info (str "install! for " action-type " result has invalid :status: " (pr-str (:status result))
+                         ", expected :ok, :skip, or :error")
+                    {:action-type action-type :result result})))
+  (let [action (:action result)]
+    (when-not (vector? action)
+      (throw (ex-info (str "install! for " action-type " result missing :action vector, got: " (pr-str action))
+                      {:action-type action-type :result result})))
+    (when-not (= action-type (first action))
+      (throw (ex-info (str "install! for " action-type " result :action type mismatch: " (first action))
+                      {:action-type action-type :result result})))))
+
+(defn do-install!
+  "Call install! and validate each result. Single call site for executing actions."
+  [action-type opts items]
+  (let [results (install! action-type opts items)]
+    (run! #(validate-result! action-type %) results)
+    results))

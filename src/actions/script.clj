@@ -20,7 +20,8 @@
                        :else (throw (ex-info "Script must have :path or :src"
                                              {:script script-name})))
                  {:keys [exit err]} (a/exec! (cond-> opts env (assoc :env env)) cmd)]
-             {:label (name script-name)
+             {:action [:pkg/script script-name]
+              :label (name script-name)
               :status (if (zero? exit) :ok :error)
               :message err}))
          items)))

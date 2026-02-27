@@ -7,14 +7,14 @@
 (defmethod a/requires :claude/plugin [_] :claude/plugin)
 (defmethod a/requires :claude/mcp [_] :claude/mcp)
 
-(defmethod a/install! :claude/marketplace [_ opts items]
-  (a/simple-install opts "Adding Claude marketplaces"
+(defmethod a/install! :claude/marketplace [type opts items]
+  (a/simple-install type opts "Adding Claude marketplaces"
     (fn [marketplace-name {:keys [source]}]
       ["claude" "plugin" "marketplace" "add" (or source (name marketplace-name))])
     items))
 
-(defmethod a/install! :claude/plugin [_ opts items]
-  (a/simple-install opts "Installing Claude plugins"
+(defmethod a/install! :claude/plugin [type opts items]
+  (a/simple-install type opts "Installing Claude plugins"
     (fn [plugin _item-opts]
       ["claude" "plugin" "install" (name plugin)])
     items))
@@ -35,11 +35,13 @@
           remove-failed? (and (not (zero? remove-exit))
                               (not (str/includes? (or remove-err "") "No such server")))]
       (if remove-failed?
-        {:label name-str
+        {:action [:claude/mcp server-name]
+         :label name-str
          :status :error
          :message remove-err}
         (let [{:keys [exit err]} (a/exec! opts add-cmd)]
-          {:label name-str
+          {:action [:claude/mcp server-name]
+           :label name-str
            :status (if (zero? exit) :ok :error)
            :message err})))))
 

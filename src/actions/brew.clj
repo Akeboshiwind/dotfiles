@@ -4,8 +4,8 @@
 (defmethod a/requires :pkg/brew [_] :pkg/brew)
 (defmethod a/requires :brew/service [_] :brew/service)
 
-(defmethod a/install! :pkg/brew [_ opts items]
-  (a/simple-install opts "Installing brew packages"
+(defmethod a/install! :pkg/brew [type opts items]
+  (a/simple-install type opts "Installing brew packages"
     (fn [pkg {:keys [head cask]}]
       (cond-> ["brew" "install"]
         cask (conj "--cask")
@@ -13,8 +13,8 @@
         head (conj "--HEAD")))
     items))
 
-(defmethod a/install! :brew/service [_ opts items]
-  (a/simple-install opts "Starting brew services"
+(defmethod a/install! :brew/service [type opts items]
+  (a/simple-install type opts "Starting brew services"
     (fn [svc {:keys [restart sudo]}]
       (let [cmd (if restart
                   ["brew" "services" "restart" (name svc)]

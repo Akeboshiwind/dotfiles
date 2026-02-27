@@ -14,20 +14,20 @@
         target-path (.toPath target-file)]
     (cond
       (not (fs/exists? target-file {:nofollow-links true}))
-      {:label target-str :status :skip :message "not found"}
+      {:action [:fs/unlink target-str] :label target-str :status :skip :message "not found"}
 
       (not (Files/isSymbolicLink target-path))
-      {:label target-str :status :error :message "not a symlink"}
+      {:action [:fs/unlink target-str] :label target-str :status :error :message "not a symlink"}
 
       ;; Strict check - see note in link-one for lenient alternative
       (not= (Files/readSymbolicLink target-path)
             (.toPath (io/file expected-source)))
-      {:label target-str :status :error :message "points elsewhere"}
+      {:action [:fs/unlink target-str] :label target-str :status :error :message "points elsewhere"}
 
       :else
       (do
         (fs/delete target-file)
-        {:label target-str :status :ok :message "removed"}))))
+        {:action [:fs/unlink target-str] :label target-str :status :ok :message "removed"}))))
 
 (defn- link-one [opts target-str source-str]
   (let [target (io/file (u/expand-tilde target-str))
@@ -41,11 +41,11 @@
       (and (fs/exists? target {:nofollow-links true})
            (Files/isSymbolicLink target-path)
            (= (Files/readSymbolicLink target-path) (.toPath source)))
-      {:label target-str :status :ok}
+      {:action [:fs/symlink target-str] :label target-str :status :ok}
 
       ;; Something exists at target (file, dir, or wrong/broken symlink)
       (fs/exists? target {:nofollow-links true})
-      {:label target-str :status :error :message "exists but wrong"}
+      {:action [:fs/symlink target-str] :label target-str :status :error :message "exists but wrong"}
 
       ;; Nothing exists, create symlink
       :else
@@ -54,8 +54,8 @@
           (fs/create-dirs parent))
         (let [{:keys [exit]} (a/exec! opts ["ln" "-s" (.getAbsolutePath source) (.getAbsolutePath target)])]
           (if (zero? exit)
-            {:label target-str :status :ok}
-            {:label target-str :status :error}))))))
+            {:action [:fs/symlink target-str] :label target-str :status :ok}
+            {:action [:fs/symlink target-str] :label target-str :status :error}))))))
 
 (defmethod a/install! :fs/unlink [_ _opts items]
   (when (seq items)
