@@ -18,7 +18,7 @@
 ;; Section formatting
 ;; =============================================================================
 
-(defn render-result [{:keys [label status message]}]
+(defn render-result [{:keys [label status message detail]}]
   (let [icon (case status
                :ok (green "✓")
                :skip (gray "·")
@@ -27,7 +27,10 @@
               :ok (if message (str label " " (gray message)) label)
               :skip (gray (str label " " (or message "skipped")))
               :error (if message (str label " " (red message)) label))]
-    (println " " icon msg)))
+    (println " " icon msg)
+    (when (seq detail)
+      (doseq [line detail]
+        (println "   " (gray line))))))
 
 (defn section
   "Print a section with title and render results.

@@ -12,7 +12,8 @@
             [actions.claude]
             [actions.osx]
             [actions.symlink]
-            [actions.git]))
+            [actions.git]
+            [actions.assert]))
 
 (defn validate-plan
   "Validate all actions in plan. Returns seq of all errors, or nil if valid."
