@@ -29,7 +29,7 @@
     (do
       (println prefix (d/gray (str/join " " args)))
       {:exit 0 :err nil})
-    (let [proc (process/process args (cond-> {:err :string}
+    (let [proc (process/process args (cond-> {:err :string :in :inherit}
                                        env (assoc :extra-env env)))
           out-future (future (prefix-print prefix (:out proc)))
           result @proc]
