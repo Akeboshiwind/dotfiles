@@ -93,6 +93,14 @@
 (defmethod status :default [type items _ctx]
   (mapv (fn [[k _]] {:label (name k) :state :unknown :action [type k]}) items))
 
+(defmulti orphans
+  "Query live system and compare against declared items to find orphans.
+   Returns a plan fragment to merge (e.g. {:pkg/brew-uninstall {:wget {} ...}}), or nil.
+   Default returns nil (no orphan detection for this action type)."
+  (fn [type _declared] type))
+
+(defmethod orphans :default [_ _] nil)
+
 (defmulti install!
   "Install items of a given action type.
    Dispatches on action type keyword (e.g. :pkg/brew).

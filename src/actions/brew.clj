@@ -2,6 +2,7 @@
   (:require [actions :as a]
             [babashka.process :as process]
             [cheshire.core :as json]
+            [clojure.set :as set]
             [clojure.string :as str]))
 
 (defmethod a/requires :pkg/brew [_] :pkg/brew)
@@ -39,6 +40,104 @@
                      :out
                      (json/parse-string true))]
     (into {} (map (fn [s] [(:name s) s])) services)))
+
+(defn leaves-set
+  "Return #{name ...} of explicitly installed formulae (not deps).
+   Uses `brew leaves --installed-on-request` to exclude transitive dependencies."
+  []
+  (->> (process/shell {:out :string :err :string} "brew" "leaves" "--installed-on-request")
+       :out
+       str/split-lines
+       (remove str/blank?)
+       set))
+
+(defn installed-set-full
+  "Return #{name ...} of installed formulae with full tap-qualified names."
+  [kind]
+  (let [flag (if (= kind :cask) "--cask" "--formula")]
+    (->> (process/shell {:out :string :err :string} "brew" "list" flag "--full-name" "-1")
+         :out
+         str/split-lines
+         (remove str/blank?)
+         set)))
+
+(defn parse-deps-graph
+  "Parse output of `brew deps --installed` into {pkg #{dep1 dep2 ...}}.
+   Each line is `name: dep1 dep2 ...`."
+  [output]
+  (if (str/blank? output)
+    {}
+    (->> (str/split-lines output)
+         (map (fn [line]
+                (let [[pkg deps-str] (str/split line #":\s*" 2)]
+                  [pkg (if (str/blank? deps-str)
+                         #{}
+                         (set (str/split deps-str #"\s+")))])))
+         (into {}))))
+
+(defn deps-graph
+  "Return {pkg #{dep1 dep2 ...}} from `brew deps --installed`."
+  []
+  (->> (process/shell {:out :string :err :string} "brew" "deps" "--installed")
+       :out
+       parse-deps-graph))
+
+(defn transitive-deps-of
+  "Given a set of declared package names and a deps graph,
+   compute the full transitive closure of their dependencies (excluding the declared set itself)."
+  [declared graph]
+  (loop [seen #{}
+         queue (vec declared)]
+    (if (empty? queue)
+      (set/difference seen declared)
+      (let [pkg (peek queue)
+            deps (get graph pkg #{})
+            new-deps (remove seen deps)]
+        (recur (into seen deps)
+               (into (pop queue) new-deps))))))
+
+(defn- short-name
+  "Extract short name from tap-qualified brew name.
+   e.g. 'babashka/brew/bbin' -> 'bbin', 'neovim' -> 'neovim'"
+  [full-name]
+  (last (str/split full-name #"/")))
+
+(defn- declared-names
+  "Extract the set of names from declared :pkg/brew items.
+   Returns both the raw name and its short form for tap-qualified names."
+  [brew-items]
+  (reduce (fn [s [k _]]
+            (let [n (name k)]
+              (-> s (conj n) (conj (short-name n)))))
+          #{}
+          brew-items))
+
+(defn- declared?
+  "Check if an installed package name matches any declared name."
+  [declared-set installed-name]
+  (or (contains? declared-set installed-name)
+      (contains? declared-set (short-name installed-name))))
+
+(defn orphans
+  "Find brew formulae/casks that are leaves (explicitly installed) but not declared.
+   installed-state is {:formulae #{...} :casks #{...}}.
+   declared-items is the :pkg/brew map from the plan."
+  [{:keys [formulae casks]} declared-items]
+  (let [declared (declared-names declared-items)
+        formula-orphans (->> formulae
+                             (remove (fn [f] (declared? declared f)))
+                             (map (fn [f] [(keyword f) {}]))
+                             (into {}))
+        cask-orphans (->> casks
+                          (remove (fn [c] (declared? declared c)))
+                          (map (fn [c] [(keyword c) {}]))
+                          (into {}))]
+    (merge formula-orphans cask-orphans)))
+
+(defmethod a/orphans :pkg/brew [_ declared]
+  (let [result (orphans {:formulae (leaves-set) :casks (installed-set-full :cask)} declared)]
+    (when (seq result)
+      {:pkg/brew-uninstall result})))
 
 (defmethod a/status :pkg/brew [type items ctx]
   (let [formulae @(:brew/formulae ctx)
@@ -84,6 +183,25 @@
         true (conj (name pkg))
         head (conj "--HEAD")))
     items))
+
+;; -- Uninstall orphans
+
+(defmethod a/requires :pkg/brew-uninstall [_] nil)
+
+(defmethod a/status :pkg/brew-uninstall [type items _ctx]
+  (mapv (fn [[k _]]
+          {:label (str (if (keyword? k) (name k) k))
+           :state :orphan
+           :action [type k]})
+        items))
+
+(defmethod a/install! :pkg/brew-uninstall [type opts items]
+  (let [results (a/simple-install type opts "Uninstalling brew orphans"
+                  (fn [pkg _] ["brew" "uninstall" (name pkg)])
+                  items)]
+    (when-not (:dry-run opts)
+      (a/exec! opts ["brew" "autoremove"]))
+    results))
 
 (defmethod a/install! :brew/service [type opts items]
   (a/simple-install type opts "Starting brew services"

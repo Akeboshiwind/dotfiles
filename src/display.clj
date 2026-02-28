@@ -55,6 +55,7 @@
    :missing   {:icon "✗" :color-fn red}
    :outdated  {:icon "↑" :color-fn yellow}
    :wrong     {:icon "!" :color-fn red}
+   :orphan    {:icon "⌫" :color-fn yellow}
    :unknown   {:icon "?" :color-fn gray}})
 
 (defn render-plan-result [{:keys [label state detail]}]
@@ -70,6 +71,7 @@
                         (color-fn (str n " " (name state)))))
                     [[:missing (plan-icons :missing)]
                      [:outdated (plan-icons :outdated)]
+                     [:orphan (plan-icons :orphan)]
                      [:installed (plan-icons :installed)]
                      [:wrong (plan-icons :wrong)]
                      [:unknown (plan-icons :unknown)]])]

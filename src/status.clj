@@ -35,7 +35,7 @@
                             (let [action-type (ffirst group)
                                   items (into {} (map (fn [[_ k]] [k (get-in plan [action-type k])]) group))]
                               [action-type items]))))
-        actionable? #{:missing :outdated :wrong}
+        actionable? #{:missing :outdated :wrong :orphan}
         all-results (mapcat (fn [[action-type items]]
                               (let [results (a/status action-type items ctx)
                                     changes (filter #(actionable? (:state %)) results)]

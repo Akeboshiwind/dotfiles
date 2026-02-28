@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
             [clojure.set :as set]
+            [actions :as a]
             [graph :as g]
             [utils :as u]))
 
@@ -118,12 +119,22 @@
     {:unlinks (select-keys cached stale-keys)
      :symlinks current}))
 
+;; >> Calculate package orphans
+
+(defn calculate-orphans
+  "Query live state and compute orphan uninstall actions for each action type in the plan.
+   Each a/orphans impl returns a plan fragment (e.g. {:pkg/brew-uninstall {...}}) or nil."
+  [plan]
+  (->> (keys plan)
+       (keep #(a/orphans % (get plan % {})))
+       (apply merge)))
+
 ;; >> Plan builder
 
 (defn build!
   "Build plan from entries. Takes [{:step map :source string} ...].
    Returns {:plan map :order [[type key] ...] :symlinks map :errors [...]}
-   Impure: reads filesystem for path canonicalization and directory listing."
+   Impure: reads filesystem for path canonicalization, directory listing, and package queries."
   [entries cache]
   (let [processed (->> entries
                        resolve-symlink-paths!
@@ -131,8 +142,10 @@
         duplicate-errors (find-duplicate-keys processed)
         merged (merge-steps processed)
         {:keys [unlinks symlinks]} (calculate-unlinks cache merged)
+        orphans (calculate-orphans merged)
         plan (cond-> merged
-               (seq unlinks) (assoc :fs/unlink unlinks))]
+               (seq unlinks) (assoc :fs/unlink unlinks)
+               (seq orphans) (merge orphans))]
     ;; Validate the dependency graph
     (when-let [errors (g/validate plan)]
       (throw (ex-info "Invalid dependency graph" errors)))
