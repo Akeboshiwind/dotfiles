@@ -29,33 +29,51 @@
         (fs/delete target-file)
         {:action [:fs/unlink target-str] :label target-str :status :ok :message "removed"}))))
 
-(defn- link-one [opts target-str source-str]
+(defn- check-link
+  "Read-only check of symlink state. Returns :installed, :wrong, or :missing."
+  [target-str source-str]
   (let [target (io/file (u/expand-tilde target-str))
         source (io/file source-str)
         target-path (.toPath target)]
     (cond
-      ;; Symlink exists and points to correct source
-      ;; Note: This is a strict check - the symlink must literally match the
-      ;; expected path. A relative symlink resolving to the same file would
-      ;; fail. For lenient matching, compare canonical paths instead.
       (and (fs/exists? target {:nofollow-links true})
            (Files/isSymbolicLink target-path)
            (= (Files/readSymbolicLink target-path) (.toPath source)))
+      :installed
+
+      (fs/exists? target {:nofollow-links true})
+      :wrong
+
+      :else
+      :missing)))
+
+(defn- link-one [opts target-str source-str]
+  (let [state (check-link target-str source-str)]
+    (case state
+      :installed
       {:action [:fs/symlink target-str] :label target-str :status :ok}
 
-      ;; Something exists at target (file, dir, or wrong/broken symlink)
-      (fs/exists? target {:nofollow-links true})
+      :wrong
       {:action [:fs/symlink target-str] :label target-str :status :error :message "exists but wrong"}
 
-      ;; Nothing exists, create symlink
-      :else
-      (do
+      :missing
+      (let [target (io/file (u/expand-tilde target-str))
+            source (io/file source-str)]
         (when-let [parent (.getParentFile target)]
           (fs/create-dirs parent))
         (let [{:keys [exit]} (a/exec! opts ["ln" "-s" (.getAbsolutePath source) (.getAbsolutePath target)])]
           (if (zero? exit)
             {:action [:fs/symlink target-str] :label target-str :status :ok}
             {:action [:fs/symlink target-str] :label target-str :status :error}))))))
+
+(defmethod a/status :fs/symlink [type items]
+  (mapv (fn [[target source]]
+          (let [state (check-link target source)]
+            {:label target
+             :action [type target]
+             :state state
+             :detail (when (= state :wrong) "wrong target")}))
+        items))
 
 (defmethod a/install! :fs/unlink [_ _opts items]
   (when (seq items)

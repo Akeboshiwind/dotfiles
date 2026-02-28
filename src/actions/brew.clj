@@ -1,8 +1,72 @@
 (ns actions.brew
-  (:require [actions :as a]))
+  (:require [actions :as a]
+            [babashka.process :as process]
+            [cheshire.core :as json]
+            [clojure.string :as str]))
 
 (defmethod a/requires :pkg/brew [_] :pkg/brew)
 (defmethod a/requires :brew/service [_] :brew/service)
+
+(defn- brew-installed-set
+  "Return #{name ...} of installed formulae or casks."
+  [kind]
+  (let [flag (if (= kind :cask) "--cask" "--formula")]
+    (->> (process/shell {:out :string :err :string} "brew" "list" flag "-1")
+         :out
+         str/split-lines
+         (remove str/blank?)
+         set)))
+
+(defn- brew-outdated-map
+  "Return {name {:installed v1 :current v2}} from brew outdated."
+  []
+  (let [raw (-> (process/shell {:out :string :err :string} "brew" "outdated" "--json=v2")
+                :out
+                (json/parse-string true))
+        parse (fn [items]
+                (into {}
+                  (map (fn [{:keys [name installed_versions current_version]}]
+                         [name {:installed (first installed_versions)
+                                :current current_version}]))
+                  items))]
+    (merge (parse (:formulae raw))
+           (parse (:casks raw)))))
+
+(defmethod a/status :pkg/brew [type items]
+  (let [formulae (brew-installed-set :formula)
+        casks (brew-installed-set :cask)
+        outdated (brew-outdated-map)]
+    (mapv (fn [[k opts]]
+            (let [pkg-name (name k)
+                  cask? (:cask opts)
+                  installed? (contains? (if cask? casks formulae) pkg-name)
+                  out-info (get outdated pkg-name)]
+              {:label pkg-name
+               :action [type k]
+               :state (cond
+                        out-info :outdated
+                        installed? :installed
+                        :else :missing)
+               :detail (when out-info
+                         (str "(" (:installed out-info) " → " (:current out-info) ")"))}))
+          items)))
+
+(defmethod a/status :brew/service [type items]
+  (let [services (-> (process/shell {:out :string} "brew" "services" "list" "--json")
+                     :out
+                     (json/parse-string true))
+        by-name (into {} (map (fn [s] [(:name s) s])) services)]
+    (mapv (fn [[k _opts]]
+            (let [svc-name (name k)
+                  svc (get by-name svc-name)]
+              {:label svc-name
+               :action [type k]
+               :state (cond
+                        (nil? svc) :missing
+                        (= "started" (:status svc)) :installed
+                        :else :missing)
+               :detail (when svc (str "(" (:status svc) ")"))}))
+          items)))
 
 (defmethod a/install! :pkg/brew [type opts items]
   (a/simple-install type opts "Installing brew packages"

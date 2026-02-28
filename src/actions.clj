@@ -84,6 +84,14 @@
 
 (defmethod validate :default [_ _] nil)
 
+(defmulti status
+  "Check installed state of items. No side effects.
+   Returns seq of {:label str :state kw :detail str? :action [type key]}"
+  (fn [type _items] type))
+
+(defmethod status :default [type items]
+  (mapv (fn [[k _]] {:label (name k) :state :unknown :action [type k]}) items))
+
 (defmulti install!
   "Install items of a given action type.
    Dispatches on action type keyword (e.g. :pkg/brew).
