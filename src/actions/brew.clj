@@ -126,11 +126,11 @@
   (let [declared (declared-names declared-items)
         formula-orphans (->> formulae
                              (remove (fn [f] (declared? declared f)))
-                             (map (fn [f] [(keyword f) {}]))
+                             (map (fn [f] [f {}]))
                              (into {}))
         cask-orphans (->> casks
                           (remove (fn [c] (declared? declared c)))
-                          (map (fn [c] [(keyword c) {}]))
+                          (map (fn [c] [c {}]))
                           (into {}))]
     (merge formula-orphans cask-orphans)))
 
@@ -190,14 +190,14 @@
 
 (defmethod a/status :pkg/brew-uninstall [type items _ctx]
   (mapv (fn [[k _]]
-          {:label (str (if (keyword? k) (name k) k))
+          {:label (if (keyword? k) (name k) (str k))
            :state :orphan
            :action [type k]})
         items))
 
 (defmethod a/install! :pkg/brew-uninstall [type opts items]
   (let [results (a/simple-install type opts "Uninstalling brew orphans"
-                  (fn [pkg _] ["brew" "uninstall" (name pkg)])
+                  (fn [pkg _] ["brew" "uninstall" (if (keyword? pkg) (name pkg) (str pkg))])
                   items)]
     (when-not (:dry-run opts)
       (a/exec! opts ["brew" "autoremove"]))

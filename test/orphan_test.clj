@@ -63,7 +63,7 @@
   (testing "formula not in manifest is orphaned"
     (let [result (brew/orphans {:formulae #{"neovim" "ripgrep" "wget"} :casks #{}}
                                {:neovim {} :ripgrep {}})]
-      (is (= {:wget {}} result))))
+      (is (= {"wget" {}} result))))
 
   (testing "only leaves are candidates, so no false positives"
     (let [result (brew/orphans {:formulae #{"neovim"} :casks #{}}
@@ -73,7 +73,7 @@
   (testing "cask not in manifest is orphaned"
     (let [result (brew/orphans {:formulae #{} :casks #{"firefox" "slack"}}
                                {:firefox {:cask true}})]
-      (is (= {:slack {}} result))))
+      (is (= {"slack" {}} result))))
 
   (testing "no orphans returns empty"
     (let [result (brew/orphans {:formulae #{"neovim" "ripgrep"} :casks #{}}
@@ -93,7 +93,7 @@
   (testing "tap-qualified: mix of string and keyword keys"
     (let [result (brew/orphans {:formulae #{"babashka/brew/bbin" "neovim" "wget"} :casks #{}}
                                {"babashka/brew/bbin" {} :neovim {}})]
-      (is (= {:wget {}} result)))))
+      (is (= {"wget" {}} result)))))
 
 (deftest bbin-orphans-test
   (testing "script not in manifest is orphaned"
@@ -131,7 +131,7 @@
   (testing ":pkg/brew-uninstall runs brew uninstall for each item plus autoremove"
     (let [calls (atom [])]
       (with-redefs [a/exec! (mock-exec! calls)]
-        (a/install! :pkg/brew-uninstall {} {:wget {} :curl {}}))
+        (a/install! :pkg/brew-uninstall {} {"wget" {} "curl" {}}))
       (is (some #(= ["brew" "uninstall" "wget"] %) @calls))
       (is (some #(= ["brew" "uninstall" "curl"] %) @calls))
       (is (some #(= ["brew" "autoremove"] %) @calls))))
