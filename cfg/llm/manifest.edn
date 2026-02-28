@@ -6,8 +6,7 @@
             :codex {}
             ; Other
             :llm {}
-            :repomix {}
-            "steveyegge/beads/bd" {}}
+            :repomix {}}
 
  ;; Using fork with fix for https://github.com/slopus/happy-cli/issues/124
  :pkg/npm {"https://github.com/ake-forks/happy-cli/releases/download/v0.13.0-patched/happy-coder-0.13.0.tgz" {}}
