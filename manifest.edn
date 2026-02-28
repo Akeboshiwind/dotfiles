@@ -9,9 +9,9 @@
           "babashka/brew/bbin" {:dep/provides #{:pkg/bbin}}}
          :assert
          {:app-store-signed-in
-          {:src "mas account 2>/dev/null | grep -q @"
-           :message "Not signed in to the App Store"
-           :instructions ["Open App Store.app and sign in with your Apple ID"]
+          {:src "defaults read MobileMeAccounts Accounts 2>/dev/null | grep -q 'LoggedIn = 1'"
+           :message "Not signed in to Apple ID (required for App Store)"
+           :instructions ["Open System Settings > Apple ID and sign in"]
            :dep/requires #{:mas/installed}
            :dep/provides #{:pkg/mas}}}}
 
