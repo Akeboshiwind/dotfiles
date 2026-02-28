@@ -46,8 +46,8 @@
         outdated @(:brew/outdated ctx)]
     (mapv (fn [[k opts]]
             (let [pkg-name (name k)
-                  cask? (:cask opts)
-                  installed? (contains? (if cask? casks formulae) pkg-name)
+                  installed? (or (contains? formulae pkg-name)
+                                 (contains? casks pkg-name))
                   out-info (get outdated pkg-name)]
               {:label pkg-name
                :action [type k]
