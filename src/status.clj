@@ -35,11 +35,14 @@
                             (let [action-type (ffirst group)
                                   items (into {} (map (fn [[_ k]] [k (get-in plan [action-type k])]) group))]
                               [action-type items]))))
+        actionable? #{:missing :outdated :wrong}
         all-results (mapcat (fn [[action-type items]]
-                              (println (subs (str action-type) 1))
-                              (let [results (a/status action-type items ctx)]
-                                (doseq [r results]
-                                  (d/render-plan-result r))
+                              (let [results (a/status action-type items ctx)
+                                    changes (filter #(actionable? (:state %)) results)]
+                                (when (seq changes)
+                                  (println (subs (str action-type) 1))
+                                  (doseq [r changes]
+                                    (d/render-plan-result r)))
                                 results))
                             batches)
         freq (frequencies (map :state all-results))]
