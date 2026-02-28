@@ -46,9 +46,12 @@
         outdated @(:brew/outdated ctx)]
     (mapv (fn [[k opts]]
             (let [pkg-name (name k)
-                  installed? (or (contains? formulae pkg-name)
-                                 (contains? casks pkg-name))
-                  out-info (get outdated pkg-name)]
+                  ;; Strip tap prefix (e.g. "babashka/brew/bbin" → "bbin")
+                  short-name (last (str/split pkg-name #"/"))
+                  installed? (or (contains? formulae short-name)
+                                 (contains? casks short-name))
+                  out-info (or (get outdated short-name)
+                               (get outdated pkg-name))]
               {:label pkg-name
                :action [type k]
                :state (cond
