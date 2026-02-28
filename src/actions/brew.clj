@@ -7,7 +7,7 @@
 (defmethod a/requires :pkg/brew [_] :pkg/brew)
 (defmethod a/requires :brew/service [_] :brew/service)
 
-(defn- brew-installed-set
+(defn installed-set
   "Return #{name ...} of installed formulae or casks."
   [kind]
   (let [flag (if (= kind :cask) "--cask" "--formula")]
@@ -17,7 +17,7 @@
          (remove str/blank?)
          set)))
 
-(defn- brew-outdated-map
+(defn outdated-map
   "Return {name {:installed v1 :current v2}} from brew outdated."
   []
   (let [raw (-> (process/shell {:out :string :err :string} "brew" "outdated" "--json=v2")
@@ -32,10 +32,18 @@
     (merge (parse (:formulae raw))
            (parse (:casks raw)))))
 
-(defmethod a/status :pkg/brew [type items]
-  (let [formulae (brew-installed-set :formula)
-        casks (brew-installed-set :cask)
-        outdated (brew-outdated-map)]
+(defn services-map
+  "Return {name service-info} from brew services list."
+  []
+  (let [services (-> (process/shell {:out :string :err :string} "brew" "services" "list" "--json")
+                     :out
+                     (json/parse-string true))]
+    (into {} (map (fn [s] [(:name s) s])) services)))
+
+(defmethod a/status :pkg/brew [type items ctx]
+  (let [formulae @(:brew/formulae ctx)
+        casks @(:brew/casks ctx)
+        outdated @(:brew/outdated ctx)]
     (mapv (fn [[k opts]]
             (let [pkg-name (name k)
                   cask? (:cask opts)
@@ -51,11 +59,8 @@
                          (str "(" (:installed out-info) " → " (:current out-info) ")"))}))
           items)))
 
-(defmethod a/status :brew/service [type items]
-  (let [services (-> (process/shell {:out :string} "brew" "services" "list" "--json")
-                     :out
-                     (json/parse-string true))
-        by-name (into {} (map (fn [s] [(:name s) s])) services)]
+(defmethod a/status :brew/service [type items ctx]
+  (let [by-name @(:brew/services ctx)]
     (mapv (fn [[k _opts]]
             (let [svc-name (name k)
                   svc (get by-name svc-name)]

@@ -1,10 +1,10 @@
 (ns status
   "Orchestrates --plan: shows what's installed, missing, outdated."
   (:require [actions :as a]
+            [actions.brew :as brew]
             [display :as d]
             ;; Load all action implementations
             [actions.script]
-            [actions.brew]
             [actions.mise]
             [actions.mas]
             [actions.bbin]
@@ -15,11 +15,21 @@
             [actions.git]
             [actions.assert]))
 
+(defn- build-ctx
+  "Build a map of delays for expensive shared data.
+   Each delay runs at most once, on first deref."
+  []
+  {:brew/formulae (delay (brew/installed-set :formula))
+   :brew/casks    (delay (brew/installed-set :cask))
+   :brew/outdated (delay (brew/outdated-map))
+   :brew/services (delay (brew/services-map))})
+
 (defn show-plan
   "Show the status of all actions in the plan.
    Groups consecutive same-type actions and renders their status."
   [{:keys [plan order]}]
-  (let [batches (->> order
+  (let [ctx (build-ctx)
+        batches (->> order
                      (partition-by first)
                      (map (fn [group]
                             (let [action-type (ffirst group)
@@ -27,7 +37,7 @@
                               [action-type items]))))
         all-results (mapcat (fn [[action-type items]]
                               (println (subs (str action-type) 1))
-                              (let [results (a/status action-type items)]
+                              (let [results (a/status action-type items ctx)]
                                 (doseq [r results]
                                   (d/render-plan-result r))
                                 results))

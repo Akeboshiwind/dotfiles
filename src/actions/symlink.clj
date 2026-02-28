@@ -66,7 +66,7 @@
             {:action [:fs/symlink target-str] :label target-str :status :ok}
             {:action [:fs/symlink target-str] :label target-str :status :error}))))))
 
-(defmethod a/status :fs/symlink [type items]
+(defmethod a/status :fs/symlink [type items _ctx]
   (mapv (fn [[target source]]
           (let [state (check-link target source)]
             {:label target

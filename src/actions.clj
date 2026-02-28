@@ -86,10 +86,11 @@
 
 (defmulti status
   "Check installed state of items. No side effects.
+   ctx is a map of delays for shared/expensive data (e.g. brew list results).
    Returns seq of {:label str :state kw :detail str? :action [type key]}"
-  (fn [type _items] type))
+  (fn [type _items _ctx] type))
 
-(defmethod status :default [type items]
+(defmethod status :default [type items _ctx]
   (mapv (fn [[k _]] {:label (name k) :state :unknown :action [type k]}) items))
 
 (defmulti install!
