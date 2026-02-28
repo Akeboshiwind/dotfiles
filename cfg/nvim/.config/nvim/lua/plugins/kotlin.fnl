@@ -1,6 +1,7 @@
 [; Requires building and installing kotlin adapter from source
  {1 :nvim-neotest/neotest
-  :dependencies [{1 :ake-forks/neotest-kotlin :branch "v2.0.0-backticks-fix"}]
+  :dependencies [;{1 :ake-forks/neotest-kotlin :branch "v2.0.0-backticks-fix"}
+                 {1 :codymikol/neotest-kotlin :branch "v2.0.0"}]
   :opts {:adapters {:neotest-kotlin {}}}}
 
  ; Use JetBrains' kotlin-lsp instead of fwcd/kotlin-language-server
