@@ -1,6 +1,5 @@
-{:pkg/brew {:neovim {:head true
-                      ; For installing LSPs with Mason
-                      :dep/requires #{[:pkg/mise :node]}}
+{:pkg/brew {:neovim {; For installing LSPs with Mason
+                     :dep/requires #{[:pkg/mise :node]}}
             ; For parinfer-rust in Clojure config
             :rust {}
             ; For fuzzy searching
