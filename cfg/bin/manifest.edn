@@ -11,5 +11,6 @@
             :imagemagick {}
             :ghostscript {} ; PDF manipulation
             :watch {}
-            :yt-dlp {}}
+            :yt-dlp {}
+            :dive {}}
  :fs/symlink-folder {"~/bin" "./bin"}}
