@@ -8,12 +8,9 @@
             :macwhisper {}
             :google-drive {}}
 
- :pkg/mas {;"OmniFocus 4" 1542143627
-           ;"Sofa" 1276554886
-           "Timelines" 1112433234
+ :pkg/mas {"Timelines" 1112433234
            "Bitwarden" 1352778147
            "Wipr 2" 1662217862
-           ;"Fantastical" 975937182
            "Data Jar" 1453273600
            "Collections Database" 1568395334
            "Save to Reader" 1640236961
