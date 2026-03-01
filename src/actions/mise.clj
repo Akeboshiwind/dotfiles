@@ -1,7 +1,8 @@
 (ns actions.mise
   (:require [actions :as a]
             [babashka.process :as process]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [outcome :as o]))
 
 (defmethod a/requires :pkg/mise [_] :pkg/mise)
 
@@ -28,6 +29,22 @@
   (let [result (orphans (installed-map) declared)]
     (when (seq result)
       {:pkg/mise-uninstall result})))
+
+(def ^:dynamic *installed-cache* (delay (installed-map)))
+
+(defmethod a/check :pkg/mise [_ key opts]
+  (if-not (:version opts)
+    (o/error "Version required")
+    (let [installed @*installed-cache*
+          tool-name (name key)
+          versions (get installed tool-name)]
+      (cond
+        (nil? versions) (o/drift :missing)
+        (contains? versions (:version opts)) o/satisfied
+        :else (o/drift :outdated)))))
+
+(defmethod a/check :pkg/mise-uninstall [_ key opts]
+  (o/drift :orphan))
 
 (defmethod a/validate :pkg/mise [_ items]
   (for [[tool opts] items

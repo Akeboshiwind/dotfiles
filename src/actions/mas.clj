@@ -1,7 +1,8 @@
 (ns actions.mas
   (:require [actions :as a]
             [babashka.process :as process]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [outcome :as o]))
 
 (defmethod a/requires :pkg/mas [_] :pkg/mas)
 
@@ -30,6 +31,18 @@
   (let [result (orphans (installed-map) declared)]
     (when (seq result)
       {:pkg/mas-uninstall result})))
+
+(def ^:dynamic *installed-cache* (delay (installed-map)))
+
+(defmethod a/check :pkg/mas [_ key opts]
+  (let [app-id (if (map? opts) (:id opts) opts)
+        installed @*installed-cache*]
+    (if (contains? installed app-id)
+      o/satisfied
+      (o/drift :missing))))
+
+(defmethod a/check :pkg/mas-uninstall [_ key opts]
+  (o/drift :orphan))
 
 (defmethod a/install! :pkg/mas [type opts items]
   (a/simple-install type opts "Installing Mac App Store apps"

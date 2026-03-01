@@ -2,7 +2,8 @@
   (:require [actions :as a]
             [babashka.fs :as fs]
             [babashka.process :as process]
-            [clojure.edn :as edn]))
+            [clojure.edn :as edn]
+            [outcome :as o]))
 
 (defmethod a/requires :pkg/bbin [_] :pkg/bbin)
 
@@ -29,6 +30,17 @@
   (let [result (orphans (installed-set) declared)]
     (when (seq result)
       {:pkg/bbin-uninstall result})))
+
+(def ^:dynamic *installed-cache* (delay (installed-set)))
+
+(defmethod a/check :pkg/bbin [_ key opts]
+  (let [installed @*installed-cache*]
+    (if (contains? installed (name key))
+      o/satisfied
+      (o/drift :missing))))
+
+(defmethod a/check :pkg/bbin-uninstall [_ key opts]
+  (o/drift :orphan))
 
 (defn- build-cmd [pkg opts]
   (let [pkg-name (name pkg)

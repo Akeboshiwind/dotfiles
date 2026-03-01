@@ -162,3 +162,57 @@
     (let [result (a/check :pkg/brew-uninstall :wget {})]
       (is (o/drift? result))
       (is (= :orphan (:kind result))))))
+
+;; =============================================================================
+;; :assert check
+;; =============================================================================
+
+(deftest assert-check-satisfied-test
+  (testing "assertion passes → satisfied"
+    (is (o/satisfied? (a/check :assert :test-assert {:src "exit 0"})))))
+
+(deftest assert-check-failed-test
+  (testing "assertion fails → error"
+    (is (o/error? (a/check :assert :test-assert {:src "exit 1"})))))
+
+(deftest assert-check-no-script-test
+  (testing "no :path or :src → error"
+    (is (o/error? (a/check :assert :test-assert {})))))
+
+(deftest assert-check-custom-message-test
+  (testing "custom message in error"
+    (let [result (a/check :assert :test-assert {:src "exit 1" :message "Remote Login disabled"})]
+      (is (o/error? result))
+      (is (= "Remote Login disabled" (:message result))))))
+
+;; =============================================================================
+;; :pkg/script check
+;; =============================================================================
+
+(deftest script-check-no-check-key-test
+  (testing "script without :check key → unknown"
+    (is (o/unknown? (a/check :pkg/script :setup {:src "echo hello"})))))
+
+(deftest script-check-with-check-passes-test
+  (testing "script with :check that passes → satisfied"
+    (is (o/satisfied? (a/check :pkg/script :setup {:src "echo hello" :check {:src "exit 0"}})))))
+
+(deftest script-check-with-check-fails-test
+  (testing "script with :check that fails → drift(:missing)"
+    (let [result (a/check :pkg/script :setup {:src "echo hello" :check {:src "exit 1"}})]
+      (is (o/drift? result))
+      (is (= :missing (:kind result))))))
+
+(deftest script-check-no-script-test
+  (testing "no :path or :src → error"
+    (is (o/error? (a/check :pkg/script :setup {})))))
+
+;; =============================================================================
+;; Default check (unknown for unimplemented types)
+;; =============================================================================
+
+(deftest default-check-unknown-test
+  (testing "unimplemented action type → unknown"
+    (is (o/unknown? (a/check :pkg/npm :neovim {})))
+    (is (o/unknown? (a/check :osx/defaults :dock {})))
+    (is (o/unknown? (a/check :git/clone :repo {})))))
