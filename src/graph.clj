@@ -72,25 +72,27 @@
   [actions type]
   (filter #(= type (first %)) actions))
 
+(defn- resolve-all-deps
+  "Resolve all requirements for an action, including [:complete type] expansion."
+  [{:keys [actions providers]} reqs]
+  (concat
+    (keep #(resolve-dep providers %) reqs)
+    (mapcat (fn [req]
+              (when (complete-cap? req)
+                (actions-of-type actions (second req))))
+            reqs)))
+
 (defn- build-graph
   "Build dependency graph from parsed data.
    Handles [:complete type] requirements by depending on all actions of that type."
-  [{:keys [actions providers requires]}]
+  [{:keys [requires] :as parsed}]
   (reduce
     (fn [g action]
       (let [reqs (get requires action)
-            ;; Standard deps (keyword capabilities + direct action refs)
-            standard-deps (keep #(resolve-dep providers %) reqs)
-            ;; [:complete type] deps → depend on all actions of that type
-            complete-deps (mapcat (fn [req]
-                                   (when (complete-cap? req)
-                                     (let [target-type (second req)]
-                                       (actions-of-type actions target-type))))
-                                 reqs)
-            all-deps (concat standard-deps complete-deps)]
+            all-deps (resolve-all-deps parsed reqs)]
         (reduce #(dep/depend %1 action %2) g all-deps)))
     (dep/graph)
-    actions))
+    (:actions parsed)))
 
 (defn validate
   "Validate the plan's dependency graph.
@@ -187,19 +189,18 @@
 (defn- dependents-of
   "Return set of actions that directly or transitively depend on the given action."
   [{:keys [parsed order]} action]
-  (let [{:keys [providers requires]} parsed]
-    (loop [blocked #{action}
-           result #{}
-           remaining order]
-      (if (empty? remaining)
-        result
-        (let [act (first remaining)
-              deps (get requires act)
-              resolved-deps (set (keep #(resolve-dep providers %) deps))
-              is-blocked? (some blocked resolved-deps)]
-          (if is-blocked?
-            (recur (conj blocked act) (conj result act) (rest remaining))
-            (recur blocked result (rest remaining))))))))
+  (loop [blocked #{action}
+         result #{}
+         remaining order]
+    (if (empty? remaining)
+      result
+      (let [act (first remaining)
+            deps (get (parsed :requires) act)
+            resolved-deps (set (resolve-all-deps parsed deps))
+            is-blocked? (some blocked resolved-deps)]
+        (if is-blocked?
+          (recur (conj blocked act) (conj result act) (rest remaining))
+          (recur blocked result (rest remaining)))))))
 
 (defn walk-graph
   "Walk an ActionGraph in topological order, calling (visitor-fn graph node)

@@ -59,6 +59,28 @@
       (is (o/error? assert-check))
       (is (o/cancelled? script-check)))))
 
+(deftest walk-graph-complete-cap-cancels-dependents-test
+  (testing "error in a brew action cancels brew-uninstall (via [:complete :pkg/brew])"
+    ;; brew-uninstall requires [:complete :pkg/brew], meaning it depends on
+    ;; ALL :pkg/brew actions. If any fails, uninstall should be cancelled.
+    (let [plan {:pkg/script {:bootstrap {:src "echo ok"
+                                          :dep/provides #{:pkg/brew}}}
+                :pkg/brew {:neovim {}}
+                :pkg/brew-uninstall {:wget {}}}
+          ag (g/build-action-graph plan)]
+      ;; Mock: brew check returns error for neovim, others unknown
+      (with-redefs [a/check (fn [type key _]
+                              (cond
+                                (= [type key] [:pkg/brew :neovim]) (o/error "install failed")
+                                (= type :pkg/brew-uninstall) o/unknown
+                                :else o/satisfied))]
+        (let [checked (chk/run-checks ag)
+              brew-check (get-in checked [:nodes [:pkg/brew :neovim] :check])
+              uninstall-check (get-in checked [:nodes [:pkg/brew-uninstall :wget] :check])]
+          (is (o/error? brew-check))
+          (is (o/cancelled? uninstall-check)
+              "brew-uninstall should be cancelled when a brew action errors"))))))
+
 (deftest walk-graph-satisfied-does-not-cancel-test
   (testing "satisfied check does not cancel dependents"
     (let [plan {:assert {:check-ok {:src "exit 0"}}
