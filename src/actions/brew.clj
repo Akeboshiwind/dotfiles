@@ -41,6 +41,12 @@
                      (json/parse-string true))]
     (into {} (map (fn [s] [(:name s) s])) services)))
 
+;; Module-level caching — each delay runs at most once per process.
+(def ^:private formulae-cache (delay (installed-set :formula)))
+(def ^:private casks-cache (delay (installed-set :cask)))
+(def ^:private outdated-cache (delay (outdated-map)))
+(def ^:private services-cache (delay (services-map)))
+
 (defn leaves-set
   "Return #{name ...} of explicitly installed formulae (not deps).
    Uses `brew leaves --installed-on-request` to exclude transitive dependencies."
@@ -139,10 +145,10 @@
     (when (seq result)
       {:pkg/brew-uninstall result})))
 
-(defmethod a/status :pkg/brew [type items ctx]
-  (let [formulae @(:brew/formulae ctx)
-        casks @(:brew/casks ctx)
-        outdated @(:brew/outdated ctx)]
+(defmethod a/status :pkg/brew [type items _ctx]
+  (let [formulae @formulae-cache
+        casks @casks-cache
+        outdated @outdated-cache]
     (mapv (fn [[k opts]]
             (let [pkg-name (name k)
                   ;; Strip tap prefix (e.g. "babashka/brew/bbin" → "bbin")
@@ -161,8 +167,8 @@
                          (str "(" (:installed out-info) " → " (:current out-info) ")"))}))
           items)))
 
-(defmethod a/status :brew/service [type items ctx]
-  (let [by-name @(:brew/services ctx)]
+(defmethod a/status :brew/service [type items _ctx]
+  (let [by-name @services-cache]
     (mapv (fn [[k _opts]]
             (let [svc-name (name k)
                   svc (get by-name svc-name)]
