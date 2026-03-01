@@ -131,3 +131,68 @@
   (let [targets (filterv #(= action-type (first %)) order)
         needed (transitive-deps plan (set targets))]
     (filterv needed order)))
+
+;; =============================================================================
+;; ActionGraph
+;; =============================================================================
+
+(defn build-action-graph
+  "Build an ActionGraph from a plan map.
+   Validates the graph and returns:
+   {:nodes    {[type key] {:ref [type key] :opts map :check nil :result nil}}
+    :order    [[type key] ...]
+    :parsed   <parse-plan output>}
+   Throws on validation errors."
+  [plan]
+  (when-let [errors (validate plan)]
+    (throw (ex-info "Dependency graph errors" errors)))
+  (let [parsed (parse-plan plan)
+        order (topological-sort plan)
+        nodes (into {}
+                    (map (fn [[type key :as ref]]
+                           [ref {:ref ref
+                                 :opts (get-in plan [type key])
+                                 :check nil
+                                 :result nil}]))
+                    order)]
+    {:nodes nodes
+     :order order
+     :parsed parsed}))
+
+(defn- dependents-of
+  "Return set of actions that directly or transitively depend on the given action."
+  [{:keys [parsed order]} action]
+  (let [{:keys [providers requires]} parsed]
+    (loop [blocked #{action}
+           result #{}
+           remaining order]
+      (if (empty? remaining)
+        result
+        (let [act (first remaining)
+              deps (get requires act)
+              resolved-deps (set (keep #(resolve-dep providers %) deps))
+              is-blocked? (some blocked resolved-deps)]
+          (if is-blocked?
+            (recur (conj blocked act) (conj result act) (rest remaining))
+            (recur blocked result (rest remaining))))))))
+
+(defn walk-graph
+  "Walk an ActionGraph in topological order, calling (visitor-fn graph node)
+   for each node. visitor-fn returns an updated node map.
+   If a node's :check is blocking?, downstream dependents are automatically cancelled.
+   Returns updated ActionGraph."
+  [action-graph visitor-fn]
+  (let [cancelled (atom #{})]
+    (reduce
+      (fn [ag ref]
+        (if (contains? @cancelled ref)
+          (update-in ag [:nodes ref] assoc :check
+                     {:outcome :cancelled})
+          (let [node (get-in ag [:nodes ref])
+                updated-node (visitor-fn ag node)
+                check (:check updated-node)]
+            (when (and check (#{:error :conflict :cancelled} (:outcome check)))
+              (swap! cancelled into (dependents-of ag ref)))
+            (assoc-in ag [:nodes ref] updated-node))))
+      action-graph
+      (:order action-graph))))

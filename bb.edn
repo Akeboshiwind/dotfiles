@@ -13,8 +13,9 @@
               [assert-test]
               [orphan-test]
               [outcome-test]
-              [check-test]]
-   :task (let [result (t/run-tests 'graph-test 'plan-test 'manifest-test 'osx-test 'script-test 'execute-test 'assert-test 'orphan-test 'outcome-test 'check-test)]
+              [check-test]
+              [action-graph-test]]
+   :task (let [result (t/run-tests 'graph-test 'plan-test 'manifest-test 'osx-test 'script-test 'execute-test 'assert-test 'orphan-test 'outcome-test 'check-test 'action-graph-test)]
            (when (or (pos? (:fail result)) (pos? (:error result)))
              (System/exit 1)))}
 

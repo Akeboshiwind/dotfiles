@@ -5,6 +5,7 @@
             [execute :as e]
             [cache :as c]
             [graph :as g]
+            [check :as chk]
             [status :as s]))
 
 (defn- format-graph-errors [errors]
@@ -72,7 +73,16 @@
           (println "No actions found for action" action)
           (System/exit 1))
         (if plan-mode
-          (s/show-plan {:plan plan :order filtered-order})
+          (let [ag (g/build-action-graph plan)
+                ;; Filter to relevant nodes if action filter specified
+                ag (if action
+                     (let [needed (set filtered-order)]
+                       (-> ag
+                           (update :order (fn [o] (filterv needed o)))
+                           (update :nodes select-keys filtered-order)))
+                     ag)
+                checked (chk/run-checks ag)]
+            (s/show-plan checked))
           (do
             (when-let [all-errors (seq (concat (m/validate-secrets)
                                                errors
