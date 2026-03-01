@@ -1,5 +1,6 @@
 (ns main
-  (:require [clojure.string :as str]
+  (:require [actions :as a]
+            [clojure.string :as str]
             [manifest :as m]
             [plan :as p]
             [execute :as e]
@@ -71,6 +72,7 @@
     (try
       (let [entries (m/load-manifest)
             cache (c/load-cache)
+            _ (reset! a/*cache* cache)
             {:keys [plan order symlinks errors]} (p/build! entries cache)
             ag (g/build-action-graph plan)
             ag (if action (filter-action-graph ag plan action) ag)]
@@ -88,7 +90,7 @@
                 (System/exit 1))
               (println "Applying configurations...")
               (e/execute-plan checked)
-              (c/save-cache! (assoc cache :symlinks symlinks))))))
+              (c/save-cache! (assoc @a/*cache* :symlinks symlinks))))))
       (catch clojure.lang.ExceptionInfo e
         (let [data (ex-data e)]
           (cond

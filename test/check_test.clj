@@ -3,6 +3,7 @@
             [babashka.fs :as fs]
             [actions :as a]
             [actions.brew :as brew]
+            [cache :as c]
             [outcome :as o]
             [registry]))
 
@@ -196,6 +197,33 @@
 (deftest script-check-with-check-passes-test
   (testing "script with :check that passes → satisfied"
     (is (o/satisfied? (a/check :pkg/script :setup {:src "echo hello" :check {:src "exit 0"}})))))
+
+(deftest script-check-content-changed-test
+  (testing "DOTFILES_CONTENT_CHANGED=true when no cached record"
+    (reset! a/*cache* {})
+    (is (o/satisfied?
+          (a/check :pkg/script :test-script
+                   {:src "echo ok"
+                    :check {:src "test \"$DOTFILES_CONTENT_CHANGED\" = \"true\""}}))))
+
+  (testing "DOTFILES_CONTENT_CHANGED=false when content unchanged"
+    (let [content "echo ok"
+          record (c/script-record content)]
+      (reset! a/*cache* {:scripts {"test-script" record}})
+      (is (o/satisfied?
+            (a/check :pkg/script :test-script
+                     {:src content
+                      :check {:src "test \"$DOTFILES_CONTENT_CHANGED\" = \"false\""}})))))
+
+  (testing "DOTFILES_CONTENT_CHANGED=true when content changed"
+    (let [old-record (c/script-record "old content")]
+      (reset! a/*cache* {:scripts {"test-script" old-record}})
+      (is (o/satisfied?
+            (a/check :pkg/script :test-script
+                     {:src "new content"
+                      :check {:src "test \"$DOTFILES_CONTENT_CHANGED\" = \"true\""}})))
+      ;; Clean up
+      (reset! a/*cache* nil))))
 
 (deftest script-check-with-check-fails-test
   (testing "script with :check that fails → drift(:missing)"

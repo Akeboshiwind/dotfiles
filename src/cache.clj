@@ -31,3 +31,26 @@
   []
   (when (fs/exists? cache-file)
     (edn/read-string (slurp cache-file))))
+
+(defn content-hash
+  "SHA-256 hash of a string."
+  [s]
+  (let [digest (java.security.MessageDigest/getInstance "SHA-256")
+        bytes (.digest digest (.getBytes (str s) "UTF-8"))]
+    (apply str (map #(format "%02x" %) bytes))))
+
+(defn script-record
+  "Build a script cache record from content string."
+  [content]
+  {:timestamp (java.util.Date.)
+   :content-hash (content-hash content)})
+
+(defn get-script
+  "Get cached script record by name. Returns nil if not cached."
+  [cache script-name]
+  (get-in cache [:scripts script-name]))
+
+(defn put-script
+  "Update cache with a script record."
+  [cache script-name record]
+  (assoc-in cache [:scripts script-name] record))
