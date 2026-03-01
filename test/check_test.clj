@@ -2,6 +2,7 @@
   (:require [clojure.test :refer [deftest testing is use-fixtures]]
             [babashka.fs :as fs]
             [actions :as a]
+            [actions.brew :as brew]
             [outcome :as o]
             [registry]))
 
@@ -92,3 +93,72 @@
       (spit other "hello")
       (fs/create-sym-link target other)
       (is (o/conflict? (a/check :fs/unlink target "/expected/source"))))))
+
+;; =============================================================================
+;; :pkg/brew check
+;; =============================================================================
+
+(deftest brew-check-installed-test
+  (testing "installed formula → satisfied"
+    (binding [brew/*formulae-cache* (delay #{"neovim"})
+              brew/*casks-cache* (delay #{})
+              brew/*outdated-cache* (delay {})]
+      (is (o/satisfied? (a/check :pkg/brew :neovim {}))))))
+
+(deftest brew-check-missing-test
+  (testing "missing formula → drift(:missing)"
+    (binding [brew/*formulae-cache* (delay #{})
+              brew/*casks-cache* (delay #{})
+              brew/*outdated-cache* (delay {})]
+      (let [result (a/check :pkg/brew :neovim {})]
+        (is (o/drift? result))
+        (is (= :missing (:kind result)))))))
+
+(deftest brew-check-outdated-test
+  (testing "outdated formula → drift(:outdated)"
+    (binding [brew/*formulae-cache* (delay #{"neovim"})
+              brew/*casks-cache* (delay #{})
+              brew/*outdated-cache* (delay {"neovim" {:installed "0.9" :current "0.10"}})]
+      (let [result (a/check :pkg/brew :neovim {})]
+        (is (o/drift? result))
+        (is (= :outdated (:kind result)))))))
+
+(deftest brew-check-tap-qualified-test
+  (testing "tap-qualified package uses short name for lookup"
+    (binding [brew/*formulae-cache* (delay #{"bbin"})
+              brew/*casks-cache* (delay #{})
+              brew/*outdated-cache* (delay {})]
+      (is (o/satisfied? (a/check :pkg/brew (keyword "babashka/brew/bbin") {}))))))
+
+;; =============================================================================
+;; :brew/service check
+;; =============================================================================
+
+(deftest service-check-running-test
+  (testing "running service → satisfied"
+    (binding [brew/*services-cache* (delay {"dnsmasq" {:name "dnsmasq" :status "started"}})]
+      (is (o/satisfied? (a/check :brew/service :dnsmasq {}))))))
+
+(deftest service-check-stopped-test
+  (testing "stopped service → drift(:missing)"
+    (binding [brew/*services-cache* (delay {"dnsmasq" {:name "dnsmasq" :status "stopped"}})]
+      (let [result (a/check :brew/service :dnsmasq {})]
+        (is (o/drift? result))
+        (is (= :missing (:kind result)))))))
+
+(deftest service-check-missing-test
+  (testing "unknown service → drift(:missing)"
+    (binding [brew/*services-cache* (delay {})]
+      (let [result (a/check :brew/service :dnsmasq {})]
+        (is (o/drift? result))
+        (is (= :missing (:kind result)))))))
+
+;; =============================================================================
+;; :pkg/brew-uninstall check
+;; =============================================================================
+
+(deftest brew-uninstall-check-test
+  (testing "orphan to uninstall → drift(:orphan)"
+    (let [result (a/check :pkg/brew-uninstall :wget {})]
+      (is (o/drift? result))
+      (is (= :orphan (:kind result))))))

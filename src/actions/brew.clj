@@ -3,7 +3,8 @@
             [babashka.process :as process]
             [cheshire.core :as json]
             [clojure.set :as set]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [outcome :as o]))
 
 (defmethod a/requires :pkg/brew [_] :pkg/brew)
 (defmethod a/requires :brew/service [_] :brew/service)
@@ -42,10 +43,43 @@
     (into {} (map (fn [s] [(:name s) s])) services)))
 
 ;; Module-level caching — each delay runs at most once per process.
-(def ^:private formulae-cache (delay (installed-set :formula)))
-(def ^:private casks-cache (delay (installed-set :cask)))
-(def ^:private outdated-cache (delay (outdated-map)))
-(def ^:private services-cache (delay (services-map)))
+(def ^:dynamic *formulae-cache* (delay (installed-set :formula)))
+(def ^:dynamic *casks-cache* (delay (installed-set :cask)))
+(def ^:dynamic *outdated-cache* (delay (outdated-map)))
+(def ^:dynamic *services-cache* (delay (services-map)))
+
+(defn- short-name
+  "Extract short name from tap-qualified brew name.
+   e.g. 'babashka/brew/bbin' -> 'bbin', 'neovim' -> 'neovim'"
+  [full-name]
+  (last (str/split full-name #"/")))
+
+(defmethod a/check :pkg/brew [_ key opts]
+  (let [pkg-name (name key)
+        sn (short-name pkg-name)
+        formulae @*formulae-cache*
+        casks @*casks-cache*
+        outdated @*outdated-cache*
+        installed? (or (contains? formulae sn)
+                       (contains? casks sn))
+        out-info (or (get outdated sn)
+                     (get outdated pkg-name))]
+    (cond
+      out-info (o/drift :outdated)
+      installed? o/satisfied
+      :else (o/drift :missing))))
+
+(defmethod a/check :brew/service [_ key opts]
+  (let [svc-name (name key)
+        by-name @*services-cache*
+        svc (get by-name svc-name)]
+    (cond
+      (nil? svc) (o/drift :missing)
+      (= "started" (:status svc)) o/satisfied
+      :else (o/drift :missing))))
+
+(defmethod a/check :pkg/brew-uninstall [_ key opts]
+  (o/drift :orphan))
 
 (defn leaves-set
   "Return #{name ...} of explicitly installed formulae (not deps).
@@ -102,12 +136,6 @@
         (recur (into seen deps)
                (into (pop queue) new-deps))))))
 
-(defn- short-name
-  "Extract short name from tap-qualified brew name.
-   e.g. 'babashka/brew/bbin' -> 'bbin', 'neovim' -> 'neovim'"
-  [full-name]
-  (last (str/split full-name #"/")))
-
 (defn- declared-names
   "Extract the set of names from declared :pkg/brew items.
    Returns both the raw name and its short form for tap-qualified names."
@@ -146,9 +174,9 @@
       {:pkg/brew-uninstall result})))
 
 (defmethod a/status :pkg/brew [type items _ctx]
-  (let [formulae @formulae-cache
-        casks @casks-cache
-        outdated @outdated-cache]
+  (let [formulae @*formulae-cache*
+        casks @*casks-cache*
+        outdated @*outdated-cache*]
     (mapv (fn [[k opts]]
             (let [pkg-name (name k)
                   ;; Strip tap prefix (e.g. "babashka/brew/bbin" → "bbin")
@@ -168,7 +196,7 @@
           items)))
 
 (defmethod a/status :brew/service [type items _ctx]
-  (let [by-name @services-cache]
+  (let [by-name @*services-cache*]
     (mapv (fn [[k _opts]]
             (let [svc-name (name k)
                   svc (get by-name svc-name)]
