@@ -136,8 +136,8 @@
       (is (some #(= ["brew" "uninstall" "curl"] %) @calls))
       (is (some #(= ["brew" "autoremove"] %) @calls))))
 
-  (testing ":pkg/brew-uninstall is standalone (requires nil)"
-    (is (nil? (a/requires :pkg/brew-uninstall)))))
+  (testing ":pkg/brew-uninstall requires [:complete :pkg/brew]"
+    (is (= [:complete :pkg/brew] (a/requires :pkg/brew-uninstall)))))
 
 (deftest bbin-uninstall-action-test
   (testing ":pkg/bbin-uninstall runs bbin uninstall for each item"
@@ -146,8 +146,8 @@
         (a/install! :pkg/bbin-uninstall {} {:neil {}}))
       (is (some #(= ["bbin" "uninstall" "neil"] %) @calls))))
 
-  (testing ":pkg/bbin-uninstall is standalone (requires nil)"
-    (is (nil? (a/requires :pkg/bbin-uninstall)))))
+  (testing ":pkg/bbin-uninstall requires [:complete :pkg/bbin]"
+    (is (= [:complete :pkg/bbin] (a/requires :pkg/bbin-uninstall)))))
 
 (deftest mise-uninstall-action-test
   (testing ":pkg/mise-uninstall runs mise uninstall for each item"
@@ -156,8 +156,8 @@
         (a/install! :pkg/mise-uninstall {} {:python {}}))
       (is (some #(= ["mise" "uninstall" "python"] %) @calls))))
 
-  (testing ":pkg/mise-uninstall is standalone (requires nil)"
-    (is (nil? (a/requires :pkg/mise-uninstall)))))
+  (testing ":pkg/mise-uninstall requires [:complete :pkg/mise]"
+    (is (= [:complete :pkg/mise] (a/requires :pkg/mise-uninstall)))))
 
 (deftest mas-uninstall-action-test
   (testing ":pkg/mas-uninstall runs mas uninstall for each item"
@@ -166,8 +166,8 @@
         (a/install! :pkg/mas-uninstall {} {497799835 {}}))
       (is (some #(= ["mas" "uninstall" "497799835"] %) @calls))))
 
-  (testing ":pkg/mas-uninstall is standalone (requires nil)"
-    (is (nil? (a/requires :pkg/mas-uninstall)))))
+  (testing ":pkg/mas-uninstall requires [:complete :pkg/mas]"
+    (is (= [:complete :pkg/mas] (a/requires :pkg/mas-uninstall)))))
 
 ;; =============================================================================
 ;; Graph ordering: uninstalls before installs
@@ -201,13 +201,13 @@
       (is (nil? (get-in result [:plan :pkg/bbin-uninstall]))))))
 
 (deftest uninstall-ordering-test
-  (testing "uninstall actions sort before their install counterparts"
+  (testing "uninstall actions sort after their install counterparts ([:complete type] dep)"
     (let [plan {:pkg/brew-uninstall {:wget {}}
                 :pkg/brew {:neovim {}}
                 :pkg/script {:homebrew {:dep/provides #{:pkg/brew}}}}
           order (g/topological-sort plan)]
-      ;; brew-uninstall is standalone (no deps) so comes first
-      ;; then script (provides :pkg/brew), then brew (requires :pkg/brew)
+      ;; script (provides :pkg/brew), then brew (requires :pkg/brew),
+      ;; then brew-uninstall (requires [:complete :pkg/brew])
       (let [positions (into {} (map-indexed (fn [i a] [a i])) order)]
-        (is (< (positions [:pkg/brew-uninstall :wget])
+        (is (> (positions [:pkg/brew-uninstall :wget])
                (positions [:pkg/brew :neovim])))))))

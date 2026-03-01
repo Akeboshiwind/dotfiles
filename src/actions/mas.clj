@@ -52,7 +52,7 @@
 
 ;; -- Uninstall orphans
 
-(defmethod a/requires :pkg/mas-uninstall [_] nil)
+(defmethod a/requires :pkg/mas-uninstall [_] [:complete :pkg/mas])
 
 (defmethod a/status :pkg/mas-uninstall [type items _ctx]
   (mapv (fn [[k opts]]

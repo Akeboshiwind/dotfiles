@@ -68,7 +68,7 @@
 
 ;; -- Uninstall orphans
 
-(defmethod a/requires :pkg/bbin-uninstall [_] nil)
+(defmethod a/requires :pkg/bbin-uninstall [_] [:complete :pkg/bbin])
 
 (defmethod a/status :pkg/bbin-uninstall [type items _ctx]
   (mapv (fn [[k _]]

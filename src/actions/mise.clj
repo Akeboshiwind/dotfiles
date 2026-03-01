@@ -65,7 +65,7 @@
 
 ;; -- Uninstall orphans
 
-(defmethod a/requires :pkg/mise-uninstall [_] nil)
+(defmethod a/requires :pkg/mise-uninstall [_] [:complete :pkg/mise])
 
 (defmethod a/status :pkg/mise-uninstall [type items _ctx]
   (mapv (fn [[k _]]

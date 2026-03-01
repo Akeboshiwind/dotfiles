@@ -41,29 +41,54 @@
      :duplicates (for [[cap providers] by-cap :when (> (count providers) 1)]
                    {:capability cap :providers (mapv second providers)})}))
 
+(defn- complete-cap?
+  "Is this a [:complete type] capability?"
+  [req]
+  (and (vector? req) (= :complete (first req))))
+
 (defn- resolve-dep
-  "Resolve a requirement to an action. Keywords lookup provider, vectors pass through."
+  "Resolve a requirement to an action. Keywords lookup provider,
+   [:complete type] vectors are handled separately, other vectors pass through."
   [providers req]
-  (if (keyword? req)
-    (get providers req)
-    req))
+  (cond
+    (keyword? req) (get providers req)
+    (complete-cap? req) nil  ;; handled by expand-complete-deps
+    :else req))
 
 (defn- find-missing
   "Find requirements with no provider."
-  [{:keys [providers requires]}]
-  (for [[action reqs] requires
-        req reqs
-        :when (keyword? req)
-        :when (not (contains? providers req))]
-    {:action action :missing-capability req}))
+  [{:keys [actions providers requires]}]
+  (let [action-types (set (map first actions))]
+    (for [[action reqs] requires
+          req reqs
+          :when (cond
+                  (keyword? req) (not (contains? providers req))
+                  (complete-cap? req) (not (contains? action-types (second req)))
+                  :else false)]
+      {:action action :missing-capability req})))
+
+(defn- actions-of-type
+  "Return all actions of the given type."
+  [actions type]
+  (filter #(= type (first %)) actions))
 
 (defn- build-graph
-  "Build dependency graph from parsed data."
+  "Build dependency graph from parsed data.
+   Handles [:complete type] requirements by depending on all actions of that type."
   [{:keys [actions providers requires]}]
   (reduce
     (fn [g action]
-      (let [deps (keep #(resolve-dep providers %) (get requires action))]
-        (reduce #(dep/depend %1 action %2) g deps)))
+      (let [reqs (get requires action)
+            ;; Standard deps (keyword capabilities + direct action refs)
+            standard-deps (keep #(resolve-dep providers %) reqs)
+            ;; [:complete type] deps → depend on all actions of that type
+            complete-deps (mapcat (fn [req]
+                                   (when (complete-cap? req)
+                                     (let [target-type (second req)]
+                                       (actions-of-type actions target-type))))
+                                 reqs)
+            all-deps (concat standard-deps complete-deps)]
+        (reduce #(dep/depend %1 action %2) g all-deps)))
     (dep/graph)
     actions))
 

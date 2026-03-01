@@ -220,7 +220,7 @@
 
 ;; -- Uninstall orphans
 
-(defmethod a/requires :pkg/brew-uninstall [_] nil)
+(defmethod a/requires :pkg/brew-uninstall [_] [:complete :pkg/brew])
 
 (defmethod a/status :pkg/brew-uninstall [type items _ctx]
   (mapv (fn [[k _]]
