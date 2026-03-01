@@ -17,10 +17,9 @@
 
 (defn show-plan
   "Show the status of all actions in the ActionGraph.
-   Displays only actionable items, grouped by type."
+   Displays everything except satisfied (installed) items, grouped by type."
   [action-graph]
-  (let [actionable? #{:missing :outdated :wrong :orphan :error}
-        nodes (:nodes action-graph)
+  (let [nodes (:nodes action-graph)
         batches (->> (:order action-graph)
                      (partition-by first)
                      (map (fn [group]
@@ -37,7 +36,7 @@
                                                :detail (when (:message check)
                                                          (:message check))}))
                                           node-group)
-                             changes (filter #(actionable? (:state %)) results)]
+                             changes (remove #(= :installed (:state %)) results)]
                          (when (seq changes)
                            (println (subs (str action-type) 1))
                            (doseq [r changes]

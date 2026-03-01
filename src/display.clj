@@ -51,12 +51,14 @@
 ;; =============================================================================
 
 (def ^:private plan-icons
-  {:installed {:icon "✓" :color-fn green}
-   :missing   {:icon "✗" :color-fn red}
-   :outdated  {:icon "↑" :color-fn yellow}
-   :wrong     {:icon "!" :color-fn red}
-   :orphan    {:icon "⌫" :color-fn yellow}
-   :unknown   {:icon "?" :color-fn gray}})
+  {:installed  {:icon "✓" :color-fn green}
+   :missing    {:icon "✗" :color-fn red}
+   :outdated   {:icon "↑" :color-fn yellow}
+   :wrong      {:icon "!" :color-fn red}
+   :orphan     {:icon "⌫" :color-fn yellow}
+   :unknown    {:icon "?" :color-fn gray}
+   :error      {:icon "✗" :color-fn red}
+   :cancelled  {:icon "⊘" :color-fn gray}})
 
 (defn render-plan-result [{:keys [label state detail]}]
   (let [{:keys [icon color-fn]} (get plan-icons state (plan-icons :unknown))
@@ -74,6 +76,8 @@
                      [:orphan (plan-icons :orphan)]
                      [:installed (plan-icons :installed)]
                      [:wrong (plan-icons :wrong)]
-                     [:unknown (plan-icons :unknown)]])]
+                     [:unknown (plan-icons :unknown)]
+                     [:error (plan-icons :error)]
+                     [:cancelled (plan-icons :cancelled)]])]
     (println)
     (println (str/join ", " parts))))
