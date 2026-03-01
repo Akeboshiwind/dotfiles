@@ -54,15 +54,16 @@
           plan {:pkg/script {:bootstrap {:src "exit 1"
                                          :dep/provides #{:pkg/brew}}}
                 :pkg/brew {:neovim {} :ripgrep {}}}
-          ag (build-and-check plan)]
-      (with-redefs [a/exec! (mock-exec! calls #(= (last %) "exit 1"))]
-        (e/execute-plan ag))
+          ag (build-and-check plan)
+          result (with-redefs [a/exec! (mock-exec! calls #(= (last %) "exit 1"))]
+                   (e/execute-plan ag))]
       (is (= 1 (count @calls))
           "only bootstrap should have been attempted")
-      (is (not-any? #(str/includes? (str/join " " %) "neovim") @calls)
-          "neovim should be skipped")
-      (is (not-any? #(str/includes? (str/join " " %) "ripgrep") @calls)
-          "ripgrep should be skipped"))))
+      ;; Verify graph state
+      (is (= :skip (:status (get-in result [:nodes [:pkg/brew :neovim] :result])))
+          "neovim node should have skip result")
+      (is (o/cancelled? (get-in result [:nodes [:pkg/brew :neovim] :check]))
+          "neovim node should be cancelled"))))
 
 (deftest transitive-skip-test
   (testing "failure propagates transitively: A fails → B skipped → C skipped"
@@ -83,11 +84,16 @@
           plan {:pkg/script {:setup {:src "echo setup"
                                      :dep/provides #{:pkg/brew}}}
                 :pkg/brew {:neovim {}}}
-          ag (build-and-check plan)]
-      (with-redefs [a/exec! (mock-exec! calls (constantly false))]
-        (e/execute-plan ag))
+          ag (build-and-check plan)
+          result (with-redefs [a/exec! (mock-exec! calls (constantly false))]
+                   (e/execute-plan ag))]
       (is (= 2 (count @calls))
-          "both actions should run"))))
+          "both actions should run")
+      ;; Verify graph state — both nodes should have results
+      (is (some? (get-in result [:nodes [:pkg/script :setup] :result]))
+          "setup node should have a result")
+      (is (some? (get-in result [:nodes [:pkg/brew :neovim] :result]))
+          "neovim node should have a result"))))
 
 (deftest mise-failure-propagates-test
   (testing "failed mise install blocks downstream dependents"
