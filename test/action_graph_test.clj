@@ -101,6 +101,39 @@
           (is (o/cancelled? script-check)
               "dependent should be cancelled when upstream throws"))))))
 
+(deftest walk-graph-conflict-cancels-dependents-test
+  (testing "conflict outcome cancels downstream dependents"
+    (let [plan {:pkg/script {:setup {:src "echo ok"
+                                      :dep/provides #{:pkg/brew}}}
+                :pkg/brew {:neovim {}}}
+          ag (g/build-action-graph plan)]
+      (with-redefs [a/check (fn [type key _]
+                              (if (= type :pkg/script)
+                                (o/conflict "file exists")
+                                o/unknown))]
+        (let [checked (chk/run-checks ag)
+              script-check (get-in checked [:nodes [:pkg/script :setup] :check])
+              brew-check (get-in checked [:nodes [:pkg/brew :neovim] :check])]
+          (is (o/conflict? script-check))
+          (is (o/cancelled? brew-check)))))))
+
+(deftest walk-graph-multi-hop-cancellation-test
+  (testing "cancellation propagates transitively: A→B→C"
+    (let [plan {:assert {:check {:src "exit 1" :message "nope"}}
+                :pkg/script {:setup {:src "echo ok"
+                                      :dep/requires #{[:assert :check]}
+                                      :dep/provides #{:pkg/brew}}}
+                :pkg/brew {:neovim {}}}
+          ag (g/build-action-graph plan)]
+      (let [checked (chk/run-checks ag)
+            assert-check (get-in checked [:nodes [:assert :check] :check])
+            script-check (get-in checked [:nodes [:pkg/script :setup] :check])
+            brew-check (get-in checked [:nodes [:pkg/brew :neovim] :check])]
+        (is (o/error? assert-check))
+        (is (o/cancelled? script-check))
+        (is (o/cancelled? brew-check)
+            "three-hop: assert error → script cancelled → brew cancelled")))))
+
 (deftest walk-graph-satisfied-does-not-cancel-test
   (testing "satisfied check does not cancel dependents"
     (let [plan {:assert {:check-ok {:src "exit 0"}}
