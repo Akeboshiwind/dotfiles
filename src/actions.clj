@@ -4,7 +4,8 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [babashka.process :as process]
-            [display :as d]))
+            [display :as d]
+            [outcome :as o]))
 
 ;; =============================================================================
 ;; Execution
@@ -92,6 +93,15 @@
 
 (defmethod status :default [type items _ctx]
   (mapv (fn [[k _]] {:label (name k) :state :unknown :action [type k]}) items))
+
+(defmulti check
+  "Check whether an action is satisfied. No side effects.
+   Returns a CheckOutcome (see outcome.clj).
+   Each module manages its own caching internally."
+  (fn [type _key _opts] type))
+
+(defmethod check :default [_ _ _]
+  o/unknown)
 
 (defmulti orphans
   "Query live system and compare against declared items to find orphans.
