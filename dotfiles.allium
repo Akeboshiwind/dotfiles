@@ -1,0 +1,710 @@
+-- Dotfiles Manager Specification
+-- A declarative system for managing dotfiles, packages, and system configuration
+--
+-- Two phases: check (read-only, builds plan) and execute (mutates).
+-- Two commands: plan (check + print) and apply (check + execute).
+
+------------------------------------------------------------
+-- Value Types
+------------------------------------------------------------
+
+value ActionRef {
+    type: ActionType
+    key: String
+}
+
+value DependencyError {
+    kind: cycle | missing_provider | duplicate_provider
+    details: String
+}
+
+value SymlinkMapping {
+    target: String    -- destination path (may contain ~)
+    source: String    -- source file path (canonical)
+}
+
+------------------------------------------------------------
+-- Enumerations
+------------------------------------------------------------
+
+enum ActionType {
+    -- Package managers
+    pkg/brew
+    pkg/mise
+    pkg/mas
+    pkg/bbin
+    pkg/npm
+    pkg/script
+
+    -- Package orphan uninstall (dynamically generated)
+    pkg/brew-uninstall
+    pkg/mise-uninstall
+    pkg/mas-uninstall
+    pkg/bbin-uninstall
+
+    -- Filesystem
+    fs/symlink
+    fs/symlink-folder
+    fs/unlink
+
+    -- System configuration
+    osx/defaults
+    brew/service
+
+    -- Assertions
+    assert
+
+    -- Git
+    git/clone
+
+    -- Claude
+    claude/marketplace
+    claude/plugin
+    claude/mcp
+}
+
+enum CheckOutcome {
+    satisfied                                          -- in desired state, no action needed
+    drift(kind: missing | outdated | wrong | orphan)   -- diverged from desired state, will act
+    unknown                                            -- cannot determine (e.g. script with no :check)
+    conflict                                           -- blocked by incompatible existing state
+    error                                              -- cannot proceed (tool missing, validation failed)
+    cancelled                                          -- upstream action failed/conflicted
+}
+
+------------------------------------------------------------
+-- Run Mode
+------------------------------------------------------------
+
+-- The entry point to the system. Determines what happens after
+-- the check phase completes.
+
+enum RunMode {
+    plan(action_filter: ActionType?)    -- check phase only, print results
+    apply(action_filter: ActionType?)   -- check phase + execute phase
+}
+
+------------------------------------------------------------
+-- Entities
+------------------------------------------------------------
+
+entity Manifest {
+    plan: List<PlanEntry>
+
+    -- Derived
+    all_entries: plan resolved to entries
+}
+
+entity PlanEntry {
+    -- One of: keyword reference, file path, or inline map
+    kind: keyword | path | inline
+    value: String       -- keyword name, path, or inline content
+    source_dir: String? -- directory for relative path resolution
+}
+
+entity ResolvedEntry {
+    step: ActionMap
+    source: String?     -- base directory for path resolution
+}
+
+entity ActionMap {
+    -- Map of ActionType -> {key -> options}
+    -- Dynamic structure based on action types
+    actions: Map<ActionType, Map<String, ActionOptions>>
+}
+
+entity ActionOptions {
+    -- Base options available to all actions
+    dep_provides: Set<Capability>?
+    dep_requires: Set<ActionRef | Capability>?
+
+    -- Action-specific options handled by each action type
+}
+
+entity ActionGraph {
+    -- The plan artifact. A dependency graph where each node
+    -- accumulates state through the check and execute phases.
+    nodes: Map<ActionRef, ActionNode>
+    edges: Map<ActionRef, Set<ActionRef>>   -- dependency edges
+    order: List<ActionRef>                  -- topological order
+    symlinks: Map<String, String>           -- target -> source
+}
+
+entity ActionNode {
+    ref: ActionRef
+    opts: ActionOptions
+    check: CheckOutcome?    -- populated during check phase
+    result: ExecutionResult? -- populated during execute phase
+}
+
+value ExecutionResult {
+    status: ok | error
+    message: String?
+}
+
+entity Cache {
+    symlinks: Map<String, String>    -- target -> source from last run
+    scripts: Map<String, ScriptRecord> -- script name -> last run info
+}
+
+value ScriptRecord {
+    timestamp: Instant
+    content_hash: String?
+}
+
+entity Secrets {
+    values: Map<String, String | :secret/disabled>
+}
+
+------------------------------------------------------------
+-- External Entities
+------------------------------------------------------------
+
+-- Action capabilities that can be provided/required
+external entity Capability {
+    name: String
+}
+
+-- Filesystem
+external entity File {
+    path: String
+    exists: Boolean
+    is_symlink: Boolean
+    symlink_target: String?
+}
+
+external entity Directory {
+    path: String
+    files: List<File>
+}
+
+------------------------------------------------------------
+-- Defaults
+------------------------------------------------------------
+
+default cache_dir = "${XDG_CACHE_HOME:-~/.cache}/dotfiles"
+default cache_file = cache_dir + "/cache.edn"
+default manifest_file = "manifest.edn"
+default secrets_file = "secrets.edn"
+
+------------------------------------------------------------
+-- Action Protocol
+------------------------------------------------------------
+
+-- Every action type implements two methods:
+--
+--   check(key, opts) -> CheckOutcome
+--     Read-only. Queries live system state and returns the
+--     current state of this action. Called during check phase.
+--
+--   install!(key, opts)
+--     Mutates. Brings the system into the desired state.
+--     Only called during execute phase, and only for actions
+--     whose check returned drift or unknown.
+
+------------------------------------------------------------
+-- Rules: Manifest Loading
+------------------------------------------------------------
+
+rule LoadManifest {
+    when: run: RunMode
+
+    let manifest = read_edn(manifest_file)
+    let entries = manifest.plan.map(e => resolve_entry(e))
+
+    requires: manifest_file exists
+
+    ensures: Manifest.created(plan: entries)
+}
+
+rule ResolveKeywordEntry {
+    when: entry: PlanEntry with kind = keyword
+
+    let path = "cfg/" + entry.value + "/manifest.edn"
+    let content = read_edn(path)
+
+    requires: path exists
+
+    ensures: ResolvedEntry.created(
+        step: content,
+        source: parent_dir(path)
+    )
+}
+
+rule ResolvePathEntry {
+    when: entry: PlanEntry with kind = path
+
+    let content = read_edn(entry.value)
+
+    requires: entry.value exists
+
+    ensures: ResolvedEntry.created(
+        step: content,
+        source: parent_dir(entry.value)
+    )
+}
+
+rule ResolveInlineEntry {
+    when: entry: PlanEntry with kind = inline
+
+    ensures: ResolvedEntry.created(
+        step: entry.value,
+        source: null
+    )
+}
+
+------------------------------------------------------------
+-- Rules: Secrets
+------------------------------------------------------------
+
+rule LoadSecrets {
+    when: run: RunMode
+
+    ensures:
+        if secrets_file exists:
+            Secrets.created(values: read_edn(secrets_file))
+        else:
+            Secrets.created(values: {})
+}
+
+rule ValidateSecrets {
+    when: secrets: Secrets.created
+
+    -- Empty secret values are caught during the check phase.
+    -- Each action that references a secret will receive an error
+    -- CheckOutcome if the secret is empty (not :secret/disabled).
+
+    let empty_values = secrets.values
+        .filter((k, v) => v != :secret/disabled and (v = null or v = ""))
+
+    ensures:
+        for each (key, _) in empty_values:
+            SecretError.created(key: key)
+}
+
+rule ResolveSecretReference {
+    when: SecretTagEncountered(key)
+
+    -- Looks up key in secrets map. Throws if key not found.
+    -- Note: does NOT check for :secret/disabled - a disabled value
+    -- is returned as-is. Validation catches empty values separately.
+
+    let secrets = current Secrets
+
+    requires: key in secrets.values
+
+    ensures: SecretResolved(value: secrets.values[key])
+}
+
+------------------------------------------------------------
+-- Rules: Plan Building
+------------------------------------------------------------
+
+rule ResolveSymlinkPaths {
+    when: entry: ResolvedEntry.created
+
+    -- Resolve relative paths in fs/symlink and fs/symlink-folder
+    -- against the entry's source directory
+
+    ensures:
+        for each (target, source) in entry.step[fs/symlink]:
+            if source is_relative:
+                requires: canonical(entry.source, source) starts_with entry.source
+                entry.step[fs/symlink][target] = canonical(entry.source, source)
+}
+
+rule ExpandSymlinkFolder {
+    when: entry: ResolvedEntry with step[fs/symlink-folder] != null
+
+    -- Expand each {prefix -> dir} into individual symlinks
+
+    ensures:
+        for each (prefix, dir) in entry.step[fs/symlink-folder]:
+            let files = list_files(dir)
+            for each file in files:
+                entry.step[fs/symlink][prefix + relative_path(dir, file)] = file.path
+        entry.step[fs/symlink-folder] = null
+}
+
+rule DetectDuplicateKeys {
+    when: entries: List<ResolvedEntry> ready_for_merge
+
+    let duplicates = find_keys_in_multiple_entries(entries)
+
+    -- Duplicate keys are a graph-building error, not a check-phase error.
+    -- Thrown immediately like other DependencyErrors.
+
+    requires: duplicates.count = 0
+        else: throw DependencyError(kind: duplicate_key, details: duplicates)
+}
+
+rule MergeEntries {
+    when: entries: List<ResolvedEntry> validated
+
+    ensures: ActionMap.created(
+        actions: merge_all(entries.map(e => e.step))
+    )
+}
+
+rule CalculateStaleSymlinks {
+    when: plan: ActionMap.created
+
+    let cache = current Cache
+    let current_symlinks = plan.actions[fs/symlink]
+    let cached_symlinks = cache.symlinks
+    let stale = cached_symlinks.keys - current_symlinks.keys
+
+    ensures:
+        if stale.count > 0:
+            plan.actions[fs/unlink] = cached_symlinks.filter(k => k in stale)
+}
+
+rule CalculateOrphans {
+    when: plan: ActionMap.created
+
+    -- For each action type that supports orphan detection,
+    -- query live system state and compare against declared items.
+    -- Each action type's orphans implementation returns a plan
+    -- fragment (e.g. {pkg/brew-uninstall: {...}}) or null.
+    -- Currently supported: pkg/brew, pkg/mise, pkg/mas, pkg/bbin.
+
+    let orphan_fragments = plan.action_types
+        .map(type => detect_orphans(type, plan.actions[type]))
+        .compact
+
+    ensures:
+        for each fragment in orphan_fragments:
+            plan.actions = plan.actions.merge(fragment)
+}
+
+------------------------------------------------------------
+-- Rules: Dependency Graph
+------------------------------------------------------------
+
+-- Graph validation fails fast: if any error is found, an exception
+-- is thrown immediately and execution stops. Graph errors are not
+-- recoverable.
+
+rule BuildActionGraph {
+    when: plan: ActionMap ready_for_validation
+
+    let actions = all_action_refs(plan)
+    let providers = find_providers(plan)      -- capability -> action ref
+    let requirements = find_requirements(plan) -- action ref -> set of requirements
+
+    ensures: ActionGraph.created(
+        nodes: actions.map(a => ActionNode{ref: a, opts: plan[a]}),
+        edges: resolve_edges(providers, requirements),
+        order: topo_sort(edges)
+    )
+}
+
+rule ValidateActionGraph {
+    when: graph: ActionGraph.created
+
+    -- All three checks happen in a single pass.
+    -- Any error throws immediately (fail-fast).
+
+    let duplicates = capabilities_with_multiple_providers(graph)
+    let missing = requirements_without_providers(graph)
+
+    requires: duplicates.count = 0
+        else: throw DependencyError(kind: duplicate_provider)
+    requires: missing.count = 0
+        else: throw DependencyError(kind: missing_provider)
+
+    -- Cycle detection only runs when no duplicate/missing errors
+    let cycles = detect_cycles(graph)
+
+    requires: cycles.count = 0
+        else: throw DependencyError(kind: cycle)
+}
+
+------------------------------------------------------------
+-- Rules: Synthetic Batch-Complete Capabilities
+------------------------------------------------------------
+
+-- For each action type present in the graph, a synthetic capability
+-- [:complete <action-type>] is automatically generated. This capability
+-- is provided when all actions of that type complete successfully
+-- during the execute phase.
+--
+-- This is a generic mechanism. Its primary use is orphan uninstall
+-- actions requiring their corresponding install type to complete first.
+
+rule GenerateBatchCompleteCapabilities {
+    when: graph: ActionGraph validated
+
+    let present_types = graph.nodes.map(n => n.ref.type).distinct
+
+    ensures:
+        for each type in present_types:
+            -- Synthetic capability depends on all actions of this type
+            graph.add_capability(
+                name: [:complete type],
+                provided_when: all actions of type succeed
+            )
+}
+
+rule OrphanRequiresBatchComplete {
+    when: action.type in [pkg/brew-uninstall, pkg/mise-uninstall,
+                          pkg/mas-uninstall, pkg/bbin-uninstall]
+
+    ensures: action requires [:complete corresponding_install_type(action)]
+    -- e.g. pkg/brew-uninstall requires [:complete pkg/brew]
+}
+
+------------------------------------------------------------
+-- Rules: Action Requirements
+------------------------------------------------------------
+
+-- Actions declare what capability they require to run.
+-- nil = standalone (no dependencies)
+-- keyword = requires that capability to be provided
+
+rule ActionRequiresCapability {
+    -- Package managers require their capability to be provided
+    when: action in [pkg/brew, pkg/mise, pkg/mas, pkg/bbin, pkg/npm,
+                     brew/service, claude/marketplace, claude/plugin, claude/mcp]
+    ensures: action requires capability(action)
+}
+
+rule GitCloneRequiresGit {
+    when: action = git/clone
+    ensures: action requires :git
+}
+
+rule StandaloneActions {
+    -- These actions have no external dependencies
+    when: action in [fs/symlink, fs/unlink, osx/defaults, pkg/script, assert]
+    ensures: action requires nothing
+}
+
+------------------------------------------------------------
+-- Rules: Check Phase
+------------------------------------------------------------
+
+-- Walk the graph in topological order. For each node, run check.
+-- Store the CheckOutcome on the node. On conflict or error,
+-- mark all downstream nodes as cancelled (don't check them).
+
+rule CheckPhase {
+    when: graph: ActionGraph validated
+
+    ensures:
+        for each node in graph.order:
+            if node.check = cancelled:
+                -- Already cancelled by upstream failure
+                continue
+
+            let outcome = check(node.ref.type, node.ref.key, node.opts)
+            node.check = outcome
+
+            if outcome in [conflict, error]:
+                for each downstream in graph.dependents(node.ref):
+                    downstream.check = cancelled
+}
+
+-- Validation rules are now part of the check phase.
+-- Actions with invalid configuration return error CheckOutcome
+-- from their check implementation.
+
+rule ValidateMiseVersion {
+    -- Implemented within pkg/mise check:
+    -- if opts.version = null, check returns error("Version required")
+}
+
+rule ValidateScriptSource {
+    -- Implemented within pkg/script check:
+    -- if opts.path = null and opts.src = null,
+    -- check returns error("Either :path or :src required")
+    --
+    -- Scripts may optionally declare :check (path or src).
+    -- If :check is present, run it during check phase:
+    --   exit 0 = satisfied, exit 1 = drift(missing)
+    -- If :check is absent, return unknown.
+    -- Cache provides last-run info via env vars to the check script.
+}
+
+rule ValidateAssertSource {
+    -- Implemented within assert check:
+    -- if opts.path = null and opts.src = null,
+    -- check returns error("Either :path or :src required")
+}
+
+------------------------------------------------------------
+-- Rules: Plan Command
+------------------------------------------------------------
+
+rule ShowPlan {
+    when: graph: ActionGraph checked and run: RunMode.plan
+
+    -- Print the check results from the graph.
+    -- Group by outcome for readability.
+
+    ensures:
+        for each node in graph.order:
+            if node.check != satisfied:
+                CheckResultDisplayed(node.ref, node.check)
+        PlanSummaryDisplayed(frequency_of(graph.nodes.map(n => n.check)))
+}
+
+------------------------------------------------------------
+-- Rules: Execute Phase
+------------------------------------------------------------
+
+rule ExecutePhase {
+    when: graph: ActionGraph checked and run: RunMode.apply
+
+    -- Walk the graph in topological order.
+    -- Only run install! for nodes with drift or unknown outcome.
+    -- Satisfied nodes are skipped. Conflict/error/cancelled are
+    -- already handled by the check phase.
+    --
+    -- On install! failure, mark downstream nodes as cancelled.
+
+    let batches = partition_by_type(graph.order)
+
+    ensures:
+        for each batch in batches:
+            let actionable = batch.filter(n => n.check in [drift, unknown])
+            let already_cancelled = batch.filter(n => n.check in [conflict, error, cancelled])
+
+            if actionable.count > 0:
+                let results = install_batch!(batch.type, actionable)
+                for each (node, result) in zip(actionable, results):
+                    node.result = result
+                    if result.status = error:
+                        for each downstream in graph.dependents(node.ref):
+                            if downstream.check not in [conflict, error, cancelled]:
+                                downstream.check = cancelled
+
+        let failed = graph.nodes.filter(n => n.result?.status = error)
+        let cancelled = graph.nodes.filter(n => n.check = cancelled)
+        if failed.count > 0 or cancelled.count > 0:
+            SummaryDisplayed(failed.count, cancelled.count)
+}
+
+------------------------------------------------------------
+-- Rules: Action Execution (deferred to action-specific specs)
+------------------------------------------------------------
+
+-- Each action type implements both check and install!.
+-- See the corresponding action spec for details.
+
+deferred BrewAction           -- see: actions/brew
+deferred BrewUninstallAction  -- see: actions/brew (orphan cleanup)
+deferred BrewServiceAction    -- see: actions/brew
+deferred MiseAction           -- see: actions/mise
+deferred MiseUninstallAction  -- see: actions/mise (orphan cleanup)
+deferred MasUninstallAction   -- see: actions/mas (orphan cleanup)
+deferred BbinAction           -- see: actions/bbin
+deferred BbinUninstallAction  -- see: actions/bbin (orphan cleanup)
+deferred NpmAction            -- see: actions/npm
+deferred ScriptAction         -- see: actions/script
+deferred AssertAction         -- see: actions/assert
+deferred SymlinkAction        -- see: actions/symlink
+deferred UnlinkAction         -- see: actions/symlink
+deferred OsxDefaultsAction    -- see: actions/osx
+deferred GitCloneAction       -- see: actions/git
+deferred ClaudeMarketplaceAction -- see: actions/claude
+deferred ClaudePluginAction   -- see: actions/claude
+deferred ClaudeMcpAction      -- see: actions/claude
+
+------------------------------------------------------------
+-- Rules: Symlink Actions (inline - these are core behaviour)
+------------------------------------------------------------
+
+rule SymlinkCheck {
+    when: check(fs/symlink, target, opts)
+
+    let target_file = expand_tilde(target)
+    let source = opts.source
+
+    ensures:
+        if target_file exists and is_symlink and points_to(source):
+            return satisfied
+
+        else if target_file exists and is_symlink:
+            -- Points to wrong target, can be re-linked
+            return drift(wrong)
+
+        else if target_file exists:
+            -- Regular file/dir exists, refuse to overwrite
+            return conflict
+
+        else:
+            return drift(missing)
+}
+
+rule SymlinkInstall {
+    when: install!(fs/symlink, target, opts)
+
+    let target_file = expand_tilde(target)
+    let source = opts.source
+
+    ensures:
+        create_parent_dirs(target_file)
+        create_symlink(source, target_file)
+}
+
+rule UnlinkCheck {
+    when: check(fs/unlink, target, opts)
+
+    let target_file = expand_tilde(target)
+    let expected_source = opts.source
+
+    ensures:
+        if not target_file exists:
+            return satisfied    -- already gone
+
+        else if not is_symlink(target_file):
+            return conflict     -- not a symlink, refuse to touch
+
+        else if not points_to(target_file, expected_source):
+            return conflict     -- points elsewhere, refuse to touch
+
+        else:
+            return drift(orphan)
+}
+
+rule UnlinkInstall {
+    when: install!(fs/unlink, target, opts)
+
+    let target_file = expand_tilde(target)
+
+    ensures:
+        delete(target_file)
+}
+
+------------------------------------------------------------
+-- Rules: Cache Update
+------------------------------------------------------------
+
+rule UpdateCache {
+    when: graph: ActionGraph executed and run: RunMode.apply
+
+    -- Always update cache regardless of action_filter.
+    -- Symlinks are computed from the full manifest (not filtered).
+    -- Script records are loaded from the existing cache and only
+    -- updated additively by scripts that actually ran.
+
+    let new_cache = Cache{
+        symlinks: graph.symlinks,
+        scripts: updated_script_records(graph)
+    }
+
+    ensures:
+        create_dirs(cache_dir)
+        atomically_write(cache_file, new_cache)
+}
+
+------------------------------------------------------------
+-- Open Questions
+------------------------------------------------------------
+
+open_question "Should symlink conflicts be auto-resolved with backup?"
+open_question "Should there be rollback on partial failure?"
+open_question "Should :secret/disabled be rejected when a secret tag references it? Currently the value is returned as-is."
+open_question "Interactive plan -> approve -> apply flow?"
+open_question "How should action_filter interact with synthetic [:complete] capabilities?"
