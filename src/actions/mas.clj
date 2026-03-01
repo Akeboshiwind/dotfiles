@@ -47,7 +47,9 @@
 (defmethod a/install! :pkg/mas [type opts items]
   (a/simple-install type opts "Installing Mac App Store apps"
     (fn [app-name _] (name app-name))
-    (fn [_app-name app-id] ["mas" "install" app-id])
+    (fn [_app-name app-opts]
+      (let [app-id (if (map? app-opts) (:id app-opts) app-opts)]
+        ["mas" "install" (str app-id)]))
     items))
 
 ;; -- Uninstall orphans
