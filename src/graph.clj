@@ -9,7 +9,8 @@
    - Returns nil for standalone actions (no dependencies)
    - Returns a capability keyword for actions that need a provider"
   (:require [weavejester.dependency :as dep]
-            [actions :as a]))
+            [actions :as a]
+            [outcome :as o]))
 
 (defn parse-plan
   "Parse plan into normalized dependency data. Returns:
@@ -223,7 +224,7 @@
                                         {:outcome :error
                                          :message (ex-message e)})))
                 check (:check updated-node)]
-            (when (and check (#{:error :conflict :cancelled} (:outcome check)))
+            (when (and check (o/blocking? check))
               (swap! cancelled into (dependents-of ag ref)))
             (assoc-in ag [:nodes ref] updated-node))))
       action-graph
