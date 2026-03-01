@@ -148,6 +148,40 @@
         (is (= 3 (count (:items (first brew-calls))))
             "the single brew call should contain all 3 items")))))
 
+(deftest batch-split-by-interleaved-dependency-test
+  (testing "same type split into two batches when a different type appears between them"
+    ;; Order should be: [brew:a, brew:b] then [script:mid] then [brew:c, brew:d]
+    ;; because c and d depend on script:mid. This should produce 2 brew batches.
+    (let [install-calls (atom [])
+          plan {:pkg/script {:bootstrap {:src "echo ok"
+                                          :dep/provides #{:pkg/brew}}
+                             :mid {:src "echo mid"
+                                    :dep/provides #{:test/mid}}}
+                :pkg/brew {:a {} :b {}
+                           :c {:dep/requires #{:test/mid}}
+                           :d {:dep/requires #{:test/mid}}}}
+          ag (build-and-check plan)]
+      (with-redefs [a/exec! (mock-exec! (atom []) (constantly false))
+                    a/do-install! (fn [type opts items]
+                                    (swap! install-calls conj {:type type :items items})
+                                    (mapv (fn [[k _]]
+                                            {:action [type k]
+                                             :label (name k)
+                                             :status :ok})
+                                          items))]
+        (e/execute-plan ag))
+      ;; Order: [script:bootstrap, brew:a+b, script:mid, brew:c+d]
+      (let [brew-calls (filter #(= :pkg/brew (:type %)) @install-calls)
+            script-calls (filter #(= :pkg/script (:type %)) @install-calls)]
+        (is (= 2 (count brew-calls))
+            "brew should be called twice — split by interleaved script")
+        (is (= 2 (count (:items (first brew-calls))))
+            "first brew batch has a and b")
+        (is (= 2 (count (:items (second brew-calls))))
+            "second brew batch has c and d")
+        (is (= 2 (count script-calls))
+            "script called twice (bootstrap + mid)")))))
+
 (deftest independent-branches-unaffected-test
   (testing "failure in one branch doesn't affect independent branch"
     (let [calls (atom [])
