@@ -3,17 +3,7 @@
   (:require [actions :as a]
             [actions.brew :as brew]
             [display :as d]
-            ;; Load all action implementations
-            [actions.script]
-            [actions.mise]
-            [actions.mas]
-            [actions.bbin]
-            [actions.npm]
-            [actions.claude]
-            [actions.osx]
-            [actions.symlink]
-            [actions.git]
-            [actions.assert]))
+            [registry]))
 
 (defn- build-ctx
   "Build a map of delays for expensive shared data.

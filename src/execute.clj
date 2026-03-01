@@ -2,18 +2,7 @@
   (:require [actions :as a]
             [graph :as g]
             [display :as d]
-            ;; Load all action implementations
-            [actions.script]
-            [actions.brew]
-            [actions.mise]
-            [actions.mas]
-            [actions.bbin]
-            [actions.npm]
-            [actions.claude]
-            [actions.osx]
-            [actions.symlink]
-            [actions.git]
-            [actions.assert]))
+            [registry]))
 
 (defn validate-plan
   "Validate all actions in plan. Returns seq of all errors, or nil if valid."
