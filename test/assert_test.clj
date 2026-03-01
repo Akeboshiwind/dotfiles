@@ -90,9 +90,7 @@
           "assert-only plan should be valid with no providers"))))
 
 (deftest assert-validates-src-or-path-test
-  (testing "assert requires :src or :path"
-    (let [errors (a/validate :assert {:bad-check {:message "missing script"}})]
-      (is (seq errors)
-          "should produce validation error")
-      (is (some #(= :bad-check (:key %)) errors)
-          "error should reference the bad check"))))
+  (testing "assert requires :src or :path — check returns error"
+    (let [result (a/check :assert :bad-check {:message "missing script"})]
+      (is (o/error? result)
+          "should produce error outcome for missing :src/:path"))))

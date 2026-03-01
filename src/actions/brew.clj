@@ -173,42 +173,6 @@
     (when (seq result)
       {:pkg/brew-uninstall result})))
 
-(defmethod a/status :pkg/brew [type items _ctx]
-  (let [formulae @*formulae-cache*
-        casks @*casks-cache*
-        outdated @*outdated-cache*]
-    (mapv (fn [[k opts]]
-            (let [pkg-name (name k)
-                  ;; Strip tap prefix (e.g. "babashka/brew/bbin" → "bbin")
-                  short-name (last (str/split pkg-name #"/"))
-                  installed? (or (contains? formulae short-name)
-                                 (contains? casks short-name))
-                  out-info (or (get outdated short-name)
-                               (get outdated pkg-name))]
-              {:label pkg-name
-               :action [type k]
-               :state (cond
-                        out-info :outdated
-                        installed? :installed
-                        :else :missing)
-               :detail (when out-info
-                         (str "(" (:installed out-info) " → " (:current out-info) ")"))}))
-          items)))
-
-(defmethod a/status :brew/service [type items _ctx]
-  (let [by-name @*services-cache*]
-    (mapv (fn [[k _opts]]
-            (let [svc-name (name k)
-                  svc (get by-name svc-name)]
-              {:label svc-name
-               :action [type k]
-               :state (cond
-                        (nil? svc) :missing
-                        (= "started" (:status svc)) :installed
-                        :else :missing)
-               :detail (when svc (str "(" (:status svc) ")"))}))
-          items)))
-
 (defmethod a/install! :pkg/brew [type opts items]
   (a/simple-install type opts "Installing brew packages"
     (fn [pkg {:keys [head cask]}]
@@ -221,13 +185,6 @@
 ;; -- Uninstall orphans
 
 (defmethod a/requires :pkg/brew-uninstall [_] [:complete :pkg/brew])
-
-(defmethod a/status :pkg/brew-uninstall [type items _ctx]
-  (mapv (fn [[k _]]
-          {:label (if (keyword? k) (name k) (str k))
-           :state :orphan
-           :action [type k]})
-        items))
 
 (defmethod a/install! :pkg/brew-uninstall [type opts items]
   (let [results (a/simple-install type opts "Uninstalling brew orphans"

@@ -50,16 +50,3 @@
   "Does this outcome block downstream dependents? (error, conflict, cancelled)"
   [o]
   (#{:error :conflict :cancelled} (:outcome o)))
-
-;; Legacy bridge
-
-(defn from-legacy-state
-  "Convert a legacy status keyword to a CheckOutcome."
-  [state]
-  (case state
-    :installed satisfied
-    :missing   (drift :missing)
-    :outdated  (drift :outdated)
-    :wrong     (drift :wrong)
-    :orphan    (drift :orphan)
-    :unknown   unknown))

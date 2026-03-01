@@ -5,14 +5,6 @@
             [outcome :as o]
             [registry]))
 
-(defn validate-plan
-  "Validate all actions in plan. Returns seq of all errors, or nil if valid."
-  [plan]
-  (->> plan
-       (mapcat (fn [[action-type items]] (a/validate action-type items)))
-       (remove nil?)
-       seq))
-
 (defn- execute-node
   "Execute a single ActionGraph node. Returns updated node with :result."
   [node]

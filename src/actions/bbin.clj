@@ -70,13 +70,6 @@
 
 (defmethod a/requires :pkg/bbin-uninstall [_] [:complete :pkg/bbin])
 
-(defmethod a/status :pkg/bbin-uninstall [type items _ctx]
-  (mapv (fn [[k _]]
-          {:label (name k)
-           :state :orphan
-           :action [type k]})
-        items))
-
 (defmethod a/install! :pkg/bbin-uninstall [type opts items]
   (a/simple-install type opts "Uninstalling bbin orphans"
     (fn [pkg _] ["bbin" "uninstall" (name pkg)])

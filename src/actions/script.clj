@@ -7,13 +7,6 @@
 
 (defmethod a/requires :pkg/script [_] nil)
 
-(defmethod a/validate :pkg/script [_ items]
-  (for [[script-name opts] items
-        :when (not (or (:path opts) (:src opts)))]
-    {:action :pkg/script
-     :key script-name
-     :error "Either :path or :src required"}))
-
 (defn- script-content
   "Get the content string of a script for hashing."
   [{:keys [path src]}]

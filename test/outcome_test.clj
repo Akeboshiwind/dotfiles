@@ -68,12 +68,3 @@
     (is (not (o/blocking? o/satisfied)))
     (is (not (o/blocking? (o/drift :missing))))
     (is (not (o/blocking? o/unknown)))))
-
-(deftest from-legacy-state-test
-  (testing "maps legacy status keywords to CheckOutcome"
-    (is (o/satisfied? (o/from-legacy-state :installed)))
-    (is (= (o/drift :missing) (o/from-legacy-state :missing)))
-    (is (= (o/drift :outdated) (o/from-legacy-state :outdated)))
-    (is (= (o/drift :wrong) (o/from-legacy-state :wrong)))
-    (is (= (o/drift :orphan) (o/from-legacy-state :orphan)))
-    (is (o/unknown? (o/from-legacy-state :unknown)))))

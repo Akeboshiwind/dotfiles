@@ -6,13 +6,6 @@
 
 (defmethod a/requires :assert [_] nil)
 
-(defmethod a/validate :assert [_ items]
-  (for [[k opts] items
-        :when (not (or (:path opts) (:src opts)))]
-    {:action :assert
-     :key k
-     :error "Either :path or :src required"}))
-
 (defmethod a/check :assert [_ key opts]
   (let [{:keys [path src]} opts]
     (if-not (or path src)

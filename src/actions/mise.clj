@@ -46,13 +46,6 @@
 (defmethod a/check :pkg/mise-uninstall [_ key opts]
   (o/drift :orphan))
 
-(defmethod a/validate :pkg/mise [_ items]
-  (for [[tool opts] items
-        :when (not (:version opts))]
-    {:action :pkg/mise
-     :key tool
-     :error "Version required"}))
-
 (defmethod a/install! :pkg/mise [type opts items]
   (a/simple-install type opts "Installing mise tools"
     (fn [tool item-opts] (str (name tool) "@" (:version item-opts)))
@@ -66,13 +59,6 @@
 ;; -- Uninstall orphans
 
 (defmethod a/requires :pkg/mise-uninstall [_] [:complete :pkg/mise])
-
-(defmethod a/status :pkg/mise-uninstall [type items _ctx]
-  (mapv (fn [[k _]]
-          {:label (name k)
-           :state :orphan
-           :action [type k]})
-        items))
 
 (defmethod a/install! :pkg/mise-uninstall [type opts items]
   (a/simple-install type opts "Uninstalling mise orphans"

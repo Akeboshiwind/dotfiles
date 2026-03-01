@@ -104,15 +104,6 @@
             {:action [:fs/symlink target-str] :label target-str :status :ok}
             {:action [:fs/symlink target-str] :label target-str :status :error}))))))
 
-(defmethod a/status :fs/symlink [type items _ctx]
-  (mapv (fn [[target source]]
-          (let [state (check-link target source)]
-            {:label target
-             :action [type target]
-             :state state
-             :detail (when (= state :wrong) "wrong target")}))
-        items))
-
 (defmethod a/install! :fs/unlink [_ _opts items]
   (when (seq items)
     (d/section "Cleaning stale symlinks"

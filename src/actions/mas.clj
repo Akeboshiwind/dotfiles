@@ -54,13 +54,6 @@
 
 (defmethod a/requires :pkg/mas-uninstall [_] [:complete :pkg/mas])
 
-(defmethod a/status :pkg/mas-uninstall [type items _ctx]
-  (mapv (fn [[k opts]]
-          {:label (or (:name opts) (str k))
-           :state :orphan
-           :action [type k]})
-        items))
-
 (defmethod a/install! :pkg/mas-uninstall [type opts items]
   (a/simple-install type opts "Uninstalling Mac App Store orphans"
     (fn [app-id opts] (or (:name opts) (str app-id)))

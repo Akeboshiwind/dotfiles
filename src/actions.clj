@@ -82,22 +82,6 @@
 
 (defmethod requires :default [type] type)
 
-(defmulti validate
-  "Validate items of a given action type.
-   Returns seq of error maps {:action :key :error}, or nil if valid."
-  (fn [type _items] type))
-
-(defmethod validate :default [_ _] nil)
-
-(defmulti status
-  "Check installed state of items. No side effects.
-   ctx is a map of delays for shared/expensive data (e.g. brew list results).
-   Returns seq of {:label str :state kw :detail str? :action [type key]}"
-  (fn [type _items _ctx] type))
-
-(defmethod status :default [type items _ctx]
-  (mapv (fn [[k _]] {:label (name k) :state :unknown :action [type k]}) items))
-
 (defmulti check
   "Check whether an action is satisfied. No side effects.
    Returns a CheckOutcome (see outcome.clj).

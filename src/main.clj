@@ -84,8 +84,7 @@
             (s/show-plan checked)
             (do
               (when-let [all-errors (seq (concat (m/validate-secrets)
-                                                  errors
-                                                  (e/validate-plan plan)))]
+                                                  errors))]
                 (println (format-validation-errors all-errors))
                 (System/exit 1))
               (println "Applying configurations...")
