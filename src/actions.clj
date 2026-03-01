@@ -22,25 +22,21 @@
 
 (defn exec!
   "Execute a command.
-   Options: :dry-run to preview, :prefix for output line prefix (default \"    \"),
+   Options: :prefix for output line prefix (default \"    \"),
             :env map of extra environment variables to pass to the process.
    Returns {:exit int :err string-or-nil}"
-  [{:keys [dry-run prefix env] :or {prefix default-prefix}} args]
-  (if dry-run
-    (do
-      (println prefix (d/gray (str/join " " args)))
-      {:exit 0 :err nil})
-    (let [proc (process/process args (cond-> {:err :string :in :inherit}
-                                       env (assoc :extra-env env)))
-          out-future (future (prefix-print prefix (:out proc)))
-          result @proc]
-      @out-future
-      {:exit (:exit result)
-       :err (let [e (:err result)]
-              (when (and e (seq (str/trim e)))
-                (-> e
-                    str/trim
-                    (str/replace #"\s*\n\s*" " "))))})))
+  [{:keys [prefix env] :or {prefix default-prefix}} args]
+  (let [proc (process/process args (cond-> {:err :string :in :inherit}
+                                     env (assoc :extra-env env)))
+        out-future (future (prefix-print prefix (:out proc)))
+        result @proc]
+    @out-future
+    {:exit (:exit result)
+     :err (let [e (:err result)]
+            (when (and e (seq (str/trim e)))
+              (-> e
+                  str/trim
+                  (str/replace #"\s*\n\s*" " "))))}))
 
 ;; =============================================================================
 ;; Helpers
@@ -49,7 +45,7 @@
 (defn simple-install
   "Helper for actions that follow the common pattern: run a command for each item.
    - action-type: the action type keyword (e.g. :pkg/brew), used for :action in results
-   - opts: execution options (passed to exec!, includes :dry-run)
+   - opts: execution options (passed to exec!)
    - title: section title
    - label-fn: (fn [key item-opts] -> string)
    - cmd-fn: (fn [key item-opts] -> command vector)
@@ -116,7 +112,7 @@
    Dispatches on action type keyword (e.g. :pkg/brew).
    Receives [type opts items] where:
    - type: action keyword
-   - opts: execution options (includes :dry-run)
+   - opts: execution options
    - items: map of {name item-opts}"
   (fn [type _opts _items] type))
 

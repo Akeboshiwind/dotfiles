@@ -31,8 +31,7 @@
                        src  ["bash" "-c" src]
                        :else (throw (ex-info "Assert must have :path or :src"
                                              {:key k})))
-                 ;; Always run checks — they're read-only predicates, safe in dry-run
-                 {:keys [exit]} (a/exec! (dissoc opts :dry-run) cmd)]
+                 {:keys [exit]} (a/exec! opts cmd)]
              (if (zero? exit)
                {:action [:assert k]
                 :label (name k)

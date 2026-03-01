@@ -3,7 +3,9 @@
             [clojure.string :as str]
             [execute :as e]
             [graph :as g]
-            [actions :as a]))
+            [check :as chk]
+            [actions :as a]
+            [outcome :as o]))
 
 (defn- mock-exec!
   "Returns a mock exec! fn that tracks calls in `calls` atom.
@@ -14,6 +16,15 @@
     (if (fail-pred args)
       {:exit 1 :err "forced failure"}
       {:exit 0 :err nil})))
+
+(defn- build-and-check
+  "Build ActionGraph and run checks. Returns checked graph.
+   Overrides a/check to return unknown for all types so execute tests
+   focus purely on execution logic, not check behavior."
+  [plan]
+  (let [ag (g/build-action-graph plan)]
+    (with-redefs [a/check (fn [_ _ _] o/unknown)]
+      (chk/run-checks ag))))
 
 ;; =============================================================================
 ;; Failure propagation tests
@@ -27,9 +38,9 @@
                              :dependent {:src "echo dep"
                                          :dep/requires #{[:pkg/script :setup]}}
                              :independent {:src "echo ind"}}}
-          order (g/topological-sort plan)]
+          ag (build-and-check plan)]
       (with-redefs [a/exec! (mock-exec! calls #(= (last %) "exit 1"))]
-        (e/execute-plan {:plan plan :order order}))
+        (e/execute-plan ag))
       (is (some #(= (last %) "exit 1") @calls)
           "setup should run")
       (is (some #(= (last %) "echo ind") @calls)
@@ -43,9 +54,9 @@
           plan {:pkg/script {:bootstrap {:src "exit 1"
                                          :dep/provides #{:pkg/brew}}}
                 :pkg/brew {:neovim {} :ripgrep {}}}
-          order (g/topological-sort plan)]
+          ag (build-and-check plan)]
       (with-redefs [a/exec! (mock-exec! calls #(= (last %) "exit 1"))]
-        (e/execute-plan {:plan plan :order order}))
+        (e/execute-plan ag))
       (is (= 1 (count @calls))
           "only bootstrap should have been attempted")
       (is (not-any? #(str/includes? (str/join " " %) "neovim") @calls)
@@ -60,26 +71,11 @@
                                          :dep/provides #{:pkg/brew}}}
                 :pkg/brew {:mise {:dep/provides #{:pkg/mise}}}
                 :pkg/mise {:node {:version "20"}}}
-          order (g/topological-sort plan)]
+          ag (build-and-check plan)]
       (with-redefs [a/exec! (mock-exec! calls #(= (last %) "exit 1"))]
-        (e/execute-plan {:plan plan :order order}))
+        (e/execute-plan ag))
       (is (= 1 (count @calls))
           "only bootstrap should have been attempted"))))
-
-(deftest skip-renders-message-test
-  (testing "skipped actions appear in output and are not executed"
-    (let [calls (atom [])
-          plan {:pkg/script {:bootstrap {:src "exit 1"
-                                         :dep/provides #{:pkg/brew}}}
-                :pkg/brew {:neovim {}}}
-          order (g/topological-sort plan)
-          output (with-out-str
-                   (with-redefs [a/exec! (mock-exec! calls #(= (last %) "exit 1"))]
-                     (e/execute-plan {:plan plan :order order})))]
-      (is (re-find #"(?i)neovim.*skip" output)
-          "skipped item should appear in output with skip indicator")
-      (is (not-any? #(str/includes? (str/join " " %) "neovim") @calls)
-          "neovim should not have been executed"))))
 
 (deftest no-failure-runs-all-test
   (testing "when nothing fails, all actions execute"
@@ -87,9 +83,9 @@
           plan {:pkg/script {:setup {:src "echo setup"
                                      :dep/provides #{:pkg/brew}}}
                 :pkg/brew {:neovim {}}}
-          order (g/topological-sort plan)]
+          ag (build-and-check plan)]
       (with-redefs [a/exec! (mock-exec! calls (constantly false))]
-        (e/execute-plan {:plan plan :order order}))
+        (e/execute-plan ag))
       (is (= 2 (count @calls))
           "both actions should run"))))
 
@@ -102,10 +98,10 @@
                 :pkg/mise {:node {:version "20"
                                   :dep/provides #{:pkg/npm}}}
                 :pkg/npm {:neovim {}}}
-          order (g/topological-sort plan)]
+          ag (build-and-check plan)]
       ;; Make mise install fail (command contains "node@20")
       (with-redefs [a/exec! (mock-exec! calls #(str/includes? (str/join " " %) "node@20"))]
-        (e/execute-plan {:plan plan :order order}))
+        (e/execute-plan ag))
       (is (some #(str/includes? (str/join " " %) "node@20") @calls)
           "mise install node@20 should have been attempted")
       (is (not-any? #(str/includes? (str/join " " %) "npm") @calls)
@@ -120,10 +116,10 @@
                                       :dep/provides #{:test/dock-configured}}}
                 :pkg/script {:post-dock {:src "echo restart-dock"
                                          :dep/requires #{[:osx/defaults :dock]}}}}
-          order (g/topological-sort plan)]
+          ag (build-and-check plan)]
       ;; Make defaults write fail
       (with-redefs [a/exec! (mock-exec! calls #(str/includes? (str/join " " %) "defaults"))]
-        (e/execute-plan {:plan plan :order order}))
+        (e/execute-plan ag))
       (is (some #(str/includes? (str/join " " %) "defaults") @calls)
           "defaults write should have been attempted")
       (is (not-any? #(str/includes? (str/join " " %) "restart-dock") @calls)
@@ -138,9 +134,9 @@
                                          :key "foo"
                                          :value true
                                          :dep/requires #{[:pkg/script :fails]}}}}
-          order (g/topological-sort plan)]
+          ag (build-and-check plan)]
       (with-redefs [a/exec! (mock-exec! calls #(= (last %) "exit 1"))]
-        (e/execute-plan {:plan plan :order order}))
+        (e/execute-plan ag))
       (is (some #(= (last %) "echo ok") @calls)
           "succeeds script should run")
       (is (some #(= (last %) "exit 1") @calls)

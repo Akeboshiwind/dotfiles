@@ -233,8 +233,7 @@
   (let [results (a/simple-install type opts "Uninstalling brew orphans"
                   (fn [pkg _] ["brew" "uninstall" (if (keyword? pkg) (name pkg) (str pkg))])
                   items)]
-    (when-not (:dry-run opts)
-      (a/exec! opts ["brew" "autoremove"]))
+    (a/exec! opts ["brew" "autoremove"])
     results))
 
 (defmethod a/install! :brew/service [type opts items]

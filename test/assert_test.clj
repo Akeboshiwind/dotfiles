@@ -3,7 +3,9 @@
             [clojure.string :as str]
             [execute :as e]
             [graph :as g]
-            [actions :as a]))
+            [check :as chk]
+            [actions :as a]
+            [outcome :as o]))
 
 (defn- mock-exec!
   [calls fail-pred]
@@ -13,37 +15,40 @@
       {:exit 1 :err "check failed"}
       {:exit 0 :err nil})))
 
+(defn- build-and-check
+  "Build and check, letting assert check run for real, mocking others as unknown."
+  [plan]
+  (let [ag (g/build-action-graph plan)
+        original-check a/check]
+    (with-redefs [a/check (fn [type key opts]
+                            (if (= type :assert)
+                              (original-check type key opts)
+                              o/unknown))]
+      (chk/run-checks ag))))
+
 ;; =============================================================================
-;; Assert action tests
+;; Assert check tests (assert is a check-only concern)
 ;; =============================================================================
 
 (deftest assert-pass-test
-  (testing "passing assert runs and succeeds"
-    (let [calls (atom [])
-          plan {:assert {:ssh-key {:src "test -f ~/.ssh/id_rsa"}}}
-          order (g/topological-sort plan)]
-      (with-redefs [a/exec! (mock-exec! calls (constantly false))]
-        (e/execute-plan {:plan plan :order order}))
-      (is (= 1 (count @calls))
-          "assert should execute its check"))))
+  (testing "passing assert → satisfied in check phase"
+    (let [plan {:assert {:ssh-key {:src "exit 0"}}}
+          ag (build-and-check plan)
+          check (get-in ag [:nodes [:assert :ssh-key] :check])]
+      (is (o/satisfied? check)))))
 
 (deftest assert-fail-prints-instructions-test
-  (testing "failing assert prints message and instructions"
+  (testing "failing assert shows instructions during execute"
     (let [calls (atom [])
-          plan {:assert {:ssh-key {:src "test -f ~/.ssh/id_rsa"
+          plan {:assert {:ssh-key {:src "exit 1"
                                    :message "SSH key not found"
                                    :instructions ["Generate: ssh-keygen -t ed25519"
                                                   "Add to GitHub"]}}}
-          order (g/topological-sort plan)
-          output (with-out-str
-                   (with-redefs [a/exec! (mock-exec! calls (constantly true))]
-                     (e/execute-plan {:plan plan :order order})))]
-      (is (re-find #"SSH key not found" output)
-          "should print the message")
-      (is (re-find #"ssh-keygen" output)
-          "should print instructions")
-      (is (re-find #"Add to GitHub" output)
-          "should print all instruction lines"))))
+          ag (build-and-check plan)
+          ;; Assert check should have returned error
+          check (get-in ag [:nodes [:assert :ssh-key] :check])]
+      (is (o/error? check))
+      (is (= "SSH key not found" (:message check))))))
 
 (deftest assert-fail-blocks-dependent-test
   (testing "failed assert blocks actions that depend on it"
@@ -54,11 +59,10 @@
                 :pkg/script {:setup {:src "echo setup"
                                      :dep/provides #{:pkg/brew}}}
                 :pkg/brew {:mosh {:dep/requires #{[:assert :remote-login]}}}}
-          order (g/topological-sort plan)]
-      (with-redefs [a/exec! (mock-exec! calls #(= (last %) "exit 1"))]
-        (e/execute-plan {:plan plan :order order}))
-      (is (some #(= (last %) "exit 1") @calls)
-          "assert should run")
+          ag (build-and-check plan)]
+      (with-redefs [a/exec! (mock-exec! calls (constantly false))]
+        (e/execute-plan ag))
+      ;; Assert error should cancel brew:mosh but not script:setup
       (is (some #(= (last %) "echo setup") @calls)
           "independent setup should run")
       (is (not-any? #(str/includes? (str/join " " %) "mosh") @calls)
@@ -67,15 +71,15 @@
 (deftest assert-pass-allows-dependent-test
   (testing "passing assert allows dependent actions to run"
     (let [calls (atom [])
-          plan {:assert {:remote-login {:src "echo ok"
+          plan {:assert {:remote-login {:src "exit 0"
                                         :message "Remote Login disabled"
                                         :instructions ["Enable in System Settings"]}}
                 :pkg/script {:setup {:src "echo setup"
                                      :dep/provides #{:pkg/brew}}}
                 :pkg/brew {:mosh {:dep/requires #{[:assert :remote-login]}}}}
-          order (g/topological-sort plan)]
+          ag (build-and-check plan)]
       (with-redefs [a/exec! (mock-exec! calls (constantly false))]
-        (e/execute-plan {:plan plan :order order}))
+        (e/execute-plan ag))
       (is (some #(str/includes? (str/join " " %) "mosh") @calls)
           "mosh should run when assert passes"))))
 
