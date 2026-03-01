@@ -3,7 +3,6 @@
             [clojure.java.io :as io]
             [clojure.set :as set]
             [actions :as a]
-            [graph :as g]
             [utils :as u]))
 
 ;; >> Resolve symlinks to root of repo
@@ -146,11 +145,6 @@
         plan (cond-> merged
                (seq unlinks) (assoc :fs/unlink unlinks)
                (seq orphans) (merge orphans))]
-    ;; Validate the dependency graph
-    (when-let [errors (g/validate plan)]
-      (throw (ex-info "Invalid dependency graph" errors)))
-    ;; Return plan, execution order, symlinks for cache, and any errors
     {:plan plan
-     :order (g/topological-sort plan)
      :symlinks symlinks
      :errors duplicate-errors}))

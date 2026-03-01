@@ -180,22 +180,23 @@
 (deftest build-includes-orphans-test
   (testing "build! adds uninstall actions from a/orphans to plan"
     (let [entries [{:step {:pkg/script {:bbin-bootstrap {:src "echo ok" :dep/provides #{:pkg/bbin}}}
-                           :pkg/bbin {:jet {}}}
-                   :source "/test"}]
+                           :pkg/bbin {:jet {}}}}
+                   :source "/test"]
           ;; Mock a/orphans to say "neil" is orphaned
           result (with-redefs [a/orphans (fn [type declared]
                                            (when (= type :pkg/bbin)
                                              {:pkg/bbin-uninstall {:neil {}}}))]
                    (p/build! entries {}))]
-      ;; neil should appear as :pkg/bbin-uninstall
+      ;; neil should appear as :pkg/bbin-uninstall in the plan
       (is (= {:neil {}} (get-in result [:plan :pkg/bbin-uninstall])))
-      ;; uninstall should be in the order
-      (is (some #{[:pkg/bbin-uninstall :neil]} (:order result)))))
+      ;; uninstall should be in the ActionGraph order
+      (let [ag (g/build-action-graph (:plan result))]
+        (is (some #{[:pkg/bbin-uninstall :neil]} (:order ag))))))
 
   (testing "build! does not add uninstall actions when no orphans"
     (let [entries [{:step {:pkg/script {:bbin-bootstrap {:src "echo ok" :dep/provides #{:pkg/bbin}}}
-                           :pkg/bbin {:jet {}}}
-                   :source "/test"}]
+                           :pkg/bbin {:jet {}}}}
+                   :source "/test"]
           result (with-redefs [a/orphans (fn [_ _] nil)]
                    (p/build! entries {}))]
       (is (nil? (get-in result [:plan :pkg/bbin-uninstall]))))))

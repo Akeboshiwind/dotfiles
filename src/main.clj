@@ -73,7 +73,7 @@
       (let [entries (m/load-manifest)
             cache (c/load-cache)
             _ (reset! a/*cache* cache)
-            {:keys [plan order symlinks errors]} (p/build! entries cache)
+            {:keys [plan symlinks errors]} (p/build! entries cache)
             ag (g/build-action-graph plan)
             ag (if action (filter-action-graph ag plan action) ag)]
         (when (and action (empty? (:order ag)))
