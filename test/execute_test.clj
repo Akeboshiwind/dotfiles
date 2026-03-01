@@ -125,6 +125,29 @@
       (is (not-any? #(str/includes? (str/join " " %) "restart-dock") @calls)
           "post-dock script should be skipped because osx/defaults:dock failed"))))
 
+(deftest batch-install-per-type-test
+  (testing "install! is called once per type with all actionable items batched"
+    (let [install-calls (atom [])
+          plan {:pkg/script {:bootstrap {:src "echo ok"
+                                          :dep/provides #{:pkg/brew}}}
+                :pkg/brew {:neovim {} :ripgrep {} :wget {}}}
+          ag (build-and-check plan)]
+      (with-redefs [a/exec! (mock-exec! (atom []) (constantly false))
+                    a/do-install! (fn [type opts items]
+                                    (swap! install-calls conj {:type type :items items})
+                                    (mapv (fn [[k _]]
+                                            {:action [type k]
+                                             :label (name k)
+                                             :status :ok})
+                                          items))]
+        (e/execute-plan ag))
+      ;; Script gets one call, brew gets ONE call with all 3 items
+      (let [brew-calls (filter #(= :pkg/brew (:type %)) @install-calls)]
+        (is (= 1 (count brew-calls))
+            "brew should be called exactly once as a batch")
+        (is (= 3 (count (:items (first brew-calls))))
+            "the single brew call should contain all 3 items")))))
+
 (deftest independent-branches-unaffected-test
   (testing "failure in one branch doesn't affect independent branch"
     (let [calls (atom [])

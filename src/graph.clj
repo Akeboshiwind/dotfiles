@@ -72,7 +72,7 @@
   [actions type]
   (filter #(= type (first %)) actions))
 
-(defn- resolve-all-deps
+(defn resolve-all-deps
   "Resolve all requirements for an action, including [:complete type] expansion."
   [{:keys [actions providers]} reqs]
   (concat
@@ -186,7 +186,7 @@
      :order order
      :parsed parsed}))
 
-(defn- dependents-of
+(defn dependents-of
   "Return set of actions that directly or transitively depend on the given action."
   [{:keys [parsed order]} action]
   (loop [blocked #{action}
