@@ -1,20 +1,26 @@
 (ns registry
-  "Loads all action namespace implementations.
-   Core modules call (ensure-loaded!) rather than requiring action namespaces directly."
-  (:require [actions.script]
-            [actions.brew]
-            [actions.mise]
-            [actions.mas]
-            [actions.bbin]
-            [actions.npm]
-            [actions.claude]
-            [actions.osx]
-            [actions.symlink]
-            [actions.git]
-            [actions.assert]))
+  "Auto-discovers and loads all action namespace implementations.
+   Requiring this namespace loads all action namespaces from src/actions/."
+  (:require [babashka.fs :as fs]
+            [clojure.string :as str]))
+
+(defn- discover-action-namespaces
+  "Find all .clj files in src/actions/ and return their namespace symbols."
+  []
+  (let [src-dir (str (fs/absolutize "src/actions"))]
+    (->> (fs/glob src-dir "*.clj")
+         (map (fn [path]
+                (-> (str (fs/file-name path))
+                    (str/replace #"\.clj$" "")
+                    (str/replace "_" "-")
+                    (->> (str "actions."))
+                    symbol))))))
+
+;; Load all action namespaces at require time
+(doseq [ns-sym (discover-action-namespaces)]
+  (require ns-sym))
 
 (defn ensure-loaded!
-  "Ensure all action namespaces are loaded. Safe to call multiple times."
+  "No-op — action namespaces are loaded when this namespace is required."
   []
-  ;; Requiring this namespace loads all action namespaces above.
   nil)
