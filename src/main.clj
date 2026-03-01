@@ -83,9 +83,7 @@
                        "Dry run - showing what would be done..."
                        "Applying configurations..."))
             (e/execute-plan {:plan plan :order filtered-order :dry-run dry-run})
-            ;; Only update symlink cache if we processed symlinks (and not dry-run)
-            (when (and (not dry-run)
-                       (or (nil? action) (= action :fs/symlink)))
+            (when-not dry-run
               (c/save-cache! (assoc cache :symlinks symlinks))))))
       (catch clojure.lang.ExceptionInfo e
         (let [data (ex-data e)]
