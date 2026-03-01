@@ -2,6 +2,7 @@
   (:require [clojure.test :refer [deftest testing is use-fixtures]]
             [babashka.fs :as fs]
             [actions :as a]
+            [cache :as c]
             [actions.script]))
 
 (def ^:dynamic *tmp-file* nil)
@@ -24,3 +25,20 @@
     (a/install! :pkg/script {}
                 {:test-script {:src (str "echo \"${SECRET:-empty}\" > " *tmp-file*)}})
     (is (= "empty" (clojure.string/trim (slurp *tmp-file*))))))
+
+(deftest script-install-cache-writeback-test
+  (testing "successful script execution writes content hash to *cache*"
+    (binding [a/*cache* (atom {})]
+      (a/install! :pkg/script {}
+                  {:my-script {:src "echo hello"}})
+      (let [cached (c/get-script @a/*cache* "my-script")]
+        (is (some? cached) "script should be in cache after execution")
+        (is (= (c/content-hash "echo hello") (:content-hash cached))
+            "cached hash should match script content"))))
+
+  (testing "failed script execution does not write to cache"
+    (binding [a/*cache* (atom {})]
+      (a/install! :pkg/script {}
+                  {:bad-script {:src "exit 1"}})
+      (is (nil? (c/get-script @a/*cache* "bad-script"))
+          "failed script should not be cached"))))
