@@ -81,6 +81,26 @@
           (is (o/cancelled? uninstall-check)
               "brew-uninstall should be cancelled when a brew action errors"))))))
 
+(deftest walk-graph-exception-becomes-error-test
+  (testing "exception thrown in check is caught and becomes error outcome"
+    (let [plan {:assert {:check-ok {:src "exit 0"}}
+                :pkg/script {:setup {:src "echo ok"
+                                      :dep/requires #{[:assert :check-ok]}}}}
+          ag (g/build-action-graph plan)]
+      ;; Mock: assert throws an exception instead of returning an outcome
+      (with-redefs [a/check (fn [type key _]
+                              (if (= type :assert)
+                                (throw (Exception. "boom"))
+                                o/unknown))]
+        (let [checked (chk/run-checks ag)
+              assert-check (get-in checked [:nodes [:assert :check-ok] :check])
+              script-check (get-in checked [:nodes [:pkg/script :setup] :check])]
+          (is (o/error? assert-check)
+              "thrown exception should become error outcome")
+          (is (= "boom" (:message assert-check)))
+          (is (o/cancelled? script-check)
+              "dependent should be cancelled when upstream throws"))))))
+
 (deftest walk-graph-satisfied-does-not-cancel-test
   (testing "satisfied check does not cancel dependents"
     (let [plan {:assert {:check-ok {:src "exit 0"}}

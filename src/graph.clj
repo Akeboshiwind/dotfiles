@@ -206,6 +206,7 @@
   "Walk an ActionGraph in topological order, calling (visitor-fn graph node)
    for each node. visitor-fn returns an updated node map.
    If a node's :check is blocking?, downstream dependents are automatically cancelled.
+   Exceptions in visitor-fn are caught and converted to error outcomes.
    Returns updated ActionGraph."
   [action-graph visitor-fn]
   (let [cancelled (atom #{})]
@@ -215,7 +216,12 @@
           (update-in ag [:nodes ref] assoc :check
                      {:outcome :cancelled})
           (let [node (get-in ag [:nodes ref])
-                updated-node (visitor-fn ag node)
+                updated-node (try
+                               (visitor-fn ag node)
+                               (catch Exception e
+                                 (assoc node :check
+                                        {:outcome :error
+                                         :message (ex-message e)})))
                 check (:check updated-node)]
             (when (and check (#{:error :conflict :cancelled} (:outcome check)))
               (swap! cancelled into (dependents-of ag ref)))
