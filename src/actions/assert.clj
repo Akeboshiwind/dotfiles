@@ -14,7 +14,8 @@
             result (apply process/shell {:out :string :err :string :continue true} cmd)]
         (if (zero? (:exit result))
           o/satisfied
-          (o/error (or (:message opts) "assertion failed")))))))
+          (cond-> (o/error (or (:message opts) "assertion failed"))
+            (:instructions opts) (assoc :detail (:instructions opts))))))))
 
 (defmethod a/install! :assert [_ opts items]
   (d/section "Checking assertions"

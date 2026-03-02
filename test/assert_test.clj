@@ -39,16 +39,22 @@
 
 (deftest assert-fail-prints-instructions-test
   (testing "failing assert shows instructions during execute"
-    (let [calls (atom [])
-          plan {:assert {:ssh-key {:src "exit 1"
+    (let [plan {:assert {:ssh-key {:src "exit 1"
                                    :message "SSH key not found"
                                    :instructions ["Generate: ssh-keygen -t ed25519"
                                                   "Add to GitHub"]}}}
           ag (build-and-check plan)
-          ;; Assert check should have returned error
           check (get-in ag [:nodes [:assert :ssh-key] :check])]
       (is (o/error? check))
-      (is (= "SSH key not found" (:message check))))))
+      (is (= "SSH key not found" (:message check)))
+      ;; Instructions must survive into the check outcome
+      (is (= ["Generate: ssh-keygen -t ed25519" "Add to GitHub"]
+             (:detail check))
+          "instructions should be carried as :detail on the error outcome")
+      ;; Instructions must be rendered during execute
+      (let [output (with-out-str (e/execute-plan ag))]
+        (is (str/includes? output "ssh-keygen")
+            "execute output should include instruction text")))))
 
 (deftest assert-fail-blocks-dependent-test
   (testing "failed assert blocks actions that depend on it"

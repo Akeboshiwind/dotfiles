@@ -41,7 +41,8 @@
   (let [[_ key] ref]
     (d/render-result {:label (if (keyword? key) (name key) (str key))
                       :status :skip
-                      :message (str "skipped (" (name (:outcome check)) ")")})))
+                      :message (str "skipped (" (name (:outcome check)) ")")
+                      :detail (:detail check)})))
 
 (defn execute-plan
   "Execute an ActionGraph that has been through the check phase.
