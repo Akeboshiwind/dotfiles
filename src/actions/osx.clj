@@ -65,8 +65,15 @@
   (d/section "Setting OSX defaults"
              (for [[config-name cfg] items
                    :let [domain (:domain cfg)
-                         ;; Support both :settings map and single :key/:value
                          settings (or (:settings cfg)
-                                      {(:key cfg) (:value cfg)})]
-                   [key value] settings]
-               (set-default opts config-name domain key value))))
+                                      {(:key cfg) (:value cfg)})
+                         results (mapv (fn [[key value]]
+                                         (set-default opts config-name domain key value))
+                                       settings)
+                         failed (first (filter #(= :error (:status %)) results))]]
+               ;; Return one aggregate result per config-name
+               (if failed
+                 (assoc failed :label (name config-name))
+                 {:action [:osx/defaults config-name]
+                  :label (name config-name)
+                  :status :ok}))))

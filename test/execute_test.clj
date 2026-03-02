@@ -131,6 +131,26 @@
       (is (not-any? #(str/includes? (str/join " " %) "restart-dock") @calls)
           "post-dock script should be skipped because osx/defaults:dock failed"))))
 
+(deftest osx-defaults-multi-setting-failure-test
+  (testing "failure in first of multiple settings is not lost"
+    (let [calls (atom [])
+          ;; Two settings for :dock — first fails, second succeeds
+          plan {:osx/defaults {:dock {:domain "com.apple.dock"
+                                      :settings {:autohide true
+                                                 :tilesize 48}
+                                      :dep/provides #{:test/dock-done}}}
+                :pkg/script {:post {:src "echo post"
+                                    :dep/requires #{[:osx/defaults :dock]}}}}
+          ag (build-and-check plan)]
+      ;; Fail only the autohide command
+      (with-redefs [a/exec! (mock-exec! calls #(str/includes? (str/join " " %) "autohide"))]
+        (let [result (e/execute-plan ag)
+              dock-result (get-in result [:nodes [:osx/defaults :dock] :result])]
+          (is (= :error (:status dock-result))
+              "dock result should be error when any setting fails")
+          (is (not-any? #(str/includes? (str/join " " %) "echo post") @calls)
+              "post script should be skipped because dock failed"))))))
+
 (deftest batch-install-per-type-test
   (testing "install! is called once per type with all actionable items batched"
     (let [install-calls (atom [])
