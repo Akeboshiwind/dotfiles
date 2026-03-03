@@ -84,16 +84,12 @@
             (s/show-plan checked)
             (do
               (when-let [all-errors (seq (concat (m/validate-secrets)
-                                                 errors))]
+                                                  errors))]
                 (println (format-validation-errors all-errors))
                 (System/exit 1))
               (println "Applying configurations...")
               (e/execute-plan checked)
-              ;; Only update symlink cache when running all actions or
-              ;; specifically symlinks — filtered runs for other types
-              ;; haven't processed symlinks and would corrupt the cache.
-              (when (or (nil? action) (= action :fs/symlink))
-                (c/save-cache! (assoc @a/*cache* :symlinks symlinks)))))))
+              (c/save-cache! (assoc @a/*cache* :symlinks symlinks))))))
       (catch clojure.lang.ExceptionInfo e
         (let [data (ex-data e)]
           (cond
