@@ -65,7 +65,7 @@
         out-info (or (get outdated sn)
                      (get outdated pkg-name))]
     (cond
-      out-info (o/drift :outdated)
+      out-info (assoc (o/drift :outdated) :message (str (:installed out-info) " → " (:current out-info)))
       installed? o/satisfied
       :else (o/drift :missing))))
 

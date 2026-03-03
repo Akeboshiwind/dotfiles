@@ -3,6 +3,7 @@
             [babashka.fs :as fs]
             [actions :as a]
             [actions.brew :as brew]
+            [actions.mise :as mise]
             [cache :as c]
             [outcome :as o]
             [registry]))
@@ -116,13 +117,14 @@
         (is (= :missing (:kind result)))))))
 
 (deftest brew-check-outdated-test
-  (testing "outdated formula → drift(:outdated)"
+  (testing "outdated formula → drift(:outdated) with version message"
     (binding [brew/*formulae-cache* (delay #{"neovim"})
               brew/*casks-cache* (delay #{})
               brew/*outdated-cache* (delay {"neovim" {:installed "0.9" :current "0.10"}})]
       (let [result (a/check :pkg/brew :neovim {})]
         (is (o/drift? result))
-        (is (= :outdated (:kind result)))))))
+        (is (= :outdated (:kind result)))
+        (is (= "0.9 → 0.10" (:message result)))))))
 
 (deftest brew-check-tap-qualified-test
   (testing "tap-qualified package uses short name for lookup"
@@ -234,6 +236,18 @@
 (deftest script-check-no-script-test
   (testing "no :path or :src → error"
     (is (o/error? (a/check :pkg/script :setup {})))))
+
+;; =============================================================================
+;; :pkg/mise check
+;; =============================================================================
+
+(deftest mise-check-outdated-test
+  (testing "outdated tool → drift(:outdated) with version message"
+    (binding [mise/*installed-cache* (delay {"node" #{"18.0.0" "20.0.0"}})]
+      (let [result (a/check :pkg/mise :node {:version "22.0.0"})]
+        (is (o/drift? result))
+        (is (= :outdated (:kind result)))
+        (is (= "20.0.0 → 22.0.0" (:message result)))))))
 
 ;; =============================================================================
 ;; Default check (unknown for unimplemented types)

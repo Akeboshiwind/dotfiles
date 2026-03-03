@@ -41,7 +41,7 @@
       (cond
         (nil? versions) (o/drift :missing)
         (contains? versions (:version opts)) o/satisfied
-        :else (o/drift :outdated)))))
+        :else (assoc (o/drift :outdated) :message (str (last (sort versions)) " → " (:version opts)))))))
 
 (defmethod a/check :pkg/mise-uninstall [_ key opts]
   (o/drift :orphan))
