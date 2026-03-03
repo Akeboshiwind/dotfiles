@@ -64,13 +64,18 @@ enum ActionType {
     claude_mcp
 }
 
+enum DriftKind { missing | outdated | wrong | orphan }
+
 enum CheckOutcome {
-    satisfied                                          -- in desired state, no action needed
-    drift(kind: missing | outdated | wrong | orphan)   -- diverged from desired state, will act
-    unknown                                            -- cannot determine (e.g. script with no :check)
-    conflict                                           -- blocked by incompatible existing state
-    error                                              -- cannot proceed (tool missing, validation failed)
-    cancelled                                          -- upstream action failed/conflicted
+    satisfied                      -- in desired state, no action needed
+    drift_missing                  -- diverged: not present
+    drift_outdated                 -- diverged: version behind
+    drift_wrong                    -- diverged: wrong value/target
+    drift_orphan                   -- diverged: should not exist
+    unknown                        -- cannot determine (e.g. script with no :check)
+    conflict                       -- blocked by incompatible existing state
+    error                          -- cannot proceed (tool missing, validation failed)
+    cancelled                      -- upstream action failed/conflicted
 }
 
 ------------------------------------------------------------
@@ -81,8 +86,13 @@ enum CheckOutcome {
 -- the check phase completes.
 
 enum RunMode {
-    plan(action_filter: ActionType?)    -- check phase only, print results
-    apply(action_filter: ActionType?)   -- check phase + execute phase
+    plan       -- check phase only, print results
+    apply      -- check phase + execute phase
+}
+
+entity RunConfig {
+    mode: RunMode
+    action_filter: ActionType?
 }
 
 ------------------------------------------------------------
@@ -208,7 +218,7 @@ default secrets_file = "secrets.edn"
 ------------------------------------------------------------
 
 rule LoadManifest {
-    when: run: RunMode
+    when: run: RunConfig
 
     let manifest = read_edn(manifest_file)
     let entries = manifest.plan.map(e => resolve_entry(e))
@@ -259,7 +269,7 @@ rule ResolveInlineEntry {
 ------------------------------------------------------------
 
 rule LoadSecrets {
-    when: run: RunMode
+    when: run: RunConfig
 
     ensures:
         if secrets_file exists:
@@ -501,7 +511,7 @@ rule CheckPhase {
             let outcome = check(node.ref.type, node.ref.key, node.opts)
             node.check = outcome
 
-            if outcome in [conflict, error]:
+            if outcome in {conflict, error}:
                 for each downstream in graph.dependents(node.ref):
                     downstream.check = cancelled
 }
@@ -522,7 +532,7 @@ rule ValidateScriptSource {
     --
     -- Scripts may optionally declare :check (path or src).
     -- If :check is present, run it during check phase:
-    --   exit 0 = satisfied, exit 1 = drift(missing)
+    --   exit 0 = satisfied, exit 1 = drift_missing
     -- If :check is absent, return unknown.
     -- Cache provides last-run info via env vars to the check script.
 }
@@ -538,7 +548,7 @@ rule ValidateAssertSource {
 ------------------------------------------------------------
 
 rule ShowPlan {
-    when: graph: ActionGraph checked and run: RunMode.plan
+    when: graph: ActionGraph checked and run: RunConfig with mode = plan
 
     -- Print the check results from the graph.
     -- Group by outcome for readability.
@@ -555,7 +565,7 @@ rule ShowPlan {
 ------------------------------------------------------------
 
 rule ExecutePhase {
-    when: graph: ActionGraph checked and run: RunMode.apply
+    when: graph: ActionGraph checked and run: RunConfig with mode = apply
 
     -- Walk the graph in topological order.
     -- Only run install! for nodes with drift or unknown outcome.
@@ -568,8 +578,8 @@ rule ExecutePhase {
 
     ensures:
         for each batch in batches:
-            let actionable = batch.filter(n => n.check in [drift, unknown])
-            let already_cancelled = batch.filter(n => n.check in [conflict, error, cancelled])
+            let actionable = batch.filter(n => n.check in {drift_missing, drift_outdated, drift_wrong, drift_orphan, unknown})
+            let already_cancelled = batch.filter(n => n.check in {conflict, error, cancelled})
 
             if actionable.count > 0:
                 let results = install_batch!(batch.type, actionable)
@@ -577,7 +587,7 @@ rule ExecutePhase {
                     node.result = result
                     if result.status = error:
                         for each downstream in graph.dependents(node.ref):
-                            if downstream.check not in [conflict, error, cancelled]:
+                            if downstream.check not in {conflict, error, cancelled}:
                                 downstream.check = cancelled
 
         let failed = graph.nodes.filter(n => n.result?.status = error)
@@ -628,14 +638,14 @@ rule SymlinkCheck {
 
         else if target_file exists and is_symlink:
             -- Points to wrong target, can be re-linked
-            return drift(wrong)
+            return drift_wrong
 
         else if target_file exists:
             -- Regular file/dir exists, refuse to overwrite
             return conflict
 
         else:
-            return drift(missing)
+            return drift_missing
 }
 
 rule SymlinkInstall {
@@ -666,7 +676,7 @@ rule UnlinkCheck {
             return conflict     -- points elsewhere, refuse to touch
 
         else:
-            return drift(orphan)
+            return drift_orphan
 }
 
 rule UnlinkInstall {
@@ -683,7 +693,7 @@ rule UnlinkInstall {
 ------------------------------------------------------------
 
 rule UpdateCache {
-    when: graph: ActionGraph executed and run: RunMode.apply
+    when: graph: ActionGraph executed and run: RunConfig with mode = apply
 
     -- Always update cache regardless of action_filter.
     -- Symlinks are computed from the full manifest (not filtered).
