@@ -243,7 +243,7 @@ rule ResolveKeywordEntry {
     let path = "cfg/" + entry.value + "/manifest.edn"
     let content = read_edn(path)
 
-    requires: path exists
+    requires: file_exists(path)
 
     ensures: ResolvedEntry.created(
         step: content,
@@ -256,7 +256,7 @@ rule ResolvePathEntry {
 
     let content = read_edn(entry.value)
 
-    requires: entry.value exists
+    requires: file_exists(entry.value)
 
     ensures: ResolvedEntry.created(
         step: content,
@@ -298,7 +298,7 @@ rule ValidateSecrets {
         .filter(entry => not entry.disabled and (entry.content = null or entry.content = ""))
 
     ensures:
-        for each (key, _) in empty_values:
+        for (key, _) in empty_values:
             SecretError.created(key: key)
 }
 
@@ -327,7 +327,7 @@ rule ResolveSymlinkPaths {
     -- against the entry's source directory
 
     ensures:
-        for each (target, source) in entry.step[fs_symlink]:
+        for (target, source) in entry.step[fs_symlink]:
             if source is_relative:
                 requires: canonical(entry.source, source) starts_with entry.source
                 entry.step[fs_symlink][target] = canonical(entry.source, source)
@@ -339,9 +339,9 @@ rule ExpandSymlinkFolder {
     -- Expand each {prefix -> dir} into individual symlinks
 
     ensures:
-        for each (prefix, dir) in entry.step[fs_symlink_folder]:
+        for (prefix, dir) in entry.step[fs_symlink_folder]:
             let files = list_files(dir)
-            for each file in files:
+            for file in files:
                 entry.step[fs_symlink][prefix + relative_path(dir, file)] = file.path
         entry.step[fs_symlink_folder] = null
 }
@@ -393,7 +393,7 @@ rule CalculateOrphans {
         .compact
 
     ensures:
-        for each fragment in orphan_fragments:
+        for fragment in orphan_fragments:
             plan.actions = plan.actions.merge(fragment)
 }
 
@@ -458,7 +458,7 @@ rule GenerateBatchCompleteCapabilities {
     let present_types = graph.nodes.map(n => n.ref.type).distinct
 
     ensures:
-        for each type in present_types:
+        for type in present_types:
             -- Synthetic capability depends on all actions of this type
             graph.add_capability(
                 name: complete_capability(type),
@@ -512,7 +512,7 @@ rule CheckPhase {
     when: graph: ActionGraph validated
 
     ensures:
-        for each node in graph.order:
+        for node in graph.order:
             if node.check = cancelled:
                 -- Already cancelled by upstream failure
                 continue
@@ -521,7 +521,7 @@ rule CheckPhase {
             node.check = outcome
 
             if outcome in {conflict, error}:
-                for each downstream in graph.dependents(node.ref):
+                for downstream in graph.dependents(node.ref):
                     downstream.check = cancelled
 }
 
@@ -563,7 +563,7 @@ rule ShowPlan {
     -- Group by outcome for readability.
 
     ensures:
-        for each node in graph.order:
+        for node in graph.order:
             if node.check != satisfied:
                 CheckResultDisplayed(node.ref, node.check)
         PlanSummaryDisplayed(frequency_of(graph.nodes.map(n => n.check)))
@@ -586,16 +586,16 @@ rule ExecutePhase {
     let batches = partition_by_type(graph.order)
 
     ensures:
-        for each batch in batches:
+        for batch in batches:
             let actionable = batch.filter(n => n.check in {drift_missing, drift_outdated, drift_wrong, drift_orphan, unknown})
             let already_cancelled = batch.filter(n => n.check in {conflict, error, cancelled})
 
             if actionable.count > 0:
                 let results = install_batch!(batch.type, actionable)
-                for each (node, result) in zip(actionable, results):
+                for (node, result) in zip(actionable, results):
                     node.result = result
                     if result.status = error:
-                        for each downstream in graph.dependents(node.ref):
+                        for downstream in graph.dependents(node.ref):
                             if downstream.check not in {conflict, error, cancelled}:
                                 downstream.check = cancelled
 
@@ -642,19 +642,19 @@ rule SymlinkCheck {
     let source = opts.source
 
     ensures:
-        if target_file exists and is_symlink and points_to(source):
-            return satisfied
+        if file_exists(target_file) and is_symlink(target_file) and points_to(target_file, source):
+            outcome = satisfied
 
-        else if target_file exists and is_symlink:
+        else if file_exists(target_file) and is_symlink(target_file):
             -- Points to wrong target, can be re-linked
-            return drift_wrong
+            outcome = drift_wrong
 
-        else if target_file exists:
+        else if file_exists(target_file):
             -- Regular file/dir exists, refuse to overwrite
-            return conflict
+            outcome = conflict
 
         else:
-            return drift_missing
+            outcome = drift_missing
 }
 
 rule SymlinkInstall {
@@ -675,17 +675,17 @@ rule UnlinkCheck {
     let expected_source = opts.source
 
     ensures:
-        if not target_file exists:
-            return satisfied    -- already gone
+        if not file_exists(target_file):
+            outcome = satisfied    -- already gone
 
         else if not is_symlink(target_file):
-            return conflict     -- not a symlink, refuse to touch
+            outcome = conflict     -- not a symlink, refuse to touch
 
         else if not points_to(target_file, expected_source):
-            return conflict     -- points elsewhere, refuse to touch
+            outcome = conflict     -- points elsewhere, refuse to touch
 
         else:
-            return drift_orphan
+            outcome = drift_orphan
 }
 
 rule UnlinkInstall {
