@@ -19,6 +19,11 @@ value DependencyError {
     details: String
 }
 
+value SecretValue {
+    content: String?
+    disabled: Boolean    -- true when secret is explicitly disabled
+}
+
 value SymlinkMapping {
     target: String    -- destination path (may contain ~)
     source: String    -- source file path (canonical)
@@ -164,7 +169,7 @@ value ScriptRecord {
 }
 
 entity Secrets {
-    values: Map<String, String | :secret/disabled>
+    values: Map<String, SecretValue>
 }
 
 ------------------------------------------------------------
@@ -287,10 +292,10 @@ rule ValidateSecrets {
 
     -- Empty secret values are caught during the check phase.
     -- Each action that references a secret will receive an error
-    -- CheckOutcome if the secret is empty (not :secret/disabled).
+    -- CheckOutcome if the secret is empty (not disabled).
 
     let empty_values = secrets.values
-        .filter((k, v) => v != :secret/disabled and (v = null or v = ""))
+        .filter(entry => not entry.disabled and (entry.content = null or entry.content = ""))
 
     ensures:
         for each (key, _) in empty_values:
@@ -301,7 +306,7 @@ rule ResolveSecretReference {
     when: SecretTagEncountered(key)
 
     -- Looks up key in secrets map. Throws if key not found.
-    -- Note: does NOT check for :secret/disabled - a disabled value
+    -- Note: does NOT check for disabled secrets - a disabled value
     -- is returned as-is. Validation catches empty values separately.
 
     let secrets = current Secrets
@@ -720,6 +725,6 @@ rule UpdateCache {
 
 open question "Should symlink conflicts be auto-resolved with backup?"
 open question "Should there be rollback on partial failure?"
-open question "Should :secret/disabled be rejected when a secret tag references it? Currently the value is returned as-is."
+open question "Should disabled secrets be rejected when a secret tag references them? Currently the value is returned as-is."
 open question "Interactive plan -> approve -> apply flow?"
 open question "How should action_filter interact with synthetic complete() capabilities?"
