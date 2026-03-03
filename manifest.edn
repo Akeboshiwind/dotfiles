@@ -2,6 +2,7 @@
         {:pkg/script
          {:homebrew
           {:path "scripts/install-homebrew.sh"
+           :check "command -v brew"
            :dep/provides #{:pkg/brew :brew/service}}}
          :pkg/brew
          {:mise {:dep/provides #{:pkg/mise}}

@@ -30,7 +30,10 @@
             changed? (or (nil? cached)
                          (not= current-hash (:content-hash cached)))
             env {"DOTFILES_CONTENT_CHANGED" (str changed?)}
-            cmd (if (:path check) ["bash" (:path check)] ["bash" "-c" (:src check)])
+            cmd (cond
+                  (string? check) ["bash" "-c" check]
+                  (:path check)   ["bash" (:path check)]
+                  :else            ["bash" "-c" (:src check)])
             result (apply process/shell {:out :string :err :string :continue true
                                          :extra-env env} cmd)]
         (if (zero? (:exit result))
