@@ -1,3 +1,4 @@
+-- allium: 1
 -- Dotfiles Manager Specification
 -- A declarative system for managing dotfiles, packages, and system configuration
 --
