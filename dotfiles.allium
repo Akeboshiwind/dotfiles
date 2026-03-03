@@ -310,7 +310,7 @@ rule ResolveSecretReference {
 
     requires: key in secrets.values
 
-    ensures: SecretResolved(value: secrets.values[key])
+    ensures: SecretResolved(value: get(secrets.values, key))
 }
 
 ------------------------------------------------------------
@@ -323,24 +323,29 @@ rule ResolveSymlinkPaths {
     -- Resolve relative paths in fs_symlink and fs_symlink_folder
     -- against the entry's source directory
 
+    let symlinks = get(entry.step, fs_symlink)
+
     ensures:
-        for mapping in entry.step[fs_symlink]:
-            if is_relative(mapping.source):
-                requires: starts_with(canonical(entry.source, mapping.source), entry.source)
+        for mapping in symlinks:
+            if is_relative(mapping.source) and starts_with(canonical(entry.source, mapping.source), entry.source):
                 mapping.source = canonical(entry.source, mapping.source)
 }
 
 rule ExpandSymlinkFolder {
-    when: entry: ResolvedEntry with step[fs_symlink_folder] != null
+    when: entry: ResolvedEntry.created
+
+    let folder_mappings = get(entry.step, fs_symlink_folder)
+
+    requires: folder_mappings != null
 
     -- Expand each {prefix -> dir} into individual symlinks
 
     ensures:
-        for mapping in entry.step[fs_symlink_folder]:
+        for mapping in folder_mappings:
             let files = list_files(mapping.dir)
             for file in files:
-                entry.step[fs_symlink][mapping.prefix + relative_path(mapping.dir, file)] = file.path
-        entry.step[fs_symlink_folder] = null
+                set(entry.step, fs_symlink, mapping.prefix + relative_path(mapping.dir, file), file.path)
+        set(entry.step, fs_symlink_folder, null)
 }
 
 rule DetectDuplicateKeys {
@@ -366,13 +371,13 @@ rule CalculateStaleSymlinks {
     when: plan: ActionMap.created
 
     let cache = Cache
-    let current_symlinks = plan.actions[fs_symlink]
+    let current_symlinks = get(plan.actions, fs_symlink)
     let cached_symlinks = cache.symlinks
     let stale = cached_symlinks.keys - current_symlinks.keys
 
     ensures:
         if stale.count > 0:
-            plan.actions[fs_unlink] = cached_symlinks.filter(k => k in stale)
+            set(plan.actions, fs_unlink, cached_symlinks.filter(k => k in stale))
 }
 
 rule CalculateOrphans {
@@ -384,9 +389,7 @@ rule CalculateOrphans {
     -- fragment (e.g. {pkg_brew_uninstall: {...}}) or null.
     -- Currently supported: pkg_brew, pkg_mise, pkg_mas, pkg_bbin.
 
-    let orphan_fragments = plan.action_types
-        .map(type => detect_orphans(type, plan.actions[type]))
-        .compact
+    let orphan_fragments = compact(plan.action_types.map(type => detect_orphans(type, get(plan.actions, type))))
 
     ensures:
         for fragment in orphan_fragments:
@@ -409,7 +412,7 @@ rule BuildActionGraph {
     let requirements = find_requirements(plan) -- action ref -> set of requirements
 
     ensures: ActionGraph.created(
-        nodes: actions.map(a => ActionNode{ref: a, opts: plan[a]}),
+        nodes: actions.map(a => ActionNode{ref: a, opts: get(plan, a)}),
         edges: resolve_edges(providers, requirements),
         order: topo_sort(edges)
     )
@@ -550,7 +553,8 @@ rule ValidateAssertSource {
 ------------------------------------------------------------
 
 rule ShowPlan {
-    when: GraphChecked(graph) and run: RunConfig with mode = plan
+    when: GraphChecked(graph, run)
+    requires: run.mode = plan
 
     -- Print the check results from the graph.
     -- Group by outcome for readability.
@@ -567,7 +571,8 @@ rule ShowPlan {
 ------------------------------------------------------------
 
 rule ExecutePhase {
-    when: GraphChecked(graph) and run: RunConfig with mode = apply
+    when: GraphChecked(graph, run)
+    requires: run.mode = apply
 
     -- Walk the graph in topological order.
     -- Only run install for nodes with drift or unknown outcome.
@@ -695,7 +700,8 @@ rule UnlinkInstall {
 ------------------------------------------------------------
 
 rule UpdateCache {
-    when: GraphExecuted(graph) and run: RunConfig with mode = apply
+    when: GraphExecuted(graph, run)
+    requires: run.mode = apply
 
     -- Always update cache regardless of action_filter.
     -- Symlinks are computed from the full manifest (not filtered).
