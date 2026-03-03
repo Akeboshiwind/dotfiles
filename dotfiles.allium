@@ -106,9 +106,6 @@ entity RunConfig {
 
 entity Manifest {
     plan: List<PlanEntry>
-
-    -- Derived
-    all_entries: plan resolved to entries
 }
 
 entity PlanEntry {
@@ -217,7 +214,7 @@ config {
 --     Read-only. Queries live system state and returns the
 --     current state of this action. Called during check phase.
 --
---   install!(key, opts)
+--   install(key, opts)
 --     Mutates. Brings the system into the desired state.
 --     Only called during execute phase, and only for actions
 --     whose check returned drift or unknown.
@@ -347,7 +344,7 @@ rule ExpandSymlinkFolder {
 }
 
 rule DetectDuplicateKeys {
-    when: entries: List<ResolvedEntry> ready_for_merge
+    when: EntriesReadyForMerge(entries)
 
     let duplicates = find_keys_in_multiple_entries(entries)
 
@@ -355,11 +352,10 @@ rule DetectDuplicateKeys {
     -- Thrown immediately like other DependencyErrors.
 
     requires: duplicates.count = 0
-        else: throw DependencyError(kind: duplicate_key, details: duplicates)
 }
 
 rule MergeEntries {
-    when: entries: List<ResolvedEntry> validated
+    when: EntriesValidated(entries)
 
     ensures: ActionMap.created(
         actions: merge_all(entries.map(e => e.step))
@@ -369,7 +365,7 @@ rule MergeEntries {
 rule CalculateStaleSymlinks {
     when: plan: ActionMap.created
 
-    let cache = current Cache
+    let cache = Cache
     let current_symlinks = plan.actions[fs_symlink]
     let cached_symlinks = cache.symlinks
     let stale = cached_symlinks.keys - current_symlinks.keys
@@ -385,8 +381,8 @@ rule CalculateOrphans {
     -- For each action type that supports orphan detection,
     -- query live system state and compare against declared items.
     -- Each action type's orphans implementation returns a plan
-    -- fragment (e.g. {pkg/brew-uninstall: {...}}) or null.
-    -- Currently supported: pkg/brew, pkg/mise, pkg/mas, pkg/bbin.
+    -- fragment (e.g. {pkg_brew_uninstall: {...}}) or null.
+    -- Currently supported: pkg_brew, pkg_mise, pkg_mas, pkg_bbin.
 
     let orphan_fragments = plan.action_types
         .map(type => detect_orphans(type, plan.actions[type]))
@@ -406,7 +402,7 @@ rule CalculateOrphans {
 -- recoverable.
 
 rule BuildActionGraph {
-    when: plan: ActionMap ready_for_validation
+    when: PlanReadyForValidation(plan)
 
     let actions = all_action_refs(plan)
     let providers = find_providers(plan)      -- capability -> action ref
@@ -429,15 +425,12 @@ rule ValidateActionGraph {
     let missing = requirements_without_providers(graph)
 
     requires: duplicates.count = 0
-        else: throw DependencyError(kind: duplicate_provider)
     requires: missing.count = 0
-        else: throw DependencyError(kind: missing_provider)
 
     -- Cycle detection only runs when no duplicate/missing errors
     let cycles = detect_cycles(graph)
 
     requires: cycles.count = 0
-        else: throw DependencyError(kind: cycle)
 }
 
 ------------------------------------------------------------
@@ -453,24 +446,24 @@ rule ValidateActionGraph {
 -- actions requiring their corresponding install type to complete first.
 
 rule GenerateBatchCompleteCapabilities {
-    when: graph: ActionGraph validated
+    when: GraphValidated(graph)
 
     let present_types = graph.nodes.map(n => n.ref.type).distinct
 
     ensures:
         for type in present_types:
             -- Synthetic capability depends on all actions of this type
-            graph.add_capability(
-                name: complete_capability(type),
-                provided_when: all actions of type succeed
+            Capability.created(
+                name: complete_capability(type)
             )
 }
 
 rule OrphanRequiresBatchComplete {
-    when: action.type in {pkg_brew_uninstall, pkg_mise_uninstall,
-                          pkg_mas_uninstall, pkg_bbin_uninstall}
+    when: node: ActionNode.created
+    requires: node.ref.type in {pkg_brew_uninstall, pkg_mise_uninstall,
+                                 pkg_mas_uninstall, pkg_bbin_uninstall}
 
-    ensures: action requires complete_capability(corresponding_install_type(action))
+    ensures: node.opts.dep_requires = {complete_capability(corresponding_install_type(node.ref.type))}
     -- e.g. pkg_brew_uninstall requires complete(pkg_brew)
 }
 
@@ -484,20 +477,23 @@ rule OrphanRequiresBatchComplete {
 
 rule ActionRequiresCapability {
     -- Package managers require their capability to be provided
-    when: action in {pkg_brew, pkg_mise, pkg_mas, pkg_bbin, pkg_npm,
-                     brew_service, claude_marketplace, claude_plugin, claude_mcp}
-    ensures: action requires capability(action)
+    when: node: ActionNode.created
+    requires: node.ref.type in {pkg_brew, pkg_mise, pkg_mas, pkg_bbin, pkg_npm,
+                                 brew_service, claude_marketplace, claude_plugin, claude_mcp}
+    ensures: node.opts.dep_requires = {capability_for(node.ref.type)}
 }
 
 rule GitCloneRequiresGit {
-    when: action = git_clone
-    ensures: action requires git_capability
+    when: node: ActionNode.created
+    requires: node.ref.type = git_clone
+    ensures: node.opts.dep_requires = {git_capability}
 }
 
 rule StandaloneActions {
     -- These actions have no external dependencies
-    when: action in {fs_symlink, fs_unlink, osx_defaults, pkg_script, assert}
-    ensures: action requires nothing
+    when: node: ActionNode.created
+    requires: node.ref.type in {fs_symlink, fs_unlink, osx_defaults, pkg_script, assert}
+    ensures: node.opts.dep_requires = {}
 }
 
 ------------------------------------------------------------
@@ -509,20 +505,17 @@ rule StandaloneActions {
 -- mark all downstream nodes as cancelled (don't check them).
 
 rule CheckPhase {
-    when: graph: ActionGraph validated
+    when: GraphValidated(graph)
 
     ensures:
         for node in graph.order:
-            if node.check = cancelled:
-                -- Already cancelled by upstream failure
-                continue
+            if node.check != cancelled:
+                let outcome = check(node.ref.type, node.ref.key, node.opts)
+                node.check = outcome
 
-            let outcome = check(node.ref.type, node.ref.key, node.opts)
-            node.check = outcome
-
-            if outcome in {conflict, error}:
-                for downstream in graph.dependents(node.ref):
-                    downstream.check = cancelled
+                if outcome in {conflict, error}:
+                    for downstream in graph.dependents(node.ref):
+                        downstream.check = cancelled
 }
 
 -- Validation rules are now part of the check phase.
@@ -557,7 +550,7 @@ rule ValidateAssertSource {
 ------------------------------------------------------------
 
 rule ShowPlan {
-    when: graph: ActionGraph checked and run: RunConfig with mode = plan
+    when: GraphChecked(graph) and run: RunConfig with mode = plan
 
     -- Print the check results from the graph.
     -- Group by outcome for readability.
@@ -574,14 +567,14 @@ rule ShowPlan {
 ------------------------------------------------------------
 
 rule ExecutePhase {
-    when: graph: ActionGraph checked and run: RunConfig with mode = apply
+    when: GraphChecked(graph) and run: RunConfig with mode = apply
 
     -- Walk the graph in topological order.
-    -- Only run install! for nodes with drift or unknown outcome.
+    -- Only run install for nodes with drift or unknown outcome.
     -- Satisfied nodes are skipped. Conflict/error/cancelled are
     -- already handled by the check phase.
     --
-    -- On install! failure, mark downstream nodes as cancelled.
+    -- On install failure, mark downstream nodes as cancelled.
 
     let batches = partition_by_type(graph.order)
 
@@ -609,7 +602,7 @@ rule ExecutePhase {
 -- Rules: Action Execution (deferred to action-specific specs)
 ------------------------------------------------------------
 
--- Each action type implements both check and install!.
+-- Each action type implements both check and install.
 -- See the corresponding action spec for details.
 
 deferred BrewAction           -- see: actions/brew
@@ -636,7 +629,7 @@ deferred ClaudeMcpAction      -- see: actions/claude
 ------------------------------------------------------------
 
 rule SymlinkCheck {
-    when: check(fs_symlink, target, opts)
+    when: CheckAction(fs_symlink, target, opts)
 
     let target_file = expand_tilde(target)
     let source = opts.source
@@ -658,7 +651,7 @@ rule SymlinkCheck {
 }
 
 rule SymlinkInstall {
-    when: install(fs_symlink, target, opts)
+    when: InstallAction(fs_symlink, target, opts)
 
     let target_file = expand_tilde(target)
     let source = opts.source
@@ -669,7 +662,7 @@ rule SymlinkInstall {
 }
 
 rule UnlinkCheck {
-    when: check(fs_unlink, target, opts)
+    when: CheckAction(fs_unlink, target, opts)
 
     let target_file = expand_tilde(target)
     let expected_source = opts.source
@@ -689,7 +682,7 @@ rule UnlinkCheck {
 }
 
 rule UnlinkInstall {
-    when: install(fs_unlink, target, opts)
+    when: InstallAction(fs_unlink, target, opts)
 
     let target_file = expand_tilde(target)
 
@@ -702,7 +695,7 @@ rule UnlinkInstall {
 ------------------------------------------------------------
 
 rule UpdateCache {
-    when: graph: ActionGraph executed and run: RunConfig with mode = apply
+    when: GraphExecuted(graph) and run: RunConfig with mode = apply
 
     -- Always update cache regardless of action_filter.
     -- Symlinks are computed from the full manifest (not filtered).
