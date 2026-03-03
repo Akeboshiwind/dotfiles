@@ -298,8 +298,8 @@ rule ValidateSecrets {
         .filter(entry => not entry.disabled and (entry.content = null or entry.content = ""))
 
     ensures:
-        for (key, _) in empty_values:
-            SecretError.created(key: key)
+        for entry in empty_values:
+            SecretError.created(key: entry.key)
 }
 
 rule ResolveSecretReference {
@@ -309,7 +309,7 @@ rule ResolveSecretReference {
     -- Note: does NOT check for disabled secrets - a disabled value
     -- is returned as-is. Validation catches empty values separately.
 
-    let secrets = current Secrets
+    let secrets = Secrets
 
     requires: key in secrets.values
 
@@ -327,10 +327,10 @@ rule ResolveSymlinkPaths {
     -- against the entry's source directory
 
     ensures:
-        for (target, source) in entry.step[fs_symlink]:
-            if source is_relative:
-                requires: canonical(entry.source, source) starts_with entry.source
-                entry.step[fs_symlink][target] = canonical(entry.source, source)
+        for mapping in entry.step[fs_symlink]:
+            if is_relative(mapping.source):
+                requires: starts_with(canonical(entry.source, mapping.source), entry.source)
+                mapping.source = canonical(entry.source, mapping.source)
 }
 
 rule ExpandSymlinkFolder {
@@ -339,10 +339,10 @@ rule ExpandSymlinkFolder {
     -- Expand each {prefix -> dir} into individual symlinks
 
     ensures:
-        for (prefix, dir) in entry.step[fs_symlink_folder]:
-            let files = list_files(dir)
+        for mapping in entry.step[fs_symlink_folder]:
+            let files = list_files(mapping.dir)
             for file in files:
-                entry.step[fs_symlink][prefix + relative_path(dir, file)] = file.path
+                entry.step[fs_symlink][mapping.prefix + relative_path(mapping.dir, file)] = file.path
         entry.step[fs_symlink_folder] = null
 }
 
@@ -591,11 +591,11 @@ rule ExecutePhase {
             let already_cancelled = batch.filter(n => n.check in {conflict, error, cancelled})
 
             if actionable.count > 0:
-                let results = install_batch!(batch.type, actionable)
-                for (node, result) in zip(actionable, results):
-                    node.result = result
-                    if result.status = error:
-                        for downstream in graph.dependents(node.ref):
+                let results = install_batch(batch.type, actionable)
+                for pair in zip(actionable, results):
+                    pair.node.result = pair.result
+                    if pair.result.status = error:
+                        for downstream in graph.dependents(pair.node.ref):
                             if downstream.check not in {conflict, error, cancelled}:
                                 downstream.check = cancelled
 
