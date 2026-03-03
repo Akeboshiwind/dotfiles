@@ -193,10 +193,14 @@ external entity Directory {
 -- Defaults
 ------------------------------------------------------------
 
-default cache_dir = "${XDG_CACHE_HOME:-~/.cache}/dotfiles"
-default cache_file = cache_dir + "/cache.edn"
-default manifest_file = "manifest.edn"
-default secrets_file = "secrets.edn"
+config {
+    cache_dir: String = "${XDG_CACHE_HOME:-~/.cache}/dotfiles"
+    manifest_file: String = "manifest.edn"
+    secrets_file: String = "secrets.edn"
+}
+
+-- Derived from config
+-- cache_file: config.cache_dir + "/cache.edn"
 
 ------------------------------------------------------------
 -- Action Protocol
@@ -220,10 +224,10 @@ default secrets_file = "secrets.edn"
 rule LoadManifest {
     when: run: RunConfig
 
-    let manifest = read_edn(manifest_file)
+    let manifest = read_edn(config.manifest_file)
     let entries = manifest.plan.map(e => resolve_entry(e))
 
-    requires: manifest_file exists
+    requires: config.manifest_file != null
 
     ensures: Manifest.created(plan: entries)
 }
@@ -272,8 +276,8 @@ rule LoadSecrets {
     when: run: RunConfig
 
     ensures:
-        if secrets_file exists:
-            Secrets.created(values: read_edn(secrets_file))
+        if file_exists(config.secrets_file):
+            Secrets.created(values: read_edn(config.secrets_file))
         else:
             Secrets.created(values: {})
 }
@@ -706,8 +710,8 @@ rule UpdateCache {
     }
 
     ensures:
-        create_dirs(cache_dir)
-        atomically_write(cache_file, new_cache)
+        create_dirs(config.cache_dir)
+        atomically_write(config.cache_dir + "/cache.edn", new_cache)
 }
 
 ------------------------------------------------------------
