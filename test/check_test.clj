@@ -241,6 +241,4 @@
 
 (deftest default-check-unknown-test
   (testing "unimplemented action type → unknown"
-    (is (o/unknown? (a/check :pkg/npm :neovim {})))
-    (is (o/unknown? (a/check :osx/defaults :dock {})))
-    (is (o/unknown? (a/check :git/clone :repo {})))))
+    (is (o/unknown? (a/check :some/unimplemented :foo {})))))

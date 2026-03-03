@@ -1,7 +1,9 @@
 (ns actions.osx
   (:require [clojure.string :as str]
+            [babashka.process :as process]
             [actions :as a]
-            [display :as d]))
+            [display :as d]
+            [outcome :as o]))
 
 (defmethod a/requires :osx/defaults [_] nil)
 
@@ -60,6 +62,34 @@
      :label (str domain " " (name key) " = " value)
      :status (if (zero? exit) :ok :error)
      :message err}))
+
+(defn- defaults-value-matches?
+  "Compare expected value against `defaults read` output string."
+  [expected actual-str]
+  (let [actual (str/trim actual-str)]
+    (cond
+      (boolean? expected) (= (if expected "1" "0") actual)
+      (int? expected)     (= expected (parse-long actual))
+      (float? expected)   (= expected (parse-double actual))
+      (string? expected)  (= expected actual)
+      ;; For complex types (arrays, dicts), skip detailed comparison
+      :else               true)))
+
+(defmethod a/check :osx/defaults [_ key opts]
+  (let [domain   (:domain opts)
+        settings (or (:settings opts)
+                     {(:key opts) (:value opts)})]
+    (reduce (fn [acc [k value]]
+              (if (or (map? value) (vector? value))
+                acc ;; skip complex types, continue checking others
+                (let [{:keys [exit out]} (process/shell {:out :string :err :string :continue true}
+                                                        "defaults" "read" domain (name k))]
+                  (cond
+                    (not (zero? exit))                      (reduced (o/drift :wrong))
+                    (not (defaults-value-matches? value out)) (reduced (o/drift :wrong))
+                    :else                                   acc))))
+            o/satisfied
+            settings)))
 
 (defmethod a/install! :osx/defaults [_ opts items]
   (d/section "Setting OSX defaults"

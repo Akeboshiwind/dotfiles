@@ -1,11 +1,41 @@
 (ns actions.claude
   (:require [clojure.string :as str]
+            [clojure.java.io :as io]
             [actions :as a]
-            [display :as d]))
+            [babashka.fs :as fs]
+            [cheshire.core :as json]
+            [display :as d]
+            [outcome :as o]))
 
 (defmethod a/requires :claude/marketplace [_] :claude/marketplace)
 (defmethod a/requires :claude/plugin [_] :claude/plugin)
 (defmethod a/requires :claude/mcp [_] :claude/mcp)
+
+(def ^:private ^:dynamic *marketplace-cache*
+  (delay
+    (let [f (io/file (str (System/getProperty "user.home") "/.claude/plugins/known_marketplaces.json"))]
+      (if (fs/exists? f)
+        (json/parse-string (slurp f) true)
+        {}))))
+
+(def ^:private ^:dynamic *plugin-cache*
+  (delay
+    (let [f (io/file (str (System/getProperty "user.home") "/.claude/plugins/installed_plugins.json"))]
+      (if (fs/exists? f)
+        (json/parse-string (slurp f) true)
+        {}))))
+
+(defmethod a/check :claude/marketplace [_ key opts]
+  (let [source (or (:source opts) (name key))]
+    (if (some (fn [[_k v]] (= source (get-in v [:source :repo]))) @*marketplace-cache*)
+      o/satisfied
+      (o/drift :missing))))
+
+(defmethod a/check :claude/plugin [_ key _opts]
+  (let [n (name key)]
+    (if (some (fn [[k _]] (str/starts-with? (name k) (str n "@"))) @*plugin-cache*)
+      o/satisfied
+      (o/drift :missing))))
 
 (defmethod a/install! :claude/marketplace [type opts items]
   (a/simple-install type opts "Adding Claude marketplaces"

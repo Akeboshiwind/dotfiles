@@ -2,7 +2,10 @@
   (:require [actions :as a]
             [utils :as u]
             [babashka.fs :as fs]
-            [display :as d]))
+            [babashka.process :as process]
+            [clojure.string :as str]
+            [display :as d]
+            [outcome :as o]))
 
 (defmethod a/requires :git/clone [_] :git)
 
@@ -21,6 +24,19 @@
         (a/exec! opts ["git" "-C" target "checkout" ref])
         (a/exec! opts ["git" "-C" target "pull"]))
       {:exit exit :err err})))
+
+(defmethod a/check :git/clone [_ key opts]
+  (let [expanded (u/expand-tilde key)
+        {:keys [ref]} opts]
+    (if-not (fs/exists? expanded)
+      (o/drift :missing)
+      (if ref
+        (let [result (process/shell {:out :string :err :string :continue true}
+                                    "git" "-C" expanded "rev-parse" "HEAD")]
+          (if (str/starts-with? (str/trim (:out result)) ref)
+            o/satisfied
+            (o/drift :outdated)))
+        o/satisfied))))
 
 (defmethod a/install! :git/clone [_ opts items]
   (d/section "Cloning git repos"
