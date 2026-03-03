@@ -22,7 +22,7 @@
   (delay
     (let [f (io/file (str (System/getProperty "user.home") "/.claude/plugins/installed_plugins.json"))]
       (if (fs/exists? f)
-        (json/parse-string (slurp f) true)
+        (:plugins (json/parse-string (slurp f) true))
         {}))))
 
 (defmethod a/check :claude/marketplace [_ key opts]
