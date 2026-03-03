@@ -714,8 +714,8 @@ rule UpdateCache {
 -- Open Questions
 ------------------------------------------------------------
 
-open_question "Should symlink conflicts be auto-resolved with backup?"
-open_question "Should there be rollback on partial failure?"
-open_question "Should :secret/disabled be rejected when a secret tag references it? Currently the value is returned as-is."
-open_question "Interactive plan -> approve -> apply flow?"
-open_question "How should action_filter interact with synthetic complete() capabilities?"
+open question "Should symlink conflicts be auto-resolved with backup?"
+open question "Should there be rollback on partial failure?"
+open question "Should :secret/disabled be rejected when a secret tag references it? Currently the value is returned as-is."
+open question "Interactive plan -> approve -> apply flow?"
+open question "How should action_filter interact with synthetic complete() capabilities?"
