@@ -76,6 +76,8 @@
     (cond
       (nil? svc) (o/drift :missing)
       (= "started" (:status svc)) o/satisfied
+      ;; sudo services show status "none" in non-sudo brew services list
+      (and (:sudo opts) (= "root" (:user svc))) o/satisfied
       :else (o/drift :missing))))
 
 (defmethod a/check :pkg/brew-uninstall [_ key opts]
