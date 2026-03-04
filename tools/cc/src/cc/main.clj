@@ -32,8 +32,8 @@
       (str (fs/parent common-dir)))
     (catch Exception _ nil)))
 
-(defn session-name
-  "Derive a tmux session name from the current directory.
+(defn base-session-name
+  "Derive a base session name from the current directory.
    - Git repo: basename of main repo root (+ ~worktree if in a worktree)
    - Not git: sanitized full path"
   []
@@ -45,6 +45,11 @@
         (cond-> (str base)
           wt (str "~" wt)))
       (sanitize cwd))))
+
+(defn session-name
+  "Base session name + session id for uniqueness."
+  [session-id]
+  (str (base-session-name) "-" session-id))
 
 (defn tmux-config-path []
   (let [candidates [(str (fs/home) "/dotfiles/tools/cc/tmux.conf")]]
@@ -103,24 +108,19 @@
         [(concat ["claude" "--dangerously-skip-permissions" "--session-id" uuid] args) uuid]))))
 
 (defn create [args]
-  (let [name (session-name)
-        conf (tmux-config-path)
+  (let [conf (tmux-config-path)
         [claude-args session-id] (build-claude-args args)
+        name (session-name session-id)
         claude-cmd (str/join " " claude-args)]
     (when-not conf
       (binding [*out* *err*]
         (println "Warning: tmux.conf not found, using defaults")))
-    (if (session-exists? name)
-      (do
-        (println (str "Attaching to existing session: " name))
-        (p/exec "tmux" "attach-session" "-t" (str "=" name)))
-      (do
-        (p/shell (cond-> ["tmux"]
-                   conf (into ["-f" conf])
-                   true (into ["new-session" "-s" name claude-cmd])))
-        ;; tmux has exited — back in the caller's terminal
-        (println)
-        (println (str "To resume: cc --resume " session-id))))))
+    (p/shell (cond-> ["tmux"]
+               conf (into ["-f" conf])
+               true (into ["new-session" "-s" name claude-cmd])))
+    ;; tmux has exited — back in the caller's terminal
+    (println)
+    (println (str "To resume: cc --resume " session-id))))
 
 (defn -main [& args]
   (if (= (first args) "ls")
