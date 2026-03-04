@@ -1,153 +1,199 @@
 ---
 name: compete
-description: Use when the user wants multiple agents to review code, research a topic, or critique an approach. Triggers on "spin up agents", "dispatch agents", "competing agents", "/compete", or any request for parallel agent review/research.
+description: Use when the user wants multiple agents to review code, research a topic, write competing solutions, or critique an approach. Triggers on "spin up agents", "dispatch agents", "competing agents", "/compete", or any request for parallel agent review/research/implementation.
 ---
 
 # Compete
 
-Dispatch 2-4 sonnet subagents with diverse methodologies to review, research, or critique. Agents compete internally for quality; results are consolidated by importance.
+Dispatch 2–4 opus subagents with diverse methodologies. Agents compete internally; results consolidated by importance.
 
-## Step 1: Classify the Task
+## Quick Reference
 
-**Review** — agent examines code/changes directly:
-- "review this codebase", "find bugs", "critique these changes"
+| Scope | Agents | Example |
+|---|---|---|
+| Single file, narrow question | 2 | "review this function" |
+| Feature, module, general research | 3 | "how should we approach auth?" |
+| Whole codebase, high-stakes, hybrid | 4 | "review everything + research alternatives" |
 
-**Research** — agent searches external sources:
-- "how should we approach X", "what's best practice for Y", "find how others solve Z"
+**Task types:** Review (examine code), Research (search external sources), Write (produce code), Hybrid (mix — split evenly or weight toward dominant mode).
 
-**Hybrid** — pick from both pools. Split evenly (e.g. 2 review + 2 research), or weight toward the dominant mode (2+1). Total stays within 2-4.
+Classify → pick methodologies → build prompts → dispatch → consolidate.
 
-## Step 2: Select Methodologies
+## Methodologies
 
-Pick 2-4 from the relevant pool. Choose for **maximum diversity** — overlapping lenses waste an agent.
-
-**How many agents:**
-- **2** — tightly scoped task (single file, narrow question)
-- **3** — moderate scope (feature, module, general research)
-- **4** — broad scope (whole codebase, high-stakes review, hybrid tasks)
+Pick for **maximum diversity** — overlapping lenses waste an agent. These are starting points; invent task-specific lenses when none below fit.
 
 ### Review Lenses
 
-| Lens | Focus | Best for |
-|---|---|---|
-| **Adversarial** | Hunt for ways to break the code — edge cases, error paths, security holes | Bugs, security, edge cases |
-| **Archaeologist** | Compare against patterns and conventions used elsewhere in this codebase | Convention violations, inconsistency |
-| **Minimalist** | Find what can be removed, simplified, or inlined without losing functionality | Complexity, dead code |
-| **User-first** | Trace what happens when a real person uses this — error messages, flows, states | UX bugs, error messages, flows |
-| **Specification** | Check whether the code does what it was intended to do, per requirements or commit message | Correctness, requirements gaps |
-| **Outsider** | Read the code as if seeing the project for the first time — what's confusing or poorly named? | Readability, naming, onboarding |
-| **Stress-tester** | Consider what happens at scale, under load, or when dependencies fail | Performance, concurrency, resilience |
+| Lens | Focus |
+|---|---|
+| **Adversarial** | Break the code — edge cases, error paths, security holes |
+| **Archaeologist** | Compare against patterns/conventions elsewhere in this codebase |
+| **Minimalist** | What can be removed, simplified, or inlined |
+| **User-first** | Trace real user flows — error messages, states, UX |
+| **Specification** | Does the code match stated requirements / commit message |
+| **Outsider** | Read as a newcomer — what's confusing or poorly named |
+| **Stress-tester** | Scale, load, dependency failure, concurrency |
+
+### Writing Approaches
+
+| Approach | Focus |
+|---|---|
+| **Pragmatic** | Simplest working solution, minimal abstractions |
+| **Defensive** | Every edge case — validate inputs, fail gracefully |
+| **Performant** | Optimize speed/memory, minimize allocations |
+| **Idiomatic** | Follow language/framework conventions, match codebase style |
+| **Compositional** | Small reusable pieces, pure functions, clear interfaces |
 
 ### Research Sources
 
-| Source | Where to look | Best for |
-|---|---|---|
-| **Codebase** | Patterns in the current repo | Internal consistency, prior art |
-| **Official docs** | Language/framework documentation | Canonical approaches |
-| **Blogs/articles** | Technical posts, tutorials (WebSearch) | Practical experience, trade-offs |
-| **Forums** | GitHub issues, SO, community (WebSearch) | Real-world problems, gotchas |
-| **Other projects** | Open-source repos (WebSearch/GitHub) | Alternative implementations |
+| Source | Where |
+|---|---|
+| **Codebase** | Patterns in current repo |
+| **Official docs** | Language/framework documentation |
+| **Blogs/articles** | Technical posts, tutorials (WebSearch) |
+| **Forums** | GitHub issues, SO, community (WebSearch) |
+| **Other projects** | Open-source repos (WebSearch/GitHub) |
 
-## Step 3: Write the Agent Prompts
+## Prompt Templates
 
-### Competition Rules (include in every agent prompt)
+### Competition Rules
 
+Include the appropriate block in every agent prompt.
+
+**Review/Research agents:**
 ```
 You are one of several agents working on this task, each with a different methodology.
 You are competing to produce the highest-quality findings. Your work will be scored:
 
-SCORING:
-- Critical bug / correctness issue:    +3
-- Meaningful improvement:               +2
-- Missing test / edge case:             +1
-- Style / bikeshedding:                 +0
-
-PENALTIES:
-- Overstating severity:                -2
-- Duplicate of obvious finding:        -1
-- Irrelevant to the task:              -1
+SCORING:  Critical bug/correctness: +3 | Meaningful improvement: +2 | Missing test/edge case: +1 | Style/bikeshedding: +0
+PENALTIES:  Overstating severity: -2 | Duplicate of obvious finding: -1 | Irrelevant to task: -1
 
 Quality over quantity. 3 strong findings beats 10 weak ones.
 ```
 
-### Agent Prompt Template
+**Write agents:**
+```
+You are one of several agents writing a solution to the same problem, each with a different approach.
+You are competing to produce the best implementation. Your work will be scored:
+
+SCORING:  Correct+complete: +3 | Clean API/interface: +2 | Handles edge cases: +1 | Good idioms: +1
+PENALTIES:  Broken/incomplete: -3 | Over-engineered: -2 | Ignores conventions: -1
+
+A simple, correct solution beats a clever, fragile one.
+```
+
+### Review/Research Prompt
 
 ```
 TASK: {task description}
-SCOPE: {files/directories/branch diff to examine, OR search domain}
+SCOPE: {files/dirs/branch diff OR search domain}
 
 YOUR METHODOLOGY: {lens or source name}
-{full description from the Focus column — expand into a complete instruction, do not paste fragments}
+{expanded description from Focus column}
 
-For each finding, provide:
+For each finding:
 - Severity: Critical / Improvement / Minor
 - Location: file:line or URL
-- Description: what you found and why it matters
-- Suggestion: how to fix or apply (brief)
+- Description: what + why it matters
+- Suggestion: how to fix (brief)
 
 {competition rules}
 ```
 
-**Scope derivation:** Look for explicit paths or branch names in the task. If none, default to `src/` or CWD for review tasks, and WebSearch for research tasks.
+**Scope default:** explicit paths/branches from task, else `src/` or CWD (review) / WebSearch (research).
 
-## Step 4: Dispatch
+### Write Prompt
 
-- Use `model: "sonnet"` for all agents
-- Dispatch all agents in a **single message** (parallel Task tool calls)
-- Use the Task tool with `subagent_type: "general-purpose"`
+```
+TASK: {task description}
+SCOPE: {context files to read, target files to write}
+CONTEXT: {existing code, interfaces, constraints}
 
-## Step 5: Consolidate and Present
+YOUR APPROACH: {approach name}
+{expanded description from Focus column}
 
-**Present all findings directly in the conversation. Do not write to files.**
+Requirements:
+- Read existing code in scope first for conventions
+- Write solution to target file(s)
+- Inline comments only where logic is non-obvious
+- Run existing tests; fix failures before finishing
 
-After all agents return, deduplicate and group by importance:
+Finish with: what you wrote, tests run, trade-offs made.
 
-### Deduplication Rules
+{competition rules}
+```
+
+**Scope:** always include files the solution must integrate with.
+
+## Dispatch
+
+- `model: "opus"`, `subagent_type: "general-purpose"` for all agents
+- All agents in a **single message** (parallel Agent tool calls)
+- **Review/Research** — no isolation (read-only)
+- **Write** — `isolation: "worktree"` (lets agents run tests without conflicts)
+
+## Consolidate & Present
+
+**Present findings directly in conversation. Do not write to files** (except Write agents in their worktrees).
+
+### Deduplication
 
 - **Exact duplicates:** list once, credit all agents, boost ranking
-- **Related findings** (same root cause or location, different descriptions): merge into one entry using the more specific description, credit all agents, boost ranking
-- **Independent discovery by 2+ agents = higher confidence** — promote to a higher group
+- **Related findings** (same root cause/location): merge using more specific description, credit all, boost
+- **Independent discovery by 2+ agents** → promote to higher group
 
-### Review Output Format
+### Output Formats
 
+**Review:**
 ```markdown
 ## Agents Dispatched
-- {Lens 1} — {one-line focus}
-- {Lens 2} — {one-line focus}
+- {Lens} — {one-line focus}
 
 ### Critical
-1. {finding} — `file:line`
-   _{which agent(s)}_
+1. {finding} — `file:line` _{agent(s)}_
 
 ### Improvements
-1. {finding} — `file:line`
-   _{which agent(s)}_
+1. {finding} — `file:line` _{agent(s)}_
 
 ### Minor
-1. {finding}
-   _{which agent(s)}_
+1. {finding} _{agent(s)}_
 ```
 
-### Research Output Format
-
-Group by confidence, determined by how many agents independently surfaced the same topic:
-
+**Research** (group by confidence = how many agents surfaced it):
 ```markdown
 ## Agents Dispatched
-- {Source 1} — {search focus}
-- {Source 2} — {search focus}
+- {Source} — {search focus}
 
 ### Strong Consensus
-1. {finding surfaced by 2+ agents}
-   _Sources: {which agents}_
+1. {finding from 2+ agents} _Sources: {agents}_
 
 ### Recommended Approaches
-1. {substantive finding from a single agent}
-   _Source: {which agent}_
+1. {substantive single-agent finding} _Source: {agent}_
 
 ### Worth Considering
-1. {less certain or niche finding}
-   _Source: {which agent}_
+1. {less certain/niche finding} _Source: {agent}_
 ```
 
-**Do NOT** display scores, declare a winner, or rank agents against each other. The goal is high-quality findings, not a leaderboard.
+**Write:**
+```markdown
+## Agents Dispatched
+- {Approach} — {focus} — branch: `{branch}`, tests: {pass/fail}
+
+### Comparison
+| Aspect | {Approach 1} | {Approach 2} |
+|---|---|---|
+| Correctness | … | … |
+| Tests passing | … | … |
+| Edge cases | … | … |
+| Readability | … | … |
+| Codebase fit | … | … |
+
+### Recommendation
+{Which solution and why. Describe composite if parts of different solutions are stronger.}
+
+### Solutions
+{Each solution in a fenced code block with approach name header + worktree branch for checkout/cherry-pick.}
+```
+
+**Do NOT** display scores, declare winners, or rank agents against each other.
