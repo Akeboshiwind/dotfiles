@@ -10,5 +10,6 @@
             :maven {} ; java_language_server
             :elixir {} ; elixir extra
             ; For tree-sitter
-            :tree-sitter {}}
+            :tree-sitter {}
+            :fd {}}
  :fs/symlink-folder {"~/.config" "./.config"}}
