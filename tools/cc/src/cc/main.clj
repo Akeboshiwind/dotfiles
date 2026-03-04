@@ -1,63 +1,20 @@
 (ns cc.main
   (:require [babashka.process :as p]
-            [clojure.string :as str]
-            [babashka.fs :as fs]))
+            [babashka.fs :as fs]
+            [clojure.string :as str]))
 
-(defn git-root
-  "Returns the git repo root, or nil if not in a git repo."
+(defn git-repo-name
+  "Returns the basename of the git repo root, or nil if not in a git repo."
   []
   (try
     (let [result (p/shell {:out :string :err :string} "git rev-parse --show-toplevel")]
       (when (zero? (:exit result))
-        (str/trim (:out result))))
+        (str (fs/file-name (str/trim (:out result))))))
     (catch Exception _ nil)))
-
-(defn git-worktree-name
-  "If in a worktree, returns the worktree branch/directory name, else nil."
-  []
-  (try
-    (let [git-dir (-> (p/shell {:out :string :err :string} "git rev-parse --git-dir")
-                      :out str/trim)]
-      (when (str/includes? git-dir "/worktrees/")
-        (last (str/split git-dir #"/worktrees/"))))
-    (catch Exception _ nil)))
-
-(defn git-main-root
-  "Returns the main repo root, even when inside a worktree."
-  []
-  (try
-    (let [common-dir (-> (p/shell {:out :string :err :string}
-                                  "git" "rev-parse" "--path-format=absolute" "--git-common-dir")
-                         :out str/trim)]
-      (str (fs/parent common-dir)))
-    (catch Exception _ nil)))
-
-(defn base-session-name
-  "Derive a base session name from the current directory.
-   - Git repo: basename of main repo root (+ ~worktree if in a worktree)
-   - Not git: sanitized full path"
-  []
-  (let [sanitize #(-> % (str/replace #"^/" "") (str/replace #"[\.:]" "_"))
-        cwd (System/getProperty "user.dir")]
-    (if-let [root (git-main-root)]
-      (let [base (fs/file-name root)
-            wt (git-worktree-name)]
-        (cond-> (str base)
-          wt (str "~" wt)))
-      (sanitize cwd))))
-
-(defn session-name
-  "Base session name + session id for uniqueness."
-  [session-id]
-  (str (base-session-name) "-" session-id))
 
 (defn tmux-config-path []
-  (let [candidates [(str (fs/home) "/dotfiles/tools/cc/tmux.conf")]]
-    (first (filter fs/exists? candidates))))
-
-(defn session-exists? [name]
-  (zero? (:exit (p/shell {:out :string :err :string :continue true}
-                         "tmux" "has-session" "-t" (str "=" name)))))
+  (let [path (str (fs/home) "/dotfiles/tools/cc/tmux.conf")]
+    (when (fs/exists? path) path)))
 
 (defn tmux-sessions
   "Returns a list of tmux session lines, or nil if tmux server isn't running."
@@ -95,34 +52,65 @@
               (nth args-vec (inc i) nil)))
           (range (dec (count args-vec))))))
 
-(defn build-claude-args
-  "Build claude command args, injecting --session-id if no --resume present.
-   Returns [claude-args session-id]."
+(defn claude-cmd
+  "Build the claude command string. Generates a session ID if none provided.
+   Returns [cmd-string session-id]."
   [args]
-  (let [resume-id (extract-resume-id args)]
-    (if resume-id
-      ;; --resume already present, use that as the session id to print later
-      [(concat ["claude" "--dangerously-skip-permissions"] args) resume-id]
-      ;; No --resume, generate a UUID and inject --session-id
-      (let [uuid (str (java.util.UUID/randomUUID))]
-        [(concat ["claude" "--dangerously-skip-permissions" "--session-id" uuid] args) uuid]))))
+  (let [resume-id (extract-resume-id args)
+        session-id (or resume-id (str (java.util.UUID/randomUUID)))
+        all-args (cond-> (vec args)
+                   (not resume-id) (into ["--session-id" session-id]))]
+    [(str/join " " (into ["claude" "--allow-dangerously-skip-permissions"] all-args))
+     session-id]))
 
-(defn create [args]
-  (let [conf (tmux-config-path)
-        [claude-args session-id] (build-claude-args args)
-        name (session-name session-id)
-        claude-cmd (str/join " " claude-args)]
-    (when-not conf
-      (binding [*out* *err*]
-        (println "Warning: tmux.conf not found, using defaults")))
+(defn run-in-tmux
+  "Run a command string in a new tmux session."
+  [session-name cmd]
+  (let [conf (tmux-config-path)]
     (p/shell (cond-> ["tmux"]
                conf (into ["-f" conf])
-               true (into ["new-session" "-s" name claude-cmd])))
-    ;; tmux has exited — back in the caller's terminal
+               true (into ["new-session" "-s" session-name cmd])))))
+
+(defn session
+  "Start claude in a tmux session named after the git repo."
+  [resume-hint args]
+  (let [base (or (git-repo-name) "cc")
+        [cmd session-id] (claude-cmd args)
+        name (str base "-" session-id)]
+    (run-in-tmux name cmd)
     (println)
-    (println (str "To resume: cc --resume " session-id))))
+    (println (str "To resume: " resume-hint " --resume " session-id))))
+
+(defn task
+  "Start claude in a worktree, letting claude manage tmux via --tmux."
+  [task-name args]
+  (let [resume-id (extract-resume-id args)
+        session-id (or resume-id (str (java.util.UUID/randomUUID)))
+        all-args (cond-> ["--worktree" task-name "--tmux" "--allow-dangerously-skip-permissions"]
+                   (not resume-id) (into ["--session-id" session-id])
+                   true (into (vec args)))]
+    (apply p/shell "claude" all-args)
+    (println)
+    (println (str "To resume: cc task " task-name " --resume " session-id))))
+
+(defn help []
+  (println "Usage: cc [command] [args...]
+
+Commands:
+  cc [args]                 Start claude in a tmux session
+  cc task <name> [args]     Start claude in a git worktree + tmux
+  cc ls                     Attach to an existing tmux session
+  cc --help                 Show this help
+
+All other args are passed through to claude."))
 
 (defn -main [& args]
-  (if (= (first args) "ls")
-    (ls)
-    (create args)))
+  (case (first args)
+    ("--help" "-h") (help)
+    "ls"   (ls)
+    "task" (if (< (count args) 2)
+             (binding [*out* *err*]
+               (println "Usage: cc task <name> [args...]")
+               (System/exit 1))
+             (task (second args) (drop 2 args)))
+    (session "cc" args)))
