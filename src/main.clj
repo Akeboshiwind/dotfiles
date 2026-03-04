@@ -27,17 +27,19 @@
             (str/join "\n"))))
 
 (defn- print-help []
-  (println "Usage: bootstrap [:<action>] [--plan]")
+  (println "Usage: bootstrap [:<action>] [--apply]")
   (println "")
   (println "Options:")
   (println "  :<action>   Run only this action type (e.g., :pkg/brew, :fs/symlink)")
-  (println "  --plan      Show what's installed, missing, and outdated")
+  (println "  --apply     Apply changes (default is plan-only)")
+  (println "  --plan      Show what's installed, missing, and outdated (default)")
   (println "  --help      Show this help message")
   (println "")
   (println "Examples:")
-  (println "  bootstrap              Install everything")
-  (println "  bootstrap :pkg/brew    Install only brew packages")
-  (println "  bootstrap --plan       Show status of all items"))
+  (println "  bootstrap              Show status of all items")
+  (println "  bootstrap --apply      Install everything")
+  (println "  bootstrap :pkg/brew    Show status of brew packages")
+  (println "  bootstrap :pkg/brew --apply  Install only brew packages"))
 
 (defn- parse-args
   "Parse CLI args. Returns {:action keyword-or-nil :plan-mode bool :help bool}"
@@ -46,9 +48,10 @@
             (cond
               (= arg "--help") (assoc acc :help true)
               (= arg "--plan") (assoc acc :plan-mode true)
+              (= arg "--apply") (assoc acc :apply-mode true)
               (str/starts-with? arg ":") (assoc acc :action (keyword (subs arg 1)))
               :else acc))
-          {:action nil :plan-mode false :help false}
+          {:action nil :plan-mode false :apply-mode false :help false}
           args))
 
 (defn- filter-action-graph
@@ -65,7 +68,7 @@
   "Main entry point for the dotfile manager.
    Loads manifest, builds ActionGraph, runs check phase, then executes or displays."
   [& args]
-  (let [{:keys [action plan-mode help]} (parse-args args)]
+  (let [{:keys [action plan-mode apply-mode help]} (parse-args args)]
     (when help
       (print-help)
       (System/exit 0))
@@ -80,7 +83,7 @@
           (println "No actions found for action" action)
           (System/exit 1))
         (let [checked (chk/run-checks ag)]
-          (if plan-mode
+          (if (not apply-mode)
             (s/show-plan checked)
             (do
               (when-let [all-errors (seq (concat (m/validate-secrets)
