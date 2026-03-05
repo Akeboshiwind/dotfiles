@@ -1,8 +1,14 @@
-# theme.fish
+# theme.fish — switch fish colors based on PWD
 
-
-# >> Set theme
-
-if test -f "$__fish_config_dir/themes/kanagawa.theme"
-    source "$__fish_config_dir/themes/kanagawa.theme"
+function _update_fish_theme --on-variable PWD
+    if string match -q '*/prog/work*' $PWD
+        set -l theme kanagawa-dragon
+    else
+        set -l theme kanagawa-wave
+    end
+    if test -f "$__fish_config_dir/themes/$theme.theme"
+        source "$__fish_config_dir/themes/$theme.theme"
+    end
 end
+
+_update_fish_theme

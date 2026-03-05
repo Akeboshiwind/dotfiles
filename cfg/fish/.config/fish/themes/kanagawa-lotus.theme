@@ -1,0 +1,32 @@
+# Kanagawa Lotus - Fish shell theme
+# source: https://github.com/rebelot/kanagawa.nvim
+# Light variant
+
+# Syntax Highlighting Colors
+set -g fish_color_normal 545464 normal
+set -g fish_color_command 597b75 cyan
+set -g fish_color_keyword 624c83 brmagenta
+set -g fish_color_quote 77713f yellow
+set -g fish_color_redirection 545464 normal
+set -g fish_color_end cc6d00 brred
+set -g fish_color_error c84053 red
+set -g fish_color_param 624c83 magenta
+set -g fish_color_option 6f894e green
+set -g fish_color_comment 8a8980 brblack
+set -g fish_color_selection --background=b5cbd2 brcyan
+set -g fish_color_operator 6f894e green
+set -g fish_color_escape b35b79 brmagenta
+set -g fish_color_autosuggestion 8a8980 brblack
+set -g fish_color_cwd 597b75 cyan
+set -g fish_color_user 597b75 cyan
+set -g fish_color_host 6f894e green
+set -g fish_color_remote 6f894e green
+set -g fish_color_status c84053 red
+set -g fish_color_cancel c84053 red
+set -g fish_color_search_match --background=b5cbd2 brcyan
+
+# Completion Pager Colors
+set -g fish_pager_color_progress 8a8980 brblack
+set -g fish_pager_color_prefix 597b75 cyan
+set -g fish_pager_color_completion 545464 normal
+set -g fish_pager_color_description 8a8980 brblack

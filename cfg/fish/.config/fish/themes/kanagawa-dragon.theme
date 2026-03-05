@@ -1,0 +1,32 @@
+# Kanagawa Dragon - Fish shell theme
+# source: https://github.com/rebelot/kanagawa.nvim
+# Darker, warmer, desaturated variant
+
+# Syntax Highlighting Colors
+set -g fish_color_normal c5c9c5 normal
+set -g fish_color_command 8ea4a2 cyan
+set -g fish_color_keyword 8992a7 brmagenta
+set -g fish_color_quote c4b28a yellow
+set -g fish_color_redirection c5c9c5 normal
+set -g fish_color_end b6927b brred
+set -g fish_color_error c4746e red
+set -g fish_color_param 8992a7 magenta
+set -g fish_color_option 8a9a7b green
+set -g fish_color_comment 737c73 brblack
+set -g fish_color_selection --background=2D4F67 brcyan
+set -g fish_color_operator 8a9a7b green
+set -g fish_color_escape a292a3 brmagenta
+set -g fish_color_autosuggestion 737c73 brblack
+set -g fish_color_cwd 8ea4a2 cyan
+set -g fish_color_user 8ea4a2 cyan
+set -g fish_color_host 8a9a7b green
+set -g fish_color_remote 8a9a7b green
+set -g fish_color_status c4746e red
+set -g fish_color_cancel c4746e red
+set -g fish_color_search_match --background=2D4F67 brcyan
+
+# Completion Pager Colors
+set -g fish_pager_color_progress 737c73 brblack
+set -g fish_pager_color_prefix 8ea4a2 cyan
+set -g fish_pager_color_completion c5c9c5 normal
+set -g fish_pager_color_description 737c73 brblack
