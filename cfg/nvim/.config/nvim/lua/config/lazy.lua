@@ -20,4 +20,4 @@ end
 ensure("folke", "lazy.nvim", "stable")
 ensure("Olical", "nfnl")
 local lazy = require("lazy")
-return lazy.setup({spec = {{"LazyVim/LazyVim", import = "lazyvim.plugins"}, {import = "plugins"}}, defaults = {lazy = false, version = false}, install = {colorscheme = {"alabaster", "kanagawa"}}, checker = {enabled = true, notify = false}, performance = {rtp = {disabled_plugins = {"gzip", "tarPlugin", "tohtml", "tutor", "zipPlugin"}}}})
+return lazy.setup({spec = {{"LazyVim/LazyVim", import = "lazyvim.plugins"}, {import = "plugins"}}, defaults = {lazy = false, version = false}, install = {colorscheme = {"kanagawa"}}, checker = {enabled = true, notify = false}, performance = {rtp = {disabled_plugins = {"gzip", "tarPlugin", "tohtml", "tutor", "zipPlugin"}}}})
