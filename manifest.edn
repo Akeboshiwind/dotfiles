@@ -32,7 +32,7 @@
 
         ;; >> Tools
         {:pkg/bbin {:hello {:local "./tools/hello"}
-                    :cc    {:local "./tools/cc"}}}
+                    :ct    {:local "./tools/ct"}}}
         :tailscale
         :git
         :ssh

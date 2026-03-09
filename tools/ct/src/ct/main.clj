@@ -1,4 +1,4 @@
-(ns cc.main
+(ns ct.main
   (:require [babashka.process :as p]
             [babashka.fs :as fs]
             [clojure.string :as str]))
@@ -13,7 +13,7 @@
     (catch Exception _ nil)))
 
 (defn tmux-config-path []
-  (let [path (str (fs/home) "/dotfiles/tools/cc/tmux.conf")]
+  (let [path (str (fs/home) "/dotfiles/tools/ct/tmux.conf")]
     (when (fs/exists? path) path)))
 
 (defn tmux-sessions
@@ -74,7 +74,7 @@
 (defn session
   "Start claude in a tmux session named after the git repo."
   [resume-hint args]
-  (let [base (or (git-repo-name) "cc")
+  (let [base (or (git-repo-name) "ct")
         [cmd session-id] (claude-cmd args)
         name (str base "-" session-id)]
     (run-in-tmux name cmd)
@@ -91,16 +91,16 @@
                    true (into (vec args)))]
     (apply p/shell "claude" all-args)
     (println)
-    (println (str "To resume: cc task " task-name " --resume " session-id))))
+    (println (str "To resume: ct task " task-name " --resume " session-id))))
 
 (defn help []
-  (println "Usage: cc [command] [args...]
+  (println "Usage: ct [command] [args...]
 
 Commands:
-  cc [args]                 Start claude in a tmux session
-  cc task <name> [args]     Start claude in a git worktree + tmux
-  cc ls                     Attach to an existing tmux session
-  cc --help                 Show this help
+  ct [args]                 Start claude in a tmux session
+  ct task <name> [args]     Start claude in a git worktree + tmux
+  ct ls                     Attach to an existing tmux session
+  ct --help                 Show this help
 
 All other args are passed through to claude."))
 
@@ -110,7 +110,7 @@ All other args are passed through to claude."))
     "ls"   (ls)
     "task" (if (< (count args) 2)
              (binding [*out* *err*]
-               (println "Usage: cc task <name> [args...]")
+               (println "Usage: ct task <name> [args...]")
                (System/exit 1))
              (task (second args) (drop 2 args)))
-    (session "cc" args)))
+    (session "ct" args)))
