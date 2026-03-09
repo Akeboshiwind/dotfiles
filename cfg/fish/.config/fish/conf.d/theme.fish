@@ -2,7 +2,7 @@
 
 function _update_fish_theme --on-variable PWD
     if string match -q '*/prog/work*' $PWD
-        set -l theme kanagawa-dragon
+        set -l theme tokyonight
     else
         set -l theme kanagawa-wave
     end

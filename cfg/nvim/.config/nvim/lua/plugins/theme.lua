@@ -3,7 +3,7 @@ local work_dir = os.getenv("HOME")
 local cwd = vim.fn.getcwd()
 local theme
 if string.find(cwd, (work_dir .. "/prog/work"), 1, true) then
-  theme = "kanagawa-dragon"
+  theme = "tokyonight-night"
 else
   theme = "kanagawa-wave"
 end

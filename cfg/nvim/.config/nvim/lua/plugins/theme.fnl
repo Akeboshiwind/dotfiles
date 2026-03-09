@@ -1,7 +1,7 @@
 (local work-dir (os.getenv "HOME"))
 (local cwd (vim.fn.getcwd))
 (local theme (if (string.find cwd (.. work-dir "/prog/work") 1 true)
-                 :kanagawa-dragon
+                 :tokyonight-night
                  :kanagawa-wave))
 
 [{1 :rebelot/kanagawa.nvim
