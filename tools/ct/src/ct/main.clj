@@ -60,7 +60,7 @@
         session-id (or resume-id (str (java.util.UUID/randomUUID)))
         all-args (cond-> (vec args)
                    (not resume-id) (into ["--session-id" session-id]))]
-    [(str/join " " (into ["claude" "--allow-dangerously-skip-permissions"] all-args))
+    [(str/join " " (into ["claude" "--dangerously-skip-permissions"] all-args))
      session-id]))
 
 (defn run-in-tmux
@@ -86,7 +86,7 @@
   [task-name args]
   (let [resume-id (extract-resume-id args)
         session-id (or resume-id (str (java.util.UUID/randomUUID)))
-        all-args (cond-> ["--worktree" task-name "--tmux" "--allow-dangerously-skip-permissions"]
+        all-args (cond-> ["--worktree" task-name "--tmux" "--dangerously-skip-permissions"]
                    (not resume-id) (into ["--session-id" session-id])
                    true (into (vec args)))]
     (apply p/shell "claude" all-args)
