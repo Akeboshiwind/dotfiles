@@ -95,5 +95,5 @@
   },
   "alwaysThinkingEnabled": true,
   "skipDangerousModePermissionPrompt": true,
-  "effortLevel": "medium"
+  "voiceEnabled": true
 }
