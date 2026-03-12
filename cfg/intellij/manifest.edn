@@ -1,1 +1,2 @@
-{:pkg/brew {:intellij-idea-ce {}}}
+{:pkg/brew {:intellij-idea-ce {}}
+ :fs/symlink {"~/.ideavimrc" "./.ideavimrc"}}

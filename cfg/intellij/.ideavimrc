@@ -1,0 +1,66 @@
+" LazyVim-inspired IdeaVim config
+
+" Plugins
+set surround
+set commentary
+set highlightedyank
+set nerdtree
+set which-key
+
+" Settings
+set scrolloff=8
+set incsearch
+set ignorecase
+set smartcase
+set number
+set relativenumber
+set ideajoin
+set clipboard+=unnamedplus
+
+" Leader
+let mapleader=" "
+
+" General
+imap fd <Esc>
+
+" Better window navigation
+nmap <C-h> <C-w>h
+nmap <C-j> <C-w>j
+nmap <C-k> <C-w>k
+nmap <C-l> <C-w>l
+
+" Find (Telescope-style)
+nmap <leader>ff :action GotoFile<CR>
+nmap <leader>/ :action FindInPath<CR>
+
+" File explorer
+nmap <leader>e :NERDTreeToggle<CR>
+
+" Code / LSP
+nmap <leader>ca :action ShowIntentionActions<CR>
+nmap <leader>cr :action RenameElement<CR>
+nmap <leader>cf :action ReformatCode<CR>
+nmap <leader>cd :action ShowErrorDescription<CR>
+nmap ]d :action GotoNextError<CR>
+nmap [d :action GotoPreviousError<CR>
+
+" Search
+nmap <leader>ss :action GotoSymbol<CR>
+nmap <leader>sS :action GotoClass<CR>
+
+" Run
+nmap <leader>rr :action Run<CR>
+nmap <leader>rd :action Debug<CR>
+
+" Terminal
+nmap <leader>ft :action ActivateTerminalToolWindow<CR>
+
+" Refactoring
+nmap <leader>rm :action ExtractMethod<CR>
+vmap <leader>rm :action ExtractMethod<CR>
+nmap <leader>rv :action IntroduceVariable<CR>
+vmap <leader>rv :action IntroduceVariable<CR>
+
+" Stay in visual mode when indenting
+vmap < <gv
+vmap > >gv
