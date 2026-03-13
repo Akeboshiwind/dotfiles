@@ -2,7 +2,8 @@
   (:require [actions :as a]
             [babashka.process :as process]
             [cheshire.core :as json]
-            [outcome :as o]))
+            [outcome :as o]
+            [utils :as u]))
 
 (defmethod a/requires :pkg/mise [_] :pkg/mise)
 
@@ -26,9 +27,10 @@
          (into {}))))
 
 (defmethod a/orphans :pkg/mise [_ declared]
-  (let [result (orphans (installed-map) declared)]
-    (when (seq result)
-      {:pkg/mise-uninstall result})))
+  (when (u/command-exists? "mise")
+    (let [result (orphans (installed-map) declared)]
+      (when (seq result)
+        {:pkg/mise-uninstall result}))))
 
 (def ^:dynamic *installed-cache* (delay (installed-map)))
 

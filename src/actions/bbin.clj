@@ -3,7 +3,8 @@
             [babashka.fs :as fs]
             [babashka.process :as process]
             [clojure.edn :as edn]
-            [outcome :as o]))
+            [outcome :as o]
+            [utils :as u]))
 
 (defmethod a/requires :pkg/bbin [_] :pkg/bbin)
 
@@ -27,9 +28,10 @@
          (into {}))))
 
 (defmethod a/orphans :pkg/bbin [_ declared]
-  (let [result (orphans (installed-set) declared)]
-    (when (seq result)
-      {:pkg/bbin-uninstall result})))
+  (when (u/command-exists? "bbin")
+    (let [result (orphans (installed-set) declared)]
+      (when (seq result)
+        {:pkg/bbin-uninstall result}))))
 
 (def ^:dynamic *installed-cache* (delay (installed-set)))
 

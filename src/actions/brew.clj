@@ -4,7 +4,8 @@
             [cheshire.core :as json]
             [clojure.set :as set]
             [clojure.string :as str]
-            [outcome :as o]))
+            [outcome :as o]
+            [utils :as u]))
 
 (defmethod a/requires :pkg/brew [_] :pkg/brew)
 (defmethod a/requires :brew/service [_] :brew/service)
@@ -171,9 +172,10 @@
     (merge formula-orphans cask-orphans)))
 
 (defmethod a/orphans :pkg/brew [_ declared]
-  (let [result (orphans {:formulae (leaves-set) :casks (installed-set-full :cask)} declared)]
-    (when (seq result)
-      {:pkg/brew-uninstall result})))
+  (when (u/command-exists? "brew")
+    (let [result (orphans {:formulae (leaves-set) :casks (installed-set-full :cask)} declared)]
+      (when (seq result)
+        {:pkg/brew-uninstall result}))))
 
 (defmethod a/install! :pkg/brew [type opts items]
   (a/simple-install type opts "Installing brew packages"

@@ -2,7 +2,8 @@
   (:require [actions :as a]
             [babashka.process :as process]
             [clojure.string :as str]
-            [outcome :as o]))
+            [outcome :as o]
+            [utils :as u]))
 
 (defmethod a/requires :pkg/mas [_] :pkg/mas)
 
@@ -28,9 +29,10 @@
          (into {}))))
 
 (defmethod a/orphans :pkg/mas [_ declared]
-  (let [result (orphans (installed-map) declared)]
-    (when (seq result)
-      {:pkg/mas-uninstall result})))
+  (when (u/command-exists? "mas")
+    (let [result (orphans (installed-map) declared)]
+      (when (seq result)
+        {:pkg/mas-uninstall result}))))
 
 (def ^:dynamic *installed-cache* (delay (installed-map)))
 
