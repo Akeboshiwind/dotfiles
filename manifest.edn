@@ -60,6 +60,9 @@
 
         {:pkg/brew {"postgresql@18" {}}}
 
+        ;; >> Reading
+        :calibre
+
         ;; >> Fun
         {:pkg/brew {:godot {}
                     :telegram {}
