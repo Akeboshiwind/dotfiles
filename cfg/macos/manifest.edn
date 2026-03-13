@@ -15,7 +15,8 @@
            "Collections Database" 1568395334
            "Save to Reader" 1640236961
            "Logger for Shortcuts" 1611554653
-           "Drafts" 1435957248}
+           "Drafts" 1435957248
+           "Uplock" 6469049274}
  :fs/symlink-folder {"~/.config" "./.config"}
  :fs/symlink {"~/.hushlogin" "./.hushlogin"}
 
