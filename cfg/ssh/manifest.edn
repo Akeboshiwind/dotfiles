@@ -1,7 +1,7 @@
-{:assert {:ssh-key {:src "test -f ~/.ssh/juxt_mac_osm && test -f ~/.ssh/juxt_mac_osm.pub"
+{:assert {:ssh-key {:src "test -f ~/.ssh/macbook_work && test -f ~/.ssh/macbook_work.pub"
                     :message "SSH identity key not found"
-                    :instructions ["Generate: ssh-keygen -t ed25519 -f ~/.ssh/juxt_mac_osm"
-                                   "Add to ssh-agent: ssh-add ~/.ssh/juxt_mac_osm"
-                                   "Add public key to GitHub: gh ssh-key add ~/.ssh/juxt_mac_osm.pub --type signing"]}}
+                    :instructions ["Generate: ssh-keygen -t ed25519 -f ~/.ssh/macbook_work"
+                                   "Add to ssh-agent: ssh-add ~/.ssh/macbook_work"
+                                   "Add public key to GitHub: gh ssh-key add ~/.ssh/macbook_work.pub --type signing"]}}
  :pkg/brew {:mosh {}}
  :fs/symlink-folder {"~/.ssh" "./.ssh"}}

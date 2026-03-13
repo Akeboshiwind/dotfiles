@@ -7,7 +7,7 @@
 [user]
     name = Oliver Marshall
     email = olivershawmarshall@gmail.com
-	signingKey = ~/.ssh/juxt_mac_osm.pub
+	signingKey = ~/.ssh/macbook_work.pub
 
 [gpg]
 	format = ssh
