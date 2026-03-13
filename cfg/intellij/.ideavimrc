@@ -43,6 +43,8 @@ nmap <leader>cf :action ReformatCode<CR>
 nmap <leader>cd :action ShowErrorDescription<CR>
 nmap ]d :action GotoNextError<CR>
 nmap [d :action GotoPreviousError<CR>
+nmap ]b :action NextEditorTab<CR>
+nmap [b :action PreviousEditorTab<CR>
 
 " Search
 nmap <leader>ss :action GotoSymbol<CR>
