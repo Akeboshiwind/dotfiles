@@ -1,4 +1,4 @@
 {; NOTE: Not a cask so that we can enable ssh access
  ;       Downside is that we have no UI
  :pkg/brew {:tailscale {}}
- :brew/service {:tailscale {:sudo true}}}
+ :brew/service {:tailscale {:sudo true :dep/requires #{[:pkg/brew :tailscale]}}}}
