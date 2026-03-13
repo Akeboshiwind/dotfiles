@@ -2,6 +2,7 @@
 theme = Kanagawa Wave
 
 # Behavior
+command = /opt/homebrew/bin/fish
 confirm-close-surface = false
 # Font
 font-size = 17
