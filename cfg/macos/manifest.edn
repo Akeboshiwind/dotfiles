@@ -6,7 +6,8 @@
             :spotify {}
             :notion {}
             :macwhisper {}
-            :google-drive {}}
+            :google-drive {}
+            :discord {}}
 
  :pkg/mas {"Timelines" 1112433234
            "Bitwarden" 1352778147
@@ -15,7 +16,14 @@
            "Collections Database" 1568395334
            "Logger for Shortcuts" 1611554653
            "Drafts" 1435957248
-           "Uplock" 6469049274}
+           "Uplock" 6469049274
+           "Todoist" 585829637
+           ;; Apple
+           "iMovie" 408981434
+           "Keynote" 409183694
+           "Pages" 409201541
+           "Numbers" 409203825
+           "GarageBand" 682658836}
  :fs/symlink-folder {"~/.config" "./.config"}
  :fs/symlink {"~/.hushlogin" "./.hushlogin"}
 

@@ -14,7 +14,7 @@
                   :out
                   str/split-lines)]
     (into {} (keep (fn [line]
-                     (when-let [[_ id app-name] (re-matches #"(\d+)\s+(.+?)(?:\s+\(.*\))?\s*$" line)]
+                     (when-let [[_ id app-name] (re-matches #"\s*(\d+)\s+(.+?)(?:\s+\(.*\))?\s*$" line)]
                        [(parse-long id) (str/trim app-name)])))
           lines)))
 
