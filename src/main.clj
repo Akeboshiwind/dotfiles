@@ -27,7 +27,7 @@
             (str/join "\n"))))
 
 (defn- print-help []
-  (println "Usage: bootstrap [:<action>] [--apply]")
+  (println "Usage: syn [:<action>] [--apply]")
   (println "")
   (println "Options:")
   (println "  :<action>   Run only this action type (e.g., :pkg/brew, :fs/symlink)")
@@ -36,10 +36,10 @@
   (println "  --help      Show this help message")
   (println "")
   (println "Examples:")
-  (println "  bootstrap              Show status of all items")
-  (println "  bootstrap --apply      Install everything")
-  (println "  bootstrap :pkg/brew    Show status of brew packages")
-  (println "  bootstrap :pkg/brew --apply  Install only brew packages"))
+  (println "  syn              Show status of all items")
+  (println "  syn --apply      Install everything")
+  (println "  syn :pkg/brew    Show status of brew packages")
+  (println "  syn :pkg/brew --apply  Install only brew packages"))
 
 (defn- parse-args
   "Parse CLI args. Returns {:action keyword-or-nil :plan-mode bool :help bool}"

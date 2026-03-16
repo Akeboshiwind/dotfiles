@@ -18,15 +18,15 @@ Babashka-based dotfile manager. Installs packages and symlinks config files via 
 2. Clone this repo to `~/dotfiles`
 3. Install prerequisites: [Homebrew](https://brew.sh), then `brew install temurin borkdude/brew/babashka git-crypt`
 4. Unlock secrets: `git-crypt unlock` (requires GPG key)
-5. Run `~/dotfiles/cfg/bin/bin/bootstrap`
+5. Run `~/dotfiles/cfg/bin/bin/syn`
 
 ## Usage
 
 ```bash
-bootstrap              # Run all actions
-bootstrap :pkg/brew    # Only brew packages
-bootstrap :fs/symlink  # Only symlinks
-bootstrap --dry-run    # Preview without executing
+syn              # Run all actions
+syn :pkg/brew    # Only brew packages
+syn :fs/symlink  # Only symlinks
+syn --dry-run    # Preview without executing
 ```
 
 ## Structure
@@ -177,10 +177,10 @@ Tools are installed with `:local` in manifest.edn:
 2. Rename namespace in `src/hello/main.clj` to `mytool.main`
 3. Update `bb.edn` with the new main namespace
 4. Add to manifest: `{:pkg/bbin {:mytool {:local "./tools/mytool"}}}`
-5. Run `bootstrap :pkg/bbin`
+5. Run `syn :pkg/bbin`
 
 ## Updating after config change
 
 ```bash
-bootstrap
+syn
 ```
