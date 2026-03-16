@@ -1,1 +1,1 @@
-{:pkg/mise {:node {:version "lts" :global true :dep/provides #{:pkg/npm}}}}
+{:pkg/mise {:node {:version "24.14.0" :global true :dep/provides #{:pkg/npm}}}}
