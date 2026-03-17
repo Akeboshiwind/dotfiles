@@ -72,7 +72,7 @@
       (int? expected)     (= expected (parse-long actual))
       (float? expected)   (= expected (parse-double actual))
       (string? expected)  (= expected actual)
-      ;; For complex types (arrays, dicts), skip detailed comparison
+      ;; TODO: support complex types (arrays, dicts) via utils.defaults/read-domain
       :else               true)))
 
 (defmethod a/check :osx/defaults [_ key opts]
@@ -81,13 +81,13 @@
                      {(:key opts) (:value opts)})]
     (reduce (fn [acc [k value]]
               (if (or (map? value) (vector? value))
-                acc ;; skip complex types, continue checking others
+                acc
                 (let [{:keys [exit out]} (process/shell {:out :string :err :string :continue true}
                                                         "defaults" "read" domain (name k))]
                   (cond
-                    (not (zero? exit))                      (reduced (o/drift :wrong))
+                    (not (zero? exit))                       (reduced (o/drift :wrong))
                     (not (defaults-value-matches? value out)) (reduced (o/drift :wrong))
-                    :else                                   acc))))
+                    :else                                    acc))))
             o/satisfied
             settings)))
 
