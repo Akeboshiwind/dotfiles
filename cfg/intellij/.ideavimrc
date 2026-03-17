@@ -13,7 +13,7 @@ set incsearch
 set ignorecase
 set smartcase
 set number
-set relativenumber
+set norelativenumber
 set ideajoin
 set clipboard+=unnamedplus
 
