@@ -27,14 +27,21 @@
     :date    (apply str content)
     nil))
 
+(defn- parse-plist-xml [xml-str]
+  (let [parsed (xml/parse-str xml-str)
+        dict-node (first (filter :tag (:content parsed)))]
+    (parse-dict (:content dict-node))))
+
 (defn read-domain
   "Read all defaults for a domain, returning a Clojure map.
    With no args, reads the currentHost global domain."
-  ([] (read-domain "-g"))
+  ([]
+   (let [{:keys [out exit]} (process/shell {:out :string :err :string :continue true}
+                                           "defaults" "-currentHost" "export" "-g" "-")]
+     (when (zero? exit)
+       (parse-plist-xml out))))
   ([domain]
    (let [{:keys [out exit]} (process/shell {:out :string :err :string :continue true}
-                                           "defaults" "-currentHost" "export" domain "-")]
+                                           "defaults" "export" domain "-")]
      (when (zero? exit)
-       (let [parsed (xml/parse-str out)
-             dict-node (first (filter :tag (:content parsed)))]
-         (parse-dict (:content dict-node)))))))
+       (parse-plist-xml out)))))
