@@ -27,7 +27,20 @@
  :fs/symlink-folder {"~/.config" "./.config"}
  :fs/symlink {"~/.hushlogin" "./.hushlogin"}
 
- ; TODO: How can I setup mapping CapsLock to Control?
+ :assert
+ {:caps-lock-to-control
+  {:clj (let [globals (defaults/read-domain)
+              mappings (->> globals
+                            (filter (fn [[k _]] (clojure.string/starts-with? k "com.apple.keyboard.modifiermapping")))
+                            (mapcat val))]
+          (some (fn [m]
+                  (and (= (get m "HIDKeyboardModifierMappingSrc") 30064771129)
+                       (= (get m "HIDKeyboardModifierMappingDst") 30064771300)))
+                mappings))
+   :message "Caps Lock is not remapped to Control"
+   :instructions ["Open System Settings > Keyboard > Keyboard Shortcuts > Modifier Keys"
+                  "Set Caps Lock to Control for each keyboard"]}}
+
  :osx/defaults
  {:global {:domain "NSGlobalDomain"
            :settings {"com.apple.sound.beep.volume" 0.0

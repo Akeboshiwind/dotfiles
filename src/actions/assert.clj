@@ -3,7 +3,8 @@
             [babashka.process :as process]
             [clojure.string :as str]
             [display :as d]
-            [outcome :as o]))
+            [outcome :as o]
+            [utils.defaults :as defaults]))
 
 (defmethod a/requires :assert [_] nil)
 
