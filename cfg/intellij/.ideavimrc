@@ -1,4 +1,5 @@
 " LazyVim-inspired IdeaVim config
+" https://github.com/octokerbs/IdeaVim-Fast-Reference
 
 " Plugins
 set surround
