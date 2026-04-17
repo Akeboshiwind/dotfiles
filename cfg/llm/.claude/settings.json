@@ -77,7 +77,8 @@
     "superpowers@claude-plugins-official": true,
     "glance@juxt-plugins": true,
     "allium@juxt-plugins": true,
-    "chalk@juxt-plugins": true
+    "chalk@juxt-plugins": true,
+    "chill@juxt-plugins": true
   },
   "extraKnownMarketplaces": {
     "juxt-plugins": {
@@ -94,6 +95,7 @@
     }
   },
   "alwaysThinkingEnabled": true,
+  "voiceEnabled": true,
   "skipDangerousModePermissionPrompt": true,
-  "voiceEnabled": true
+  "effortLevel": "medium"
 }
