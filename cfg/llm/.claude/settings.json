@@ -3,6 +3,9 @@
     "DISABLE_AUTOUPDATER": "1",
     "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1"
   },
+  "permissions": {
+    "defaultMode": "auto"
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -96,7 +99,8 @@
     }
   },
   "alwaysThinkingEnabled": true,
+  "effortLevel": "medium",
   "voiceEnabled": true,
   "skipDangerousModePermissionPrompt": true,
-  "effortLevel": "medium"
+  "skipAutoPermissionPrompt": true
 }
