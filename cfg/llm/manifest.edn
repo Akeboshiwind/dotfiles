@@ -18,7 +18,6 @@
  :claude/marketplace {:official {:source "anthropics/claude-plugins-official"}
                       :juxt {:source "juxt/claude-plugins"}}
  :claude/plugin {:playground {:dep/requires #{[:claude/marketplace :official]}}
-                 :superpowers {:dep/requires #{[:claude/marketplace :official]}}
                  :allium {:dep/requires #{[:claude/marketplace :juxt]}}
                  :chalk {:dep/requires #{[:claude/marketplace :juxt]}}
                  :glance {:dep/requires #{[:claude/marketplace :juxt]}}
