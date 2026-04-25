@@ -1,3 +1,2 @@
 {:pkg/brew {:python {}
-            :uv {:dep/provides #{:uv/tool}}}
- :uv/tool {}}
+            :uv {:dep/provides #{:uv/tool}}}}

@@ -120,13 +120,31 @@
 
 ;; >> Calculate package orphans
 
+(defn- orphan-types
+  "Return all action types that have a non-default orphans implementation."
+  []
+  (->> (methods a/orphans)
+       keys
+       (remove #{:default})))
+
 (defn calculate-orphans
-  "Query live state and compute orphan uninstall actions for each action type in the plan.
-   Each a/orphans impl returns a plan fragment (e.g. {:pkg/brew-uninstall {...}}) or nil."
+  "Query live state and compute orphan uninstall actions for all action types
+   with orphan detection, not just those in the plan.
+   Each a/orphans impl returns a plan fragment (e.g. {:pkg/brew-uninstall {...}}) or nil.
+   When orphans are found for a type not in the plan, the base type is injected
+   as an empty entry so the dependency graph resolves."
   [plan]
-  (->> (keys plan)
-       (keep #(a/orphans % (get plan % {})))
-       (apply merge)))
+  (let [fragments (->> (orphan-types)
+                       (keep #(a/orphans % (get plan % {}))))]
+    (reduce (fn [acc fragment]
+              (let [;; e.g. {:pkg/brew-uninstall {...}} -> :pkg/brew
+                    uninstall-type (first (keys fragment))
+                    base-type (keyword (namespace uninstall-type)
+                                       (str/replace (name uninstall-type) #"-uninstall$" ""))]
+                (cond-> (merge acc fragment)
+                  (not (contains? plan base-type)) (assoc base-type {}))))
+            {}
+            fragments)))
 
 ;; >> Plan builder
 
