@@ -1,6 +1,5 @@
-.beads
 .clj-kondo
 .cpcache
 .lsp
 .nrepl-port
-.worktrees
+.claude/worktrees
