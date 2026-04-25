@@ -3,7 +3,7 @@
             :coreutils {}
             :tree {}
             :jq {}
-            :ffmpeg {}
+            :ffmpeg-full {}
             :stow {}
             :help2man {}
             :htop {}
