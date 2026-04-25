@@ -35,6 +35,7 @@
                              :when (seq reqs)]
                          [action reqs]))]
     {:actions (set actions)
+     :action-types (set (keys plan))
      :providers (->> by-cap
                      (map (fn [[cap [[_ action]]]] [cap action]))
                      (into {}))
@@ -58,15 +59,14 @@
 
 (defn- find-missing
   "Find requirements with no provider."
-  [{:keys [actions providers requires]}]
-  (let [action-types (set (map first actions))]
-    (for [[action reqs] requires
-          req reqs
-          :when (cond
-                  (keyword? req) (not (contains? providers req))
-                  (complete-cap? req) (not (contains? action-types (second req)))
-                  :else false)]
-      {:action action :missing-capability req})))
+  [{:keys [action-types providers requires]}]
+  (for [[action reqs] requires
+        req reqs
+        :when (cond
+                (keyword? req) (not (contains? providers req))
+                (complete-cap? req) (not (contains? action-types (second req)))
+                :else false)]
+    {:action action :missing-capability req}))
 
 (defn- actions-of-type
   "Return all actions of the given type."
@@ -151,12 +151,20 @@
           (recur (into needed deps)
                  (into (pop queue) deps)))))))
 
+(defn- uninstall-type
+  "Derive the uninstall action type for a given action type.
+   e.g. :pkg/brew -> :pkg/brew-uninstall, :uv/tool -> :uv/tool-uninstall"
+  [action-type]
+  (keyword (namespace action-type)
+           (str (name action-type) "-uninstall")))
+
 (defn filter-order
-  "Filter execution order to only include actions of the given type,
-   plus any actions they transitively depend on.
+  "Filter execution order to only include actions of the given type
+   (and its uninstall variant), plus any actions they transitively depend on.
    Returns actions in dependency order (dependencies first)."
   [plan order action-type]
-  (let [targets (filterv #(= action-type (first %)) order)
+  (let [types #{action-type (uninstall-type action-type)}
+        targets (filterv #(contains? types (first %)) order)
         needed (transitive-deps plan (set targets))]
     (filterv needed order)))
 
