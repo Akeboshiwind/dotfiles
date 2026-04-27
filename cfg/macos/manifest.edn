@@ -49,20 +49,7 @@
                 (get current "AppleEnabledInputSources")))
    :message "Australian keyboard layout is not enabled"
    :instructions ["Open System Settings > Keyboard > Input Sources > Edit"
-                  "Add Australian keyboard layout"]}
-  :tinystart
-  {:src "test -d /Applications/TinyStart.app"
-   :message "TinyStart not installed, get from ko-fi"
-   :instructions ["Download from https://ko-fi.com/s/eb0f06d83e"
-                  "Unzip the download and move TinyStart.app to /Applications/"]}
-  :spotlight-disabled
-  {:clj (let [hotkeys (get (defaults/read-domain "com.apple.symbolichotkeys")
-                           "AppleSymbolicHotKeys")]
-          (and (false? (get-in hotkeys ["64" "enabled"]))
-               (false? (get-in hotkeys ["65" "enabled"]))))
-   :message "Spotlight keyboard shortcut is still enabled"
-   :instructions ["Open System Settings > Keyboard > Keyboard Shortcuts > Spotlight"
-                  "Untick 'Show Spotlight search' and 'Show Finder search window'"]}}
+                  "Add Australian keyboard layout"]}}
 
  :osx/defaults
  {:global {:domain "NSGlobalDomain"

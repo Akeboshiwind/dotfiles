@@ -59,6 +59,9 @@
 
         {:pkg/brew {"postgresql@18" {}}}
 
+        ;; >> Launcher
+        :tinystart
+
         ;; >> Reading
         :calibre
 

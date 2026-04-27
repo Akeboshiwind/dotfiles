@@ -1,0 +1,60 @@
+# TinyStart Settings
+# Edit this file to customize TinyStart behavior.
+# Changes take effect after restarting TinyStart.
+
+additional_applications_directories = []
+custom_folders = []
+custom_shortcuts = []
+drag_to_position_enabled = true
+emoji_frecency_rows = 2
+emoji_hotkey_key_code = 49
+emoji_hotkey_modifiers = 4352
+emoji_skin_tone = 'default'
+excluded_application_paths = []
+global_hotkey_key_code = 49
+global_hotkey_modifiers = 256
+launcher_scale = 'regular'
+picker_position = 'bottom_center'
+shortcuts_enabled_by_default = false
+shortcuts_hide_disabled_in_settings = false
+show_menu_bar_icon = false
+
+[[custom_links]]
+title = 'XTDB Issues'
+url = 'https://github.com/xtdb/xtdb/issues'
+
+[[custom_search_engines]]
+name = 'DuckDuckGo'
+shorthand = 'ddg'
+show_as_fallback_search_option = false
+url_template = 'https://duckduckgo.com/?q=%s'
+
+[[custom_search_engines]]
+name = 'Giphy'
+shorthand = 'gif'
+show_as_fallback_search_option = false
+url_template = 'https://giphy.com/search/%s'
+
+[[custom_search_engines]]
+name = 'Google'
+shorthand = 'g'
+show_as_fallback_search_option = true
+url_template = 'https://www.google.com/search?q=%s'
+
+[[custom_search_engines]]
+name = 'Google Maps'
+shorthand = 'maps'
+show_as_fallback_search_option = false
+url_template = 'https://maps.google.com/?q=%s'
+
+[[custom_search_engines]]
+name = 'Wikipedia'
+shorthand = 'wiki'
+show_as_fallback_search_option = true
+url_template = 'https://en.wikipedia.org/w/index.php?search=%s'
+
+[[custom_search_engines]]
+name = 'YouTube'
+shorthand = 'yt'
+show_as_fallback_search_option = false
+url_template = 'https://www.youtube.com/results?search_query=%s'
