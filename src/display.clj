@@ -60,12 +60,15 @@
    :error      {:icon "✗" :color-fn red}
    :cancelled  {:icon "⊘" :color-fn gray}})
 
-(defn render-plan-result [{:keys [label state detail]}]
+(defn render-plan-result [{:keys [label state detail instructions]}]
   (let [{:keys [icon color-fn]} (get plan-icons state (plan-icons :unknown))
         line (if detail
                (str label (str "  " (gray detail)))
                label)]
-    (println " " (color-fn icon) line)))
+    (println " " (color-fn icon) line)
+    (when (seq instructions)
+      (doseq [instr instructions]
+        (println "   " (gray instr))))))
 
 (defn plan-summary [freq-map]
   (let [parts (keep (fn [[state {:keys [color-fn]}]]

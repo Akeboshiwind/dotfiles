@@ -34,7 +34,8 @@
                                                :state state
                                                :action ref
                                                :detail (when (:message check)
-                                                         (:message check))}))
+                                                         (:message check))
+                                               :instructions (:detail check)}))
                                           node-group)
                              changes (remove #(= :installed (:state %)) results)]
                          (when (seq changes)
