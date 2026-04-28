@@ -38,16 +38,6 @@
           }
         ]
       }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/skills/claudeception/scripts/claudeception-activator.sh"
-          }
-        ]
-      }
     ]
   },
   "statusLine": {
