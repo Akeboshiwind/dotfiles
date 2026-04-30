@@ -2,9 +2,6 @@
             :claude {}
             :claude-code {:dep/provides #{:claude/marketplace :claude/plugin :claude/mcp}}
             :sox {} ; voice mode
-            ; OpenAI
-            :chatgpt {}
-            :codex {}
             ; Other
             :llm {}
             :repomix {}
