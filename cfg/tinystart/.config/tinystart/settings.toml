@@ -3,7 +3,6 @@
 # Changes take effect after restarting TinyStart.
 
 additional_applications_directories = []
-custom_folders = []
 custom_shortcuts = []
 drag_to_position_enabled = true
 emoji_frecency_rows = 2
@@ -13,15 +12,27 @@ emoji_skin_tone = 'default'
 excluded_application_paths = []
 global_hotkey_key_code = 49
 global_hotkey_modifiers = 256
-launcher_scale = 'regular'
+launcher_scale = 'large_120'
 picker_position = 'bottom_center'
 shortcuts_enabled_by_default = false
 shortcuts_hide_disabled_in_settings = false
 show_menu_bar_icon = false
 
+[[custom_folders]]
+path = '/Users/osm/Library/Mobile Documents/com~apple~CloudDocs'
+title = 'iCloud Drive'
+
+[[custom_links]]
+title = 'DER Services Platform'
+url = 'https://github.com/synergy-au/der-services-platform'
+
 [[custom_links]]
 title = 'XTDB Issues'
 url = 'https://github.com/xtdb/xtdb/issues'
+
+[[custom_links]]
+title = 'XTDB Synergy Board'
+url = 'https://github.com/orgs/xtdb/projects/42'
 
 [[custom_search_engines]]
 name = 'DuckDuckGo'
