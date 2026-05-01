@@ -16,7 +16,8 @@
       (->> (:out result)
            str/split-lines
            (keep (fn [line]
-                   (when-not (or (str/starts-with? line " ")
+                   (when-not (or (str/blank? line)
+                                 (str/starts-with? line " ")
                                  (str/starts-with? line "- "))
                      (first (str/split line #"\s")))))
            set)
