@@ -3,6 +3,7 @@
 # Changes take effect after restarting TinyStart.
 
 additional_applications_directories = []
+clear_search_field = 'immediately'
 custom_shortcuts = []
 drag_to_position_enabled = true
 emoji_frecency_rows = 2
@@ -13,6 +14,7 @@ excluded_application_paths = []
 global_hotkey_key_code = 49
 global_hotkey_modifiers = 256
 launcher_scale = 'large_120'
+open_folders_in_forklift = false
 picker_position = 'bottom_center'
 shortcuts_enabled_by_default = false
 shortcuts_hide_disabled_in_settings = false
@@ -37,7 +39,7 @@ url = 'https://github.com/orgs/xtdb/projects/42'
 [[custom_search_engines]]
 name = 'DuckDuckGo'
 shorthand = 'ddg'
-show_as_fallback_search_option = false
+show_as_fallback_search_option = true
 url_template = 'https://duckduckgo.com/?q=%s'
 
 [[custom_search_engines]]
@@ -49,7 +51,7 @@ url_template = 'https://giphy.com/search/%s'
 [[custom_search_engines]]
 name = 'Google'
 shorthand = 'g'
-show_as_fallback_search_option = true
+show_as_fallback_search_option = false
 url_template = 'https://www.google.com/search?q=%s'
 
 [[custom_search_engines]]
@@ -61,7 +63,7 @@ url_template = 'https://maps.google.com/?q=%s'
 [[custom_search_engines]]
 name = 'Wikipedia'
 shorthand = 'wiki'
-show_as_fallback_search_option = true
+show_as_fallback_search_option = false
 url_template = 'https://en.wikipedia.org/w/index.php?search=%s'
 
 [[custom_search_engines]]
