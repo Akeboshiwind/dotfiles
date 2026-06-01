@@ -13,10 +13,12 @@
                               :git/tag "v0.2.0"
                               :main-opts "[\"-m\" \"clojure-mcp-light.nrepl-eval\"]"}}
  :claude/marketplace {:official {:source "anthropics/claude-plugins-official"}
-                      :juxt {:source "juxt/claude-plugins"}}
+                      :juxt {:source "juxt/claude-plugins"}
+                      :xtdb {:source "xtdb/claude-plugins"}}
  :claude/plugin {:playground {:dep/requires #{[:claude/marketplace :official]}}
                  :allium {:dep/requires #{[:claude/marketplace :juxt]}}
                  :chalk {:dep/requires #{[:claude/marketplace :juxt]}}
                  :glance {:dep/requires #{[:claude/marketplace :juxt]}}
-                 :chill {:dep/requires #{[:claude/marketplace :juxt]}}}
+                 :chill {:dep/requires #{[:claude/marketplace :juxt]}}
+                 :gradle-tests {:dep/requires #{[:claude/marketplace :xtdb]}}}
  :fs/symlink-folder {"~/.claude" "./.claude"}}

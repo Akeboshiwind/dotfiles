@@ -50,7 +50,8 @@
     "glance@juxt-plugins": true,
     "allium@juxt-plugins": true,
     "chalk@juxt-plugins": true,
-    "chill@juxt-plugins": true
+    "chill@juxt-plugins": true,
+    "gradle-tests@xtdb-plugins": true
   },
   "extraKnownMarketplaces": {
     "juxt-plugins": {
@@ -63,6 +64,12 @@
       "source": {
         "source": "github",
         "repo": "anthropics/claude-plugins-official"
+      }
+    },
+    "xtdb-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "xtdb/claude-plugins"
       }
     }
   },
