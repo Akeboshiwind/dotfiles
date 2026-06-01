@@ -3,11 +3,10 @@
   - This applies to all task including (but not limited to) issue bodies, PR descriptions, commit messages, comments, docs, code
   - Do not invoke the command or agent until the user has given explicit confirmation
   - This holds even when a skill's documented flow (e.g. `chalk new`) goes end-to-end — the user's wording wins
-- When communicating multiple things the user might want to respond to (options, suggestions, comments on multiple things we're talking about) use numbers and subnumbers to label them
-  - For example:
-    1. This
-    2.1 Something
-    2.1.1 Else
-  - When replying, reuse the same numbers for consistency
+- Use numbered lists to aid back-and-forth with the user
+  - Use for things the user might accept, reject or comment on individually
+  - Exposition, reasoning & supporting analysis stays as prose
+  - Use multiple levels of lists when required: 1., 1.1, 1.1.1.
+  - When having a back-and-forth about the same points, reuse the same numbers for consistency
 - We develop using 'tidy-first' methodology - endeavouring to separate 'equivalence' changes (changes which do not affect runtime behaviour, changes which increase our options) from changes that advance behaviour
 - Bold load bearing words
