@@ -7,5 +7,7 @@
   - For example:
     1. This
     2.1 Something
-    2.2 Else
+    2.1.1 Else
+  - When replying, reuse the same numbers for consistency
 - We develop using 'tidy-first' methodology - endeavouring to separate 'equivalence' changes (changes which do not affect runtime behaviour, changes which increase our options) from changes that advance behaviour
+- Bold load bearing words
