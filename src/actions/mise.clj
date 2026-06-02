@@ -17,6 +17,17 @@
                     [(name tool) (into #{} (map :version) versions)]))
           raw)))
 
+(defn outdated-map
+  "Return {tool-name {:current ... :latest ...}} from `mise outdated`.
+   Only includes tools that have an upgrade available."
+  []
+  (let [raw (-> (process/shell {:out :string :err :string} "mise" "outdated" "--json")
+                :out
+                (json/parse-string true))]
+    (into {} (map (fn [[tool {:keys [current latest]}]]
+                    [(name tool) {:current current :latest latest}]))
+          raw)))
+
 (defn orphans
   "Find mise tools installed but not declared."
   [installed-tools declared-items]
@@ -33,17 +44,29 @@
         {:pkg/mise-uninstall result}))))
 
 (def ^:dynamic *installed-cache* (delay (installed-map)))
+(def ^:dynamic *outdated-cache* (delay (outdated-map)))
 
 (defmethod a/check :pkg/mise [_ key opts]
   (if-not (:version opts)
     (o/error "Version required")
     (let [installed @*installed-cache*
           tool-name (name key)
-          versions (get installed tool-name)]
+          versions  (get installed tool-name)]
       (cond
-        (nil? versions) (o/drift :missing)
-        (contains? versions (:version opts)) o/satisfied
-        :else (assoc (o/drift :outdated) :message (str (last (sort versions)) " → " (:version opts)))))))
+        (nil? versions)
+        (o/drift :missing)
+
+        (= "latest" (:version opts))
+        (if-let [{:keys [current latest]} (get @*outdated-cache* tool-name)]
+          (assoc (o/drift :outdated) :message (str current " → " latest))
+          o/satisfied)
+
+        (contains? versions (:version opts))
+        o/satisfied
+
+        :else
+        (assoc (o/drift :outdated)
+               :message (str (last (sort versions)) " → " (:version opts)))))))
 
 (defmethod a/check :pkg/mise-uninstall [_ key opts]
   (o/drift :orphan))
