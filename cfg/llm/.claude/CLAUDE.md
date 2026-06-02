@@ -3,6 +3,7 @@
   - This applies to all task including (but not limited to) issue bodies, PR descriptions, commit messages, comments, docs, code
   - Do not invoke the command or agent until the user has given explicit confirmation
   - This holds even when a skill's documented flow (e.g. `chalk new`) goes end-to-end — the user's wording wins
+  - This only applies when the user explicitly asks to "draft"
 - Use numbered lists to aid back-and-forth with the user
   - Use for things the user might accept, reject or comment on individually
   - Exposition, reasoning & supporting analysis stays as prose
