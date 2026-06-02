@@ -11,3 +11,4 @@
   - When having a back-and-forth about the same points, reuse the same numbers for consistency
 - We develop using 'tidy-first' methodology - endeavouring to separate 'equivalence' changes (changes which do not affect runtime behaviour, changes which increase our options) from changes that advance behaviour
 - Bold load bearing words
+- Never git push without the user *directly* asking you to, never infer
