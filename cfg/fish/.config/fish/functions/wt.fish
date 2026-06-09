@@ -35,7 +35,11 @@ function wt --description 'Create or switch to a git worktree'
 
     # Create new worktree, then enter subshell
     mkdir -p "$wt_dir"
-    git worktree add "$wt_path" -b "$name"
+    if git show-ref --verify --quiet "refs/heads/$name"
+        git worktree add "$wt_path" "$name"
+    else
+        git worktree add "$wt_path" -b "$name"
+    end
     and set -lx WT_NAME $name
     and fish -C "cd '$wt_path'"
 end
