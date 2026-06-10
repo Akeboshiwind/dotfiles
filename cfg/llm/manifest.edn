@@ -1,11 +1,12 @@
 {:pkg/brew {; Anthropic
             :claude {}
-            :claude-code {:dep/provides #{:claude/marketplace :claude/plugin :claude/mcp}}
             :sox {} ; voice mode
             ; Other
             :llm {}
             :repomix {}
             "juxt/allium/allium" {}}
+
+ :pkg/npm {"@anthropic-ai/claude-code" {:dep/provides #{:claude/marketplace :claude/plugin :claude/mcp}}}
 
  :pkg/bbin {"clj-paren-repair-claude-hook" {:url "https://github.com/bhauman/clojure-mcp-light.git"
                                             :git/tag "v0.2.0"}
