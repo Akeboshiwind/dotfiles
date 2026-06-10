@@ -4,6 +4,9 @@
   - Do not invoke the command or agent until the user has given explicit confirmation
   - This holds even when a skill's documented flow (e.g. `chalk new`) goes end-to-end — the user's wording wins
   - This only applies when the user explicitly asks to "draft"
+  - First draft: write the full text to a scratch file under `/tmp` (descriptive name, e.g. `/tmp/draft-pr-body.md`) **and** show it once in the conversation
+  - Re-drafts/revisions: apply changes to that file with the **Edit** tool so the user reads only the rendered red/green **diff** — never reprint the full text in the conversation
+  - The scratch file is the **canonical** current draft; keep it complete so the user can read the whole thing there when they want
 - Use numbered lists to aid back-and-forth with the user
   - Use for things the user might accept, reject or comment on individually
   - Exposition, reasoning & supporting analysis stays as prose
