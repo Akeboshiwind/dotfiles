@@ -1,1 +1,1 @@
-abbr -a ct 'claude --model fable'
+abbr -a ct 'claude --model opus'
