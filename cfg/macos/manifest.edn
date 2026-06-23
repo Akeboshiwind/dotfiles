@@ -2,7 +2,6 @@
             :obsidian {}
             :quitter {}
             :rectangle-pro {}
-            :music-decoy {}
             :spotify {}
             :notion {}
             :macwhisper {}
@@ -79,8 +78,4 @@
   :stage-manager {:domain "com.apple.WindowManager"
                   :settings {"GloballyEnabled" true
                              ; Don't group windows by application
-                             "AppWindowGroupingBehavior" false}}
-  :music-decoy {:domain "com.lowtechguys.MusicDecoy"
-                :settings {"mediaAppPath" "/Applications/Spotify.app"}
-                :dep/requires #{[:pkg/brew :music-decoy]
-                                [:pkg/brew :spotify]}}}}
+                             "AppWindowGroupingBehavior" false}}}}
