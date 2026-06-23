@@ -59,6 +59,9 @@
          :pkg/mas {"Windows App" 1295203466}}
 
         {:pkg/brew {"postgresql@18" {}}}
+        ; To run the XTDB docs site
+        {:pkg/brew {:yarn {}
+                    :d2 {}}}
 
         ;; >> Launcher
         :tinystart
