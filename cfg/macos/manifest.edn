@@ -26,7 +26,9 @@
            "Keynote" 409183694
            "Pages" 409201541
            "Numbers" 409203825
-           "GarageBand" 682658836}
+           "GarageBand" 682658836
+           "Mercury Weather" 1621800675
+           "Currents Reader" 6758530974}
  :fs/symlink-folder {"~/.config" "./.config"}
  :fs/symlink {"~/.hushlogin" "./.hushlogin"}
 
