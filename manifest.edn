@@ -49,6 +49,7 @@
         ;; >> Deployment
         :aws
         :fly
+        :kubernetes
 
         ;; >> AI
         :llm
