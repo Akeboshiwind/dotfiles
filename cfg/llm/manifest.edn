@@ -1,7 +1,6 @@
 {:pkg/brew {:sox {} ; voice mode for claude
             ; Other
             :llm {}
-            :repomix {}
             "juxt/allium/allium" {}}
 
  :pkg/npm {"@anthropic-ai/claude-code" {:dep/provides #{:claude/marketplace :claude/plugin :claude/mcp}}}
