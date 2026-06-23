@@ -11,7 +11,7 @@
             :google-chrome {}
             :alcove {}}
 
- :pkg/mas {"Timelines" 1112433234
+ :pkg/mas {;"Timelines" 1112433234 # MAS thinks it's uninstalled because it's an iPad app I think
            "Bitwarden" 1352778147
            "Wipr 2" 1662217862
            "Data Jar" 1453273600

@@ -1,2 +1,2 @@
-{:pkg/brew {:python {}
+{:pkg/brew {;:python {} # Just using system for now 🤷‍♂️
             :uv {:dep/provides #{:uv/tool}}}}
