@@ -16,6 +16,27 @@
         (into #{} (keys (get (json/parse-string (:out result)) "dependencies")))
         #{}))))
 
+(defn outdated-map
+  "Return {name {:current v1 :latest v2}} from `npm outdated -g --json`.
+   Only includes packages that have an upgrade available.
+   `npm outdated` exits non-zero when anything is outdated, so the exit
+   code is ignored and parsing relies on the JSON body."
+  []
+  (let [raw (-> (process/shell {:out :string :err :string :continue true}
+                               "npm" "outdated" "-g" "--json")
+                :out)]
+    (if (str/blank? raw)
+      {}
+      (into {}
+        (keep (fn [[pkg info]]
+                (let [current (get info "current")
+                      latest  (get info "latest")]
+                  (when (and current latest (not= current latest))
+                    [pkg {:current current :latest latest}]))))
+        (json/parse-string raw)))))
+
+(def ^:private ^:dynamic *outdated-cache* (delay (outdated-map)))
+
 (defn- pkg-name-from-url
   "Extract package name from a URL.
    e.g. 'https://…/happy-coder-0.13.0.tgz' → 'happy-coder'"
@@ -28,10 +49,13 @@
   (let [k        (if (keyword? key) (name key) (str key))
         pkg-name (if (str/starts-with? k "http")
                    (pkg-name-from-url k)
-                   k)]
-    (if (contains? @*installed-cache* pkg-name)
-      o/satisfied
-      (o/drift :missing))))
+                   k)
+        out-info (get @*outdated-cache* pkg-name)]
+    (cond
+      out-info    (assoc (o/drift :outdated)
+                         :message (str (:current out-info) " → " (:latest out-info)))
+      (contains? @*installed-cache* pkg-name) o/satisfied
+      :else       (o/drift :missing))))
 
 (def ^:private builtin-packages
   "Packages that ship with Node and should not be treated as orphans."
