@@ -38,6 +38,12 @@ function fish_prompt --description 'Write out the prompt'
         set wt_status " "$yellow"wt:"$git_color$WT_NAME$normal
     end
 
+    # >> Detect AWS Profile
+    set -l aws_status ""
+    if set -q AWS_PROFILE
+        set aws_status " "$yellow"aws:"(set_color cyan)$AWS_PROFILE$normal
+    end
+
     # >> Prompt Status
     set -l prompt_status ""
     # Color the prompt in red on error
@@ -58,6 +64,6 @@ function fish_prompt --description 'Write out the prompt'
     end
 
     echo
-    echo -s $pwd $nix_status $wt_status $git_status $prompt_status
+    echo -s $pwd $nix_status $wt_status $aws_status $git_status $prompt_status
     echo -n -s $status_color $prefix ' ' $normal
 end
