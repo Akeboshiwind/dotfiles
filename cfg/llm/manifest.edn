@@ -1,6 +1,4 @@
-{:pkg/brew {; Anthropic
-            :claude {}
-            :sox {} ; voice mode
+{:pkg/brew {:sox {} ; voice mode for claude
             ; Other
             :llm {}
             :repomix {}
