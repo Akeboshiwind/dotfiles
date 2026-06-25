@@ -2,7 +2,7 @@
     editor = nvim
 
 [init]
-	defaultBranch = main
+    defaultBranch = main
 
 [user]
     name = Oliver Marshall
@@ -10,22 +10,22 @@
 	signingKey = ~/.ssh/macbook_work.pub
 
 [gpg]
-	format = ssh
+    format = ssh
 
 [commit]
     gpgSign = true
 
 [pull]
     # Assume `--rebase` when doing a `git pull`
-	rebase = true
+    rebase = true
 
 [push]
     # Assume `--set-upstream` when doing a `git push origin <branch>`
-	autoSetupRemote = true
-	default = upstream
+    autoSetupRemote = true
+    default = upstream
 
 [filter "lfs"]
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
-	required = true
+    clean = git-lfs clean -- %f
+    smudge = git-lfs smudge -- %f
+    process = git-lfs filter-process
+    required = true
