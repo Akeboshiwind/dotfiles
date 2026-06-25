@@ -8,7 +8,8 @@
             :google-drive {}
             :discord {}
             :google-chrome {}
-            :alcove {}}
+            :alcove {}
+            :secretive {}}
 
  :pkg/mas {;"Timelines" 1112433234 # MAS thinks it's uninstalled because it's an iPad app I think
            "Bitwarden" 1352778147

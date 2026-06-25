@@ -7,10 +7,13 @@
 [user]
     name = Oliver Marshall
     email = olivershawmarshall@gmail.com
-	signingKey = ~/.ssh/macbook_work.pub
+    signingkey = /Users/osm/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys/320022f00c3958599c88ae1bbcb2f6c5.pub
 
 [gpg]
     format = ssh
+
+[gpg "ssh"]
+    allowedSignersFile = ~/.gitallowedsigners
 
 [commit]
     gpgSign = true

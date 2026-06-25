@@ -4,4 +4,5 @@
             :gh {}
             :git-crypt {}}
  :fs/symlink {"~/.gitconfig" "./.gitconfig"
+              "~/.gitallowedsigners" "./.gitallowedsigners"
               "~/Library/Application Support/lazygit/config.yml" "./lazygit.yml"}}
