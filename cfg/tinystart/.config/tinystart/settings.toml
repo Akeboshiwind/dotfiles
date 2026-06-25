@@ -4,7 +4,6 @@
 
 additional_applications_directories = []
 clear_search_field = 'immediately'
-custom_shortcuts = []
 drag_to_position_enabled = true
 emoji_frecency_rows = 2
 emoji_hotkey_key_code = 49
@@ -20,7 +19,7 @@ open_folders_in_forklift = false
 picker_position = 'bottom_center'
 search_engine_defaults_version = 2
 shortcuts_enabled_by_default = false
-shortcuts_hide_disabled_in_settings = false
+shortcuts_hide_disabled_in_settings = true
 show_menu_bar_icon = false
 
 [[custom_folders]]
@@ -80,3 +79,7 @@ name = 'YouTube'
 shorthand = 'yt'
 show_as_fallback_search_option = false
 url_template = 'https://www.youtube.com/results?search_query=%s'
+
+[[custom_shortcuts]]
+identifier = 'B027ED10-8FE5-418E-8331-6414C448B6F9'
+is_enabled = false
