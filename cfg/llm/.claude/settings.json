@@ -78,5 +78,6 @@
   "theme": "auto",
   "editorMode": "vim",
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true
+  "voiceEnabled": true,
+  "tui": "fullscreen"
 }
