@@ -15,5 +15,8 @@
   - The built-in git/PR workflow covers mechanics but not the chalk voice; bypassing chalk defeats why it's installed
   - Applies regardless of diff size, and to plain requests like "commit this"
 - We develop using 'tidy-first' methodology - endeavouring to separate 'equivalence' changes (changes which do not affect runtime behaviour, changes which increase our options) from changes that advance behaviour
+- Make illegal states **unrepresentable**
+- **Obviously no bugs** over *no obvious bugs*
+- Debugging is twice as hard as writing the code - so code written at the limit of your cleverness is beyond your ability to debug; write **below** that limit
 - Bold load bearing words
 - Never git push without the user *directly* asking you to, never infer
