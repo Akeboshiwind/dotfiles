@@ -4,6 +4,7 @@
             [cheshire.core :as json]
             [clojure.set :as set]
             [clojure.string :as str]
+            [display :as d]
             [outcome :as o]
             [utils :as u]))
 
@@ -14,16 +15,18 @@
   "Return #{name ...} of installed formulae or casks."
   [kind]
   (let [flag (if (= kind :cask) "--cask" "--formula")]
-    (->> (process/shell {:out :string :err :string} "brew" "list" flag "-1")
-         :out
-         str/split-lines
-         (remove str/blank?)
-         set)))
+    (d/with-spinner (str "Listing Homebrew " (if (= kind :cask) "casks" "formulae"))
+      (->> (process/shell {:out :string :err :string} "brew" "list" flag "-1")
+           :out
+           str/split-lines
+           (remove str/blank?)
+           set))))
 
 (defn outdated-map
   "Return {name {:installed v1 :current v2}} from brew outdated."
   []
-  (let [raw (-> (process/shell {:out :string :err :string} "brew" "outdated" "--json=v2")
+  (let [raw (-> (d/with-spinner "Checking for outdated Homebrew packages"
+                  (process/shell {:out :string :err :string} "brew" "outdated" "--json=v2"))
                 :out
                 (json/parse-string true))
         parse (fn [items]
@@ -38,7 +41,8 @@
 (defn services-map
   "Return {name service-info} from brew services list."
   []
-  (let [services (-> (process/shell {:out :string :err :string} "brew" "services" "list" "--json")
+  (let [services (-> (d/with-spinner "Listing Homebrew services"
+                       (process/shell {:out :string :err :string} "brew" "services" "list" "--json"))
                      :out
                      (json/parse-string true))]
     (into {} (map (fn [s] [(:name s) s])) services)))
@@ -88,21 +92,23 @@
   "Return #{name ...} of explicitly installed formulae (not deps).
    Uses `brew leaves --installed-on-request` to exclude transitive dependencies."
   []
-  (->> (process/shell {:out :string :err :string} "brew" "leaves" "--installed-on-request")
-       :out
-       str/split-lines
-       (remove str/blank?)
-       set))
+  (d/with-spinner "Listing explicitly installed Homebrew formulae"
+    (->> (process/shell {:out :string :err :string} "brew" "leaves" "--installed-on-request")
+         :out
+         str/split-lines
+         (remove str/blank?)
+         set)))
 
 (defn installed-set-full
   "Return #{name ...} of installed formulae with full tap-qualified names."
   [kind]
   (let [flag (if (= kind :cask) "--cask" "--formula")]
-    (->> (process/shell {:out :string :err :string} "brew" "list" flag "--full-name" "-1")
-         :out
-         str/split-lines
-         (remove str/blank?)
-         set)))
+    (d/with-spinner (str "Listing Homebrew " (if (= kind :cask) "casks" "formulae"))
+      (->> (process/shell {:out :string :err :string} "brew" "list" flag "--full-name" "-1")
+           :out
+           str/split-lines
+           (remove str/blank?)
+           set))))
 
 (defn parse-deps-graph
   "Parse output of `brew deps --installed` into {pkg #{dep1 dep2 ...}}.
@@ -121,9 +127,10 @@
 (defn deps-graph
   "Return {pkg #{dep1 dep2 ...}} from `brew deps --installed`."
   []
-  (->> (process/shell {:out :string :err :string} "brew" "deps" "--installed")
-       :out
-       parse-deps-graph))
+  (d/with-spinner "Resolving Homebrew dependency graph"
+    (->> (process/shell {:out :string :err :string} "brew" "deps" "--installed")
+         :out
+         parse-deps-graph)))
 
 (defn transitive-deps-of
   "Given a set of declared package names and a deps graph,

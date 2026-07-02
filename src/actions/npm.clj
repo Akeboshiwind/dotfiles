@@ -3,6 +3,7 @@
             [babashka.process :as process]
             [cheshire.core :as json]
             [clojure.string :as str]
+            [display :as d]
             [outcome :as o]
             [utils :as u]))
 
@@ -10,8 +11,9 @@
 
 (def ^:private ^:dynamic *installed-cache*
   (delay
-    (let [result (process/shell {:out :string :err :string :continue true}
-                                "npm" "list" "-g" "--depth=0" "--json")]
+    (let [result (d/with-spinner "Listing global npm packages"
+                   (process/shell {:out :string :err :string :continue true}
+                                  "npm" "list" "-g" "--depth=0" "--json"))]
       (if (zero? (:exit result))
         (into #{} (keys (get (json/parse-string (:out result)) "dependencies")))
         #{}))))
@@ -22,8 +24,9 @@
    `npm outdated` exits non-zero when anything is outdated, so the exit
    code is ignored and parsing relies on the JSON body."
   []
-  (let [raw (-> (process/shell {:out :string :err :string :continue true}
-                               "npm" "outdated" "-g" "--json")
+  (let [raw (-> (d/with-spinner "Checking for outdated npm packages"
+                  (process/shell {:out :string :err :string :continue true}
+                                 "npm" "outdated" "-g" "--json"))
                 :out)]
     (if (str/blank? raw)
       {}

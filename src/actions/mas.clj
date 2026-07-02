@@ -2,6 +2,7 @@
   (:require [actions :as a]
             [babashka.process :as process]
             [clojure.string :as str]
+            [display :as d]
             [outcome :as o]
             [utils :as u]))
 
@@ -10,7 +11,8 @@
 (defn installed-map
   "Return {id app-name} of installed Mac App Store apps."
   []
-  (let [lines (-> (process/shell {:out :string :err :string} "mas" "list")
+  (let [lines (-> (d/with-spinner "Listing Mac App Store apps"
+                    (process/shell {:out :string :err :string} "mas" "list"))
                   :out
                   str/split-lines)]
     (into {} (keep (fn [line]

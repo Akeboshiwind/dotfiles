@@ -53,8 +53,9 @@
   "Refreshes all marketplace catalogues from their sources (network).
    Forced at most once per run, before plugin version comparison — version
    drift can only be detected against a current catalogue."
-  (delay (process/shell {:out :string :err :string :continue true}
-                        "claude" "plugin" "marketplace" "update")))
+  (delay (d/with-spinner "Fetching updates from Claude Marketplace"
+           (process/shell {:out :string :err :string :continue true}
+                          "claude" "plugin" "marketplace" "update"))))
 
 (defn catalogue-version
   "Version of a plugin in the local marketplace checkout, or nil when the

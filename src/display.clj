@@ -18,6 +18,50 @@
 (defn yellow "Wrap string in yellow ANSI color." [s] (str YELLOW s RESET))
 
 ;; =============================================================================
+;; Spinner
+;; =============================================================================
+
+(def ^:private spinner-frames ["/" "-" "\\" "|"])
+
+(defn- tty?
+  "True when stdout is an interactive terminal."
+  []
+  (if-let [console (System/console)]
+    ;; JDK 22+ hands out a Console even when redirected; isTerminal
+    ;; disambiguates. Older runtimes only return a Console on a tty.
+    (try (.isTerminal console)
+         (catch Exception _ true))
+    false))
+
+(defn with-spinner*
+  "Run thunk while animating a spinner beside message on the current line.
+   Animates only on an interactive terminal; otherwise just runs the thunk.
+   Clears the line before returning the thunk's result."
+  [message thunk]
+  (if-not (tty?)
+    (thunk)
+    (let [spinning (atom true)
+          animator (future
+                     (loop [i 0]
+                       (when @spinning
+                         (print (str "\r" (nth spinner-frames (mod i (count spinner-frames))) " " message))
+                         (flush)
+                         (Thread/sleep 80)
+                         (recur (inc i)))))]
+      (try
+        (thunk)
+        (finally
+          (reset! spinning false)
+          @animator
+          (print "\r\033[K")
+          (flush))))))
+
+(defmacro with-spinner
+  "Run body while showing message with an animated spinner (see with-spinner*)."
+  [message & body]
+  `(with-spinner* ~message (fn [] ~@body)))
+
+;; =============================================================================
 ;; Section formatting
 ;; =============================================================================
 

@@ -2,6 +2,7 @@
   (:require [actions :as a]
             [babashka.process :as process]
             [clojure.string :as str]
+            [display :as d]
             [outcome :as o]
             [utils :as u]))
 
@@ -10,8 +11,9 @@
 (defn installed-set
   "Return #{name ...} of installed uv tools."
   []
-  (let [result (process/shell {:out :string :err :string :continue true}
-                              "uv" "tool" "list")]
+  (let [result (d/with-spinner "Listing uv tools"
+                 (process/shell {:out :string :err :string :continue true}
+                                "uv" "tool" "list"))]
     (if (zero? (:exit result))
       (->> (:out result)
            str/split-lines

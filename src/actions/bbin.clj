@@ -3,6 +3,7 @@
             [babashka.fs :as fs]
             [babashka.process :as process]
             [clojure.edn :as edn]
+            [display :as d]
             [outcome :as o]
             [utils :as u]))
 
@@ -11,12 +12,13 @@
 (defn installed-set
   "Return #{name ...} of installed bbin scripts."
   []
-  (->> (process/shell {:out :string :err :string} "bbin" "ls" "--edn")
-       :out
-       edn/read-string
-       keys
-       (map name)
-       set))
+  (d/with-spinner "Listing bbin scripts"
+    (->> (process/shell {:out :string :err :string} "bbin" "ls" "--edn")
+         :out
+         edn/read-string
+         keys
+         (map name)
+         set)))
 
 (defn orphans
   "Find bbin scripts installed but not declared."
