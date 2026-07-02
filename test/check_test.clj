@@ -353,10 +353,43 @@
       (is (o/drift? (a/check :claude/marketplace :other {:source "acme/other"}))))))
 
 (deftest claude-plugin-check-test
-  (testing "installed plugin → satisfied; missing → drift"
-    (with-bindings {#'claude/*plugin-cache* (delay {(keyword "chalk@juxt-plugins") {}})}
-      (is (o/satisfied? (a/check :claude/plugin :chalk {})))
-      (is (o/drift? (a/check :claude/plugin :missing-plugin {}))))))
+  (testing "installed and current plugin → satisfied; missing → drift"
+    (with-bindings {#'claude/*plugin-cache* (delay {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]})
+                    #'claude/*marketplace-refresh* (delay nil)}
+      (with-redefs [claude/catalogue-version (fn [_mp _n] "0.11.2")]
+        (is (o/satisfied? (a/check :claude/plugin :chalk {})))
+        (is (o/drift? (a/check :claude/plugin :missing-plugin {})))))))
+
+(deftest claude-plugin-outdated-test
+  (testing "installed plugin behind the refreshed marketplace catalogue → drift(:outdated)"
+    (with-bindings {#'claude/*plugin-cache* (delay {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]})
+                    #'claude/*marketplace-refresh* (delay nil)}
+      (with-redefs [claude/catalogue-version (fn [mp n]
+                                               (when (and (= mp "juxt-plugins") (= n "chalk"))
+                                                 "0.12.0"))]
+        (let [result (a/check :claude/plugin :chalk {})]
+          (is (o/drift? result))
+          (is (= :outdated (:kind result)))
+          (is (= "0.11.2 → 0.12.0" (:message result))))))))
+
+(deftest claude-mcp-check-test
+  (testing "user-scope server present → satisfied; absent → drift(:missing)"
+    (with-bindings {#'claude/*mcp-cache* (delay {:my-server {:command "x"}})}
+      (is (o/satisfied? (a/check :claude/mcp :my-server {:command "x"})))
+      (let [result (a/check :claude/mcp :other {:command "x"})]
+        (is (o/drift? result))
+        (is (= :missing (:kind result))))))
+
+  (testing "non-user scope → error (syn manages machine-global state only)"
+    (is (o/error? (a/check :claude/mcp :proj {:command "x" :scope "project"})))
+    (is (o/error? (a/check :claude/mcp :loc {:command "x" :scope "local"})))))
+
+(deftest claude-plugin-unknown-catalogue-version-test
+  (testing "installed plugin with no catalogue version → satisfied (cannot determine drift)"
+    (with-bindings {#'claude/*plugin-cache* (delay {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]})
+                    #'claude/*marketplace-refresh* (delay nil)}
+      (with-redefs [claude/catalogue-version (fn [_mp _n] nil)]
+        (is (o/satisfied? (a/check :claude/plugin :chalk {})))))))
 
 ;; =============================================================================
 ;; Default check (unknown for unimplemented types)

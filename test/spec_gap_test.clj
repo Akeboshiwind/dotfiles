@@ -87,11 +87,6 @@
     (is (not (o/unknown? (a/check :claude/mcp :spec-gap-server {:command "echo"})))
         "check :claude/mcp falls through to the default unknown outcome")))
 
-;; TODO (spec: rule CheckClaudeResources, ClaudeResourceAction.update_available):
-;; a marketplace or plugin with a newer version available must check as
-;; drift(:outdated). No seam exists to fake version state until the version
-;; check is implemented — add tests alongside that implementation.
-
 ;; =============================================================================
 ;; Spec: rule CheckDefaults
 ;; "Every declared value is compared against the live system, including array

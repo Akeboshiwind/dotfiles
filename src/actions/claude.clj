@@ -3,6 +3,7 @@
             [clojure.java.io :as io]
             [actions :as a]
             [babashka.fs :as fs]
+            [babashka.process :as process]
             [cheshire.core :as json]
             [display :as d]
             [outcome :as o]))
@@ -33,10 +34,11 @@
         {}))))
 
 (defmethod a/check :claude/mcp [_ key {:keys [scope] :or {scope "user"}}]
-  ;; Only user-scope servers are recorded in ~/.claude.json; other scopes
-  ;; fall back to unknown (always re-registered).
+  ;; syn manages machine-global state, so only user-scope servers (recorded
+  ;; in ~/.claude.json) can be declared; project/local registrations belong
+  ;; to the projects they serve.
   (if (not= scope "user")
-    o/unknown
+    (o/error "only user-scope MCP servers can be managed from dotfiles")
     (if (contains? @*mcp-cache* (keyword (name key)))
       o/satisfied
       (o/drift :missing))))
@@ -47,10 +49,47 @@
       o/satisfied
       (o/drift :missing))))
 
+(def ^:private ^:dynamic *marketplace-refresh*
+  "Refreshes all marketplace catalogues from their sources (network).
+   Forced at most once per run, before plugin version comparison — version
+   drift can only be detected against a current catalogue."
+  (delay (process/shell {:out :string :err :string :continue true}
+                        "claude" "plugin" "marketplace" "update")))
+
+(defn catalogue-version
+  "Version of a plugin in the local marketplace checkout, or nil when the
+   catalogue does not record one (e.g. remote plugin sources)."
+  [marketplace plugin-name]
+  (let [base (str (System/getProperty "user.home") "/.claude/plugins/marketplaces/" marketplace)
+        mp-file (io/file base ".claude-plugin/marketplace.json")]
+    (when (fs/exists? mp-file)
+      (let [entry (->> (json/parse-string (slurp mp-file) true)
+                       :plugins
+                       (filter #(= plugin-name (:name %)))
+                       first)]
+        (or (:version entry)
+            (when-let [src (:source entry)]
+              (when (string? src)
+                (let [pf (io/file base src ".claude-plugin/plugin.json")]
+                  (when (fs/exists? pf)
+                    (:version (json/parse-string (slurp pf) true)))))))))))
+
+(defn- installed-plugin-entry
+  "Find [plugin-id records] in the plugin cache for a plugin name."
+  [plugin-cache n]
+  (some (fn [[k v]] (when (str/starts-with? (name k) (str n "@")) [(name k) v]))
+        plugin-cache))
+
 (defmethod a/check :claude/plugin [_ key _opts]
   (let [n (name key)]
-    (if (some (fn [[k _]] (str/starts-with? (name k) (str n "@"))) @*plugin-cache*)
-      o/satisfied
+    (if-let [[plugin-id records] (installed-plugin-entry @*plugin-cache* n)]
+      (do @*marketplace-refresh*
+          (let [marketplace (second (str/split plugin-id #"@" 2))
+                installed-version (:version (first records))
+                latest (catalogue-version marketplace n)]
+            (if (and installed-version latest (not= installed-version latest))
+              (assoc (o/drift :outdated) :message (str installed-version " → " latest))
+              o/satisfied)))
       (o/drift :missing))))
 
 (defmethod a/install! :claude/marketplace [type opts items]
@@ -62,7 +101,11 @@
 (defmethod a/install! :claude/plugin [type opts items]
   (a/simple-install type opts "Installing Claude plugins"
     (fn [plugin _item-opts]
-      ["claude" "plugin" "install" (name plugin)])
+      (let [n (name plugin)]
+        ;; Outdated plugins are already installed — update instead of install
+        (if (installed-plugin-entry @*plugin-cache* n)
+          ["claude" "plugin" "update" n]
+          ["claude" "plugin" "install" n])))
     items))
 
 ;; MCP has special remove-then-add logic, doesn't fit simple-install

@@ -239,8 +239,9 @@ variant ClaudeResourceAction : Action {
     -- A Claude Code marketplace, plugin or MCP server registration.
     resource_kind: marketplace | plugin | mcp_server
     present: Boolean                      -- registered/installed on the machine
-    update_available: Boolean             -- a newer version of the resource (or, for a
-                                          -- plugin, of its marketplace) exists
+    update_available: Boolean             -- the installed version is behind the
+                                          -- marketplace catalogue, after the catalogue
+                                          -- has been refreshed from its source
 }
 
 -- =============================================================================
@@ -548,9 +549,19 @@ rule CheckClaudeResources {
             else:
                 action.check_outcome = satisfied
     @guidance
-        -- Missing registration is drift/missing; a stale version of a
-        -- marketplace, plugin or MCP server is drift/outdated. A present,
-        -- current resource is satisfied and is not re-registered.
+        -- Missing registration is drift/missing; a stale version is
+        -- drift/outdated. A present, current resource is satisfied and is
+        -- not re-registered.
+        -- Version discovery for plugins refreshes the marketplace catalogues
+        -- from their sources once per run (a network read) and then compares
+        -- the installed version against the catalogue; a plugin whose
+        -- catalogue records no version cannot drift by version. Outdated
+        -- plugins are remedied by an update, not a reinstall.
+        -- MCP servers are managed at user (machine-global) scope only —
+        -- presence is read from the user-scope registry. Declaring a
+        -- project- or local-scope server is a check error: those
+        -- registrations belong to the individual projects they serve, not
+        -- the dotfiles manifest.
 }
 
 rule BlockingOutcomeCancelsDependents {
@@ -692,7 +703,11 @@ surface CommandLine {
 
     @guarantee PlanModeIsHarmless
         -- Invoking without apply mode only inspects the machine; nothing is
-        -- installed, linked, removed or written (including the cache).
+        -- installed, linked, removed or written (including syn's state
+        -- cache). Version discovery may refresh package managers' own
+        -- metadata caches (marketplace catalogues, registry indexes) — a
+        -- read of the outside world, not a change to the machine's
+        -- configuration.
 }
 
 surface RunReport {
