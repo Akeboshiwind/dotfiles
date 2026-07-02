@@ -1,0 +1,739 @@
+-- allium: 3
+-- syn.allium — behavioural specification of "syn", the dotfile manager
+
+-- Scope: the dotfile-manager engine (manifest → plan → check → report/apply)
+-- Includes: manifest and module loading, plan assembly (path resolution,
+--   symlink-folder expansion, duplicate detection), stale-symlink cleanup,
+--   orphan detection, capability-based dependency ordering, the check phase,
+--   plan display, apply execution with failure propagation, symlink-ownership
+--   and script-run caching, secrets validation.
+-- Excludes:
+--   - The contents of individual cfg/* modules (declarative data, not behaviour)
+--   - Terminal rendering, colours and output layout (display.clj)
+--   - Cache file location, EDN format and atomic-write mechanics (cache.clj)
+--   - Action-namespace auto-discovery (registry.clj)
+--   - The exact shell commands each package manager runs
+
+given {
+    cache: StateCache
+    manifest: Manifest
+}
+
+-- =============================================================================
+-- External world
+-- =============================================================================
+
+external entity Operator {
+    -- The human running syn at a terminal on their own machine.
+    name: String
+}
+
+external entity PackageManager {
+    -- A package manager syn can drive: brew, mise, mas, bbin, npm, uv.
+    name: String
+    available: Boolean                    -- the manager's command exists on PATH
+    supports_orphan_detection: Boolean
+    explicitly_installed: Set<String>     -- user-requested items only, not transitive dependencies
+}
+
+external entity SourceFile {
+    -- A file inside the repository, discovered when expanding a symlink folder.
+    relative_path: String                 -- path relative to the declared folder
+    absolute_path: String
+}
+
+-- =============================================================================
+-- Manifest
+-- =============================================================================
+
+entity Manifest {
+    modules: Module with manifest = this
+    folder_declarations: FolderDeclaration with manifest = this
+
+    references_undefined_secret: Boolean  -- some module refers to a secret key
+                                          -- that is not defined
+    has_escaping_source: modules.any(m => m.has_escaping_source)
+}
+
+entity FolderDeclaration {
+    -- A symlink-folder declaration: link every file under a repository folder.
+    manifest: Manifest
+    link_prefix: String                   -- where the links land, e.g. "~/.config/fish"
+    files: Set<SourceFile>                -- files discovered under the declared folder
+}
+
+entity Module {
+    -- One entry in the root manifest plan: a cfg/<name>/manifest.edn file
+    -- or an inline declaration block.
+    manifest: Manifest
+    source_dir: String?                   -- null for inline entries
+    has_escaping_source: Boolean          -- a declared relative source path resolves
+                                          -- outside source_dir
+}
+
+entity Secret {
+    key: String
+    value: String?
+    disabled: Boolean                     -- explicitly marked as not in use
+
+    invalid: not disabled and (value = null or value = "")
+}
+
+-- =============================================================================
+-- State cache
+-- =============================================================================
+
+entity StateCache {
+    -- Persisted between runs. Records which symlinks syn owns (so links removed
+    -- from the manifest can be cleaned up) and which scripts have run.
+    recorded_symlinks: RecordedSymlink with cache = this
+    script_records: ScriptRecord with cache = this
+}
+
+entity RecordedSymlink {
+    cache: StateCache
+    target: String
+    source: String
+}
+
+entity ScriptRecord {
+    cache: StateCache
+    script_name: String
+    content_hash: String                  -- identity of the script content that last ran successfully
+}
+
+-- =============================================================================
+-- Run and actions
+-- =============================================================================
+
+entity Run {
+    mode: plan | apply
+    scope: String?                        -- optional action-type filter, e.g. ":pkg/brew"
+    status: planning | checking | displaying | applying | complete | aborted
+
+    graph_errors: Boolean                 -- the capability graph has a cycle, a required
+                                          -- capability with no provider, or a capability
+                                          -- with more than one provider
+
+    actions: Action with run = this
+    validation_errors: ValidationError with run = this
+
+    unsatisfied_actions: actions where check_outcome != satisfied
+    warned_actions: actions where check_outcome = satisfied and check_message != null
+    all_checked: actions.all(a => a.check_outcome != unchecked)
+    all_resolved: actions.all(a => a.result != pending)
+
+    transitions status {
+        planning -> checking
+        planning -> aborted
+        checking -> displaying
+        checking -> applying
+        checking -> aborted
+        displaying -> complete
+        applying -> complete
+        terminal: complete, aborted
+    }
+}
+
+entity ValidationError {
+    run: Run
+    subject: String                       -- the offending declaration or secret key
+    description: String
+}
+
+entity Action {
+    run: Run
+    key: String
+    kind: SymlinkAction | UnlinkAction | PackageAction | UninstallAction |
+          ScriptAction | AssertAction | ServiceAction | DefaultsAction |
+          GitCloneAction | ClaudeResourceAction
+
+    declaring_modules: Set<Module>        -- modules that declared this (type, key)
+    provides: Set<String>                 -- capability keywords this action enables
+    depends_on: Set<Action>               -- resolved capability and explicit dependencies
+
+    in_scope: Boolean                     -- true when run.scope = null; otherwise true only if
+                                          -- the action's type matches the scope (or its
+                                          -- uninstall variant), or the action is a transitive
+                                          -- dependency of one that does
+
+    check_outcome: unchecked | satisfied | drift | unknown | conflict | error | cancelled
+    drift_kind: missing | outdated | wrong | orphan when check_outcome = drift
+    check_message: String?
+
+    result: pending | applied | skipped | failed
+
+    install_succeeds: Boolean             -- live outcome of attempting the action
+
+    actionable: check_outcome in {drift, unknown}
+    blocking: check_outcome in {error, conflict, cancelled}
+}
+
+variant SymlinkAction : Action {
+    target: String                        -- where the link lives (may be under ~)
+    source: String                        -- file inside the repository
+
+    -- Live filesystem state at check time:
+    target_exists: Boolean
+    target_is_symlink: Boolean
+    target_points_at_source: Boolean
+}
+
+variant UnlinkAction : Action {
+    target: String
+    expected_source: String               -- what the cache says the link should point at
+
+    target_exists: Boolean
+    target_is_symlink: Boolean
+    target_points_at_expected: Boolean
+}
+
+variant PackageAction : Action {
+    manager: PackageManager
+    version: String?                      -- pinned version, or "latest"
+
+    installed: Boolean
+    upgrade_available: Boolean            -- a newer version exists than the one installed
+    installed_version: String?
+    desired_version: String?
+}
+
+variant UninstallAction : Action {
+    manager: PackageManager
+}
+
+variant ScriptAction : Action {
+    content: String
+    has_check: Boolean                    -- a check command was declared
+    check_passes: Boolean                 -- live: the check command exits successfully
+    content_changed: Boolean              -- no successful run of this exact content is
+                                          -- recorded in the cache
+}
+
+variant AssertAction : Action {
+    condition_holds: Boolean              -- live evaluation of the assertion
+    message: String?
+    instructions: List<String>?           -- manual remediation steps shown to the operator
+}
+
+variant ServiceAction : Action {
+    running: Boolean
+    root_owned: Boolean                   -- the service runs as root
+    needs_sudo: Boolean                   -- declared as a sudo-managed service
+}
+
+variant DefaultsAction : Action {
+    -- A macOS defaults domain with one or more desired key/value settings.
+    all_values_match: Boolean             -- every declared setting — scalar or complex
+                                          -- (array/dict) — reads back as the desired value
+}
+
+variant GitCloneAction : Action {
+    url: String
+    ref: String?
+    repo_exists: Boolean
+    head_matches_ref: Boolean
+}
+
+variant ClaudeResourceAction : Action {
+    -- A Claude Code marketplace, plugin or MCP server registration.
+    resource_kind: marketplace | plugin | mcp_server
+    present: Boolean                      -- registered/installed on the machine
+    update_available: Boolean             -- a newer version of the resource (or, for a
+                                          -- plugin, of its marketplace) exists
+}
+
+-- =============================================================================
+-- Invocation and plan assembly
+-- =============================================================================
+
+rule OperatorInvokesSyn {
+    when: SynInvoked(_, scope, mode)
+    ensures: Run.created(mode: mode, scope: scope, status: planning)
+}
+
+rule ReferencingUndefinedSecretAborts {
+    -- A module manifest may reference a secret by key. If no secret with that
+    -- key is defined, the run aborts before any plan is assembled.
+    when: run: Run.status becomes planning
+    requires: run.status = planning
+    requires: manifest.references_undefined_secret
+    ensures: run.status = aborted
+}
+
+rule PathEscapeAbortsRun {
+    when: run: Run.status becomes planning
+    requires: run.status = planning
+    requires: manifest.has_escaping_source
+    ensures: run.status = aborted
+    @guidance
+        -- A relative source path in a module manifest is resolved against the
+        -- module's own directory; a path that canonicalises outside that
+        -- directory is rejected. Absolute and ~-prefixed paths are exempt.
+}
+
+rule AssemblePlan {
+    when: run: Run.status becomes planning
+    requires: not manifest.has_escaping_source
+    requires: not manifest.references_undefined_secret
+
+    -- One Action is created per declared item across all module manifests,
+    -- identified by (action type, key). Relative source paths are resolved
+    -- against the declaring module's directory. A symlink-folder declaration
+    -- stands for one symlink per file found under the folder, preserving the
+    -- file's relative path under the declared link prefix.
+    ensures:
+        for folder in manifest.folder_declarations:
+            for file in folder.files:
+                SymlinkAction.created(
+                    run: run,
+                    target: folder.link_prefix + file.relative_path,
+                    source: file.absolute_path
+                )
+    ensures: PlanAssembled(run)
+    @guidance
+        -- Declarations of the same action type from different modules are
+        -- merged into a single collection before graph construction.
+}
+
+rule FlagDuplicateDeclarations {
+    -- The same (action type, key) declared by more than one module is a
+    -- validation error naming all declaring sources. It does not stop the
+    -- plan from being displayed; it blocks apply.
+    when: PlanAssembled(run)
+    for action in run.actions where declaring_modules.count > 1:
+        ensures: ValidationError.created(
+            run: run,
+            subject: action.key,
+            description: "declared in multiple modules"
+        )
+}
+
+rule FlagInvalidSecrets {
+    -- A defined secret with an empty value (and not explicitly disabled) is a
+    -- validation error — even if nothing currently references it.
+    when: PlanAssembled(run)
+    for secret in Secrets where invalid:
+        ensures: ValidationError.created(
+            run: run,
+            subject: secret.key,
+            description: "empty secret value (disable it to opt out)"
+        )
+}
+
+rule ScheduleStaleUnlinks {
+    -- A symlink recorded in the cache but absent from the current plan was
+    -- previously created by syn and is now stale: an unlink action is added.
+    when: PlanAssembled(run)
+    for record in cache.recorded_symlinks:
+        ensures:
+            if not run.actions.any(a => a.kind = SymlinkAction and a.target = record.target):
+                UnlinkAction.created(
+                    run: run,
+                    target: record.target,
+                    expected_source: record.source
+                )
+}
+
+rule ScheduleOrphanUninstalls {
+    -- The manifest is the single source of truth for every package manager
+    -- syn can drive: anything explicitly installed but not declared is drift
+    -- to be removed. Every available manager with orphan detection is
+    -- therefore queried on every run — whether or not the manifest declares
+    -- anything for it (removing a manager's last declaration means "nothing
+    -- should be installed via this manager", not "stop managing it").
+    -- Undeclared items become uninstall actions, ordered after every action
+    -- of the base type.
+    when: PlanAssembled(run)
+    for manager in PackageManagers where available and supports_orphan_detection:
+        ensures:
+            for item in manager.explicitly_installed:
+                if not run.actions.any(a => a.kind = PackageAction and a.key = item):
+                    UninstallAction.created(run: run, manager: manager, key: item)
+    @guidance
+        -- Tap-qualified names (e.g. babashka/brew/bbin) match their short
+        -- form (bbin) when comparing declared names against installed ones.
+}
+
+rule GraphErrorsAbortRun {
+    when: PlanAssembled(run)
+    requires: run.graph_errors
+    ensures: run.status = aborted
+}
+
+rule EmptyScopeAborts {
+    when: PlanAssembled(run)
+    requires: run.scope != null
+    requires: not run.actions.any(a => a.in_scope)
+    ensures: run.status = aborted
+}
+
+rule ScopeFilterRemovesUnrelatedActions {
+    when: PlanAssembled(run)
+    requires: run.scope != null
+    requires: not run.graph_errors
+    ensures:
+        for action in run.actions:
+            if not action.in_scope:
+                not exists action
+}
+
+rule BeginChecks {
+    when: PlanAssembled(run)
+    requires: not run.graph_errors
+    requires: run.scope = null or run.actions.any(a => a.in_scope)
+    ensures: run.status = checking
+    @guidance
+        -- Graph validation and the scope filter run after stale unlinks and
+        -- orphan uninstalls have been merged into the plan, so injected
+        -- actions participate in ordering and validation.
+}
+
+-- =============================================================================
+-- Check phase
+-- =============================================================================
+
+-- Checks run in dependency order and are read-only: no check mutates the
+-- machine. Each action family determines its outcome from live system state.
+
+rule CheckSymlinks {
+    when: run: Run.status becomes checking
+    for action in run.actions where kind = SymlinkAction:
+        ensures:
+            if action.target_exists and action.target_is_symlink and action.target_points_at_source:
+                action.check_outcome = satisfied
+            else if action.target_exists and action.target_is_symlink:
+                action.check_outcome = drift
+            else if action.target_exists:
+                action.check_outcome = conflict
+            else:
+                action.check_outcome = drift
+    @guidance
+        -- Symlink drift kinds: an existing symlink pointing elsewhere is
+        -- drift/wrong; a missing link is drift/missing. A regular file at the
+        -- target is a conflict requiring manual intervention.
+}
+
+rule CheckUnlinks {
+    when: run: Run.status becomes checking
+    for action in run.actions where kind = UnlinkAction:
+        ensures:
+            if not action.target_exists:
+                action.check_outcome = satisfied
+            else if not action.target_is_symlink:
+                action.check_outcome = conflict
+            else if not action.target_points_at_expected:
+                action.check_outcome = conflict
+            else:
+                action.check_outcome = drift
+    @guidance
+        -- Stale links are removed only when they are provably syn's: a
+        -- symlink pointing exactly where the cache recorded. Anything else
+        -- at the target is a conflict, never deleted. Drift kind is orphan.
+}
+
+rule CheckPackages {
+    when: run: Run.status becomes checking
+    for action in run.actions where kind = PackageAction:
+        ensures:
+            if action.installed and action.upgrade_available:
+                action.check_outcome = drift
+            else if action.installed:
+                action.check_outcome = satisfied
+            else:
+                action.check_outcome = drift
+    @guidance
+        -- Drift kind is outdated (with an "installed → desired" message) when
+        -- an upgrade is available, missing otherwise. A version-pinned tool
+        -- is outdated when the pinned version is not installed; a "latest"
+        -- tool is outdated when the manager reports a newer version. A mise
+        -- tool declared without a version is a check error.
+}
+
+rule CheckUninstalls {
+    when: run: Run.status becomes checking
+    for action in run.actions where kind = UninstallAction:
+        ensures:
+            action.check_outcome = drift
+    @guidance
+        -- Orphans always need action by construction; drift kind is orphan.
+}
+
+rule CheckScripts {
+    when: run: Run.status becomes checking
+    for action in run.actions where kind = ScriptAction:
+        ensures:
+            if not action.has_check:
+                action.check_outcome = unknown
+            else if action.check_passes:
+                action.check_outcome = satisfied
+            else:
+                action.check_outcome = drift
+    @guidance
+        -- The check command is told whether the script content has changed
+        -- since its last successful run (via an environment flag), so a check
+        -- can force a re-run on content change. A script with no check
+        -- command runs on every apply.
+}
+
+rule CheckAssertions {
+    when: run: Run.status becomes checking
+    for action in run.actions where kind = AssertAction:
+        ensures:
+            if action.condition_holds:
+                action.check_outcome = satisfied
+            else:
+                action.check_outcome = error
+    @guidance
+        -- A failed assertion reports its declared message and remediation
+        -- instructions. As an error outcome it blocks everything that
+        -- depends on it — assertions gate their dependents.
+}
+
+rule CheckServices {
+    when: run: Run.status becomes checking
+    for action in run.actions where kind = ServiceAction:
+        ensures:
+            if action.running:
+                action.check_outcome = satisfied
+            else if action.needs_sudo and action.root_owned:
+                action.check_outcome = satisfied
+            else:
+                action.check_outcome = drift
+    @guidance
+        -- Root-owned services are invisible to a non-sudo status query, so a
+        -- declared sudo service owned by root is assumed running.
+}
+
+rule CheckDefaults {
+    when: run: Run.status becomes checking
+    for action in run.actions where kind = DefaultsAction:
+        ensures:
+            if action.all_values_match:
+                action.check_outcome = satisfied
+            else:
+                action.check_outcome = drift
+    @guidance
+        -- Drift kind is wrong. Every declared value is compared against the
+        -- live system, including array and dict values.
+}
+
+rule CheckGitClones {
+    when: run: Run.status becomes checking
+    for action in run.actions where kind = GitCloneAction:
+        ensures:
+            if not action.repo_exists:
+                action.check_outcome = drift
+            else if action.ref != null and not action.head_matches_ref:
+                action.check_outcome = drift
+            else:
+                action.check_outcome = satisfied
+        ensures:
+            if action.repo_exists and action.ref = null:
+                action.check_message = "no ref declared — existing repository is never updated"
+    @guidance
+        -- Missing repo is drift/missing; wrong ref is drift/outdated. A repo
+        -- with no declared ref is satisfied by mere existence, but the report
+        -- warns the operator that it will never be updated.
+}
+
+rule CheckClaudeResources {
+    when: run: Run.status becomes checking
+    for action in run.actions where kind = ClaudeResourceAction:
+        ensures:
+            if not action.present:
+                action.check_outcome = drift
+            else if action.update_available:
+                action.check_outcome = drift
+            else:
+                action.check_outcome = satisfied
+    @guidance
+        -- Missing registration is drift/missing; a stale version of a
+        -- marketplace, plugin or MCP server is drift/outdated. A present,
+        -- current resource is satisfied and is not re-registered.
+}
+
+rule BlockingOutcomeCancelsDependents {
+    -- Errors, conflicts and cancellations propagate: everything that depends
+    -- (directly or, via this rule's cascade, transitively) on a blocked
+    -- action is cancelled and will not be attempted.
+    when: action: Action.blocking
+    ensures:
+        for dep in action.run.actions:
+            if action in dep.depends_on:
+                dep.check_outcome = cancelled
+}
+
+rule ChecksLeadToDisplay {
+    when: run: Run.all_checked
+    requires: run.status = checking
+    requires: run.mode = plan
+    ensures: run.status = displaying
+}
+
+rule ApplyGate {
+    -- Apply is blocked outright when the manifest has duplicate declarations
+    -- or when any defined secret is empty without being disabled — even a
+    -- secret nothing currently references.
+    when: run: Run.all_checked
+    requires: run.status = checking
+    requires: run.mode = apply
+    ensures:
+        if run.validation_errors.count > 0:
+            run.status = aborted
+        else:
+            run.status = applying
+}
+
+-- =============================================================================
+-- Display (plan mode)
+-- =============================================================================
+
+rule DisplayPlan {
+    -- Plan mode reports every action that is not already satisfied, grouped
+    -- by action type, with its drift kind or blocking reason and a summary
+    -- count by state — and every validation error that would block an apply.
+    -- It changes nothing on the machine.
+    when: run: Run.status becomes displaying
+    requires: run.status = displaying
+    ensures: run.status = complete
+}
+
+-- =============================================================================
+-- Apply
+-- =============================================================================
+
+rule ExecuteActions {
+    -- Actions are attempted in dependency order. Satisfied actions are
+    -- skipped; blocked actions are skipped and reported; actionable actions
+    -- (drift or unknown) are attempted.
+    when: run: Run.status becomes applying
+    for action in run.actions:
+        ensures:
+            if action.check_outcome = satisfied:
+                action.result = skipped
+            else if action.blocking:
+                action.result = skipped
+            else if action.install_succeeds:
+                action.result = applied
+            else:
+                action.result = failed
+    @guidance
+        -- Consecutive actionable actions of the same type are batched into a
+        -- single installer invocation; a batch is flushed when the type
+        -- changes or when an action depends on something still in the batch.
+        -- This is an efficiency choice, not observable ordering behaviour.
+}
+
+rule ApplyCompletes {
+    when: run: Run.all_resolved
+    requires: run.status = applying
+    ensures: run.status = complete
+}
+
+rule FailedActionBlocksDependents {
+    when: action: Action.result becomes failed
+    ensures: action.check_outcome = error
+    -- BlockingOutcomeCancelsDependents then cancels everything downstream.
+}
+
+rule RecordScriptRun {
+    -- A successful script run records the identity of the content that ran,
+    -- so future checks can detect content changes.
+    when: action: Action.result becomes applied
+    requires: action.kind = ScriptAction
+    ensures: ScriptRecord.created(
+        cache: cache,
+        script_name: action.key,
+        content_hash: action.content
+    )
+}
+
+rule PersistSymlinkOwnership {
+    -- After an apply, the cache's record of owned symlinks is replaced by the
+    -- symlinks that verifiably exist as syn's: those newly created this run
+    -- and those already satisfied. Failed or conflicted symlinks are not
+    -- recorded — syn never claims ownership of a link it did not make.
+    when: run: Run.status transitions_to complete
+    requires: run.mode = apply
+    ensures:
+        for old in cache.recorded_symlinks:
+            not exists old
+    ensures:
+        for action in run.actions:
+            if action.kind = SymlinkAction and
+               (action.result = applied or action.check_outcome = satisfied):
+                RecordedSymlink.created(
+                    cache: cache,
+                    target: action.target,
+                    source: action.source
+                )
+}
+
+-- =============================================================================
+-- Surfaces
+-- =============================================================================
+
+surface CommandLine {
+    facing operator: Operator
+
+    provides:
+        SynInvoked(operator, scope, mode)
+
+    @guarantee PlanModeIsHarmless
+        -- Invoking without apply mode only inspects the machine; nothing is
+        -- installed, linked, removed or written (including the cache).
+}
+
+surface RunReport {
+    facing operator: Operator
+
+    context run: Run
+
+    exposes:
+        for action in run.unsatisfied_actions:
+            action.key
+            action.check_outcome
+            action.check_message
+        for action in run.warned_actions:
+            action.key
+            action.check_message
+        for error in run.validation_errors:
+            error.subject
+            error.description
+
+    @guarantee ActionableSummary
+        -- The report groups unsatisfied actions by type, distinguishes what
+        -- will be installed, upgraded or removed from what is blocked, and
+        -- includes remediation instructions for failed assertions.
+
+    @guarantee ValidationVisibleBeforeApply
+        -- Anything that would block an apply (duplicate declarations, empty
+        -- secrets) is already visible in the plan report.
+}
+
+-- =============================================================================
+-- Invariants
+-- =============================================================================
+
+invariant BlockedActionsAreNeverApplied {
+    for action in Actions:
+        action.blocking implies action.result != applied
+}
+
+invariant SatisfiedActionsAreNotReapplied {
+    for action in Actions:
+        action.check_outcome = satisfied implies action.result != applied
+}
+
+invariant PlanModeIsReadOnly {
+    for run in Runs:
+        run.mode = plan implies run.actions.all(a => a.result = pending)
+}
+
+invariant OnlyOwnedSymlinksAreRemoved {
+    for action in Actions:
+        action.kind = UnlinkAction and action.result = applied
+            implies action.target_points_at_expected
+}
+
