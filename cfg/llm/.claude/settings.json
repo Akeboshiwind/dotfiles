@@ -6,6 +6,7 @@
   "permissions": {
     "defaultMode": "auto"
   },
+  "model": "claude-fable-5[1m]",
   "hooks": {
     "PreToolUse": [
       {
@@ -74,10 +75,10 @@
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
+  "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true,
   "theme": "auto",
   "editorMode": "vim",
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true,
-  "tui": "fullscreen"
+  "voiceEnabled": true
 }
