@@ -3,7 +3,8 @@
             [babashka.process :as process]
             [actions :as a]
             [display :as d]
-            [outcome :as o]))
+            [outcome :as o]
+            [utils.defaults :as defaults]))
 
 (defmethod a/requires :osx/defaults [_] nil)
 
@@ -72,16 +73,39 @@
       (int? expected)     (= expected (parse-long actual))
       (float? expected)   (= expected (parse-double actual))
       (string? expected)  (= expected actual)
-      ;; TODO: support complex types (arrays, dicts) via utils.defaults/read-domain
+      ;; complex types (arrays, dicts) are compared via read-domain in the check
       :else               true)))
 
+(defn- normalize-plist
+  "Convert declared plist-typed values (maps inside arrays, written via
+   value->plist-xml) to the shape utils.defaults/read-domain returns:
+   keyword keys become strings, scalar types are preserved."
+  [v]
+  (cond
+    (map? v)    (into {} (map (fn [[k val]] [(name k) (normalize-plist val)])) v)
+    (vector? v) (mapv normalize-plist v)
+    :else       v))
+
+(defn normalize-written
+  "Mirror what set-default writes so declared complex values can be compared
+   against read-domain output: top-level dict values and array scalars are
+   written as strings; maps inside arrays keep their plist types."
+  [value]
+  (cond
+    (map? value)    (into {} (map (fn [[k v]] [(name k) (str v)])) value)
+    (vector? value) (mapv (fn [e] (if (map? e) (normalize-plist e) (str e))) value)
+    :else           value))
+
 (defmethod a/check :osx/defaults [_ key opts]
-  (let [domain   (:domain opts)
-        settings (or (:settings opts)
-                     {(:key opts) (:value opts)})]
+  (let [domain      (:domain opts)
+        settings    (or (:settings opts)
+                        {(:key opts) (:value opts)})
+        live-domain (delay (defaults/read-domain domain))]
     (reduce (fn [acc [k value]]
               (if (or (map? value) (vector? value))
-                acc
+                (if (= (normalize-written value) (get @live-domain (name k)))
+                  acc
+                  (reduced (o/drift :wrong)))
                 (let [{:keys [exit out]} (process/shell {:out :string :err :string :continue true}
                                                         "defaults" "read" domain (name k))]
                   (cond

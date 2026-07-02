@@ -82,17 +82,23 @@
         (when (and action (empty? (:order ag)))
           (println "No actions found for action" action)
           (System/exit 1))
-        (let [checked (chk/run-checks ag)]
+        (let [checked (chk/run-checks ag)
+              all-errors (seq (concat (m/validate-secrets) errors))]
           (if (not apply-mode)
-            (s/show-plan checked)
             (do
-              (when-let [all-errors (seq (concat (m/validate-secrets)
-                                                  errors))]
+              (s/show-validation-errors all-errors)
+              (s/show-plan checked))
+            (do
+              (when all-errors
                 (println (format-validation-errors all-errors))
                 (System/exit 1))
               (println "Applying configurations...")
-              (e/execute-plan checked)
-              (c/save-cache! (assoc @a/*cache* :symlinks symlinks))))))
+              (let [executed (e/execute-plan checked)]
+                (c/save-cache! (assoc @a/*cache*
+                                      :symlinks (e/recordable-symlinks
+                                                  executed
+                                                  symlinks
+                                                  (get cache :symlinks {})))))))))
       (catch clojure.lang.ExceptionInfo e
         (let [data (ex-data e)]
           (cond

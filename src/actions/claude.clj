@@ -25,6 +25,22 @@
         (:plugins (json/parse-string (slurp f) true))
         {}))))
 
+(def ^:private ^:dynamic *mcp-cache*
+  (delay
+    (let [f (io/file (str (System/getProperty "user.home") "/.claude.json"))]
+      (if (fs/exists? f)
+        (:mcpServers (json/parse-string (slurp f) true))
+        {}))))
+
+(defmethod a/check :claude/mcp [_ key {:keys [scope] :or {scope "user"}}]
+  ;; Only user-scope servers are recorded in ~/.claude.json; other scopes
+  ;; fall back to unknown (always re-registered).
+  (if (not= scope "user")
+    o/unknown
+    (if (contains? @*mcp-cache* (keyword (name key)))
+      o/satisfied
+      (o/drift :missing))))
+
 (defmethod a/check :claude/marketplace [_ key opts]
   (let [source (or (:source opts) (name key))]
     (if (some (fn [[_k v]] (= source (get-in v [:source :repo]))) @*marketplace-cache*)

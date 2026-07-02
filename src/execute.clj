@@ -37,6 +37,24 @@
               ag
               items))))
 
+(defn recordable-symlinks
+  "Filter planned symlinks to those syn can claim ownership of: links whose
+   action was applied this run or was already satisfied at check time.
+   Failed or conflicted links are never recorded — syn must not later try to
+   unlink a symlink it did not make.
+   Targets absent from the graph (e.g. filtered out by a scoped run) keep
+   their previous ownership record."
+  ([executed-graph symlinks]
+   (recordable-symlinks executed-graph symlinks {}))
+  ([executed-graph symlinks previously-recorded]
+   (into {}
+         (filter (fn [[target _source]]
+                   (if-let [node (get-in executed-graph [:nodes [:fs/symlink target]])]
+                     (or (o/satisfied? (:check node))
+                         (= :ok (get-in node [:result :status])))
+                     (contains? previously-recorded target))))
+         symlinks)))
+
 (defn- render-skipped [ref check]
   (let [[_ key] ref]
     (d/render-result {:label (if (keyword? key) (name key) (str key))

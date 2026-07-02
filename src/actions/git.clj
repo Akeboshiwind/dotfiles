@@ -36,7 +36,9 @@
           (if (str/starts-with? (str/trim (:out result)) ref)
             o/satisfied
             (o/drift :outdated)))
-        o/satisfied))))
+        ;; No ref pinned: existence satisfies, but the repo will never be
+        ;; updated by syn — surface that in the plan report.
+        (assoc o/satisfied :message "no ref declared — repo is never updated")))))
 
 (defmethod a/install! :git/clone [_ opts items]
   (d/section "Cloning git repos"

@@ -15,6 +15,17 @@
     :error :error
     :cancelled :cancelled))
 
+(defn show-validation-errors
+  "Print validation errors that would block an apply. No-op when nil/empty."
+  [errors]
+  (when (seq errors)
+    (println (d/red "Validation errors (--apply will be blocked):"))
+    (doseq [{:keys [action key error]} errors]
+      (println (str "  " (name action) " "
+                    (if (keyword? key) (name key) (str key))
+                    ": " error)))
+    (println)))
+
 (defn show-plan
   "Show the status of all actions in the ActionGraph.
    Displays everything except satisfied (installed) items, grouped by type."
@@ -37,7 +48,11 @@
                                                          (:message check))
                                                :instructions (:detail check)}))
                                           node-group)
-                             changes (remove #(= :installed (:state %)) results)]
+                             ;; Show everything unsatisfied, plus satisfied items
+                             ;; that carry a warning message
+                             changes (remove #(and (= :installed (:state %))
+                                                   (nil? (:detail %)))
+                                             results)]
                          (when (seq changes)
                            (println (subs (str action-type) 1))
                            (doseq [r changes]
