@@ -37,23 +37,41 @@
               ag
               items))))
 
+(defn- unlink-resolved?
+  "Did this run's unlink for target settle its ownership? True when the link
+   was removed, was already gone, or turned out not to be syn's (conflict).
+   False when the unlink never ran (absent, cancelled) or errored — the
+   record must survive so the unlink is rescheduled next run."
+  [executed-graph target]
+  (when-let [node (get-in executed-graph [:nodes [:fs/unlink target]])]
+    (or (= :ok (get-in node [:result :status]))
+        (o/satisfied? (:check node))
+        (o/conflict? (:check node)))))
+
 (defn recordable-symlinks
-  "Filter planned symlinks to those syn can claim ownership of: links whose
-   action was applied this run or was already satisfied at check time.
-   Failed or conflicted links are never recorded — syn must not later try to
-   unlink a symlink it did not make.
-   Targets absent from the graph (e.g. filtered out by a scoped run) keep
-   their previous ownership record."
+  "Compute the symlink-ownership record to persist after an apply.
+   Planned links are recorded when their action was applied this run or was
+   already satisfied at check time; failed or conflicted links are never
+   recorded — syn must not later try to unlink a symlink it did not make.
+   Previously recorded links keep their record when they were not attempted
+   this run (planned but filtered out by a scoped run, or stale but their
+   unlink did not resolve)."
   ([executed-graph symlinks]
    (recordable-symlinks executed-graph symlinks {}))
   ([executed-graph symlinks previously-recorded]
-   (into {}
-         (filter (fn [[target _source]]
-                   (if-let [node (get-in executed-graph [:nodes [:fs/symlink target]])]
-                     (or (o/satisfied? (:check node))
-                         (= :ok (get-in node [:result :status])))
-                     (contains? previously-recorded target))))
-         symlinks)))
+   (let [planned (into {}
+                       (filter (fn [[target _source]]
+                                 (if-let [node (get-in executed-graph [:nodes [:fs/symlink target]])]
+                                   (or (o/satisfied? (:check node))
+                                       (= :ok (get-in node [:result :status])))
+                                   (contains? previously-recorded target))))
+                       symlinks)
+         retained (into {}
+                        (remove (fn [[target _source]]
+                                  (or (contains? symlinks target)
+                                      (unlink-resolved? executed-graph target))))
+                        previously-recorded)]
+     (merge retained planned))))
 
 (defn- render-skipped [ref check]
   (let [[_ key] ref]

@@ -227,3 +227,36 @@
       ;; osx/defaults depends on the failing script — should be skipped
       (is (not-any? #(str/includes? (str/join " " %) "defaults") @calls)
           "osx/defaults depending on failed script should be skipped"))))
+
+;; =============================================================================
+;; recordable-symlinks: ownership persistence (spec: PersistSymlinkOwnership)
+;; =============================================================================
+
+(deftest recordable-symlinks-outcomes-test
+  (testing "applied and already-satisfied links are recorded; failed/conflicted are not"
+    (let [ag {:nodes {[:fs/symlink "t1"] {:check (o/drift :missing) :result {:status :ok}}
+                      [:fs/symlink "t2"] {:check o/satisfied :result {:status :skip}}
+                      [:fs/symlink "t3"] {:check (o/conflict "regular file exists") :result {:status :skip}}
+                      [:fs/symlink "t4"] {:check (o/drift :missing) :result {:status :error}}}}]
+      (is (= {"t1" "s1" "t2" "s2"}
+             (e/recordable-symlinks ag {"t1" "s1" "t2" "s2" "t3" "s3" "t4" "s4"}))))))
+
+(deftest recordable-symlinks-scoped-run-test
+  (testing "planned links absent from the graph (scope-filtered) keep their previous record"
+    (is (= {"t1" "s1"}
+           (e/recordable-symlinks {:nodes {}} {"t1" "s1" "t2" "s2"} {"t1" "s1"}))))
+
+  (testing "planned links absent from the graph with no previous record are not claimed"
+    (is (= {}
+           (e/recordable-symlinks {:nodes {}} {"t1" "s1"} {})))))
+
+(deftest recordable-symlinks-stale-records-test
+  (testing "stale records drop once their unlink resolved, otherwise are retained for rescheduling"
+    (let [ag {:nodes {[:fs/unlink "removed"] {:check (o/drift :orphan) :result {:status :ok}}
+                      [:fs/unlink "already-gone"] {:check o/satisfied :result {:status :skip}}
+                      [:fs/unlink "not-ours"] {:check (o/conflict "points elsewhere") :result {:status :skip}}
+                      [:fs/unlink "errored"] {:check (o/drift :orphan) :result {:status :error}}}}
+          previously {"removed" "s1" "already-gone" "s2" "not-ours" "s3"
+                      "errored" "s4" "never-attempted" "s5"}]
+      (is (= {"errored" "s4" "never-attempted" "s5"}
+             (e/recordable-symlinks ag {} previously))))))

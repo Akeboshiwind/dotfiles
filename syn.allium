@@ -650,15 +650,25 @@ rule RecordScriptRun {
 }
 
 rule PersistSymlinkOwnership {
-    -- After an apply, the cache's record of owned symlinks is replaced by the
-    -- symlinks that verifiably exist as syn's: those newly created this run
-    -- and those already satisfied. Failed or conflicted symlinks are not
+    -- After an apply, the ownership record is updated from what this run
+    -- actually observed. A planned link is recorded when its action was
+    -- applied or already satisfied; failed or conflicted links are not
     -- recorded — syn never claims ownership of a link it did not make.
+    -- A stale record is dropped once its unlink resolved: the link was
+    -- removed, already gone, or turned out not to be syn's (conflict).
+    -- Records whose target was not attempted this run — excluded by a scope
+    -- filter, or cancelled — are retained untouched, so ownership survives
+    -- partial runs and pending unlinks are rescheduled.
     when: run: Run.status transitions_to complete
     requires: run.mode = apply
     ensures:
         for old in cache.recorded_symlinks:
-            not exists old
+            if run.actions.any(a => a.kind = SymlinkAction and a.target = old.target)
+               or run.actions.any(a => a.kind = UnlinkAction and a.target = old.target and
+                                       (a.result = applied
+                                        or a.check_outcome = satisfied
+                                        or a.check_outcome = conflict)):
+                not exists old
     ensures:
         for action in run.actions:
             if action.kind = SymlinkAction and
@@ -726,6 +736,10 @@ invariant SatisfiedActionsAreNotReapplied {
         action.check_outcome = satisfied implies action.result != applied
 }
 
+-- Read-only means syn itself never mutates during plan mode. Script and
+-- assert checks execute manifest-author-supplied commands; keeping those
+-- commands side-effect-free is the manifest author's responsibility — the
+-- framework does not (and cannot) enforce it.
 invariant PlanModeIsReadOnly {
     for run in Runs:
         run.mode = plan implies run.actions.all(a => a.result = pending)
