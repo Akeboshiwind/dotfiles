@@ -1,8 +1,12 @@
 (ns check-test
   (:require [clojure.test :refer [deftest testing is use-fixtures]]
             [babashka.fs :as fs]
+            [babashka.process :as process]
+            [clojure.string :as str]
             [actions :as a]
             [actions.brew :as brew]
+            [actions.claude :as claude]
+            [actions.mas :as mas]
             [actions.mise :as mise]
             [cache :as c]
             [outcome :as o]
@@ -248,6 +252,111 @@
         (is (o/drift? result))
         (is (= :outdated (:kind result)))
         (is (= "20.0.0 → 22.0.0" (:message result)))))))
+
+(deftest mise-check-version-required-test
+  (testing "mise tool declared without version → error"
+    (is (o/error? (a/check :pkg/mise :node {})))))
+
+(deftest mise-check-pinned-satisfied-test
+  (testing "pinned version installed → satisfied"
+    (binding [mise/*installed-cache* (delay {"node" #{"20.0.0"}})]
+      (is (o/satisfied? (a/check :pkg/mise :node {:version "20.0.0"}))))))
+
+(deftest mise-check-missing-test
+  (testing "tool not installed → drift(:missing)"
+    (binding [mise/*installed-cache* (delay {})]
+      (let [result (a/check :pkg/mise :node {:version "20.0.0"})]
+        (is (o/drift? result))
+        (is (= :missing (:kind result)))))))
+
+(deftest mise-check-latest-current-test
+  (testing "latest requested, no upgrade available → satisfied"
+    (binding [mise/*installed-cache* (delay {"node" #{"20.0.0"}})
+              mise/*outdated-cache* (delay {})]
+      (is (o/satisfied? (a/check :pkg/mise :node {:version "latest"}))))))
+
+(deftest mise-check-latest-outdated-test
+  (testing "latest requested, upgrade available → drift(:outdated) with version message"
+    (binding [mise/*installed-cache* (delay {"node" #{"20.0.0"}})
+              mise/*outdated-cache* (delay {"node" {:current "20.0.0" :latest "22.0.0"}})]
+      (let [result (a/check :pkg/mise :node {:version "latest"})]
+        (is (o/drift? result))
+        (is (= :outdated (:kind result)))
+        (is (= "20.0.0 → 22.0.0" (:message result)))))))
+
+;; =============================================================================
+;; :pkg/mas check
+;; =============================================================================
+
+(deftest mas-check-installed-test
+  (testing "installed app → satisfied, for both id and {:id ...} declaration forms"
+    (binding [mas/*installed-cache* (delay {1295203466 "Windows App"})]
+      (is (o/satisfied? (a/check :pkg/mas "Windows App" 1295203466)))
+      (is (o/satisfied? (a/check :pkg/mas "Windows App" {:id 1295203466}))))))
+
+(deftest mas-check-missing-test
+  (testing "app not installed → drift(:missing)"
+    (binding [mas/*installed-cache* (delay {})]
+      (let [result (a/check :pkg/mas "Windows App" 1295203466)]
+        (is (o/drift? result))
+        (is (= :missing (:kind result)))))))
+
+;; =============================================================================
+;; :git/clone check
+;; =============================================================================
+
+(defn- init-repo!
+  "Create a git repo with one commit at dir, return its HEAD sha."
+  [dir]
+  (process/shell {:out :string :err :string} "git" "init" "-q" dir)
+  (process/shell {:out :string :err :string :dir dir}
+                 "git" "-c" "user.email=t@t" "-c" "user.name=t"
+                 "commit" "--allow-empty" "-q" "-m" "init")
+  (-> (process/shell {:out :string :err :string :dir dir} "git" "rev-parse" "HEAD")
+      :out
+      str/trim))
+
+(deftest git-clone-check-missing-test
+  (testing "no directory at target → drift(:missing)"
+    (let [result (a/check :git/clone (str *tmp* "/norepo") {:url "https://example.com/r.git"})]
+      (is (o/drift? result))
+      (is (= :missing (:kind result))))))
+
+(deftest git-clone-check-ref-match-test
+  (testing "repo at the declared ref → satisfied"
+    (let [dir (str *tmp* "/repo")
+          sha (init-repo! dir)]
+      (is (o/satisfied? (a/check :git/clone dir {:url "ignored" :ref sha}))))))
+
+(deftest git-clone-check-ref-mismatch-test
+  (testing "repo at a different ref → drift(:outdated)"
+    (let [dir (str *tmp* "/repo2")]
+      (init-repo! dir)
+      (let [result (a/check :git/clone dir {:url "ignored" :ref "0000000000"})]
+        (is (o/drift? result))
+        (is (= :outdated (:kind result)))))))
+
+(deftest git-clone-check-refless-exists-test
+  (testing "existing directory with no declared ref → satisfied"
+    (let [dir (str *tmp* "/repo3")]
+      (fs/create-dirs dir)
+      (is (o/satisfied? (a/check :git/clone dir {:url "ignored"}))))))
+
+;; =============================================================================
+;; :claude/marketplace and :claude/plugin checks
+;; =============================================================================
+
+(deftest claude-marketplace-check-test
+  (testing "registered marketplace → satisfied; unregistered → drift"
+    (with-bindings {#'claude/*marketplace-cache* (delay {:jx {:source {:repo "juxt/plugins"}}})}
+      (is (o/satisfied? (a/check :claude/marketplace :plugins {:source "juxt/plugins"})))
+      (is (o/drift? (a/check :claude/marketplace :other {:source "acme/other"}))))))
+
+(deftest claude-plugin-check-test
+  (testing "installed plugin → satisfied; missing → drift"
+    (with-bindings {#'claude/*plugin-cache* (delay {(keyword "chalk@juxt-plugins") {}})}
+      (is (o/satisfied? (a/check :claude/plugin :chalk {})))
+      (is (o/drift? (a/check :claude/plugin :missing-plugin {}))))))
 
 ;; =============================================================================
 ;; Default check (unknown for unimplemented types)
