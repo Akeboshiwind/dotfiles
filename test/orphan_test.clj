@@ -8,6 +8,7 @@
             [actions.mas :as mas]
             [graph :as g]
             [plan :as p]
+            [utils :as u]
             ;; Load action impls
             [execute]))
 
@@ -178,14 +179,16 @@
 ;; =============================================================================
 
 (deftest build-includes-orphans-test
+  ;; a/orphans is a multimethod that plan/calculate-orphans introspects with
+  ;; (methods a/orphans), so it cannot be with-redefs'd to a plain fn — mock
+  ;; the per-type helpers the implementations call instead.
   (testing "build! adds uninstall actions from a/orphans to plan"
     (let [entries [{:step {:pkg/script {:bbin-bootstrap {:src "echo ok" :dep/provides #{:pkg/bbin}}}
                            :pkg/bbin {:jet {}}}}
                    :source "/test"]
-          ;; Mock a/orphans to say "neil" is orphaned
-          result (with-redefs [a/orphans (fn [type declared]
-                                           (when (= type :pkg/bbin)
-                                             {:pkg/bbin-uninstall {:neil {}}}))]
+          ;; Only bbin's orphan detection runs; it sees "neil" as undeclared
+          result (with-redefs [u/command-exists? (fn [cmd] (= cmd "bbin"))
+                               bbin/installed-set (fn [] #{"jet" "neil"})]
                    (p/build! entries {}))]
       ;; neil should appear as :pkg/bbin-uninstall in the plan
       (is (= {:neil {}} (get-in result [:plan :pkg/bbin-uninstall])))
@@ -197,7 +200,7 @@
     (let [entries [{:step {:pkg/script {:bbin-bootstrap {:src "echo ok" :dep/provides #{:pkg/bbin}}}
                            :pkg/bbin {:jet {}}}}
                    :source "/test"]
-          result (with-redefs [a/orphans (fn [_ _] nil)]
+          result (with-redefs [u/command-exists? (constantly false)]
                    (p/build! entries {}))]
       (is (nil? (get-in result [:plan :pkg/bbin-uninstall]))))))
 
