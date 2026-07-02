@@ -11,6 +11,9 @@
   - Use for things the user might accept, reject or comment on individually
   - Exposition, reasoning & supporting analysis stays as prose
   - When having a back-and-forth about the same points, reuse the same numbers for consistency
+- Before drafting **any** GitHub-bound prose — commit message, PR description, issue body, comment — check the available skills for a matching `chalk:*` skill (`chalk:commit`, `chalk:pr`, `chalk`, `chalk:tend-docs`, `chalk:weed-docs`) and load it **before** composing
+  - The built-in git/PR workflow covers mechanics but not the chalk voice; bypassing chalk defeats why it's installed
+  - Applies regardless of diff size, and to plain requests like "commit this"
 - We develop using 'tidy-first' methodology - endeavouring to separate 'equivalence' changes (changes which do not affect runtime behaviour, changes which increase our options) from changes that advance behaviour
 - Bold load bearing words
 - Never git push without the user *directly* asking you to, never infer
