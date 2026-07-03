@@ -4,7 +4,8 @@
 -- Scope: the dotfile-manager engine (manifest → plan → check → report/apply)
 -- Includes: manifest and module loading, plan assembly (path resolution,
 --   symlink-folder expansion, duplicate detection), stale-symlink cleanup,
---   orphan detection, capability-based dependency ordering, the check phase,
+--   orphan detection (packages and third-party package sources),
+--   package-source trust, capability-based dependency ordering, the check phase,
 --   plan display, apply execution with failure propagation, symlink-ownership
 --   and script-run caching, secrets validation.
 -- Excludes:
@@ -34,6 +35,8 @@ external entity PackageManager {
     available: Boolean                    -- the manager's command exists on PATH
     supports_orphan_detection: Boolean
     explicitly_installed: Set<String>     -- user-requested items only, not transitive dependencies
+    third_party_sources: Set<String>      -- installed sources outside the manager's
+                                          -- official registry (e.g. brew taps)
 }
 
 external entity SourceFile {
@@ -145,8 +148,8 @@ entity Action {
     run: Run
     key: String
     kind: SymlinkAction | UnlinkAction | PackageAction | UninstallAction |
-          ScriptAction | AssertAction | ServiceAction | DefaultsAction |
-          GitCloneAction | ClaudeResourceAction
+          SourceRemovalAction | ScriptAction | AssertAction | ServiceAction |
+          DefaultsAction | GitCloneAction | ClaudeResourceAction
 
     declaring_modules: Set<Module>        -- modules that declared this (type, key)
     provides: Set<String>                 -- capability keywords this action enables
@@ -191,15 +194,28 @@ variant UnlinkAction : Action {
 variant PackageAction : Action {
     manager: PackageManager
     version: String?                      -- pinned version, or "latest"
+    source: String?                       -- third-party source the item comes from
+                                          -- (e.g. a brew tap); null for official items
+    trust_declared: Boolean               -- the manifest declares :trust for this item
 
     installed: Boolean
     upgrade_available: Boolean            -- a newer version exists than the one installed
     installed_version: String?
     desired_version: String?
+    trusted: Boolean?                     -- live: whether the operator has granted the
+                                          -- manager's required trust for this item; null
+                                          -- when trust does not apply (official source,
+                                          -- or the manager imposes no trust requirement)
 }
 
 variant UninstallAction : Action {
     manager: PackageManager
+}
+
+variant SourceRemovalAction : Action {
+    -- Removal of an orphaned third-party package source (e.g. a brew tap).
+    manager: PackageManager
+    source: String
 }
 
 variant ScriptAction : Action {
@@ -356,6 +372,24 @@ rule ScheduleOrphanUninstalls {
         -- form (bbin) when comparing declared names against installed ones.
 }
 
+rule ScheduleOrphanSourceRemovals {
+    -- The single-source-of-truth stance extends to package sources: a
+    -- third-party source is justified only by declared packages that come
+    -- from it. An installed source no declaration uses is drift to be
+    -- removed; removing it also drops any trust grants made under it.
+    when: PlanAssembled(run)
+    for manager in PackageManagers where available and supports_orphan_detection:
+        ensures:
+            for source in manager.third_party_sources:
+                if not run.actions.any(a => a.kind = PackageAction and a.source = source):
+                    SourceRemovalAction.created(run: run, manager: manager, source: source)
+    @guidance
+        -- Homebrew taps are the only third-party sources today. Orphanhood
+        -- is judged against declared packages, not installed ones, so a
+        -- source whose last installed package is an orphan being removed
+        -- this run is itself removed in the same run.
+}
+
 rule GraphErrorsAbortRun {
     when: PlanAssembled(run)
     requires: run.graph_errors
@@ -437,18 +471,42 @@ rule CheckPackages {
     when: run: Run.status becomes checking
     for action in run.actions where kind = PackageAction:
         ensures:
-            if action.installed and action.upgrade_available:
+            if action.trusted = false and action.trust_declared:
+                action.check_outcome = drift
+            else if action.trusted = true and not action.trust_declared:
+                action.check_outcome = drift
+            else if action.trusted = false and not action.trust_declared and not action.installed:
+                action.check_outcome = conflict
+            else if action.trusted = false and not action.trust_declared:
+                action.check_outcome = satisfied
+            else if action.installed and action.upgrade_available:
                 action.check_outcome = drift
             else if action.installed:
                 action.check_outcome = satisfied
             else:
                 action.check_outcome = drift
+        ensures:
+            if action.trusted = false and not action.trust_declared:
+                if action.installed:
+                    action.check_message = "untrusted tap — declare :trust to re-enable updates"
+                else:
+                    action.check_message = "untrusted tap — declare :trust to allow install"
     @guidance
         -- Drift kind is outdated (with an "installed → desired" message) when
         -- an upgrade is available, missing otherwise. A version-pinned tool
         -- is outdated when the pinned version is not installed; a "latest"
         -- tool is outdated when the manager reports a newer version. A mise
         -- tool declared without a version is a check error.
+        -- Trust branches precede installed/outdated because the manager
+        -- ignores items from untrusted sources — its installed and outdated
+        -- answers are unreliable for them. Homebrew is the only manager
+        -- that enforces source trust today. Trust drift kind is wrong:
+        -- declared-but-ungranted trust is granted on apply,
+        -- granted-but-undeclared trust is revoked. An unconsented item that
+        -- is not installed is a conflict — the install is known to fail, so
+        -- it is never attempted; an unconsented item that is installed
+        -- remains satisfied but warned. Either way the remediation is the
+        -- same: declare :trust on the package (or remove it).
 }
 
 rule CheckUninstalls {
@@ -458,6 +516,16 @@ rule CheckUninstalls {
             action.check_outcome = drift
     @guidance
         -- Orphans always need action by construction; drift kind is orphan.
+}
+
+rule CheckSourceRemovals {
+    when: run: Run.status becomes checking
+    for action in run.actions where kind = SourceRemovalAction:
+        ensures:
+            action.check_outcome = drift
+    @guidance
+        -- Orphaned sources always need action by construction; drift kind
+        -- is orphan.
 }
 
 rule CheckScripts {
@@ -634,6 +702,12 @@ rule ExecuteActions {
         -- single installer invocation; a batch is flushed when the type
         -- changes or when an action depends on something still in the batch.
         -- This is an efficiency choice, not observable ordering behaviour.
+        -- Applying a package whose live trust diverges from its declaration
+        -- reconciles the grant (granting before installing, so the manager
+        -- will load the item). Trust is granted per item, never for a whole
+        -- source — whole-source trust would extend to items the manifest
+        -- never declared. Uninstalling a third-party orphan also revokes
+        -- any grant made for it.
 }
 
 rule ApplyCompletes {
@@ -744,6 +818,16 @@ surface RunReport {
 invariant BlockedActionsAreNeverApplied {
     for action in Actions:
         action.blocking implies action.result != applied
+}
+
+-- Trust is fully declarative: the manifest's :trust declaration is the
+-- single source of truth for a grant. Applying a package converges its
+-- live grant on the declaration — granting when declared, revoking when
+-- not — so no grant outlives the declaration that justified it.
+invariant AppliedTrustMatchesDeclaration {
+    for action in Actions:
+        action.kind = PackageAction and action.result = applied and action.trusted != null
+            implies action.trusted = action.trust_declared
 }
 
 invariant SatisfiedActionsAreNotReapplied {

@@ -128,23 +128,25 @@
        (remove #{:default})))
 
 (defn calculate-orphans
-  "Query live state and compute orphan uninstall actions for all action types
+  "Query live state and compute orphan removal actions for all action types
    with orphan detection, not just those in the plan.
-   Each a/orphans impl returns a plan fragment (e.g. {:pkg/brew-uninstall {...}}) or nil.
-   When orphans are found for a type not in the plan, the base type is injected
-   as an empty entry so the dependency graph resolves."
+   Each a/orphans impl returns a plan fragment or nil, possibly spanning
+   several orphan action types (e.g. {:pkg/brew-uninstall {...} :brew/untap {...}}).
+   When an orphan type requires [:complete base] and the base type is absent
+   from the plan, the base is injected as an empty entry so the dependency
+   graph resolves."
   [plan]
-  (let [fragments (->> (orphan-types)
-                       (keep #(a/orphans % (get plan % {}))))]
-    (reduce (fn [acc fragment]
-              (let [;; e.g. {:pkg/brew-uninstall {...}} -> :pkg/brew
-                    uninstall-type (first (keys fragment))
-                    base-type (keyword (namespace uninstall-type)
-                                       (str/replace (name uninstall-type) #"-uninstall$" ""))]
-                (cond-> (merge acc fragment)
-                  (not (contains? plan base-type)) (assoc base-type {}))))
-            {}
-            fragments)))
+  (let [merged (->> (orphan-types)
+                    (keep #(a/orphans % (get plan % {})))
+                    (apply merge {}))
+        missing-bases (->> (keys merged)
+                           (keep (fn [orphan-type]
+                                   (let [req (a/requires orphan-type)]
+                                     (when (and (vector? req) (= :complete (first req)))
+                                       (second req)))))
+                           (remove #(or (contains? plan %)
+                                        (contains? merged %))))]
+    (reduce (fn [acc base] (assoc acc base {})) merged missing-bases)))
 
 ;; >> Plan builder
 

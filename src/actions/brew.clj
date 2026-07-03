@@ -47,17 +47,63 @@
                      (json/parse-string true))]
     (into {} (map (fn [s] [(:name s) s])) services)))
 
+(defn trusted-map
+  "Return {:formulae #{...} :casks #{...} :taps #{...}} from brew trust --json v1."
+  []
+  (let [raw (-> (d/with-spinner "Reading Homebrew trust store"
+                  (process/shell {:out :string :err :string} "brew" "trust" "--json" "v1"))
+                :out
+                (json/parse-string true))]
+    {:formulae (set (:formulae raw))
+     :casks (set (:casks raw))
+     :taps (set (:taps raw))}))
+
 ;; Module-level caching — each delay runs at most once per process.
 (def ^:dynamic *formulae-cache* (delay (installed-set :formula)))
 (def ^:dynamic *casks-cache* (delay (installed-set :cask)))
 (def ^:dynamic *outdated-cache* (delay (outdated-map)))
 (def ^:dynamic *services-cache* (delay (services-map)))
+(def ^:dynamic *trusted-cache* (delay (trusted-map)))
 
 (defn- short-name
   "Extract short name from tap-qualified brew name.
    e.g. 'babashka/brew/bbin' -> 'bbin', 'neovim' -> 'neovim'"
   [full-name]
   (last (str/split full-name #"/")))
+
+(defn tap-of
+  "Return the tap a qualified brew name comes from, nil for official names.
+   e.g. 'babashka/brew/bbin' -> 'babashka/brew', 'neovim' -> nil"
+  [full-name]
+  (let [parts (str/split full-name #"/")]
+    (when (= 3 (count parts))
+      (str/join "/" (take 2 parts)))))
+
+(defn- trusted?
+  "Is this tap-qualified name covered by a trust grant — its own, or its tap's?"
+  [full-name]
+  (let [{:keys [formulae casks taps]} @*trusted-cache*]
+    (boolean (or (contains? (or formulae #{}) full-name)
+                 (contains? (or casks #{}) full-name)
+                 (contains? (or taps #{}) (tap-of full-name))))))
+
+(defn- trust-check
+  "Trust outcome for a tap-qualified package, nil when trust needs no attention.
+   Precedes the installed/outdated logic: brew ignores items from untrusted
+   taps, so its answers about them are unreliable."
+  [pkg-name declared? installed?]
+  (let [granted? (trusted? pkg-name)]
+    (cond
+      (and declared? (not granted?))
+      (assoc (o/drift :wrong) :message "untrusted")
+
+      (and granted? (not declared?))
+      (assoc (o/drift :wrong) :message "trusted but :trust not declared — revoking")
+
+      (and (not granted?) (not declared?))
+      (if installed?
+        (assoc o/satisfied :message "untrusted tap — declare :trust to re-enable updates")
+        (o/conflict "untrusted tap — declare :trust to allow install")))))
 
 (defmethod a/check :pkg/brew [_ key opts]
   (let [pkg-name (name key)
@@ -69,10 +115,12 @@
                        (contains? casks sn))
         out-info (or (get outdated sn)
                      (get outdated pkg-name))]
-    (cond
-      out-info (assoc (o/drift :outdated) :message (str (:installed out-info) " → " (:current out-info)))
-      installed? o/satisfied
-      :else (o/drift :missing))))
+    (or (when (tap-of pkg-name)
+          (trust-check pkg-name (boolean (:trust opts)) installed?))
+        (cond
+          out-info (assoc (o/drift :outdated) :message (str (:installed out-info) " → " (:current out-info)))
+          installed? o/satisfied
+          :else (o/drift :missing)))))
 
 (defmethod a/check :brew/service [_ key opts]
   (let [svc-name (name key)
@@ -178,31 +226,107 @@
                           (into {}))]
     (merge formula-orphans cask-orphans)))
 
+(defn installed-taps
+  "Return #{tap ...} of installed third-party taps."
+  []
+  (d/with-spinner "Listing Homebrew taps"
+    (->> (process/shell {:out :string :err :string} "brew" "tap")
+         :out
+         str/split-lines
+         (remove str/blank?)
+         set)))
+
+(defn orphan-taps
+  "Find installed taps that no declared package comes from.
+   declared-items is the :pkg/brew map from the plan."
+  [installed declared-items]
+  (let [in-use (into #{} (keep (fn [[k _]] (tap-of (name k)))) declared-items)]
+    (->> installed
+         (remove in-use)
+         (map (fn [tap] [tap {}]))
+         (into {}))))
+
 (defmethod a/orphans :pkg/brew [_ declared]
   (when (u/command-exists? "brew")
-    (let [result (orphans {:formulae (leaves-set) :casks (installed-set-full :cask)} declared)]
-      (when (seq result)
-        {:pkg/brew-uninstall result}))))
+    (let [pkgs (orphans {:formulae (leaves-set) :casks (installed-set-full :cask)} declared)
+          taps (orphan-taps (installed-taps) declared)]
+      (merge (when (seq pkgs) {:pkg/brew-uninstall pkgs})
+             (when (seq taps) {:brew/untap taps})))))
+
+(defn- install-commands
+  "The command sequence that makes one declared package true: converge the
+   trust grant on the :trust declaration (per item, never the whole tap),
+   then install if the package itself is absent or being upgraded."
+  [pkg-name {:keys [head cask trust]}]
+  (let [tap (tap-of pkg-name)
+        granted? (and tap (trusted? pkg-name))
+        grant? (and tap trust (not granted?))
+        revoke? (and granted? (not trust))
+        installed? (or (contains? @*formulae-cache* (short-name pkg-name))
+                       (contains? @*casks-cache* (short-name pkg-name)))
+        flag (if cask "--cask" "--formula")]
+    (cond-> []
+      grant? (conj ["brew" "trust" flag pkg-name])
+      revoke? (conj ["brew" "untrust" flag pkg-name])
+      (and (not revoke?)
+           (or (not grant?) (not installed?)))
+      (conj (cond-> ["brew" "install"]
+              cask (conj "--cask")
+              true (conj pkg-name)
+              head (conj "--HEAD"))))))
+
+(defn- run-commands!
+  "Run cmds in order, stopping at the first failure. Returns {:exit :err}."
+  [opts cmds]
+  (reduce (fn [_ cmd]
+            (let [{:keys [exit] :as result} (a/exec! opts cmd)]
+              (if (zero? exit) result (reduced result))))
+          {:exit 0 :err nil}
+          cmds))
 
 (defmethod a/install! :pkg/brew [type opts items]
-  (a/simple-install type opts "Installing brew packages"
-    (fn [pkg {:keys [head cask]}]
-      (cond-> ["brew" "install"]
-        cask (conj "--cask")
-        true (conj (name pkg))
-        head (conj "--HEAD")))
-    items))
+  (d/section "Installing brew packages"
+    (map (fn [[pkg item-opts]]
+           (let [{:keys [exit err]} (run-commands! opts (install-commands (name pkg) item-opts))]
+             {:action [type pkg]
+              :label (name pkg)
+              :status (if (zero? exit) :ok :error)
+              :message err}))
+         items)))
 
 ;; -- Uninstall orphans
 
 (defmethod a/requires :pkg/brew-uninstall [_] [:complete :pkg/brew])
 
 (defmethod a/install! :pkg/brew-uninstall [type opts items]
-  (let [results (a/simple-install type opts "Uninstalling brew orphans"
-                  (fn [pkg _] ["brew" "uninstall" (if (keyword? pkg) (name pkg) (str pkg))])
-                  items)]
+  (let [results (d/section "Uninstalling brew orphans"
+                  (map (fn [[pkg _]]
+                         (let [pkg-name (if (keyword? pkg) (name pkg) (str pkg))
+                               cmds (cond-> []
+                                      ;; no grant outlives the package it was made for
+                                      (and (tap-of pkg-name) (trusted? pkg-name))
+                                      (conj ["brew" "untrust" "--formula" pkg-name])
+                                      true (conj ["brew" "uninstall" pkg-name]))
+                               {:keys [exit err]} (run-commands! opts cmds)]
+                           {:action [type pkg]
+                            :label pkg-name
+                            :status (if (zero? exit) :ok :error)
+                            :message err}))
+                       items))]
     (a/exec! opts ["brew" "autoremove"])
     results))
+
+;; -- Untap orphan sources
+
+(defmethod a/requires :brew/untap [_] [:complete :pkg/brew])
+
+(defmethod a/check :brew/untap [_ key opts]
+  (o/drift :orphan))
+
+(defmethod a/install! :brew/untap [type opts items]
+  (a/simple-install type opts "Removing orphaned brew taps"
+    (fn [tap _] ["brew" "untap" (name tap)])
+    items))
 
 (defmethod a/install! :brew/service [type opts items]
   (a/simple-install type opts "Starting brew services"
