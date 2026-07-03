@@ -384,6 +384,21 @@
     (is (o/error? (a/check :claude/mcp :proj {:command "x" :scope "project"})))
     (is (o/error? (a/check :claude/mcp :loc {:command "x" :scope "local"})))))
 
+(deftest claude-plugin-update-command-test
+  (testing "outdated plugin updates via its marketplace-qualified id (bare name → 'not found')"
+    (with-bindings {#'claude/*plugin-cache* (delay {(keyword "allium@juxt-plugins") [{:version "3.6.0"}]})}
+      (let [calls (atom [])]
+        (with-redefs [a/exec! (fn [_ args] (swap! calls conj args) {:exit 0 :err nil})]
+          (a/install! :claude/plugin {} {:allium {}}))
+        (is (some #(= ["claude" "plugin" "update" "allium@juxt-plugins"] %) @calls)))))
+
+  (testing "missing plugin installs by bare name"
+    (with-bindings {#'claude/*plugin-cache* (delay {})}
+      (let [calls (atom [])]
+        (with-redefs [a/exec! (fn [_ args] (swap! calls conj args) {:exit 0 :err nil})]
+          (a/install! :claude/plugin {} {:allium {}}))
+        (is (some #(= ["claude" "plugin" "install" "allium"] %) @calls))))))
+
 (deftest claude-plugin-unknown-catalogue-version-test
   (testing "installed plugin with no catalogue version → satisfied (cannot determine drift)"
     (with-bindings {#'claude/*plugin-cache* (delay {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]})

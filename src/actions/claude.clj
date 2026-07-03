@@ -103,9 +103,10 @@
   (a/simple-install type opts "Installing Claude plugins"
     (fn [plugin _item-opts]
       (let [n (name plugin)]
-        ;; Outdated plugins are already installed — update instead of install
-        (if (installed-plugin-entry @*plugin-cache* n)
-          ["claude" "plugin" "update" n]
+        ;; Outdated plugins are already installed — update instead of install.
+        ;; update requires the marketplace-qualified id; the bare name is "not found".
+        (if-let [[plugin-id _] (installed-plugin-entry @*plugin-cache* n)]
+          ["claude" "plugin" "update" plugin-id]
           ["claude" "plugin" "install" n])))
     items))
 
