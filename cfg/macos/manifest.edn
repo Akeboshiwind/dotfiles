@@ -1,14 +1,15 @@
 {:pkg/brew {:orbstack {} ;:docker-desktop {}
             :obsidian {}
             :quitter {}
-            :rectangle-pro {}
+            ;:rectangle-pro {}
             :spotify {}
             :notion {}
             :macwhisper {}
             :google-drive {}
             :discord {}
             :google-chrome {}
-            :alcove {}}
+            :alcove {}
+            :swish {}}
 
  :pkg/mas {;"Timelines" 1112433234 # MAS thinks it's uninstalled because it's an iPad app I think
            "Bitwarden" 1352778147
