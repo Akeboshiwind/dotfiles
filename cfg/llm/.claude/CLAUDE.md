@@ -20,3 +20,4 @@
 - Debugging is twice as hard as writing the code - so code written at the limit of your cleverness is beyond your ability to debug; write **below** that limit
 - Bold load bearing words
 - Never git push without the user *directly* asking you to, never infer
+- When asked for a linear walkthrough, use `uvx showboat --help`
