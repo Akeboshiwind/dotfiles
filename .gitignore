@@ -3,3 +3,5 @@
 .lsp
 .nrepl-port
 .claude/worktrees
+
+.allium-loop/

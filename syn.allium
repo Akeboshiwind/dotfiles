@@ -7,7 +7,9 @@
 --   orphan detection (packages and third-party package sources),
 --   package-source trust, capability-based dependency ordering, the check phase,
 --   plan display, apply execution with failure propagation, symlink-ownership
---   and script-run caching, secrets validation.
+--   and script-run caching, secrets validation, persisted-plan capture (a plan
+--   run records its checked plan) and replay (a default apply replays a valid
+--   persisted plan, skipping the live check phase).
 -- Excludes:
 --   - The contents of individual cfg/* modules (declarative data, not behaviour)
 --   - Terminal rendering, colours and output layout (display.clj)
@@ -53,6 +55,9 @@ entity Manifest {
     modules: Module with manifest = this
     folder_declarations: FolderDeclaration with manifest = this
 
+    identity: String                      -- hash identifying this manifest; a
+                                          -- persisted plan is valid to replay only
+                                          -- against a manifest with the same identity
     references_undefined_secret: Boolean  -- some module refers to a secret key
                                           -- that is not defined
     has_escaping_source: modules.any(m => m.has_escaping_source)
@@ -88,9 +93,11 @@ entity Secret {
 
 entity StateCache {
     -- Persisted between runs. Records which symlinks syn owns (so links removed
-    -- from the manifest can be cleaned up) and which scripts have run.
+    -- from the manifest can be cleaned up), which scripts have run, and the most
+    -- recently captured plan (so a later apply can replay it).
     recorded_symlinks: RecordedSymlink with cache = this
     script_records: ScriptRecord with cache = this
+    stored_plan: StoredPlan with cache = this   -- at most one; the last plan captured
 }
 
 entity RecordedSymlink {
@@ -105,6 +112,29 @@ entity ScriptRecord {
     content_hash: String                  -- identity of the script content that last ran successfully
 }
 
+entity StoredPlan {
+    -- A plan captured by a plan-mode run at the end of its check phase, so a
+    -- later default apply can replay the recorded decisions without repeating
+    -- the expensive live queries. The checked actions and validation errors it
+    -- replays live on source_run, whose plan this captured.
+    cache: StateCache
+    source_run: Run                       -- the plan run whose checked plan this is
+    manifest_identity: String             -- identity of the manifest it was built from
+    scope: String?                        -- the scope in force when it was captured
+    spent: Boolean                        -- consumed by a prior successful replay-apply
+    captured_at: Timestamp                -- when the plan was persisted
+
+    -- A stored plan is valid to replay for an invocation only when it was built
+    -- from the same manifest, under the same scope, has not been consumed, and
+    -- was captured within the TTL window (so drift that happened while the
+    -- operator was away between plan and apply forces a fresh check).
+    valid_for(current_identity, current_scope):
+        not spent
+        and manifest_identity = current_identity
+        and ((scope = null and current_scope = null) or scope = current_scope)
+        and now - captured_at <= config.plan_ttl
+}
+
 -- =============================================================================
 -- Run and actions
 -- =============================================================================
@@ -112,7 +142,13 @@ entity ScriptRecord {
 entity Run {
     mode: plan | apply
     scope: String?                        -- optional action-type filter, e.g. ":pkg/brew"
+    fresh: Boolean                        -- the --fresh flag: ignore any persisted plan and
+                                          -- check live (only meaningful when mode = apply;
+                                          -- plan mode always checks live)
     status: planning | checking | displaying | applying | complete | aborted
+
+    replayed_plan: StoredPlan?            -- the persisted plan this apply run replayed;
+                                          -- null on the live-check path
 
     graph_errors: Boolean                 -- the capability graph has a cycle, a required
                                           -- capability with no provider, or a capability
@@ -128,6 +164,7 @@ entity Run {
 
     transitions status {
         planning -> checking
+        planning -> applying              -- replay: skip the live check phase
         planning -> aborted
         checking -> displaying
         checking -> applying
@@ -261,12 +298,75 @@ variant ClaudeResourceAction : Action {
 }
 
 -- =============================================================================
+-- Config
+-- =============================================================================
+
+config {
+    plan_ttl: Duration = 5.minutes        -- a captured plan is only replayable
+                                          -- within this window of being captured;
+                                          -- beyond it the machine may have drifted
+                                          -- while the operator was away
+}
+
+-- =============================================================================
 -- Invocation and plan assembly
 -- =============================================================================
 
 rule OperatorInvokesSyn {
-    when: SynInvoked(_, scope, mode)
-    ensures: Run.created(mode: mode, scope: scope, status: planning)
+    when: SynInvoked(_, scope, mode, fresh)
+    ensures: Run.created(mode: mode, scope: scope, fresh: fresh, status: planning)
+}
+
+rule ReplayStoredPlan {
+    -- A default apply (not --fresh) with a valid persisted plan replays it:
+    -- assembly and the live check phase are skipped entirely. The plan's
+    -- captured actions are loaded onto this run with the outcomes they were
+    -- checked with, and execution proceeds straight to applying. Captured
+    -- validation errors still gate the apply exactly as ApplyGate would, with
+    -- no recomputation.
+    when: run: Run.status becomes planning
+    requires: run.status = planning
+    requires: run.mode = apply
+    requires: not run.fresh
+    requires: not manifest.has_escaping_source
+    requires: not manifest.references_undefined_secret
+    requires: cache.stored_plan != null
+    requires: cache.stored_plan.valid_for(manifest.identity, run.scope)
+
+    let plan = cache.stored_plan
+
+    ensures:
+        if plan.source_run.validation_errors.count > 0:
+            run.status = aborted
+        else:
+            run.replayed_plan = plan
+            for action in plan.source_run.actions:
+                action.run = run
+            run.status = applying
+    @guidance
+        -- Loading a plan re-associates its checked actions with this run; the
+        -- outcomes recorded at plan time (satisfied / drift / conflict /
+        -- cancelled …) are replayed as-is, so no package manager or filesystem
+        -- is queried again. install_succeeds is still the live outcome of
+        -- attempting each action at apply time.
+}
+
+rule ApplyWithoutValidPlanAborts {
+    -- A default apply with no valid persisted plan refuses rather than falling
+    -- back to a live check. This covers: never planned, manifest changed since
+    -- planning (identity mismatch), scope mismatch, or an already-spent plan.
+    when: run: Run.status becomes planning
+    requires: run.status = planning
+    requires: run.mode = apply
+    requires: not run.fresh
+    requires: not manifest.has_escaping_source
+    requires: not manifest.references_undefined_secret
+    requires: cache.stored_plan = null
+             or not cache.stored_plan.valid_for(manifest.identity, run.scope)
+    ensures: run.status = aborted
+    @guidance
+        -- The operator is directed to run `syn` first to plan, or to re-run
+        -- with `--fresh` to check the machine live and apply in one pass.
 }
 
 rule ReferencingUndefinedSecretAborts {
@@ -291,6 +391,7 @@ rule PathEscapeAbortsRun {
 
 rule AssemblePlan {
     when: run: Run.status becomes planning
+    requires: run.mode = plan or run.fresh   -- the live path only; a default apply replays
     requires: not manifest.has_escaping_source
     requires: not manifest.references_undefined_secret
 
@@ -678,6 +779,27 @@ rule DisplayPlan {
     ensures: run.status = complete
 }
 
+rule PersistCheckedPlan {
+    -- A plan-mode run captures its checked plan when checking completes, so a
+    -- later default apply can replay it. The capture is tagged with the manifest
+    -- identity and the scope in force and starts unspent. Only one plan is kept:
+    -- any earlier capture is discarded. Writing the plan cache is a write to
+    -- syn's own state, not a change to the machine — no action result is touched.
+    when: run: Run.status transitions_to displaying
+    requires: run.mode = plan
+    ensures:
+        if cache.stored_plan != null:
+            not exists cache.stored_plan
+    ensures: StoredPlan.created(
+        cache: cache,
+        source_run: run,
+        manifest_identity: manifest.identity,
+        scope: run.scope,
+        spent: false,
+        captured_at: now
+    )
+}
+
 -- =============================================================================
 -- Apply
 -- =============================================================================
@@ -714,6 +836,20 @@ rule ApplyCompletes {
     when: run: Run.all_resolved
     requires: run.status = applying
     ensures: run.status = complete
+}
+
+rule SpendStoredPlanOnApply {
+    -- Any apply that reaches completion has mutated the machine, so the captured
+    -- plan no longer describes the current world: it is spent and can never be
+    -- replayed. This consumes the plan a replay-apply replayed (here
+    -- cache.stored_plan is that same plan, so a second bare apply refuses), and
+    -- invalidates a stale plan a --fresh apply ignored and checked past. An
+    -- apply that aborts (e.g. on validation errors) touches nothing and leaves
+    -- the captured plan intact.
+    when: run: Run.status transitions_to complete
+    requires: run.mode = apply
+    requires: cache.stored_plan != null
+    ensures: cache.stored_plan.spent = true
 }
 
 rule FailedActionBlocksDependents {
@@ -773,15 +909,17 @@ surface CommandLine {
     facing operator: Operator
 
     provides:
-        SynInvoked(operator, scope, mode)
+        SynInvoked(operator, scope, mode, fresh)
 
     @guarantee PlanModeIsHarmless
-        -- Invoking without apply mode only inspects the machine; nothing is
-        -- installed, linked, removed or written (including syn's state
-        -- cache). Version discovery may refresh package managers' own
-        -- metadata caches (marketplace catalogues, registry indexes) — a
-        -- read of the outside world, not a change to the machine's
-        -- configuration.
+        -- Invoking without apply mode only inspects the machine; nothing on
+        -- the machine is installed, linked or removed. Plan mode does write
+        -- syn's own persisted plan cache — capturing the checked plan for a
+        -- later apply to replay — but that is a write to syn's own state, not
+        -- a change to the machine's configuration. Version discovery may
+        -- likewise refresh package managers' own metadata caches (marketplace
+        -- catalogues, registry indexes) — a read of the outside world, not a
+        -- change to the machine's configuration.
 }
 
 surface RunReport {
@@ -848,5 +986,16 @@ invariant OnlyOwnedSymlinksAreRemoved {
     for action in Actions:
         action.kind = UnlinkAction and action.result = applied
             implies action.target_points_at_expected
+}
+
+-- A persisted plan is consumed by at most one replay: once a replay-apply
+-- completes it is spent, and a spent plan is never valid to replay again. No
+-- two runs ever replay the same stored plan, so a plan's recorded decisions
+-- are never applied to the machine twice.
+invariant StoredPlanReplayedAtMostOnce {
+    for a in Runs:
+        for b in Runs:
+            a != b and a.replayed_plan != null and b.replayed_plan != null
+                implies a.replayed_plan != b.replayed_plan
 }
 

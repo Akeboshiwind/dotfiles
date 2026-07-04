@@ -39,6 +39,12 @@
   []
   (validate-secrets' @secrets))
 
+(defn all-secrets
+  "The parsed secrets map (secrets.edn). Used to fold secret values into the
+   manifest identity, so changing a secret invalidates a captured plan."
+  []
+  @secrets)
+
 (def ^:private edn-readers
   {'secret secret-reader})
 
