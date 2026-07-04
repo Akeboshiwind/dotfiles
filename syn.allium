@@ -61,6 +61,16 @@ entity Manifest {
     references_undefined_secret: Boolean  -- some module refers to a secret key
                                           -- that is not defined
     has_escaping_source: modules.any(m => m.has_escaping_source)
+
+    can_assemble: not references_undefined_secret and not has_escaping_source
+    assembly_error: String?               -- null when the manifest assembles
+                                          -- cleanly; otherwise the specific reason
+                                          -- it cannot be (e.g. "Secret not found:
+                                          -- gh-token", "Path escapes base directory")
+
+    invariant AssemblyErrorPresentWhenBroken {
+        can_assemble = (assembly_error = null)
+    }
 }
 
 entity FolderDeclaration {
@@ -124,6 +134,9 @@ entity StoredPlan {
     spent: Boolean                        -- consumed by a prior successful replay-apply
     captured_at: Timestamp                -- when the plan was persisted
 
+    age: now - captured_at                -- how long ago it was captured
+    is_expired: now - captured_at > config.plan_ttl
+
     -- A stored plan is valid to replay for an invocation only when it was built
     -- from the same manifest, under the same scope, has not been consumed, and
     -- was captured within the TTL window (so drift that happened while the
@@ -132,7 +145,16 @@ entity StoredPlan {
         not spent
         and manifest_identity = current_identity
         and ((scope = null and current_scope = null) or scope = current_scope)
-        and now - captured_at <= config.plan_ttl
+        and not is_expired
+
+    -- For --show: staleness against the current manifest is tri-state. It is
+    -- indeterminate when the current manifest cannot be assembled — its identity
+    -- cannot then be trusted, so staleness is never reported as changed in that
+    -- case, only as unconfirmable.
+    staleness(current_identity, current_assemblable):
+        if not current_assemblable: indeterminate
+        else if manifest_identity = current_identity: matches
+        else: changed
 }
 
 -- =============================================================================
@@ -140,7 +162,7 @@ entity StoredPlan {
 -- =============================================================================
 
 entity Run {
-    mode: plan | apply
+    mode: plan | apply | show
     scope: String?                        -- optional action-type filter, e.g. ":pkg/brew"
     fresh: Boolean                        -- the --fresh flag: ignore any persisted plan and
                                           -- check live (only meaningful when mode = apply;
@@ -165,6 +187,7 @@ entity Run {
     transitions status {
         planning -> checking
         planning -> applying              -- replay: skip the live check phase
+        planning -> complete              -- show: re-render the captured plan, nothing else
         planning -> aborted
         checking -> displaying
         checking -> applying
@@ -369,11 +392,29 @@ rule ApplyWithoutValidPlanAborts {
         -- with `--fresh` to check the machine live and apply in one pass.
 }
 
-rule ReferencingUndefinedSecretAborts {
-    -- A module manifest may reference a secret by key. If no secret with that
-    -- key is defined, the run aborts before any plan is assembled.
+rule ShowStoredPlan {
+    -- syn --show re-renders the last captured plan and classifies its
+    -- replayability. It cheaply assembles the current manifest to compute its
+    -- identity for the staleness check, but tolerates assembly failure: a broken
+    -- manifest (undefined #secret, path escape) never aborts show — it still
+    -- renders the captured plan, with staleness reported as indeterminate. It
+    -- builds no plan and runs no live check-phase queries. The run simply
+    -- completes; the captured plan (if any) is surfaced via StoredPlanReport.
+    -- Show never spends, modifies or re-captures the plan — it is a pure read.
     when: run: Run.status becomes planning
     requires: run.status = planning
+    requires: run.mode = show
+    ensures: run.status = complete
+}
+
+rule ReferencingUndefinedSecretAborts {
+    -- A module manifest may reference a secret by key. If no secret with that
+    -- key is defined, the run aborts before any plan is assembled. Show mode is
+    -- exempt: it tolerates a broken manifest, rendering the already-captured plan
+    -- with staleness reported as indeterminate rather than aborting.
+    when: run: Run.status becomes planning
+    requires: run.status = planning
+    requires: run.mode != show
     requires: manifest.references_undefined_secret
     ensures: run.status = aborted
 }
@@ -381,6 +422,7 @@ rule ReferencingUndefinedSecretAborts {
 rule PathEscapeAbortsRun {
     when: run: Run.status becomes planning
     requires: run.status = planning
+    requires: run.mode != show
     requires: manifest.has_escaping_source
     ensures: run.status = aborted
     @guidance
@@ -912,14 +954,27 @@ surface CommandLine {
         SynInvoked(operator, scope, mode, fresh)
 
     @guarantee PlanModeIsHarmless
-        -- Invoking without apply mode only inspects the machine; nothing on
-        -- the machine is installed, linked or removed. Plan mode does write
-        -- syn's own persisted plan cache — capturing the checked plan for a
-        -- later apply to replay — but that is a write to syn's own state, not
-        -- a change to the machine's configuration. Version discovery may
+        -- Invoking in plan mode only inspects the machine; nothing on the
+        -- machine is installed, linked or removed. Plan mode does write syn's
+        -- own persisted plan cache — capturing the checked plan for a later
+        -- apply to replay — but that is a write to syn's own state, not a
+        -- change to the machine's configuration. Version discovery may
         -- likewise refresh package managers' own metadata caches (marketplace
         -- catalogues, registry indexes) — a read of the outside world, not a
         -- change to the machine's configuration.
+
+    @guarantee ShowModeIsInert
+        -- Invoking in show mode changes nothing on the machine and does not
+        -- even write syn's own cache — not even when the current manifest is
+        -- broken. It cheaply assembles the current manifest to compute its
+        -- identity for the staleness check (tolerating assembly failure), but
+        -- builds no plan, runs no check phase, performs no live system queries,
+        -- and never spends, re-captures or otherwise modifies the persisted
+        -- plan. Show is strictly more read-only than plan mode.
+
+    @guarantee ShowReportsAbsentPlan
+        -- When no plan has been captured, show mode reports that there is
+        -- nothing to show and directs the operator to run `syn` first.
 }
 
 surface RunReport {
@@ -947,6 +1002,50 @@ surface RunReport {
     @guarantee ValidationVisibleBeforeApply
         -- Anything that would block an apply (duplicate declarations, empty
         -- secrets) is already visible in the plan report.
+}
+
+surface StoredPlanReport {
+    -- What `syn --show` renders: the last captured plan, exactly as it was
+    -- captured, plus a status banner classifying whether it is still replayable.
+    -- No assembly or live check-phase queries occur; the action list is read
+    -- from the captured plan. At most one plan exists, so at most one instance.
+    facing operator: Operator
+
+    context plan: StoredPlan
+
+    let staleness = plan.staleness(manifest.identity, manifest.can_assemble)
+    let replayable = not plan.spent and not plan.is_expired and staleness = matches
+
+    exposes:
+        -- Status banner: replayability at view time and why. A plan is only
+        -- replayable when staleness is definitively matches; indeterminate (the
+        -- current manifest would not assemble) counts as not replayable.
+        replayable
+        plan.spent
+        plan.is_expired
+        staleness
+        manifest.assembly_error when not manifest.can_assemble
+        plan.age
+        plan.scope
+        -- The same action list plan mode renders, read from the captured plan.
+        for action in plan.source_run.unsatisfied_actions:
+            action.key
+            action.check_outcome
+            action.check_message
+        for action in plan.source_run.warned_actions:
+            action.key
+            action.check_message
+        for error in plan.source_run.validation_errors:
+            error.subject
+            error.description
+
+    @guarantee StatusIsComputedNotChecked
+        -- The banner is derived from the captured plan and the current manifest
+        -- alone: spent and expired come from the stored plan; staleness compares
+        -- the captured manifest identity against the current one, and is
+        -- indeterminate (never "changed") when the current manifest cannot be
+        -- assembled — the specific assembly error is surfaced instead. No action
+        -- is re-checked against the live system to produce the status.
 }
 
 -- =============================================================================

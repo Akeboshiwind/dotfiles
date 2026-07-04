@@ -52,6 +52,32 @@
   [stored-plan]
   (assoc stored-plan :spent true))
 
+(defn status
+  "Classify a captured plan for display (spec: StoredPlanReport / ShowStoredPlan).
+   Reports each replayability condition independently — spent, expired and stale
+   can co-occur, so they are not collapsed into one verdict — plus the plan's age
+   and the scope it was captured under.
+
+   Staleness is tri-state: false = matches the current manifest, true = the
+   manifest changed, :unknown = the current manifest could not be assembled (pass
+   manifest-identity as nil). A plan is only replayable when staleness is a
+   definite match — indeterminate cannot be confirmed, so it is not replayable.
+   Pure: no assembly, no live checks."
+  [stored-plan {:keys [manifest-identity now ttl-ms]}]
+  (let [captured-at (:captured-at stored-plan)
+        spent       (boolean (:spent stored-plan))
+        expired     (> (- now captured-at) ttl-ms)
+        stale       (if (nil? manifest-identity)
+                      :unknown
+                      (not= (:manifest-identity stored-plan) manifest-identity))]
+    {:spent spent
+     :expired expired
+     :stale stale
+     :replayable (and (not spent) (not expired) (false? stale))
+     :age-ms (- now captured-at)
+     :captured-at captured-at
+     :scope (:scope stored-plan)}))
+
 (defn- canonical
   "A stable, order-independent rendering of nested data. Maps become vectors of
    [k v] pairs sorted by the printed key (robust to mixed keyword/string keys,

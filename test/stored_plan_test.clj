@@ -177,6 +177,70 @@
 ;; secrets.edn, symlink-folder file listings, and slurped script bodies.
 ;; =============================================================================
 
+;; =============================================================================
+;; Spec: surface StoredPlanReport, rule ShowStoredPlan, StoredPlan.is_expired/age
+;; `syn --show` renders the captured plan + a status banner classifying it as
+;; replayable / spent / expired / stale (which can co-occur), with age and the
+;; captured scope. Pure classification core — no assembly, no live checks.
+;; =============================================================================
+
+(deftest status-replayable-test
+  (testing "a fresh, unspent, matching plan is replayable with no flags set"
+    (let [st (sp/status (plan-at "abc" :pkg/brew t0)
+                        {:manifest-identity "abc" :now (+ t0 1000) :ttl-ms ttl-ms})]
+      (is (true? (:replayable st)))
+      (is (false? (:spent st)))
+      (is (false? (:expired st)))
+      (is (false? (:stale st)))
+      (is (= 1000 (:age-ms st)) "age is now - captured-at")
+      (is (= :pkg/brew (:scope st)) "the captured scope is surfaced"))))
+
+(deftest status-spent-test
+  (testing "a spent plan is flagged spent and not replayable"
+    (let [st (sp/status (assoc (plan-at "abc" nil) :spent true)
+                        {:manifest-identity "abc" :now (+ t0 1000) :ttl-ms ttl-ms})]
+      (is (true? (:spent st)))
+      (is (false? (:replayable st))))))
+
+(deftest status-expired-test
+  (testing "exactly at the TTL is not yet expired (boundary is exclusive: > ttl)"
+    (is (false? (:expired (sp/status (plan-at "abc" nil)
+                                     {:manifest-identity "abc" :now (+ t0 ttl-ms) :ttl-ms ttl-ms})))))
+  (testing "past the TTL is flagged expired and not replayable"
+    (let [st (sp/status (plan-at "abc" nil)
+                        {:manifest-identity "abc" :now (+ t0 ttl-ms 1) :ttl-ms ttl-ms})]
+      (is (true? (:expired st)))
+      (is (false? (:replayable st))))))
+
+(deftest status-stale-test
+  (testing "a plan whose manifest identity no longer matches is flagged stale"
+    (let [st (sp/status (plan-at "abc" nil)
+                        {:manifest-identity "CHANGED" :now (+ t0 1000) :ttl-ms ttl-ms})]
+      (is (true? (:stale st)))
+      (is (false? (:replayable st))))))
+
+(deftest status-manifest-indeterminate-test
+  (testing "when the current manifest can't be assembled (identity nil), staleness is :unknown"
+    (let [st (sp/status (plan-at "abc" nil)
+                        {:manifest-identity nil :now (+ t0 1000) :ttl-ms ttl-ms})]
+      (is (= :unknown (:stale st)) "not reported as 'changed' — it is indeterminate")
+      (is (false? (:replayable st)) "indeterminate staleness cannot be confirmed replayable")))
+  (testing "an otherwise-fine plan is still not replayable when staleness is indeterminate"
+    (let [st (sp/status (plan-at "abc" nil)          ;; unspent, in-window
+                        {:manifest-identity nil :now (+ t0 1000) :ttl-ms ttl-ms})]
+      (is (false? (:spent st)))
+      (is (false? (:expired st)))
+      (is (false? (:replayable st))))))
+
+(deftest status-conditions-co-occur-test
+  (testing "spent, expired and stale can all hold at once (not collapsed to one enum)"
+    (let [st (sp/status (assoc (plan-at "abc" nil) :spent true)
+                        {:manifest-identity "CHANGED" :now (+ t0 ttl-ms 1) :ttl-ms ttl-ms})]
+      (is (true? (:spent st)))
+      (is (true? (:expired st)))
+      (is (true? (:stale st)))
+      (is (false? (:replayable st))))))
+
 (defn- inputs [& {:as m}]
   (merge {:manifest {:plan [:brew]}
           :modules {"cfg/brew/manifest.edn" {:pkg/brew {"htop" {}}}}

@@ -35,12 +35,14 @@
   (println "  --apply     Apply changes (default is plan-only)")
   (println "  --plan      Show what's installed, missing, and outdated (default)")
   (println "  --fresh     With --apply: ignore the stored plan and check live")
+  (println "  --show      Re-display the last stored plan and its status (no checks)")
   (println "  --help      Show this help message")
   (println "")
   (println "Examples:")
   (println "  syn              Show status of all items (and store the plan)")
   (println "  syn --apply      Apply the stored plan (run `syn` first)")
   (println "  syn --apply --fresh  Check live and apply, ignoring any stored plan")
+  (println "  syn --show       Re-show the last stored plan (spent? expired?)")
   (println "  syn :pkg/brew    Show status of brew packages")
   (println "  syn :pkg/brew --apply  Apply the stored plan for brew packages"))
 
@@ -54,9 +56,10 @@
               (= arg "--plan") (assoc acc :plan-mode true)
               (= arg "--apply") (assoc acc :apply-mode true)
               (= arg "--fresh") (assoc acc :fresh true)
+              (= arg "--show") (assoc acc :show true)
               (str/starts-with? arg ":") (assoc acc :action (keyword (subs arg 1)))
               :else acc))
-          {:action nil :plan-mode false :apply-mode false :fresh false :help false}
+          {:action nil :plan-mode false :apply-mode false :fresh false :show false :help false}
           args))
 
 (defn- filter-action-graph
@@ -159,22 +162,51 @@
                                  "` first to create a plan, or add --fresh to check live."))
                   (System/exit 1))))))
 
+(defn- run-show!
+  "Show mode (--show): re-render the last captured plan with a status banner,
+   reading only the cache (spec: rule ShowStoredPlan, surface StoredPlanReport).
+   No live checks, no writes — not even the plan cache. Reads the repository
+   cheaply to compute the current identity for the staleness check, but tolerates
+   a manifest that won't assemble (undefined secret, path escape): it still
+   renders the captured plan, reports staleness as indeterminate, and surfaces how
+   the manifest is broken. Ignores any scope arg — it renders the plan as captured."
+  [cache]
+  (if-let [stored (:stored-plan cache)]
+    (let [{:keys [identity error]}
+          (try {:identity (sp/manifest-identity (m/load-manifest) cache)}
+               (catch clojure.lang.ExceptionInfo e {:error (ex-message e)})
+               (catch Exception e {:error (ex-message e)}))]
+      (s/show-stored-status
+        (sp/status stored {:manifest-identity identity
+                           :now (System/currentTimeMillis)
+                           :ttl-ms sp/default-ttl-ms})
+        sp/default-ttl-ms
+        error)
+      (println)
+      (s/show-plan (:graph (:plan stored))))
+    (println "No stored plan to show — run `syn` first.")))
+
 (defn -main
   "Main entry point for the dotfile manager.
-   Loads manifest, then either shows-and-stores the plan (plan mode) or applies
-   it — replaying a valid stored plan, or checking live under --fresh."
+   Loads manifest, then shows the stored plan (--show), applies it (replaying a
+   valid stored plan or checking live under --fresh), or shows-and-stores a fresh
+   plan (plan mode, the default)."
   [& args]
-  (let [{:keys [action apply-mode fresh help]} (parse-args args)]
+  (let [{:keys [action apply-mode fresh show help]} (parse-args args)]
     (when help
       (print-help)
       (System/exit 0))
     (try
-      (let [entries (m/load-manifest)
-            cache (c/load-cache)
+      (let [cache (c/load-cache)
             _ (reset! a/*cache* cache)]
-        (if apply-mode
-          (run-apply! entries cache action fresh)
-          (run-plan! entries cache action (sp/manifest-identity entries cache))))
+        (if show
+          ;; Show loads the manifest itself, tolerating one that won't assemble.
+          (run-show! cache)
+          ;; Plan and apply need the manifest; a broken one aborts here (caught below).
+          (let [entries (m/load-manifest)]
+            (if apply-mode
+              (run-apply! entries cache action fresh)
+              (run-plan! entries cache action (sp/manifest-identity entries cache))))))
       (catch clojure.lang.ExceptionInfo e
         (let [data (ex-data e)]
           (cond
