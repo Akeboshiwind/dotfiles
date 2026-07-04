@@ -50,6 +50,7 @@
         :aws
         :fly
         :kubernetes
+        :cloudflare
 
         ;; >> AI
         :llm
