@@ -150,21 +150,36 @@
 
 ;; >> Plan builder
 
-(defn build!
-  "Build plan from entries. Takes [{:step map :source string} ...].
-   Returns {:plan map :order [[type key] ...] :symlinks map :errors [...]}
-   Impure: reads filesystem for path canonicalization, directory listing, and package queries."
+(defn assemble
+  "Cheap, declarative plan assembly — NO live package queries. Resolves source
+   paths, expands symlink folders (a filesystem listing), merges module steps,
+   and computes stale unlinks from the cache. Returns
+   {:merged plan-map :symlinks {...} :unlinks {...} :errors [...]}.
+   This is the part of a build that depends only on the repository and the
+   cache, so it is safe to run on the fast apply path (e.g. to hash the
+   manifest's identity) without paying for orphan detection."
   [entries cache]
   (let [processed (->> entries
                        resolve-symlink-paths!
                        expand-symlink-folders!)
         duplicate-errors (find-duplicate-keys processed)
         merged (merge-steps processed)
-        {:keys [unlinks symlinks]} (calculate-unlinks cache merged)
+        {:keys [unlinks symlinks]} (calculate-unlinks cache merged)]
+    {:merged merged
+     :symlinks symlinks
+     :unlinks unlinks
+     :errors duplicate-errors}))
+
+(defn build!
+  "Build plan from entries. Takes [{:step map :source string} ...].
+   Returns {:plan map :order [[type key] ...] :symlinks map :errors [...]}
+   Impure: reads filesystem for path canonicalization, directory listing, and package queries."
+  [entries cache]
+  (let [{:keys [merged symlinks unlinks errors]} (assemble entries cache)
         orphans (calculate-orphans merged)
         plan (cond-> merged
                (seq unlinks) (assoc :fs/unlink unlinks)
                (seq orphans) (merge orphans))]
     {:plan plan
      :symlinks symlinks
-     :errors duplicate-errors}))
+     :errors errors}))
