@@ -79,6 +79,8 @@
   "skipDangerousModePermissionPrompt": true,
   "theme": "auto",
   "editorMode": "vim",
+  "remoteControlAtStartup": true,
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true
+  "voiceEnabled": true,
+  "agentPushNotifEnabled": true
 }
