@@ -58,6 +58,7 @@
         ;; >> Work
         {:pkg/brew {:slack {}}
          :pkg/mas {"Windows App" 1295203466}}
+        {:pkg/brew {:tunnelblick {}}}
 
         {:pkg/brew {"postgresql@18" {}}}
         ; To run the XTDB docs site
