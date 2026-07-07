@@ -19,5 +19,10 @@
 - **Obviously no bugs** over *no obvious bugs*
 - Debugging is twice as hard as writing the code - so code written at the limit of your cleverness is beyond your ability to debug; write **below** that limit
 - Bold load bearing words
+- Comments say only what the code can't. Default to **none**, and keep any you write **as short as possible**.
+  - Write one only for what a competent reader can't recover from the code: a non-obvious *why*, an invariant/constraint, a gotcha, an issue/spec link.
+  - Never restate what the code does, narrate steps, or label the obvious (a field named `table` needs no comment).
+  - Some things live better in the **commit/PR message** than the code — decision rationale (why this way, what was rejected) and the story of a change. Put them there, not in an inline comment.
+  - Test before keeping one: would deleting it mislead or surprise the reader? If not, delete it.
 - Never git push without the user *directly* asking you to, never infer
 - When asked for a linear walkthrough, use `uvx showboat --help`
