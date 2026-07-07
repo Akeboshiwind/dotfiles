@@ -6,7 +6,6 @@
   "permissions": {
     "defaultMode": "auto"
   },
-  "model": "opus",
   "hooks": {
     "PreToolUse": [
       {
@@ -74,13 +73,13 @@
     }
   },
   "alwaysThinkingEnabled": true,
-  "effortLevel": "high",
+  "effortLevel": "medium",
   "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true,
   "theme": "auto",
   "editorMode": "vim",
   "remoteControlAtStartup": true,
+  "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true,
-  "agentPushNotifEnabled": true
+  "voiceEnabled": true
 }
