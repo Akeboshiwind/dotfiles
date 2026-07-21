@@ -28,7 +28,9 @@
            "Numbers" 409203825
            "GarageBand" 682658836
            "Mercury Weather" 1621800675
-           "Currents Reader" 6758530974}
+           "Currents Reader" 6758530974
+           "Things 3" 904280696
+           "Xcode" 497799835}
  :fs/symlink-folder {"~/.config" "./.config"}
  :fs/symlink {"~/.hushlogin" "./.hushlogin"}
 
