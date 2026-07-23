@@ -9,7 +9,11 @@
             :discord {}
             :google-chrome {}
             :alcove {}
-            :swish {}}
+            :swish {}
+            ;; Fonts
+            :font-ia-writer-mono {}
+            :font-ia-writer-duo {}
+            :font-ia-writer-quattro {}}
 
  :pkg/mas {;"Timelines" 1112433234 # MAS thinks it's uninstalled because it's an iPad app I think
            "Bitwarden" 1352778147
