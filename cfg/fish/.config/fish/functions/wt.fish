@@ -102,6 +102,20 @@ function __wt_main_root --description 'Absolute path of the repository main work
     path dirname -- $common
 end
 
+function __wt_find --description 'Path of the registered worktree named $argv[1], if any'
+    for line in (git worktree list --porcelain)
+        set -l field (string split -m1 ' ' -- $line)
+        if test "$field[1]" = worktree; and test (path basename -- $field[2]) = "$argv[1]"
+            echo $field[2]
+            return 0
+        end
+    end
+    return 1
+end
+
+# Where new worktrees are created, relative to the main checkout
+set -q wt_root; or set -g wt_root .claude/worktrees
+
 function wt --description 'Create or switch to a git worktree'
     set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
     if test $status -ne 0
@@ -111,7 +125,6 @@ function wt --description 'Create or switch to a git worktree'
 
     # Worktrees always hang off the main checkout, never off each other
     set -l main_root (__wt_main_root)
-    set -l wt_dir "$main_root/.claude/worktrees"
 
     # No args: leave a worktree, otherwise list
     if test (count $argv) -eq 0
@@ -124,16 +137,20 @@ function wt --description 'Create or switch to a git worktree'
     end
 
     set -l name $argv[1]
-    set -l wt_path "$wt_dir/$name"
+
+    # Existing worktree: git knows where it lives, which needn't be $wt_root
+    set -l wt_path (__wt_find $name)
+    if test $status -eq 0
+        cd $wt_path
+        return
+    end
+
+    set -l wt_dir "$main_root/$wt_root"
+    set wt_path "$wt_dir/$name"
 
     # check-ignore can't classify a path outside the worktree it runs in
     if not git -C $main_root check-ignore -q "$wt_path" 2>/dev/null
-        echo "Warning: .claude/worktrees is not in .gitignore"
-    end
-
-    if test -d "$wt_path"
-        cd $wt_path
-        return
+        echo "Warning: $wt_root is not in .gitignore"
     end
 
     mkdir -p "$wt_dir"
