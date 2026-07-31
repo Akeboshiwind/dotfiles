@@ -103,11 +103,6 @@ function __wt_main_root --description 'Absolute path of the repository main work
 end
 
 function wt --description 'Create or switch to a git worktree'
-    if set -q WT_NAME
-        echo "Already in worktree '$WT_NAME'. Type 'exit' to leave first."
-        return 1
-    end
-
     set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
     if test $status -ne 0
         echo "Not in a git repository"
@@ -118,7 +113,7 @@ function wt --description 'Create or switch to a git worktree'
     set -l main_root (__wt_main_root)
     set -l wt_dir "$main_root/.claude/worktrees"
 
-    # No args: leave a worktree we walked into, otherwise list
+    # No args: leave a worktree, otherwise list
     if test (count $argv) -eq 0
         if test (path resolve -- $git_root) != (path resolve -- $main_root)
             cd $main_root
@@ -131,25 +126,21 @@ function wt --description 'Create or switch to a git worktree'
     set -l name $argv[1]
     set -l wt_path "$wt_dir/$name"
 
-    # Check .gitignore
-    if not git check-ignore -q "$wt_path" 2>/dev/null
+    # check-ignore can't classify a path outside the worktree it runs in
+    if not git -C $main_root check-ignore -q "$wt_path" 2>/dev/null
         echo "Warning: .claude/worktrees is not in .gitignore"
     end
 
-    # Existing worktree: enter subshell
     if test -d "$wt_path"
-        set -lx WT_NAME $name
-        fish -C "cd '$wt_path'"
+        cd $wt_path
         return
     end
 
-    # Create new worktree, then enter subshell
     mkdir -p "$wt_dir"
     if git show-ref --verify --quiet "refs/heads/$name"
         git worktree add --force "$wt_path" "$name"
     else
         git worktree add "$wt_path" -b "$name"
     end
-    and set -lx WT_NAME $name
-    and fish -C "cd '$wt_path'"
+    and cd $wt_path
 end

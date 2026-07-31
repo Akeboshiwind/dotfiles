@@ -32,10 +32,12 @@ function fish_prompt --description 'Write out the prompt'
         set nix_status " "$yellow"nix:"$name
     end
 
-    # >> Detect Worktree Subshell
+    # >> Detect Worktree
+    # A linked worktree's common dir is the *main* checkout's .git, so the two disagree
     set -l wt_status ""
-    if set -q WT_NAME
-        set wt_status " "$yellow"wt:"$git_color$WT_NAME$normal
+    set -l wt_paths (git rev-parse --path-format=absolute --show-toplevel --git-common-dir 2>/dev/null)
+    if test (count $wt_paths) -eq 2; and test $wt_paths[1] != (path dirname -- $wt_paths[2])
+        set wt_status " "$yellow"wt:"$git_color(path basename -- $wt_paths[1])$normal
     end
 
     # >> Detect AWS Profile
