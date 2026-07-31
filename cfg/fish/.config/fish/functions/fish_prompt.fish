@@ -26,12 +26,6 @@ function fish_prompt --description 'Write out the prompt'
         set git_status " $git_status"
     end
 
-    # >> Detect Nix Shell
-    set -l nix_status ""
-    if set -q IN_NIX_SHELL
-        set nix_status " "$yellow"nix:"$name
-    end
-
     # >> Detect Worktree / Submodule
     # Only a linked worktree has a git dir distinct from the common dir; a submodule's
     # agree. --show-superproject-working-tree emits a 4th line only inside a submodule.
@@ -72,6 +66,6 @@ function fish_prompt --description 'Write out the prompt'
     end
 
     echo
-    echo -s $pwd $nix_status $wt_status $aws_status $git_status $prompt_status
+    echo -s $pwd $wt_status $aws_status $git_status $prompt_status
     echo -n -s $status_color $prefix ' ' $normal
 end
