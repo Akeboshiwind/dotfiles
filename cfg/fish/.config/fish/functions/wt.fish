@@ -97,6 +97,11 @@ function __wt_list --description 'List git worktrees, most recent commit first'
     end
 end
 
+function __wt_main_root --description 'Absolute path of the repository main worktree'
+    set -l common (git rev-parse --path-format=absolute --git-common-dir 2>/dev/null); or return 1
+    path dirname -- $common
+end
+
 function wt --description 'Create or switch to a git worktree'
     if set -q WT_NAME
         echo "Already in worktree '$WT_NAME'. Type 'exit' to leave first."
@@ -109,11 +114,17 @@ function wt --description 'Create or switch to a git worktree'
         return 1
     end
 
-    set -l wt_dir "$git_root/.claude/worktrees"
+    # Worktrees always hang off the main checkout, never off each other
+    set -l main_root (__wt_main_root)
+    set -l wt_dir "$main_root/.claude/worktrees"
 
-    # No args: list worktrees
+    # No args: leave a worktree we walked into, otherwise list
     if test (count $argv) -eq 0
-        __wt_list
+        if test (path resolve -- $git_root) != (path resolve -- $main_root)
+            cd $main_root
+        else
+            __wt_list
+        end
         return 0
     end
 
