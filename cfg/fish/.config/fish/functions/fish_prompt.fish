@@ -32,12 +32,18 @@ function fish_prompt --description 'Write out the prompt'
         set nix_status " "$yellow"nix:"$name
     end
 
-    # >> Detect Worktree
-    # A linked worktree's common dir is the *main* checkout's .git, so the two disagree
+    # >> Detect Worktree / Submodule
+    # Only a linked worktree has a git dir distinct from the common dir; a submodule's
+    # agree. --show-superproject-working-tree emits a 4th line only inside a submodule.
     set -l wt_status ""
-    set -l wt_paths (git rev-parse --path-format=absolute --show-toplevel --git-common-dir 2>/dev/null)
-    if test (count $wt_paths) -eq 2; and test $wt_paths[1] != (path dirname -- $wt_paths[2])
-        set wt_status " "$yellow"wt:"$git_color(path basename -- $wt_paths[1])$normal
+    set -l repo (git rev-parse --path-format=absolute --show-toplevel --git-dir --git-common-dir --show-superproject-working-tree 2>/dev/null)
+    if test (count $repo) -ge 3
+        set -l here (path basename -- $repo[1])
+        if test $repo[2] != $repo[3]
+            set wt_status " "$yellow"wt:"$git_color$here$normal
+        else if set -q repo[4]
+            set wt_status " "$yellow"sub:"$git_color$here$normal
+        end
     end
 
     # >> Detect AWS Profile

@@ -97,11 +97,6 @@ function __wt_list --description 'List git worktrees, most recent commit first'
     end
 end
 
-function __wt_main_root --description 'Absolute path of the repository main worktree'
-    set -l common (git rev-parse --path-format=absolute --git-common-dir 2>/dev/null); or return 1
-    path dirname -- $common
-end
-
 function __wt_find --description 'Path of the worktree named $argv[1], preferring $argv[2]/$argv[1]'
     set -l name $argv[1]
     set -l wt_dir $argv[2]
@@ -131,18 +126,25 @@ end
 set -q wt_root; or set -g wt_root .claude/worktrees
 
 function wt --description 'Create or switch to a git worktree'
-    set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
-    if test $status -ne 0
+    set -l info (git rev-parse --path-format=absolute --show-toplevel --git-dir --git-common-dir 2>/dev/null)
+    if test (count $info) -ne 3
         echo "Not in a git repository"
         return 1
     end
 
-    # Worktrees always hang off the main checkout, never off each other
-    set -l main_root (__wt_main_root)
+    # Only a linked worktree has a git dir distinct from the common dir. A submodule
+    # has its own git dir under .git/modules, but the two still agree.
+    set -l main_root $info[1]
+    set -l linked
+    if test $info[2] != $info[3]
+        set linked true
+        # Worktrees always hang off the main checkout, never off each other
+        set main_root (path dirname -- $info[3])
+    end
 
     # No args: leave a worktree, otherwise list
     if test (count $argv) -eq 0
-        if test (path resolve -- $git_root) != (path resolve -- $main_root)
+        if set -q linked[1]
             cd $main_root
         else
             __wt_list
