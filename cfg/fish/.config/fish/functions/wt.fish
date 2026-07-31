@@ -102,11 +102,25 @@ function __wt_main_root --description 'Absolute path of the repository main work
     path dirname -- $common
 end
 
-function __wt_find --description 'Path of the registered worktree named $argv[1], if any'
+function __wt_find --description 'Path of the worktree named $argv[1], preferring $argv[2]/$argv[1]'
+    set -l name $argv[1]
+    set -l wt_dir $argv[2]
+
+    set -l paths
     for line in (git worktree list --porcelain)
         set -l field (string split -m1 ' ' -- $line)
-        if test "$field[1]" = worktree; and test (path basename -- $field[2]) = "$argv[1]"
-            echo $field[2]
+        # A deleted worktree stays listed until pruned, so insist on the directory
+        test "$field[1]" = worktree; and test -d "$field[2]"; and set -a paths $field[2]
+    end
+
+    # Exact first: a basename match elsewhere must not shadow the configured layout
+    if contains -- "$wt_dir/$name" $paths
+        echo "$wt_dir/$name"
+        return 0
+    end
+    for p in $paths
+        if test (path basename -- $p) = "$name"
+            echo $p
             return 0
         end
     end
@@ -136,16 +150,21 @@ function wt --description 'Create or switch to a git worktree'
         return 0
     end
 
+    if string match -qr '^[/~]' -- $wt_root
+        echo "wt_root must be relative to the main checkout (got '$wt_root')"
+        return 1
+    end
+    set -l wt_dir "$main_root/$wt_root"
+
     set -l name $argv[1]
 
     # Existing worktree: git knows where it lives, which needn't be $wt_root
-    set -l wt_path (__wt_find $name)
+    set -l wt_path (__wt_find $name $wt_dir)
     if test $status -eq 0
         cd $wt_path
         return
     end
 
-    set -l wt_dir "$main_root/$wt_root"
     set wt_path "$wt_dir/$name"
 
     # check-ignore can't classify a path outside the worktree it runs in
