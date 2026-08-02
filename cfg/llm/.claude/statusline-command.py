@@ -11,7 +11,7 @@ import os
 import subprocess
 import sys
 import time
-from typing import List, Optional
+from typing import List, NamedTuple, Optional
 
 RED = "\033[0;31m"
 GREEN = "\033[0;32m"
@@ -34,9 +34,27 @@ BAR_CHARS = "▁▂▃▄▅▆▇█"
 # competing with the gaps it needs to be distinguishable from.
 SEPARATOR = f" {DIM}│{RESET} "
 
-FIVE_HOUR_SECONDS = 18000
-SEVEN_DAY_SECONDS = 604800
 PACE_UNKNOWN_BELOW = 15
+CONTEXT_CELLS = 10
+
+
+class Window(NamedTuple):
+    """A rate limit window, one cell per natural unit of it - an hour, a day.
+
+    Tying the cell count to the unit is what makes a partly-filled cell readable: on the
+    weekly bar a half-full fourth cell is the middle of the fourth day, not 50% of some
+    arbitrary fraction. `seconds` is hardcoded because the payload reports when a window
+    resets and never how long it runs.
+    """
+
+    label: str
+    key: str
+    seconds: int
+    cells: int
+
+
+FIVE_HOUR = Window("5h", "five_hour", 18000, 5)
+SEVEN_DAY = Window("7d", "seven_day", 604800, 7)
 
 
 def render_bar(percent: int, width: int) -> str:
@@ -96,27 +114,27 @@ def window_elapsed_percent(resets_at: Optional[int], window: int) -> Optional[in
     return (window - remaining) * 100 // window
 
 
-def limit_segment(label: str, window_data: Optional[dict], window: int) -> Optional[str]:
-    """One rate limit window as a labelled chip, or None when the window is absent.
+def meter(label: str, bar: str, reading: str) -> str:
+    """A labelled bar and its reading, spaced so the label doesn't crowd the bar."""
+    return f"{DIM}{label}{RESET} {bar} {DIM}{reading}{RESET}"
 
-    A single cell rather than a bar, so the ten-cell context bar stays the only thing on the
-    line shaped like a bar. At one cell the fill height is a rounding of a rounding - the
-    chip earns its place by carrying the pace colour, which a filled block shows far more
-    plainly than coloured text does.
-    """
-    if not window_data:
+
+def limit_segment(window: Window, limits: dict) -> Optional[str]:
+    """One rate limit window as a meter, or None when the window is absent."""
+    data = limits.get(window.key)
+    if not data:
         return None
-    percent = window_data.get("used_percentage")
+    percent = data.get("used_percentage")
     if percent is None:
         return None
     percent = math.floor(percent)
 
-    resets_at = window_data.get("resets_at")
+    resets_at = data.get("resets_at")
     elapsed = window_elapsed_percent(
-        math.floor(resets_at) if resets_at is not None else None, window
+        math.floor(resets_at) if resets_at is not None else None, window.seconds
     )
-    chip = paint(pace_color(percent, elapsed), render_bar(percent, 1))
-    return f"{DIM}{label}{RESET}{chip} {DIM}{percent}%{RESET}"
+    bar = paint(pace_color(percent, elapsed), render_bar(percent, window.cells))
+    return meter(window.label, bar, f"{percent}%")
 
 
 def git_run(cwd: str, *args: str) -> Optional[str]:
@@ -193,11 +211,9 @@ def main() -> None:
                 [f"{CYAN}{location}{RESET}" if location else None, git_segment(current_dir)],
                 [f"{BLUE}{model}{RESET}" if model else None],
                 [f"{YELLOW}${cost.get('total_cost_usd') or 0:.2f}{RESET}"],
-                [
-                    f"{sparkline(context_percent, 10, 50, 70)} {DIM}{context_k}k{RESET}",
-                    limit_segment("5h", limits.get("five_hour"), FIVE_HOUR_SECONDS),
-                    limit_segment("7d", limits.get("seven_day"), SEVEN_DAY_SECONDS),
-                ],
+                [meter("ctx", sparkline(context_percent, CONTEXT_CELLS, 50, 70), f"{context_k}k")],
+                [limit_segment(FIVE_HOUR, limits)],
+                [limit_segment(SEVEN_DAY, limits)],
             ]
         )
     )
