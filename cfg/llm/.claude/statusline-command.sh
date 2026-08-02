@@ -20,6 +20,7 @@ get_used_percentage() { echo "$input" | jq -r '(.context_window.used_percentage 
 # Empty rather than 0 — absent for API-key accounts and until the first response, and a
 # hard 0% is a claim we can't make. Callers omit the segment entirely.
 get_five_hour_percentage() { echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty | floor'; }
+get_five_hour_resets_at() { echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty | floor'; }
 get_seven_day_percentage() { echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty | floor'; }
 # Floored because bash arithmetic rejects a decimal point outright.
 get_seven_day_resets_at() { echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty | floor'; }
@@ -99,11 +100,34 @@ sparkline() {
   paint "$color" "$(render_bar "$percent" "$width")"
 }
 
-# Coloured by pace - spend against elapsed time, not against the ceiling. A weekly window
+# Window lengths are hardcoded because the payload reports only when a window resets, never
+# how long it runs. Both are assumed fixed-length and closing at resets_at.
+FIVE_HOUR_SECONDS=18000
+SEVEN_DAY_SECONDS=604800
+
+# How much of a window has already gone. Answers 0 for "can't tell" - no resets_at, or one
+# further out than a whole window - which reads downstream as pace-unknown.
+# Usage: window_elapsed_percent <resets_at> <window_seconds>
+window_elapsed_percent() {
+  local resets_at=$1
+  local window=$2
+
+  if [ -z "$resets_at" ]; then
+    printf "0"
+    return
+  fi
+
+  local remaining=$((resets_at - $(date +%s)))
+  [ "$remaining" -lt 0 ] && remaining=0
+  [ "$remaining" -gt "$window" ] && remaining=$window
+  printf "%s" $(((window - remaining) * 100 / window))
+}
+
+# Coloured by pace - spend against elapsed time, not against the ceiling. A rate limit window
 # is meant to reach 100% just as it resets, so a full-but-on-schedule bar is success, and
-# level colouring would cry wolf every week at exactly the wrong moment. Below
-# PACE_UNKNOWN_BELOW the ratio is dominated by noise (day one at 5% is technically "ahead"),
-# and an elapsed of 0 means we couldn't work it out at all, so both fall back to level.
+# level colouring would cry wolf at exactly the wrong moment. Below PACE_UNKNOWN_BELOW the
+# ratio is dominated by noise (5% spent in the first minutes is technically "ahead"), and an
+# elapsed of 0 means we couldn't work it out at all, so both fall back to level.
 # Usage: sparkline_paced <percent> <width> <elapsed_percent>
 PACE_UNKNOWN_BELOW=15
 sparkline_paced() {
@@ -132,6 +156,22 @@ sparkline_paced() {
   fi
 
   paint "$color" "$(render_bar "$percent" "$width")"
+}
+
+# One rate limit window as a labelled bar, or nothing at all when the window is absent -
+# which it is for API-key accounts, and for everyone until the first response of a session.
+# Usage: limit_segment <label> <percent> <resets_at> <window_seconds>
+limit_segment() {
+  local label=$1
+  local percent=$2
+  local resets_at=$3
+  local window=$4
+
+  [ -z "$percent" ] && return
+
+  local elapsed
+  elapsed=$(window_elapsed_percent "$resets_at" "$window")
+  printf "%s" "${DIM}${label}${RESET}$(sparkline_paced "$percent" 5 "$elapsed") ${DIM}${percent}%${RESET}"
 }
 
 # Extract values using helpers
@@ -221,31 +261,8 @@ context_k=$((input_tokens / 1000))
 context_spark=$(sparkline "$context_percent" 10 50 70)
 context_info="${context_spark} ${DIM}${context_k}k${RESET}"
 
-# 5-hour rate limit. Higher thresholds than the context bar: a full window is spent
-# every session by design, and it refills on its own.
-five_hour_percent=$(get_five_hour_percentage)
-limit_info=""
-if [ -n "$five_hour_percent" ]; then
-  limit_info="${DIM}5h${RESET}$(sparkline "$five_hour_percent" 5 70 90) ${DIM}${five_hour_percent}%${RESET}"
-fi
-
-# 7-day rate limit, coloured by pace. Assumes resets_at closes a fixed 604800s window,
-# so elapsed is however much of it has already gone.
-SEVEN_DAY_SECONDS=604800
-seven_day_percent=$(get_seven_day_percentage)
-week_info=""
-if [ -n "$seven_day_percent" ]; then
-  resets_at=$(get_seven_day_resets_at)
-  # 0 reads as "pace unknown" downstream, which is the honest answer without resets_at.
-  elapsed_percent=0
-  if [ -n "$resets_at" ]; then
-    remaining=$((resets_at - $(date +%s)))
-    [ "$remaining" -lt 0 ] && remaining=0
-    [ "$remaining" -gt "$SEVEN_DAY_SECONDS" ] && remaining=$SEVEN_DAY_SECONDS
-    elapsed_percent=$(((SEVEN_DAY_SECONDS - remaining) * 100 / SEVEN_DAY_SECONDS))
-  fi
-  week_info="${DIM}7d${RESET}$(sparkline_paced "$seven_day_percent" 5 "$elapsed_percent") ${DIM}${seven_day_percent}%${RESET}"
-fi
+limit_info=$(limit_segment "5h" "$(get_five_hour_percentage)" "$(get_five_hour_resets_at)" "$FIVE_HOUR_SECONDS")
+week_info=$(limit_segment "7d" "$(get_seven_day_percentage)" "$(get_seven_day_resets_at)" "$SEVEN_DAY_SECONDS")
 
 # Build output
 output=""
