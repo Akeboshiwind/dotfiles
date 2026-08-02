@@ -193,8 +193,8 @@ def context_reading(context: dict) -> str:
     return f"{thousands}k, {share}% cached"
 
 
-def waiting_share(cost: dict) -> Optional[str]:
-    """Share of session wall-clock spent waiting on the model rather than on the human.
+def waiting_share(cost: dict) -> Optional[int]:
+    """Percentage of session wall-clock spent waiting on the model rather than on the human.
 
     Clamped because concurrent requests can bill more API time than the clock has run.
     """
@@ -202,7 +202,25 @@ def waiting_share(cost: dict) -> Optional[str]:
     waiting = cost.get("total_api_duration_ms") or 0
     if not elapsed:
         return None
-    return f"{DIM}{min(waiting * 100 // elapsed, 100)}% waiting{RESET}"
+    return min(waiting * 100 // elapsed, 100)
+
+
+def model_segment(model: Optional[str], cost: dict) -> Optional[str]:
+    """The model, and the share of the session that has gone on waiting for it.
+
+    One phrase rather than two segments, because naming the model inside the wait says what
+    the waiting is for - which a bare percentage never did, whatever it was labelled. The
+    model keeps its colour inside the phrase so it stays the part the eye lands on.
+
+    Falls back to the model alone when there's no elapsed time to take a share of, which is
+    the case before the first response. Of the two the model is the half worth keeping.
+    """
+    if not model:
+        return None
+    share = waiting_share(cost)
+    if share is None:
+        return f"{BLUE}{model}{RESET}"
+    return f"{DIM}{share}% waiting on {RESET}{BLUE}{model}{RESET}"
 
 
 def limit_segment(window: Window, limits: dict) -> Optional[str]:
@@ -294,9 +312,8 @@ def main() -> None:
         join_groups(
             [
                 [f"{CYAN}{location}{RESET}" if location else None, git_segment(current_dir)],
-                [f"{BLUE}{model}{RESET}" if model else None],
                 [f"{YELLOW}${cost.get('total_cost_usd') or 0:.2f}{RESET}"],
-                [waiting_share(cost)],
+                [model_segment(model, cost)],
                 [meter("ctx", sparkline(context_percent, CONTEXT_CELLS, 50, 70),
                        context_reading(context))],
                 [limit_segment(FIVE_HOUR, limits)],
