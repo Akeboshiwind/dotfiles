@@ -161,22 +161,12 @@ def meter(label: str, bar: str, reading: str) -> str:
     return f"{DIM}{label}{RESET} {bar} {DIM}{reading}{RESET}"
 
 
-def figure(label: str, value: str) -> str:
-    """A label and a number, for signals with no bar to hang off.
-
-    Left uncoloured on purpose. Both of these read better when high, the opposite of every
-    bar on the line, and a green 94% beside a green 20% would make the palette mean two
-    contradictory things at once.
-    """
-    return f"{DIM}{label} {value}{RESET}"
-
-
-def cache_share(context: dict) -> Optional[str]:
-    """Share of the last turn's input that was read from cache instead of sent again.
+def cache_share(context: dict) -> Optional[int]:
+    """Percentage of the last turn's input read from cache rather than sent again.
 
     Answers whether the next turn re-reads this conversation cheaply or pays to rebuild it.
     `current_usage` is null before the first API call and again after /compact, and its three
-    components can legitimately sum to zero, so both cases drop the figure rather than divide.
+    components can legitimately sum to zero, so both cases give up rather than divide.
     """
     usage = context.get("current_usage") or {}
     cached = usage.get("cache_read_input_tokens") or 0
@@ -187,10 +177,23 @@ def cache_share(context: dict) -> Optional[str]:
     )
     if not total:
         return None
-    return figure("cache", f"{cached * 100 // total}%")
+    return cached * 100 // total
 
 
-def api_share(cost: dict) -> Optional[str]:
+def context_reading(context: dict) -> str:
+    """What's in the window, and how much of it the last turn got to reuse.
+
+    One phrase rather than two figures: the cache share describes the very tokens it's sitting
+    beside, and a second bare percentage on the line would read as another gauge.
+    """
+    thousands = (context.get("total_input_tokens") or 0) // 1000
+    share = cache_share(context)
+    if share is None:
+        return f"{thousands}k"
+    return f"{thousands}k, {share}% cached"
+
+
+def waiting_share(cost: dict) -> Optional[str]:
     """Share of session wall-clock spent waiting on the model rather than on the human.
 
     Clamped because concurrent requests can bill more API time than the clock has run.
@@ -199,7 +202,7 @@ def api_share(cost: dict) -> Optional[str]:
     waiting = cost.get("total_api_duration_ms") or 0
     if not elapsed:
         return None
-    return figure("api", f"{min(waiting * 100 // elapsed, 100)}%")
+    return f"{DIM}{min(waiting * 100 // elapsed, 100)}% waiting{RESET}"
 
 
 def limit_segment(window: Window, limits: dict) -> Optional[str]:
@@ -281,7 +284,6 @@ def main() -> None:
 
     context = data.get("context_window") or {}
     context_percent = math.floor(context.get("used_percentage") or 0)
-    context_k = (context.get("total_input_tokens") or 0) // 1000
 
     cost = data.get("cost") or {}
     limits = data.get("rate_limits") or {}
@@ -293,11 +295,10 @@ def main() -> None:
             [
                 [f"{CYAN}{location}{RESET}" if location else None, git_segment(current_dir)],
                 [f"{BLUE}{model}{RESET}" if model else None],
-                [f"{YELLOW}${cost.get('total_cost_usd') or 0:.2f}{RESET}", api_share(cost)],
-                [
-                    meter("ctx", sparkline(context_percent, CONTEXT_CELLS, 50, 70), f"{context_k}k"),
-                    cache_share(context),
-                ],
+                [f"{YELLOW}${cost.get('total_cost_usd') or 0:.2f}{RESET}"],
+                [waiting_share(cost)],
+                [meter("ctx", sparkline(context_percent, CONTEXT_CELLS, 50, 70),
+                       context_reading(context))],
                 [limit_segment(FIVE_HOUR, limits)],
                 [limit_segment(SEVEN_DAY, limits)],
             ]
