@@ -20,6 +20,9 @@ get_used_percentage() { echo "$input" | jq -r '(.context_window.used_percentage 
 # Empty rather than 0 — absent for API-key accounts and until the first response, and a
 # hard 0% is a claim we can't make. Callers omit the segment entirely.
 get_five_hour_percentage() { echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty | floor'; }
+get_seven_day_percentage() { echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty | floor'; }
+# Floored because bash arithmetic rejects a decimal point outright.
+get_seven_day_resets_at() { echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty | floor'; }
 
 # Colors
 RED='\033[0;31m'
@@ -91,6 +94,41 @@ sparkline() {
     color="$FG_YELLOW"
   else
     color="$FG_RED"
+  fi
+
+  paint "$color" "$(render_bar "$percent" "$width")"
+}
+
+# Coloured by pace - spend against elapsed time, not against the ceiling. A weekly window
+# is meant to reach 100% just as it resets, so a full-but-on-schedule bar is success, and
+# level colouring would cry wolf every week at exactly the wrong moment. Below
+# PACE_UNKNOWN_BELOW the ratio is dominated by noise (day one at 5% is technically "ahead"),
+# and an elapsed of 0 means we couldn't work it out at all, so both fall back to level.
+# Usage: sparkline_paced <percent> <width> <elapsed_percent>
+PACE_UNKNOWN_BELOW=15
+sparkline_paced() {
+  local percent=$1
+  local width=$2
+  local elapsed=$3
+
+  local color
+  if [ "$elapsed" -lt "$PACE_UNKNOWN_BELOW" ]; then
+    if [ "$percent" -lt 50 ]; then
+      color="$FG_GREEN"
+    elif [ "$percent" -lt 75 ]; then
+      color="$FG_YELLOW"
+    else
+      color="$FG_RED"
+    fi
+  else
+    local ratio=$((percent * 100 / elapsed))
+    if [ "$ratio" -lt 100 ]; then
+      color="$FG_GREEN"
+    elif [ "$ratio" -lt 130 ]; then
+      color="$FG_YELLOW"
+    else
+      color="$FG_RED"
+    fi
   fi
 
   paint "$color" "$(render_bar "$percent" "$width")"
@@ -191,6 +229,24 @@ if [ -n "$five_hour_percent" ]; then
   limit_info="${DIM}5h${RESET}$(sparkline "$five_hour_percent" 5 70 90) ${DIM}${five_hour_percent}%${RESET}"
 fi
 
+# 7-day rate limit, coloured by pace. Assumes resets_at closes a fixed 604800s window,
+# so elapsed is however much of it has already gone.
+SEVEN_DAY_SECONDS=604800
+seven_day_percent=$(get_seven_day_percentage)
+week_info=""
+if [ -n "$seven_day_percent" ]; then
+  resets_at=$(get_seven_day_resets_at)
+  # 0 reads as "pace unknown" downstream, which is the honest answer without resets_at.
+  elapsed_percent=0
+  if [ -n "$resets_at" ]; then
+    remaining=$((resets_at - $(date +%s)))
+    [ "$remaining" -lt 0 ] && remaining=0
+    [ "$remaining" -gt "$SEVEN_DAY_SECONDS" ] && remaining=$SEVEN_DAY_SECONDS
+    elapsed_percent=$(((SEVEN_DAY_SECONDS - remaining) * 100 / SEVEN_DAY_SECONDS))
+  fi
+  week_info="${DIM}7d${RESET}$(sparkline_paced "$seven_day_percent" 5 "$elapsed_percent") ${DIM}${seven_day_percent}%${RESET}"
+fi
+
 # Build output
 output=""
 output="${output}${CYAN}${location}${RESET}"
@@ -199,6 +255,7 @@ output="${output} ${BLUE}${model_name}${RESET}"
 output="${output} ${DIM}v${version}${RESET}"
 output="${output} ${context_info}"
 [ -n "$limit_info" ] && output="${output} ${limit_info}"
+[ -n "$week_info" ] && output="${output} ${week_info}"
 output="${output} ${YELLOW}${cost_formatted}${RESET}"
 output="${output} ${DIM}${duration}${RESET}"
 [ -n "$lines_info" ] && output="${output} ${lines_info}"
