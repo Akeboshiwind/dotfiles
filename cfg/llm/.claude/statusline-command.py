@@ -37,6 +37,13 @@ SEPARATOR = f" {DIM}│{RESET} "
 PACE_UNKNOWN_BELOW = 15
 CONTEXT_CELLS = 10
 
+# Spend as a percentage of elapsed time. 100 is dead on schedule, and it has to sit inside
+# the green band with room to spare: both figures are integers, so perfectly even usage lands
+# on either side of 100 by rounding alone. A ratio exhausts the window at 100/ratio of the way
+# through it, so 115 runs dry with a fourteenth of the window left and 150 with a third of it.
+PACE_AHEAD = 115
+PACE_WELL_AHEAD = 150
+
 
 class Window(NamedTuple):
     """A rate limit window, one cell per natural unit of it - an hour, a day.
@@ -100,7 +107,7 @@ def pace_color(percent: int, elapsed: Optional[int]) -> str:
     if elapsed is None or elapsed < PACE_UNKNOWN_BELOW:
         return level_color(percent, 50, 75)
     ratio = percent * 100 // elapsed
-    return level_color(ratio, 100, 130)
+    return level_color(ratio, PACE_AHEAD, PACE_WELL_AHEAD)
 
 
 def window_elapsed_percent(resets_at: Optional[int], window: int) -> Optional[int]:
