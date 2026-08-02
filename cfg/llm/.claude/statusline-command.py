@@ -1,0 +1,200 @@
+#!/usr/bin/python3
+"""Claude Code status line: location, git, model, context window, rate limits, cost.
+
+The interpreter is pinned rather than found via env, so installing a managed python can't
+silently move this onto a different one.
+"""
+
+import json
+import math
+import os
+import subprocess
+import sys
+import time
+from typing import List, Optional
+
+RED = "\033[0;31m"
+GREEN = "\033[0;32m"
+YELLOW = "\033[0;33m"
+BLUE = "\033[0;34m"
+MAGENTA = "\033[0;35m"
+CYAN = "\033[0;36m"
+DIM = "\033[2m"
+RESET = "\033[0m"
+
+BG_DARK = "\033[48;5;236m"
+FG_GREEN = "\033[32m"
+FG_YELLOW = "\033[33m"
+FG_RED = "\033[31m"
+
+BAR_CHARS = "▁▂▃▄▅▆▇█"
+
+FIVE_HOUR_SECONDS = 18000
+SEVEN_DAY_SECONDS = 604800
+PACE_UNKNOWN_BELOW = 15
+
+
+def render_bar(percent: int, width: int) -> str:
+    """Bar geometry, no colour. Each cell carries 8 graduations."""
+    filled = percent * width * 8 // 100
+    cells = []
+    for i in range(width):
+        cell_fill = filled - i * 8
+        if cell_fill >= 8:
+            cells.append(BAR_CHARS[7])
+        elif cell_fill <= 0:
+            cells.append(" ")
+        else:
+            cells.append(BAR_CHARS[cell_fill - 1])
+    return "".join(cells)
+
+
+def paint(color: str, bar: str) -> str:
+    return f"{BG_DARK}{color}{bar}{RESET}"
+
+
+def level_color(percent: int, yellow_at: int, red_at: int) -> str:
+    if percent < yellow_at:
+        return FG_GREEN
+    if percent < red_at:
+        return FG_YELLOW
+    return FG_RED
+
+
+def sparkline(percent: int, width: int, yellow_at: int, red_at: int) -> str:
+    """Coloured by level - how full the bar is."""
+    return paint(level_color(percent, yellow_at, red_at), render_bar(percent, width))
+
+
+def pace_color(percent: int, elapsed: Optional[int]) -> str:
+    """Spend against elapsed time rather than against the ceiling.
+
+    A rate limit window is meant to reach 100% just as it resets, so a full-but-on-schedule
+    bar is success and level colouring would cry wolf at exactly the wrong moment. Below
+    PACE_UNKNOWN_BELOW the ratio is dominated by noise, and elapsed is None when there is no
+    resets_at to work from - both fall back to level.
+    """
+    if elapsed is None or elapsed < PACE_UNKNOWN_BELOW:
+        return level_color(percent, 50, 75)
+    ratio = percent * 100 // elapsed
+    return level_color(ratio, 100, 130)
+
+
+def window_elapsed_percent(resets_at: Optional[int], window: int) -> Optional[int]:
+    """How much of a fixed-length window has gone. None when it can't be worked out."""
+    if resets_at is None:
+        return None
+    remaining = resets_at - int(time.time())
+    if remaining > window:
+        return None
+    remaining = max(remaining, 0)
+    return (window - remaining) * 100 // window
+
+
+def limit_segment(label: str, window_data: Optional[dict], window: int) -> Optional[str]:
+    """One rate limit window as a labelled bar, or None when the window is absent."""
+    if not window_data:
+        return None
+    percent = window_data.get("used_percentage")
+    if percent is None:
+        return None
+    percent = math.floor(percent)
+
+    resets_at = window_data.get("resets_at")
+    elapsed = window_elapsed_percent(
+        math.floor(resets_at) if resets_at is not None else None, window
+    )
+    bar = paint(pace_color(percent, elapsed), render_bar(percent, 5))
+    return f"{DIM}{label}{RESET}{bar} {DIM}{percent}%{RESET}"
+
+
+def git_run(cwd: str, *args: str) -> Optional[str]:
+    try:
+        out = subprocess.run(
+            ["git", "-C", cwd, "--no-optional-locks", *args],
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        return None
+    if out.returncode != 0:
+        return None
+    return out.stdout.strip()
+
+
+def git_segment(cwd: str) -> Optional[str]:
+    if git_run(cwd, "rev-parse", "--git-dir") is None:
+        return None
+    branch = git_run(cwd, "rev-parse", "--abbrev-ref", "HEAD") or ""
+
+    dirty = subprocess.run(
+        ["git", "-C", cwd, "--no-optional-locks", "diff", "--quiet"],
+        capture_output=True,
+    ).returncode
+    status = f"{GREEN}✓" if dirty == 0 else f"{YELLOW}●"
+
+    if git_run(cwd, "ls-files", "--others", "--exclude-standard"):
+        status += f"{CYAN}+"
+
+    counts = git_run(cwd, "rev-list", "--left-right", "--count", "HEAD...@{upstream}")
+    if counts:
+        ahead, behind = counts.split("\t")[:2]
+        if int(ahead) > 0:
+            status += f"{GREEN}↑{ahead}"
+        if int(behind) > 0:
+            status += f"{RED}↓{behind}"
+
+    return f"{MAGENTA}{branch}{RESET}[{status}{RESET}]"
+
+
+def format_duration(ms: Optional[int]) -> str:
+    seconds = (ms or 0) // 1000
+    if seconds >= 60:
+        return f"{seconds // 60}m{seconds % 60}s"
+    return f"{seconds}s"
+
+
+def format_lines(added: Optional[int], removed: Optional[int]) -> Optional[str]:
+    parts: List[str] = []
+    if added:
+        parts.append(f"{GREEN}+{added}{RESET}")
+    if removed:
+        parts.append(f"{RED}-{removed}{RESET}")
+    return "/".join(parts) or None
+
+
+def main() -> None:
+    data = json.load(sys.stdin)
+
+    workspace = data.get("workspace") or {}
+    current_dir = workspace.get("current_dir") or ""
+    project_dir = workspace.get("project_dir") or ""
+    location = os.path.basename(current_dir)
+    if current_dir != project_dir:
+        location = f"{os.path.basename(project_dir)}→{location}"
+
+    context = data.get("context_window") or {}
+    context_percent = math.floor(context.get("used_percentage") or 0)
+    context_k = (context.get("total_input_tokens") or 0) // 1000
+
+    cost = data.get("cost") or {}
+    limits = data.get("rate_limits") or {}
+
+    segments: List[Optional[str]] = [
+        f"{CYAN}{location}{RESET}",
+        git_segment(current_dir),
+        f"{BLUE}{data.get('model', {}).get('display_name')}{RESET}",
+        f"{DIM}v{data.get('version')}{RESET}",
+        f"{sparkline(context_percent, 10, 50, 70)} {DIM}{context_k}k{RESET}",
+        limit_segment("5h", limits.get("five_hour"), FIVE_HOUR_SECONDS),
+        limit_segment("7d", limits.get("seven_day"), SEVEN_DAY_SECONDS),
+        f"{YELLOW}${cost.get('total_cost_usd') or 0:.2f}{RESET}",
+        f"{DIM}{format_duration(cost.get('total_duration_ms'))}{RESET}",
+        format_lines(cost.get("total_lines_added"), cost.get("total_lines_removed")),
+    ]
+
+    sys.stdout.write(" ".join(s for s in segments if s))
+
+
+if __name__ == "__main__":
+    main()

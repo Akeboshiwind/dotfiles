@@ -42,7 +42,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "/Users/osm/.claude/statusline-command.sh"
+    "command": "/Users/osm/.claude/statusline-command.py"
   },
   "enabledPlugins": {
     "playground@claude-plugins-official": true,
