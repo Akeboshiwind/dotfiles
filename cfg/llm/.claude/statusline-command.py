@@ -161,6 +161,47 @@ def meter(label: str, bar: str, reading: str) -> str:
     return f"{DIM}{label}{RESET} {bar} {DIM}{reading}{RESET}"
 
 
+def figure(label: str, value: str) -> str:
+    """A label and a number, for signals with no bar to hang off.
+
+    Left uncoloured on purpose. Both of these read better when high, the opposite of every
+    bar on the line, and a green 94% beside a green 20% would make the palette mean two
+    contradictory things at once.
+    """
+    return f"{DIM}{label} {value}{RESET}"
+
+
+def cache_share(context: dict) -> Optional[str]:
+    """Share of the last turn's input that was read from cache instead of sent again.
+
+    Answers whether the next turn re-reads this conversation cheaply or pays to rebuild it.
+    `current_usage` is null before the first API call and again after /compact, and its three
+    components can legitimately sum to zero, so both cases drop the figure rather than divide.
+    """
+    usage = context.get("current_usage") or {}
+    cached = usage.get("cache_read_input_tokens") or 0
+    total = (
+        (usage.get("input_tokens") or 0)
+        + (usage.get("cache_creation_input_tokens") or 0)
+        + cached
+    )
+    if not total:
+        return None
+    return figure("cache", f"{cached * 100 // total}%")
+
+
+def api_share(cost: dict) -> Optional[str]:
+    """Share of session wall-clock spent waiting on the model rather than on the human.
+
+    Clamped because concurrent requests can bill more API time than the clock has run.
+    """
+    elapsed = cost.get("total_duration_ms") or 0
+    waiting = cost.get("total_api_duration_ms") or 0
+    if not elapsed:
+        return None
+    return figure("api", f"{min(waiting * 100 // elapsed, 100)}%")
+
+
 def limit_segment(window: Window, limits: dict) -> Optional[str]:
     """One rate limit window as a meter, or None when the window is absent."""
     data = limits.get(window.key)
@@ -252,8 +293,11 @@ def main() -> None:
             [
                 [f"{CYAN}{location}{RESET}" if location else None, git_segment(current_dir)],
                 [f"{BLUE}{model}{RESET}" if model else None],
-                [f"{YELLOW}${cost.get('total_cost_usd') or 0:.2f}{RESET}"],
-                [meter("ctx", sparkline(context_percent, CONTEXT_CELLS, 50, 70), f"{context_k}k")],
+                [f"{YELLOW}${cost.get('total_cost_usd') or 0:.2f}{RESET}", api_share(cost)],
+                [
+                    meter("ctx", sparkline(context_percent, CONTEXT_CELLS, 50, 70), f"{context_k}k"),
+                    cache_share(context),
+                ],
                 [limit_segment(FIVE_HOUR, limits)],
                 [limit_segment(SEVEN_DAY, limits)],
             ]
