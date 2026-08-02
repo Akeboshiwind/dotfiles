@@ -29,6 +29,11 @@ FG_RED = "\033[31m"
 
 BAR_CHARS = "▁▂▃▄▅▆▇█"
 
+# Groups are space-separated inside and divided by this. Whitespace alone won't do the job:
+# two of the groups have spaces between their own segments, so a wider gap would be
+# competing with the gaps it needs to be distinguishable from.
+SEPARATOR = f" {DIM}│{RESET} "
+
 FIVE_HOUR_SECONDS = 18000
 SEVEN_DAY_SECONDS = 604800
 PACE_UNKNOWN_BELOW = 15
@@ -92,7 +97,13 @@ def window_elapsed_percent(resets_at: Optional[int], window: int) -> Optional[in
 
 
 def limit_segment(label: str, window_data: Optional[dict], window: int) -> Optional[str]:
-    """One rate limit window as a labelled bar, or None when the window is absent."""
+    """One rate limit window as a labelled chip, or None when the window is absent.
+
+    A single cell rather than a bar, so the ten-cell context bar stays the only thing on the
+    line shaped like a bar. At one cell the fill height is a rounding of a rounding - the
+    chip earns its place by carrying the pace colour, which a filled block shows far more
+    plainly than coloured text does.
+    """
     if not window_data:
         return None
     percent = window_data.get("used_percentage")
@@ -104,8 +115,8 @@ def limit_segment(label: str, window_data: Optional[dict], window: int) -> Optio
     elapsed = window_elapsed_percent(
         math.floor(resets_at) if resets_at is not None else None, window
     )
-    bar = paint(pace_color(percent, elapsed), render_bar(percent, 5))
-    return f"{DIM}{label}{RESET}{bar} {DIM}{percent}%{RESET}"
+    chip = paint(pace_color(percent, elapsed), render_bar(percent, 1))
+    return f"{DIM}{label}{RESET}{chip} {DIM}{percent}%{RESET}"
 
 
 def git_run(cwd: str, *args: str) -> Optional[str]:
@@ -147,20 +158,14 @@ def git_segment(cwd: str) -> Optional[str]:
     return f"{MAGENTA}{branch}{RESET}[{status}{RESET}]"
 
 
-def format_duration(ms: Optional[int]) -> str:
-    seconds = (ms or 0) // 1000
-    if seconds >= 60:
-        return f"{seconds // 60}m{seconds % 60}s"
-    return f"{seconds}s"
+def join_groups(groups: List[List[Optional[str]]]) -> str:
+    """Space-separated within a group, SEPARATOR between them.
 
-
-def format_lines(added: Optional[int], removed: Optional[int]) -> Optional[str]:
-    parts: List[str] = []
-    if added:
-        parts.append(f"{GREEN}+{added}{RESET}")
-    if removed:
-        parts.append(f"{RED}-{removed}{RESET}")
-    return "/".join(parts) or None
+    Absent segments and groups left empty by them drop out, so a missing git repo or an
+    API-key account can't strand a separator with nothing on one side of it.
+    """
+    rendered = [" ".join(s for s in group if s) for group in groups]
+    return SEPARATOR.join(r for r in rendered if r)
 
 
 def main() -> None:
@@ -180,20 +185,22 @@ def main() -> None:
     cost = data.get("cost") or {}
     limits = data.get("rate_limits") or {}
 
-    segments: List[Optional[str]] = [
-        f"{CYAN}{location}{RESET}",
-        git_segment(current_dir),
-        f"{BLUE}{data.get('model', {}).get('display_name')}{RESET}",
-        f"{DIM}v{data.get('version')}{RESET}",
-        f"{sparkline(context_percent, 10, 50, 70)} {DIM}{context_k}k{RESET}",
-        limit_segment("5h", limits.get("five_hour"), FIVE_HOUR_SECONDS),
-        limit_segment("7d", limits.get("seven_day"), SEVEN_DAY_SECONDS),
-        f"{YELLOW}${cost.get('total_cost_usd') or 0:.2f}{RESET}",
-        f"{DIM}{format_duration(cost.get('total_duration_ms'))}{RESET}",
-        format_lines(cost.get("total_lines_added"), cost.get("total_lines_removed")),
-    ]
+    model = (data.get("model") or {}).get("display_name")
 
-    sys.stdout.write(" ".join(s for s in segments if s))
+    sys.stdout.write(
+        join_groups(
+            [
+                [f"{CYAN}{location}{RESET}" if location else None, git_segment(current_dir)],
+                [f"{BLUE}{model}{RESET}" if model else None],
+                [f"{YELLOW}${cost.get('total_cost_usd') or 0:.2f}{RESET}"],
+                [
+                    f"{sparkline(context_percent, 10, 50, 70)} {DIM}{context_k}k{RESET}",
+                    limit_segment("5h", limits.get("five_hour"), FIVE_HOUR_SECONDS),
+                    limit_segment("7d", limits.get("seven_day"), SEVEN_DAY_SECONDS),
+                ],
+            ]
+        )
+    )
 
 
 if __name__ == "__main__":
