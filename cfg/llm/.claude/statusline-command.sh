@@ -12,12 +12,11 @@ get_cost() { echo "$input" | jq -r '.cost.total_cost_usd'; }
 get_duration() { echo "$input" | jq -r '.cost.total_duration_ms'; }
 get_lines_added() { echo "$input" | jq -r '.cost.total_lines_added'; }
 get_lines_removed() { echo "$input" | jq -r '.cost.total_lines_removed'; }
-get_input_tokens() { echo "$input" | jq -r '.context_window.total_input_tokens'; }
-get_output_tokens() { echo "$input" | jq -r '.context_window.total_output_tokens'; }
-get_context_window_size() { echo "$input" | jq -r '.context_window.context_window_size'; }
-get_cache_read() { echo "$input" | jq -r '.context_window.current_usage.cache_read_input_tokens // 0'; }
-get_cache_creation() { echo "$input" | jq -r '.context_window.current_usage.cache_creation_input_tokens // 0'; }
-get_current_input() { echo "$input" | jq -r '.context_window.current_usage.input_tokens // 0'; }
+# Current context, not a session total, since Claude Code v2.1.132.
+get_input_tokens() { echo "$input" | jq -r '.context_window.total_input_tokens // 0'; }
+get_output_tokens() { echo "$input" | jq -r '.context_window.total_output_tokens // 0'; }
+# Null early in a session and again just after /compact; floor because it can be fractional.
+get_used_percentage() { echo "$input" | jq -r '(.context_window.used_percentage // 0) | floor'; }
 
 # Colors
 RED='\033[0;31m'
@@ -43,19 +42,18 @@ FG_RED='\033[31m'
 BAR_CHARS=("▁" "▂" "▃" "▄" "▅" "▆" "▇" "█")
 
 # Sparkline function - converts percentage to a bar with graduations
-# Usage: sparkline <percent> <width> <value> <yellow_threshold> <red_threshold>
+# Usage: sparkline <percent> <width> <yellow_threshold> <red_threshold>
 sparkline() {
   local percent=$1
   local width=${2:-10}
-  local value=${3:-0}
-  local yellow_at=${4:-50}
-  local red_at=${5:-80}
+  local yellow_at=${3:-50}
+  local red_at=${4:-80}
   local bar=""
 
   local color
-  if [ "$value" -lt "$yellow_at" ]; then
+  if [ "$percent" -lt "$yellow_at" ]; then
     color="$FG_GREEN"
-  elif [ "$value" -lt "$red_at" ]; then
+  elif [ "$percent" -lt "$red_at" ]; then
     color="$FG_YELLOW"
   else
     color="$FG_RED"
@@ -97,7 +95,7 @@ lines_added=$(get_lines_added)
 lines_removed=$(get_lines_removed)
 input_tokens=$(get_input_tokens)
 output_tokens=$(get_output_tokens)
-context_size=$(get_context_window_size)
+context_percent=$(get_used_percentage)
 
 # Format duration
 if [ "$duration_ms" != "null" ] && [ -n "$duration_ms" ]; then
@@ -169,13 +167,8 @@ if git -C "$current_dir" rev-parse --git-dir >/dev/null 2>&1; then
 fi
 
 # Context window with sparkline - bar shows fill against total window, number shows raw k
-cache_read=$(get_cache_read)
-cache_creation=$(get_cache_creation)
-current_input=$(get_current_input)
-actual_context=$((cache_read + cache_creation + current_input))
-context_percent=$((actual_context * 100 / context_size))
-context_k=$((actual_context / 1000))
-context_spark=$(sparkline "$context_percent" 10 "$context_k" 100 140)
+context_k=$((input_tokens / 1000))
+context_spark=$(sparkline "$context_percent" 10 50 70)
 context_info="${context_spark} ${DIM}${context_k}k${RESET}"
 
 # Build output
