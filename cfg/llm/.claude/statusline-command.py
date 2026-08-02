@@ -23,6 +23,10 @@ DIM = "\033[2m"
 RESET = "\033[0m"
 
 BG_DARK = "\033[48;5;236m"
+# A rate limit bar carries a second reading in its background: cells behind the clock are
+# lighter, so the boundary between the two shades is where an evenly-spent window would have
+# reached by now. Fill running past it is overspend, shown positionally.
+BG_ELAPSED = "\033[48;5;238m"
 FG_GREEN = "\033[32m"
 FG_YELLOW = "\033[33m"
 FG_RED = "\033[31m"
@@ -58,10 +62,11 @@ class Window(NamedTuple):
     key: str
     seconds: int
     cells: int
+    unit: str
 
 
-FIVE_HOUR = Window("5h", "five_hour", 18000, 5)
-SEVEN_DAY = Window("7d", "seven_day", 604800, 7)
+FIVE_HOUR = Window("5h", "five_hour", 18000, 5, "h")
+SEVEN_DAY = Window("7d", "seven_day", 604800, 7, "d")
 
 
 def render_bar(percent: int, width: int) -> str:
@@ -81,6 +86,19 @@ def render_bar(percent: int, width: int) -> str:
 
 def paint(color: str, bar: str) -> str:
     return f"{BG_DARK}{color}{bar}{RESET}"
+
+
+def paint_paced(color: str, bar: str, elapsed: Optional[int]) -> str:
+    """As paint, but with the background split at wherever the clock has reached.
+
+    An elapsed of None leaves the whole bar on the base shade: with no resets_at there is no
+    clock to mark, and a boundary drawn at zero would read as a window that just opened.
+    """
+    if elapsed is None:
+        return paint(color, bar)
+    lit = elapsed * len(bar) // 100
+    cells = (f"{BG_ELAPSED if i < lit else BG_DARK}{color}{g}" for i, g in enumerate(bar))
+    return "".join(cells) + RESET
 
 
 def level_color(percent: int, yellow_at: int, red_at: int) -> str:
@@ -121,6 +139,23 @@ def window_elapsed_percent(resets_at: Optional[int], window: int) -> Optional[in
     return (window - remaining) * 100 // window
 
 
+def pace_gap(percent: int, elapsed: Optional[int], window: Window) -> str:
+    """How far spend has run ahead of the clock, in the window's own units.
+
+    A debt already run up rather than a forecast: +1.0h means running out an hour early even
+    on slowing to the sustainable rate this instant, where a projection from the current rate
+    would say sooner. Unlike the pace ratio there's no small denominator to guard against, so
+    this stays meaningful from the first minute of a window. Without a resets_at there is no
+    clock to be ahead of, and it falls back to reporting the level the bar is already showing.
+    """
+    if elapsed is None:
+        return f"{percent}%"
+    gap = (percent - elapsed) / 100 * window.cells
+    if abs(gap) < 0.05:
+        gap = 0.0
+    return f"{gap:+.1f}{window.unit}"
+
+
 def meter(label: str, bar: str, reading: str) -> str:
     """A labelled bar and its reading, spaced so the label doesn't crowd the bar."""
     return f"{DIM}{label}{RESET} {bar} {DIM}{reading}{RESET}"
@@ -140,8 +175,8 @@ def limit_segment(window: Window, limits: dict) -> Optional[str]:
     elapsed = window_elapsed_percent(
         math.floor(resets_at) if resets_at is not None else None, window.seconds
     )
-    bar = paint(pace_color(percent, elapsed), render_bar(percent, window.cells))
-    return meter(window.label, bar, f"{percent}%")
+    bar = paint_paced(pace_color(percent, elapsed), render_bar(percent, window.cells), elapsed)
+    return meter(window.label, bar, pace_gap(percent, elapsed, window))
 
 
 def git_run(cwd: str, *args: str) -> Optional[str]:
