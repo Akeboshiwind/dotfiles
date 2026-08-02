@@ -17,6 +17,9 @@ get_input_tokens() { echo "$input" | jq -r '.context_window.total_input_tokens /
 get_output_tokens() { echo "$input" | jq -r '.context_window.total_output_tokens // 0'; }
 # Null early in a session and again just after /compact; floor because it can be fractional.
 get_used_percentage() { echo "$input" | jq -r '(.context_window.used_percentage // 0) | floor'; }
+# Empty rather than 0 — absent for API-key accounts and until the first response, and a
+# hard 0% is a claim we can't make. Callers omit the segment entirely.
+get_five_hour_percentage() { echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty | floor'; }
 
 # Colors
 RED='\033[0;31m'
@@ -171,6 +174,14 @@ context_k=$((input_tokens / 1000))
 context_spark=$(sparkline "$context_percent" 10 50 70)
 context_info="${context_spark} ${DIM}${context_k}k${RESET}"
 
+# 5-hour rate limit. Higher thresholds than the context bar: a full window is spent
+# every session by design, and it refills on its own.
+five_hour_percent=$(get_five_hour_percentage)
+limit_info=""
+if [ -n "$five_hour_percent" ]; then
+  limit_info="${DIM}5h${RESET}$(sparkline "$five_hour_percent" 5 70 90) ${DIM}${five_hour_percent}%${RESET}"
+fi
+
 # Build output
 output=""
 output="${output}${CYAN}${location}${RESET}"
@@ -178,6 +189,7 @@ output="${output}${CYAN}${location}${RESET}"
 output="${output} ${BLUE}${model_name}${RESET}"
 output="${output} ${DIM}v${version}${RESET}"
 output="${output} ${context_info}"
+[ -n "$limit_info" ] && output="${output} ${limit_info}"
 output="${output} ${YELLOW}${cost_formatted}${RESET}"
 output="${output} ${DIM}${duration}${RESET}"
 [ -n "$lines_info" ] && output="${output} ${lines_info}"
