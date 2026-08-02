@@ -44,30 +44,16 @@ FG_RED='\033[31m'
 # Bar characters from 1/8 to 8/8 height
 BAR_CHARS=("▁" "▂" "▃" "▄" "▅" "▆" "▇" "█")
 
-# Sparkline function - converts percentage to a bar with graduations
-# Usage: sparkline <percent> <width> <yellow_threshold> <red_threshold>
-sparkline() {
+# Bar geometry, no colour. Each cell carries 8 graduations.
+# Usage: render_bar <percent> <width>
+render_bar() {
   local percent=$1
-  local width=${2:-10}
-  local yellow_at=${3:-50}
-  local red_at=${4:-80}
+  local width=$2
   local bar=""
 
-  local color
-  if [ "$percent" -lt "$yellow_at" ]; then
-    color="$FG_GREEN"
-  elif [ "$percent" -lt "$red_at" ]; then
-    color="$FG_YELLOW"
-  else
-    color="$FG_RED"
-  fi
-
-  # Calculate fill: each cell has 8 graduations
-  # Total graduations = width * 8
   local total_graduations=$((width * 8))
   local filled_graduations=$((percent * total_graduations / 100))
 
-  # Build the sparkline
   for ((i = 0; i < width; i++)); do
     local cell_start=$((i * 8))
     local cell_fill=$((filled_graduations - cell_start))
@@ -84,7 +70,30 @@ sparkline() {
     fi
   done
 
-  printf "%b%b%s%b" "$BG_DARK" "$color" "$bar" "$RESET"
+  printf "%s" "$bar"
+}
+
+# Usage: paint <color> <bar>
+paint() { printf "%b%b%s%b" "$BG_DARK" "$1" "$2" "$RESET"; }
+
+# Coloured by level - how full the bar is.
+# Usage: sparkline <percent> <width> <yellow_threshold> <red_threshold>
+sparkline() {
+  local percent=$1
+  local width=${2:-10}
+  local yellow_at=${3:-50}
+  local red_at=${4:-80}
+
+  local color
+  if [ "$percent" -lt "$yellow_at" ]; then
+    color="$FG_GREEN"
+  elif [ "$percent" -lt "$red_at" ]; then
+    color="$FG_YELLOW"
+  else
+    color="$FG_RED"
+  fi
+
+  paint "$color" "$(render_bar "$percent" "$width")"
 }
 
 # Extract values using helpers
