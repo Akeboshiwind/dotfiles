@@ -3,7 +3,8 @@
   (:require [clojure.string :as str]
             [display :as d]
             [outcome :as o]
-            [registry]))
+            [registry]
+            [version :as v]))
 
 (defn- fmt-duration
   "Human duration for the status banner, e.g. 45s, 3m, 3m 20s."
@@ -82,6 +83,8 @@
                                                :action ref
                                                :detail (when (:message check)
                                                          (:message check))
+                                               :from (:from check)
+                                               :to (:to check)
                                                :instructions (:detail check)}))
                                           node-group)
                              ;; Show everything unsatisfied, plus satisfied items
@@ -95,5 +98,9 @@
                              (d/render-plan-result r)))
                          results))
                      batches)
-        freq (frequencies (map :state all-states))]
-    (d/plan-summary freq)))
+        freq (frequencies (map :state all-states))
+        jumps (frequencies (keep (fn [{:keys [state from to]}]
+                                   (when (and (= :outdated state) from to)
+                                     (v/severity from to)))
+                                 all-states))]
+    (d/plan-summary freq jumps)))

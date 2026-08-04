@@ -1,6 +1,7 @@
 (ns display
   "Terminal display utilities - colors and formatting"
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [version :as v]))
 
 ;; =============================================================================
 ;; Colors
@@ -10,12 +11,14 @@
 (def ^:private GREEN "\033[32m")
 (def ^:private RED "\033[31m")
 (def ^:private YELLOW "\033[33m")
+(def ^:private BOLD-RED "\033[1;31m")
 (def ^:private RESET "\033[0m")
 
 (defn gray "Wrap string in gray ANSI color." [s] (str GRAY s RESET))
 (defn green "Wrap string in green ANSI color." [s] (str GREEN s RESET))
 (defn red "Wrap string in red ANSI color." [s] (str RED s RESET))
 (defn yellow "Wrap string in yellow ANSI color." [s] (str YELLOW s RESET))
+(defn bold-red "Wrap string in bold red ANSI color." [s] (str BOLD-RED s RESET))
 
 ;; =============================================================================
 ;; Spinner
@@ -104,20 +107,64 @@
    :error      {:icon "✗" :color-fn red}
    :cancelled  {:icon "⊘" :color-fn gray}})
 
-(defn render-plan-result [{:keys [label state detail instructions]}]
-  (let [{:keys [icon color-fn]} (get plan-icons state (plan-icons :unknown))
-        line (if detail
-               (str label (str "  " (gray detail)))
-               label)]
+(def ^:private jump-icons
+  "An upgrade reads by weight: patch recedes, minor asks for a glance, major
+   and any downgrade stop you. Shape carries the same signal as colour, so it
+   survives a pipe or a reader who cannot see the red."
+  {:major     {:icon "⇑" :color-fn bold-red}
+   :downgrade {:icon "⇓" :color-fn bold-red}
+   :minor     {:icon "↑" :color-fn yellow}
+   :unknown   {:icon "↑" :color-fn yellow}
+   :patch     {:icon "·" :color-fn gray}})
+
+(defn- version-jump
+  "Icon and colour for an outdated result that carries both versions, or nil
+   when it carries none — a git ref that moved has no jump to weigh."
+  [{:keys [state from to]}]
+  (when (and (= :outdated state) from to)
+    (jump-icons (v/severity from to))))
+
+(defn- version-detail
+  "Render `from → to` with only the part of `to` that moved picked out, so the
+   line says where the version went without needing a legend."
+  [from to color-fn]
+  (let [i (v/change-index from to)
+        moved (subs to i)]
+    (str (gray (str from " → " (subs to 0 i)))
+         (when (seq moved) (color-fn moved)))))
+
+(defn render-plan-result [{:keys [label state detail instructions from to] :as result}]
+  (let [jump (version-jump result)
+        {:keys [icon color-fn]} (or jump (get plan-icons state (plan-icons :unknown)))
+        line (cond
+               jump   (str label "  " (version-detail from to color-fn))
+               detail (str label (str "  " (gray detail)))
+               :else  label)]
     (println " " (color-fn icon) line)
     (when (seq instructions)
       (doseq [instr instructions]
         (println "   " (gray instr))))))
 
-(defn plan-summary [freq-map]
-  (let [parts (keep (fn [[state {:keys [color-fn]}]]
+(defn- jump-breakdown
+  "Tally the outdated items worth a second look. Downgrades count as major and
+   unprovable jumps count as minor — the same folding the icons do. Nil when
+   every upgrade is a patch, so a quiet plan stays quiet."
+  [jumps]
+  (let [major (+ (get jumps :major 0) (get jumps :downgrade 0))
+        minor (+ (get jumps :minor 0) (get jumps :unknown 0))
+        parts (cond-> []
+                (pos? major) (conj (bold-red (str major " major")))
+                (pos? minor) (conj (yellow (str minor " minor"))))]
+    (when (seq parts)
+      (str (gray " (") (str/join (gray ", ") parts) (gray ")")))))
+
+(defn plan-summary
+  ([freq-map] (plan-summary freq-map {}))
+  ([freq-map jumps]
+   (let [parts (keep (fn [[state {:keys [color-fn]}]]
                       (when-let [n (get freq-map state)]
-                        (color-fn (str n " " (name state)))))
+                        (str (color-fn (str n " " (name state)))
+                             (when (= :outdated state) (jump-breakdown jumps)))))
                     [[:missing (plan-icons :missing)]
                      [:outdated (plan-icons :outdated)]
                      [:orphan (plan-icons :orphan)]
@@ -127,4 +174,4 @@
                      [:error (plan-icons :error)]
                      [:cancelled (plan-icons :cancelled)]])]
     (println)
-    (println (str/join ", " parts))))
+    (println (str/join ", " parts)))))
