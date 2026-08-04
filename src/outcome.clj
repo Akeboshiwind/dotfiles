@@ -14,6 +14,17 @@
   [kind]
   {:outcome :drift :kind kind})
 
+(defn version-drift
+  "Action is behind a known version. Carries both versions structurally so a
+   reader can weigh the size of the jump; :message is their rendered form.
+   Not every outdated action has versions to compare — a git ref that moved
+   uses plain (drift :outdated) and stays unweighed."
+  [from to]
+  (assoc (drift :outdated)
+         :from from
+         :to to
+         :message (str from " → " to)))
+
 (def unknown
   "Cannot determine state — will attempt install."
   {:outcome :unknown})

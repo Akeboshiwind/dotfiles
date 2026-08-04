@@ -55,8 +55,7 @@
                    k)
         out-info (get @*outdated-cache* pkg-name)]
     (cond
-      out-info    (assoc (o/drift :outdated)
-                         :message (str (:current out-info) " → " (:latest out-info)))
+      out-info    (o/version-drift (:current out-info) (:latest out-info))
       (contains? @*installed-cache* pkg-name) o/satisfied
       :else       (o/drift :missing))))
 

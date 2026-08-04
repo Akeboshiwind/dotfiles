@@ -10,6 +10,11 @@
     (is (= {:outcome :drift :kind :missing} (o/drift :missing)))
     (is (= {:outcome :drift :kind :outdated} (o/drift :outdated))))
 
+  (testing "version-drift is outdated drift carrying both versions"
+    (is (= {:outcome :drift :kind :outdated
+            :from "1.2.3" :to "2.0.0" :message "1.2.3 → 2.0.0"}
+           (o/version-drift "1.2.3" "2.0.0"))))
+
   (testing "unknown is a map with :outcome :unknown"
     (is (= :unknown (:outcome o/unknown))))
 

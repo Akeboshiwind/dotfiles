@@ -89,7 +89,7 @@
                 installed-version (:version (first records))
                 latest (catalogue-version marketplace n)]
             (if (and installed-version latest (not= installed-version latest))
-              (assoc (o/drift :outdated) :message (str installed-version " → " latest))
+              (o/version-drift installed-version latest)
               o/satisfied)))
       (o/drift :missing))))
 

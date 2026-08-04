@@ -118,7 +118,7 @@
     (or (when (tap-of pkg-name)
           (trust-check pkg-name (boolean (:trust opts)) installed?))
         (cond
-          out-info (assoc (o/drift :outdated) :message (str (:installed out-info) " → " (:current out-info)))
+          out-info (o/version-drift (:installed out-info) (:current out-info))
           installed? o/satisfied
           :else (o/drift :missing)))))
 

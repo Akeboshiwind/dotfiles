@@ -61,15 +61,14 @@
 
         (= "latest" (:version opts))
         (if-let [{:keys [current latest]} (get @*outdated-cache* tool-name)]
-          (assoc (o/drift :outdated) :message (str current " → " latest))
+          (o/version-drift current latest)
           o/satisfied)
 
         (contains? versions (:version opts))
         o/satisfied
 
         :else
-        (assoc (o/drift :outdated)
-               :message (str (last (sort versions)) " → " (:version opts)))))))
+        (o/version-drift (last (sort versions)) (:version opts))))))
 
 (defmethod a/check :pkg/mise-uninstall [_ key opts]
   (o/drift :orphan))
