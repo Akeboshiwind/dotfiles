@@ -1,0 +1,16 @@
+; Trimmed copy of cfg/git/.gitconfig — deliberately omits [gpg], user.signingKey
+; and the lfs filter. git-ssh-sign resolves the signing key at signing time from
+; the forwarded agent, and a static signingKey here would override it.
+[user]
+    name = Oliver Marshall
+    email = olivershawmarshall@gmail.com
+
+[init]
+    defaultBranch = main
+
+[pull]
+    rebase = true
+
+[push]
+    autoSetupRemote = true
+    default = upstream

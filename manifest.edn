@@ -54,6 +54,7 @@
 
         ;; >> AI
         :llm
+        :sbx
 
         ;; >> Work
         {:pkg/brew {:slack {}}

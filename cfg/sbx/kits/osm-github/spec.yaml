@@ -1,0 +1,25 @@
+schemaVersion: "2"
+kind: mixin
+name: osm-github
+displayName: GitHub API access
+description: Lets gh open PRs and post comments from the sandbox; push and pull stay on the host.
+
+# gh ships in the agent image, so this kit only opens the network and relies on
+# the built-in `github` service for token injection: sbx secret set -g github
+permissions:
+  network:
+    allow:
+      - github.com
+      - api.github.com
+      - uploads.github.com
+      - objects.githubusercontent.com
+
+agentInstructions:
+  content: |
+    ## GitHub
+
+    `gh` is authenticated through a host-side proxy — the token never enters this
+    VM. Use it for `gh pr create`, `gh issue comment` and `gh api`.
+
+    Do not push or pull. SSH remotes are unreachable from here, and pushing is
+    the host's job.

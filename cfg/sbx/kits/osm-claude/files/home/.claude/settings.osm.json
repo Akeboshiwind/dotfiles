@@ -1,0 +1,46 @@
+{
+  "env": {
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "/home/agent/.claude/statusline-command.py"
+  },
+  "enabledPlugins": {
+    "playground@claude-plugins-official": true,
+    "allium@juxt-plugins": true,
+    "chalk@juxt-plugins": true,
+    "chill@juxt-plugins": true,
+    "gradle-tests@xtdb-plugins": true
+  },
+  "extraKnownMarketplaces": {
+    "juxt-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "juxt/claude-plugins"
+      }
+    },
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    },
+    "xtdb-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "xtdb/claude-plugins"
+      }
+    }
+  },
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "high",
+  "tui": "fullscreen",
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "auto",
+  "editorMode": "vim",
+  "remoteControlAtStartup": true,
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true
+}

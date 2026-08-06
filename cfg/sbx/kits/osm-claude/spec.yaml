@@ -1,0 +1,52 @@
+schemaVersion: "2"
+kind: mixin
+name: osm-claude
+displayName: Oliver's Claude Code setup
+description: Global CLAUDE.md, settings and plugins — a sandbox inherits none of these from the host.
+
+# files/home/.claude/ holds hand-copies of cfg/llm/.claude/ and will drift from
+# it. sbx rejects symlinks that leave the kit directory, so linking at the
+# canonical copies is not possible.
+#
+# The settings are settings.osm.json, not settings.json: the built-in claude kit
+# rewrites settings.json during install, after files/ are copied, so anything
+# landing there is lost. ct loads this file with `claude --settings`, which
+# layers on top rather than replacing. Dropped from the canonical copy: hooks
+# (clj-paren-repair-claude-hook is absent), voice (needs sox), and
+# permissions.defaultMode (would fight sbx's bypassPermissions).
+permissions:
+  network:
+    allow:
+      - github.com
+      - codeload.github.com
+      - raw.githubusercontent.com
+      - objects.githubusercontent.com
+
+setup:
+  install:
+    # Plugin paths in installed_plugins.json are absolute, so the host's cache
+    # cannot be copied in — the plugins have to be installed here.
+    - command: |
+        set -eu
+        claude plugin marketplace add anthropics/claude-plugins-official
+        claude plugin marketplace add juxt/claude-plugins
+        claude plugin marketplace add xtdb/claude-plugins
+        for p in playground allium chalk chill gradle-tests; do
+          claude plugin install "$p"
+        done
+      user: "1000"
+      description: Install the plugins CLAUDE.md depends on
+  startup:
+    # The spec says nothing about files/ preserving mode, and the statusline is
+    # useless unless Claude Code can execute it.
+    - command: ["sh", "-c", "chmod 0755 /home/agent/.claude/statusline-command.py"]
+      user: "1000"
+      description: Keep the statusline script executable
+
+agentInstructions:
+  content: |
+    ## Sandbox differences
+
+    Host-only tooling is absent here: the `clj-paren-repair-claude-hook` hooks,
+    the statusline, voice mode and MCP servers. Personal skills arrive through
+    the shared store via `sbx skills import`, not through this kit.

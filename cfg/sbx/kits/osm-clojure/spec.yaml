@@ -1,0 +1,41 @@
+schemaVersion: "2"
+kind: mixin
+name: osm-clojure
+displayName: Clojure toolchain
+description: babashka, the Clojure CLI and clj-kondo. The agent image already ships a JDK.
+
+# The image has OpenJDK 25 at /usr/bin/java and presets JAVA_TOOL_OPTIONS with the
+# sandbox proxy, so Maven Central and Clojars resolve once allowed here. Note the
+# host pins temurin 21 via mise; this kit does not match that.
+permissions:
+  network:
+    allow:
+      - clojars.org
+      - repo.clojars.org
+      - repo1.maven.org
+      - download.clojure.org
+      - github.com
+      - raw.githubusercontent.com
+      - objects.githubusercontent.com
+
+setup:
+  # Guarded so a re-run is a no-op. Each tool is its own entry: a failure then
+  # names the tool that broke rather than the whole toolchain.
+  install:
+    - command: command -v bb >/dev/null || curl -sL https://raw.githubusercontent.com/babashka/babashka/master/install | bash
+      description: babashka
+    - command: command -v clj-kondo >/dev/null || curl -sL https://raw.githubusercontent.com/clj-kondo/clj-kondo/master/script/install-clj-kondo | bash
+      description: clj-kondo
+    - command: command -v clojure >/dev/null || (cd /tmp && curl -sL -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh && bash linux-install.sh)
+      description: Clojure CLI
+
+agentInstructions:
+  content: |
+    ## Clojure
+
+    `bb`, `clojure` and `clj-kondo` are installed. The JDK is OpenJDK 25, which
+    is newer than the temurin 21 this project is developed against on the host.
+
+    There is no shared nREPL here. The host editor's REPL is not reachable, and
+    one started in here is reachable only from inside the sandbox. Evaluate with
+    `bb -e` or `clojure -M -e` rather than looking for a running nREPL to join.

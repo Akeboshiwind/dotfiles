@@ -1,0 +1,13 @@
+;; Standalone microVM runner for coding agents — no relation to Docker
+;; Desktop, and it leaves the OrbStack docker socket alone.
+{:pkg/brew {"docker/tap/sbx" {:trust true :cask true}}
+ ;; Commit signing comes from the external git-ssh-sign kit, whose source has to
+ ;; be allowlisted once on the host — sbx settings, not a file syn can own:
+ ;;   sbx settings set kit.allowedSources '["docker.io/","github.com/docker/"]'
+ ;;
+ ;; One link per kit, not per file: sbx rejects any symlink under files/ that
+ ;; resolves outside the kit, so the kit directory has to be the link.
+ :fs/symlink {"~/.config/sbx/kits/osm-claude" "./kits/osm-claude"
+              "~/.config/sbx/kits/osm-clojure" "./kits/osm-clojure"
+              "~/.config/sbx/kits/osm-git" "./kits/osm-git"
+              "~/.config/sbx/kits/osm-github" "./kits/osm-github"}}

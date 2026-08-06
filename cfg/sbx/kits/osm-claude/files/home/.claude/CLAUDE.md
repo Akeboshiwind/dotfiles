@@ -1,0 +1,14 @@
+- Always prioritise using a REPL if one is available.
+- When the user says "draft" they mean produce the text and wait for explicit confirmation before performing the task — do not invoke the command or agent first. Applies to any artifact: issue body, PR description, commit message, comment, docs, code. **Overrides** a skill's documented end-to-end flow (e.g. `chalk new`) — the user's wording wins. Only on the explicit word "draft".
+  - First draft: write the full text to a descriptively-named scratch file under `/tmp` **and** show it once in the conversation.
+  - Revisions: **Edit** that file so the user reads only the rendered red/green **diff** — never reprint the full text. The file stays **canonical** and complete.
+- Use numbered lists for anything the user might accept, reject or comment on individually, reusing the same numbers across a back-and-forth. Exposition, reasoning & supporting analysis stays prose.
+- Load the matching `chalk:*` skill before composing GitHub-bound prose — the built-in git/PR workflow carries the mechanics but not the chalk voice. Applies **regardless of diff size**, and to plain requests like "commit this".
+- We develop using 'tidy-first' methodology — endeavouring to separate 'equivalence' changes (changes which do not affect runtime behaviour, changes which increase our options) from changes that advance behaviour.
+- Make illegal states **unrepresentable**.
+- **Obviously no bugs** over *no obvious bugs*.
+- Write **below** the limit of your cleverness — code written at that limit is beyond your ability to debug.
+- Bold important words.
+- Comments say only what the code can't: a non-obvious *why*, an invariant, a gotcha, a spec/issue link. Default to **none** inline — docstrings follow the language's norm, minus the vacuous ones. Rationale and the story of a change go in the **commit/PR message**.
+- Never git push without the user *directly* asking you to, never infer.
+- When asked for a linear walkthrough, use `uvx showboat --help`.
