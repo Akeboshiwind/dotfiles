@@ -1,7 +1,9 @@
 {:pkg/brew {:sox {} ; voice mode for claude
             ; Other
             :llm {}
-            "juxt/allium/allium" {:trust true}}
+            "juxt/allium/allium" {:trust true}
+            ; auto_updates cask — self-updating, so syn never reports drift on it
+            :t3-code {:dep/requires #{[:pkg/npm "@anthropic-ai/claude-code"]}}}
 
  :pkg/npm {"@anthropic-ai/claude-code" {:dep/provides #{:claude/marketplace :claude/plugin :claude/mcp}}}
 
