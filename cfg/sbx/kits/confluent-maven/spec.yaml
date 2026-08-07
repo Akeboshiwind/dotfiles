@@ -1,0 +1,13 @@
+schemaVersion: "2"
+kind: mixin
+name: confluent-maven
+displayName: Confluent Maven repository
+description: Egress to packages.confluent.io, for builds resolving io.confluent artifacts.
+
+# Separate from osm-clojure, which allows the repos Clojure tooling reaches by
+# default. This one is a vendor repository: a build either declares it or has no
+# use for it.
+permissions:
+  network:
+    allow:
+      - packages.confluent.io
