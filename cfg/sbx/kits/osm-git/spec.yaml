@@ -10,9 +10,26 @@ description: Author identity and pull/push defaults; sandboxes never inherit ~/.
 #   --kit "git+https://github.com/docker/sbx-kits-contrib.git#ref=v0.14.0&dir=git-ssh-sign"
 # That source must be allowlisted once on the host — see cfg/sbx/manifest.edn.
 
+setup:
+  install:
+    # cfg/git declares :git-lfs and the image has none, so LFS-tracked paths
+    # check out as pointer text and a repo's post-commit hook complains on every
+    # commit. --system writes /etc/gitconfig, leaving files/home/.gitconfig —
+    # this kit's actual job — untouched.
+    - command: |
+        set -eu
+        apt-get update
+        apt-get install -y --no-install-recommends git-lfs
+        rm -rf /var/lib/apt/lists/*
+        git lfs install --system
+      description: git-lfs
+
 agentInstructions:
   content: |
     ## Git identity
 
     Commits are authored as Oliver Marshall. Signing is not configured by this
     kit — stack `git-ssh-sign` for that.
+
+    git-lfs is installed and registered system-wide, so LFS-tracked files
+    resolve rather than checking out as pointer text.
