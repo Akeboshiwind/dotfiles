@@ -2,7 +2,7 @@ schemaVersion: "2"
 kind: mixin
 name: osm-claude
 displayName: Oliver's Claude Code setup
-description: Global CLAUDE.md, settings and plugins — a sandbox inherits none of these from the host.
+description: Global CLAUDE.md, settings and plugins for Claude Code.
 
 # files/home/.claude/ holds hand-copies of cfg/llm/.claude/ and will drift from
 # it. sbx rejects symlinks that leave the kit directory, so linking at the
@@ -45,8 +45,8 @@ setup:
 
 agentInstructions:
   content: |
-    ## Sandbox differences
+    ## Scope
 
-    Host-only tooling is absent here: the `clj-paren-repair-claude-hook` hooks,
-    the statusline, voice mode and MCP servers. Personal skills arrive through
-    the shared store via `sbx skills import`, not through this kit.
+    Not included: the `clj-paren-repair-claude-hook` hooks, the statusline, voice
+    mode and MCP servers. Personal skills arrive through the shared store via
+    `sbx skills import`, not through this kit.

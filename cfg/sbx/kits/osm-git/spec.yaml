@@ -2,7 +2,7 @@ schemaVersion: "2"
 kind: mixin
 name: osm-git
 displayName: Oliver's git identity
-description: Author identity and pull/push defaults; sandboxes never inherit ~/.gitconfig.
+description: Author identity, pull/push defaults and git-lfs.
 
 # Signing is deliberately not set here — commit.gpgSign and gpg.format belong to
 # git-ssh-sign, which resolves the key from the forwarded agent at signing time.
@@ -12,10 +12,9 @@ description: Author identity and pull/push defaults; sandboxes never inherit ~/.
 
 setup:
   install:
-    # cfg/git declares :git-lfs and the image has none, so LFS-tracked paths
-    # check out as pointer text and a repo's post-commit hook complains on every
-    # commit. --system writes /etc/gitconfig, leaving files/home/.gitconfig —
-    # this kit's actual job — untouched.
+    # Without git-lfs, LFS-tracked paths check out as pointer text and a repo
+    # carrying an LFS hook complains on every commit. --system registration
+    # writes /etc/gitconfig, keeping files/home/.gitconfig to identity alone.
     - command: |
         set -eu
         apt-get update

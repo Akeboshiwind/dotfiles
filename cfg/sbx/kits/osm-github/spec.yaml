@@ -2,7 +2,7 @@ schemaVersion: "2"
 kind: mixin
 name: osm-github
 displayName: GitHub API access
-description: Lets gh open PRs and post comments from the sandbox; push and pull stay on the host.
+description: gh authenticated for PRs, comments and API calls. Not for push or pull.
 
 # gh ships in the agent image, so this kit only opens the network and relies on
 # the built-in `github` service for token injection: sbx secret set -g github

@@ -2,15 +2,13 @@ schemaVersion: "2"
 kind: mixin
 name: osm-clojure
 displayName: Clojure toolchain
-description: babashka, the Clojure CLI and clj-kondo. The agent image already ships a JDK.
+description: babashka, the Clojure CLI and clj-kondo.
 
-# The image has OpenJDK 25 at /usr/bin/java and presets JAVA_TOOL_OPTIONS with the
-# sandbox proxy, so Maven Central and Clojars resolve once allowed here. That JDK
-# is fine for babashka work, which is most of it.
+# No JDK: the image ships one, and babashka and the Clojure CLI run on whatever
+# it is. A build that pins a version wants a JDK kit stacked alongside.
 #
-# It is not fine for a JVM build: cfg/clojure pins temurin 21, and Gradle 8.x
-# cannot run on 25 at all. Stack osm-java alongside this kit for those repos:
-#   --kit ~/.config/sbx/kits/osm-java
+# JAVA_TOOL_OPTIONS arrives preset with the sandbox proxy, so Maven Central and
+# Clojars resolve once allowed here.
 permissions:
   network:
     allow:
@@ -54,8 +52,8 @@ agentInstructions:
   content: |
     ## Clojure
 
-    `bb`, `clojure` and `clj-kondo` are installed. The JDK is OpenJDK 25, which
-    is newer than the temurin 21 this project is developed against on the host.
+    `bb`, `clojure` and `clj-kondo` are installed. They run on whichever JDK the
+    image or a stacked JDK kit provides; this kit does not manage one.
 
     There is no shared nREPL here. The host editor's REPL is not reachable, and
     one started in here is reachable only from inside the sandbox. Evaluate with
