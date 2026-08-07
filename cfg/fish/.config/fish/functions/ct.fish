@@ -1,3 +1,13 @@
+function _ct_under --description 'Is the first path inside any of the rest?'
+    set -l dir $argv[1]
+    for root in $argv[2..]
+        if test "$dir" = "$root"; or string match -q -- "$root/*" "$dir"
+            return 0
+        end
+    end
+    return 1
+end
+
 function ct --wraps=claude --description 'Run Claude Code in a Docker sandbox'
     set -l agent_args --settings /home/agent/.claude/settings.osm.json --model opus $argv
 
@@ -19,14 +29,10 @@ function ct --wraps=claude --description 'Run Claude Code in a Docker sandbox'
         --kit $HOME/.config/sbx/kits/osm-github \
         --kit "git+https://github.com/docker/sbx-kits-contrib.git#ref=v0.14.0&dir=git-ssh-sign"
 
-    # The Clojure toolchain downloads three binaries and a JDK's worth of deps,
-    # so it is limited to the trees that actually need it.
+    # Kits that cost real download time are limited to the trees that need them.
     set -l dir (pwd)
-    for root in $HOME/dotfiles $HOME/prog/work/xtdb/xtdb
-        if test "$dir" = "$root"; or string match -q -- "$root/*" "$dir"
-            set -a kits --kit $HOME/.config/sbx/kits/osm-clojure
-            break
-        end
+    if _ct_under $dir $HOME/dotfiles $HOME/prog/work/xtdb/xtdb
+        set -a kits --kit $HOME/.config/sbx/kits/osm-clojure
     end
 
     # A linked worktree's .git is a pointer into the main checkout's
