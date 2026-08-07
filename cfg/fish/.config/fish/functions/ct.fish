@@ -34,6 +34,9 @@ function ct --wraps=claude --description 'Run Claude Code in a Docker sandbox'
     if _ct_under $dir $HOME/dotfiles $HOME/prog/work/xtdb/xtdb
         set -a kits --kit $HOME/.config/sbx/kits/osm-clojure
     end
+    if _ct_under $dir $HOME/prog/work/xtdb/xtdb
+        set -a kits --kit $HOME/.config/sbx/kits/jdk-21
+    end
 
     # A linked worktree's .git is a pointer into the main checkout's
     # .git/worktrees/<name>. Mount that directory too or the sandbox cannot
