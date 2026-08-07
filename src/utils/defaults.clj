@@ -1,6 +1,6 @@
 (ns utils.defaults
-  (:require [babashka.process :as process]
-            [clojure.data.xml :as xml]))
+  (:require [clojure.data.xml :as xml]
+            [utils.sh :as sh]))
 
 (declare parse-node)
 
@@ -36,12 +36,12 @@
   "Read all defaults for a domain, returning a Clojure map.
    With no args, reads the currentHost global domain."
   ([]
-   (let [{:keys [out exit]} (process/shell {:out :string :err :string :continue true}
-                                           "defaults" "-currentHost" "export" "-g" "-")]
+   (let [{:keys [out exit]} (sh/query! `read-domain {:continue true}
+                                       ["defaults" "-currentHost" "export" "-g" "-"])]
      (when (zero? exit)
        (parse-plist-xml out))))
   ([domain]
-   (let [{:keys [out exit]} (process/shell {:out :string :err :string :continue true}
-                                           "defaults" "export" domain "-")]
+   (let [{:keys [out exit]} (sh/query! `read-domain {:continue true}
+                                       ["defaults" "export" domain "-"])]
      (when (zero? exit)
        (parse-plist-xml out)))))

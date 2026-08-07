@@ -1,10 +1,10 @@
 (ns actions.osx
   (:require [clojure.string :as str]
-            [babashka.process :as process]
             [actions :as a]
             [display :as d]
             [outcome :as o]
-            [utils.defaults :as defaults]))
+            [utils.defaults :as defaults]
+            [utils.sh :as sh]))
 
 (defmethod a/requires :osx/defaults [_] nil)
 
@@ -106,8 +106,8 @@
                 (if (= (normalize-written value) (get @live-domain (name k)))
                   acc
                   (reduced (o/drift :wrong)))
-                (let [{:keys [exit out]} (process/shell {:out :string :err :string :continue true}
-                                                        "defaults" "read" domain (name k))]
+                (let [{:keys [exit out]} (sh/query! "osx/defaults check" {:continue true}
+                                                   ["defaults" "read" domain (name k)])]
                   (cond
                     (not (zero? exit))                       (reduced (o/drift :wrong))
                     (not (defaults-value-matches? value out)) (reduced (o/drift :wrong))

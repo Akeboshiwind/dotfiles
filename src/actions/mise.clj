@@ -1,10 +1,10 @@
 (ns actions.mise
   (:require [actions :as a]
-            [babashka.process :as process]
             [cheshire.core :as json]
             [display :as d]
             [outcome :as o]
-            [utils :as u]))
+            [utils :as u]
+            [utils.sh :as sh]))
 
 (defmethod a/requires :pkg/mise [_] :pkg/mise)
 
@@ -12,7 +12,7 @@
   "Return {tool-name #{version ...}} of installed mise tools."
   []
   (let [raw (-> (d/with-spinner "Listing mise tools"
-                  (process/shell {:out :string :err :string} "mise" "ls" "--installed" "--json"))
+                  (sh/query! `installed-map ["mise" "ls" "--installed" "--json"]))
                 :out
                 (json/parse-string true))]
     (into {} (map (fn [[tool versions]]
@@ -24,7 +24,7 @@
    Only includes tools that have an upgrade available."
   []
   (let [raw (-> (d/with-spinner "Checking for outdated mise tools"
-                  (process/shell {:out :string :err :string} "mise" "outdated" "--json"))
+                  (sh/query! `outdated-map ["mise" "outdated" "--json"]))
                 :out
                 (json/parse-string true))]
     (into {} (map (fn [[tool {:keys [current latest]}]]

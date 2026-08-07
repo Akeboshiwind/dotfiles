@@ -1,12 +1,12 @@
 (ns actions.brew
   (:require [actions :as a]
-            [babashka.process :as process]
             [cheshire.core :as json]
             [clojure.set :as set]
             [clojure.string :as str]
             [display :as d]
             [outcome :as o]
-            [utils :as u]))
+            [utils :as u]
+            [utils.sh :as sh]))
 
 (defmethod a/requires :pkg/brew [_] :pkg/brew)
 (defmethod a/requires :brew/service [_] :brew/service)
@@ -16,7 +16,7 @@
   [kind]
   (let [flag (if (= kind :cask) "--cask" "--formula")]
     (d/with-spinner (str "Listing Homebrew " (if (= kind :cask) "casks" "formulae"))
-      (->> (process/shell {:out :string :err :string} "brew" "list" flag "-1")
+      (->> (sh/query! `installed-set ["brew" "list" flag "-1"])
            :out
            str/split-lines
            (remove str/blank?)
@@ -26,7 +26,7 @@
   "Return {name {:installed v1 :current v2}} from brew outdated."
   []
   (let [raw (-> (d/with-spinner "Checking for outdated Homebrew packages"
-                  (process/shell {:out :string :err :string} "brew" "outdated" "--json=v2"))
+                  (sh/query! `outdated-map ["brew" "outdated" "--json=v2"]))
                 :out
                 (json/parse-string true))
         parse (fn [items]
@@ -42,7 +42,7 @@
   "Return {name service-info} from brew services list."
   []
   (let [services (-> (d/with-spinner "Listing Homebrew services"
-                       (process/shell {:out :string :err :string} "brew" "services" "list" "--json"))
+                       (sh/query! `services-map ["brew" "services" "list" "--json"]))
                      :out
                      (json/parse-string true))]
     (into {} (map (fn [s] [(:name s) s])) services)))
@@ -51,7 +51,7 @@
   "Return {:formulae #{...} :casks #{...} :taps #{...}} from brew trust --json v1."
   []
   (let [raw (-> (d/with-spinner "Reading Homebrew trust store"
-                  (process/shell {:out :string :err :string} "brew" "trust" "--json" "v1"))
+                  (sh/query! `trusted-map ["brew" "trust" "--json" "v1"]))
                 :out
                 (json/parse-string true))]
     {:formulae (set (:formulae raw))
@@ -141,7 +141,7 @@
    Uses `brew leaves --installed-on-request` to exclude transitive dependencies."
   []
   (d/with-spinner "Listing explicitly installed Homebrew formulae"
-    (->> (process/shell {:out :string :err :string} "brew" "leaves" "--installed-on-request")
+    (->> (sh/query! `leaves-set ["brew" "leaves" "--installed-on-request"])
          :out
          str/split-lines
          (remove str/blank?)
@@ -152,7 +152,7 @@
   [kind]
   (let [flag (if (= kind :cask) "--cask" "--formula")]
     (d/with-spinner (str "Listing Homebrew " (if (= kind :cask) "casks" "formulae"))
-      (->> (process/shell {:out :string :err :string} "brew" "list" flag "--full-name" "-1")
+      (->> (sh/query! `installed-set-full ["brew" "list" flag "--full-name" "-1"])
            :out
            str/split-lines
            (remove str/blank?)
@@ -176,7 +176,7 @@
   "Return {pkg #{dep1 dep2 ...}} from `brew deps --installed`."
   []
   (d/with-spinner "Resolving Homebrew dependency graph"
-    (->> (process/shell {:out :string :err :string} "brew" "deps" "--installed")
+    (->> (sh/query! `deps-graph ["brew" "deps" "--installed"])
          :out
          parse-deps-graph)))
 
@@ -230,7 +230,7 @@
   "Return #{tap ...} of installed third-party taps."
   []
   (d/with-spinner "Listing Homebrew taps"
-    (->> (process/shell {:out :string :err :string} "brew" "tap")
+    (->> (sh/query! `installed-taps ["brew" "tap"])
          :out
          str/split-lines
          (remove str/blank?)

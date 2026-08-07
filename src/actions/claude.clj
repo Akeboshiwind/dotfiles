@@ -3,10 +3,10 @@
             [clojure.java.io :as io]
             [actions :as a]
             [babashka.fs :as fs]
-            [babashka.process :as process]
             [cheshire.core :as json]
             [display :as d]
-            [outcome :as o]))
+            [outcome :as o]
+            [utils.sh :as sh]))
 
 (defmethod a/requires :claude/marketplace [_] :claude/marketplace)
 (defmethod a/requires :claude/plugin [_] :claude/plugin)
@@ -54,8 +54,8 @@
    Forced at most once per run, before plugin version comparison — version
    drift can only be detected against a current catalogue."
   (delay (d/with-spinner "Fetching updates from Claude Marketplace"
-           (process/shell {:out :string :err :string :continue true}
-                          "claude" "plugin" "marketplace" "update"))))
+           (sh/query! `*marketplace-refresh* {:continue true}
+                      ["claude" "plugin" "marketplace" "update"]))))
 
 (defn catalogue-version
   "Version of a plugin in the local marketplace checkout, or nil when the

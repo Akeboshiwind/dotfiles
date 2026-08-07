@@ -1,10 +1,10 @@
 (ns actions.mas
   (:require [actions :as a]
-            [babashka.process :as process]
             [clojure.string :as str]
             [display :as d]
             [outcome :as o]
-            [utils :as u]))
+            [utils :as u]
+            [utils.sh :as sh]))
 
 (defmethod a/requires :pkg/mas [_] :pkg/mas)
 
@@ -12,7 +12,7 @@
   "Return {id app-name} of installed Mac App Store apps."
   []
   (let [lines (-> (d/with-spinner "Listing Mac App Store apps"
-                    (process/shell {:out :string :err :string} "mas" "list"))
+                    (sh/query! `installed-map ["mas" "list"]))
                   :out
                   str/split-lines)]
     (into {} (keep (fn [line]

@@ -1,10 +1,10 @@
 (ns actions.uv
   (:require [actions :as a]
-            [babashka.process :as process]
             [clojure.string :as str]
             [display :as d]
             [outcome :as o]
-            [utils :as u]))
+            [utils :as u]
+            [utils.sh :as sh]))
 
 (defmethod a/requires :uv/tool [_] :uv/tool)
 
@@ -12,8 +12,7 @@
   "Return #{name ...} of installed uv tools."
   []
   (let [result (d/with-spinner "Listing uv tools"
-                 (process/shell {:out :string :err :string :continue true}
-                                "uv" "tool" "list"))]
+                 (sh/query! `installed-set {:continue true} ["uv" "tool" "list"]))]
     (if (zero? (:exit result))
       (->> (:out result)
            str/split-lines

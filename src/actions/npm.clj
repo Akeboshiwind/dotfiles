@@ -1,19 +1,19 @@
 (ns actions.npm
   (:require [actions :as a]
-            [babashka.process :as process]
             [cheshire.core :as json]
             [clojure.string :as str]
             [display :as d]
             [outcome :as o]
-            [utils :as u]))
+            [utils :as u]
+            [utils.sh :as sh]))
 
 (defmethod a/requires :pkg/npm [_] :pkg/npm)
 
 (def ^:private ^:dynamic *installed-cache*
   (delay
     (let [result (d/with-spinner "Listing global npm packages"
-                   (process/shell {:out :string :err :string :continue true}
-                                  "npm" "list" "-g" "--depth=0" "--json"))]
+                   (sh/query! `*installed-cache* {:continue true}
+                              ["npm" "list" "-g" "--depth=0" "--json"]))]
       (if (zero? (:exit result))
         (into #{} (keys (get (json/parse-string (:out result)) "dependencies")))
         #{}))))
@@ -25,8 +25,8 @@
    code is ignored and parsing relies on the JSON body."
   []
   (let [raw (-> (d/with-spinner "Checking for outdated npm packages"
-                  (process/shell {:out :string :err :string :continue true}
-                                 "npm" "outdated" "-g" "--json"))
+                  (sh/query! `outdated-map {:continue true}
+                             ["npm" "outdated" "-g" "--json"]))
                 :out)]
     (if (str/blank? raw)
       {}

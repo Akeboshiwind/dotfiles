@@ -1,11 +1,11 @@
 (ns actions.bbin
   (:require [actions :as a]
             [babashka.fs :as fs]
-            [babashka.process :as process]
             [clojure.edn :as edn]
             [display :as d]
             [outcome :as o]
-            [utils :as u]))
+            [utils :as u]
+            [utils.sh :as sh]))
 
 (defmethod a/requires :pkg/bbin [_] :pkg/bbin)
 
@@ -13,7 +13,7 @@
   "Return #{name ...} of installed bbin scripts."
   []
   (d/with-spinner "Listing bbin scripts"
-    (->> (process/shell {:out :string :err :string} "bbin" "ls" "--edn")
+    (->> (sh/query! `installed-set ["bbin" "ls" "--edn"])
          :out
          edn/read-string
          keys
