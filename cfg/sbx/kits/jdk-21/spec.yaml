@@ -2,7 +2,7 @@ schemaVersion: "2"
 kind: mixin
 name: jdk-21
 displayName: JDK 21
-description: Ubuntu's openjdk-21 as the default JVM.
+description: Ubuntu's openjdk-21 as the default JVM, with the binutils jlink shells out to.
 
 # The image's own JDK stays installed and stays visible: anything that scans
 # /usr/lib/jvm, such as Gradle's toolchain detection, sees both. It also stays
@@ -11,10 +11,14 @@ description: Ubuntu's openjdk-21 as the default JVM.
 # gets the image's version.
 setup:
   install:
+    # binutils is not a JDK dependency and is not in the image, but jlink's
+    # --strip-native-debug-symbols plugin shells out to objcopy, so a build that
+    # links a runtime image dies without it. The jmods jlink needs are in the
+    # -headless package already.
     - command: |
         set -eu
         apt-get update
-        apt-get install -y --no-install-recommends openjdk-21-jdk-headless
+        apt-get install -y --no-install-recommends openjdk-21-jdk-headless binutils
         rm -rf /var/lib/apt/lists/*
 
         jdk=/usr/lib/jvm/java-21-openjdk-$(dpkg --print-architecture)
