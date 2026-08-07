@@ -2,7 +2,7 @@ schemaVersion: "2"
 kind: mixin
 name: jdk-21
 displayName: JDK 21
-description: Ubuntu's openjdk-21 as the default JVM, with the sandbox proxy CA in its truststore.
+description: Ubuntu's openjdk-21 as the default JVM.
 
 # The image's own JDK stays installed and stays visible: anything that scans
 # /usr/lib/jvm, such as Gradle's toolchain detection, sees both. It also stays
@@ -11,9 +11,6 @@ description: Ubuntu's openjdk-21 as the default JVM, with the sandbox proxy CA i
 # gets the image's version.
 setup:
   install:
-    # Every apt JDK shares /etc/ssl/certs/java/cacerts, which does not carry the
-    # sandbox proxy CA even though the system bundle does. Without this, a JVM
-    # hits PKIX failures on intercepted hosts where curl succeeds.
     - command: |
         set -eu
         apt-get update
@@ -21,13 +18,6 @@ setup:
         rm -rf /var/lib/apt/lists/*
 
         jdk=/usr/lib/jvm/java-21-openjdk-$(dpkg --print-architecture)
-
-        "$jdk/bin/keytool" -list -alias sbx-proxy-ca \
-          -keystore "$jdk/lib/security/cacerts" -storepass changeit >/dev/null 2>&1 \
-          || "$jdk/bin/keytool" -importcert -noprompt -trustcacerts -alias sbx-proxy-ca \
-               -file /usr/local/share/ca-certificates/proxy-ca.crt \
-               -keystore "$jdk/lib/security/cacerts" -storepass changeit
-
         grep -q JAVA_HOME /etc/sandbox-persistent.sh || {
           echo "export JAVA_HOME=$jdk"
           echo 'export PATH="$JAVA_HOME/bin:$PATH"'
