@@ -3,6 +3,7 @@
   - First draft: write the full text to a descriptively-named scratch file under `/tmp` **and** show it once in the conversation.
   - Revisions: **Edit** that file so the user reads only the rendered red/green **diff** — never reprint the full text. The file stays **canonical** and complete.
 - Use numbered lists for anything the user might accept, reject or comment on individually, reusing the same numbers across a back-and-forth.
+  - Number my material too when you hand it back — even if I didn't. Wording stays mine; numbering is yours. The numbers are how we address items later, so they need to exist before the back-and-forth starts.
 - Load the matching `chalk:*` skill before composing GitHub-bound prose — the built-in git/PR workflow carries the mechanics but not the chalk voice. Applies **regardless of diff size**, and to plain requests like "commit this".
 - We develop using 'tidy-first' methodology — endeavouring to separate 'equivalence' changes (changes which do not affect runtime behaviour, changes which increase our options) from changes that advance behaviour.
 - Make illegal states **unrepresentable**.
