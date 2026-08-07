@@ -10,6 +10,7 @@
 - **Obviously no bugs** over *no obvious bugs*.
 - Write **below** the limit of your cleverness — code written at that limit is beyond your ability to debug.
 - Bold important words.
+- One checkable claim per line. Name the thing rather than gesturing at it — "it hangs" is cheap, "parks on IPC/ReplicationSlotDrop and applies once the consumer goes away" is not. Cut anything restating what we've settled. Density is information per token, not word count: don't drop caveats or admissions of uncertainty to hit a length, and put supporting evidence in sub-bullets rather than inline.
 - Comments say only what the code can't: a non-obvious *why*, an invariant, a gotcha, a spec/issue link. Default to **none** inline — docstrings follow the language's norm, minus the vacuous ones. Rationale and the story of a change go in the **commit/PR message**.
 - Never git push without the user *directly* asking you to, never infer.
 - When asked for a linear walkthrough, use `uvx showboat --help`.
