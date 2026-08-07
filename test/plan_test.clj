@@ -1,6 +1,14 @@
 (ns plan-test
-  (:require [clojure.test :refer [deftest testing is]]
+  (:require [clojure.test :refer [deftest testing is use-fixtures]]
             [plan :as p]))
+
+(defn no-orphan-detection
+  "build! asks every action type for its orphans, which queries the machine.
+   These tests are about path resolution, so answer nothing."
+  [f]
+  (with-redefs [p/calculate-orphans (constantly {})] (f)))
+
+(use-fixtures :each no-orphan-detection)
 
 ;; =============================================================================
 ;; find-duplicate-keys tests

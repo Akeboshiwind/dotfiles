@@ -8,6 +8,11 @@
 
 (defmethod a/requires :osx/defaults [_] nil)
 
+(def ^:dynamic *read-domain*
+  "How :osx/defaults check reads live values. A var rather than a cache: the
+   domain differs per item, so there is nothing process-wide to memoise."
+  defaults/read-domain)
+
 (defn- xml-escape [s]
   (-> (str s)
       (str/replace "&" "&amp;")
@@ -100,7 +105,7 @@
   (let [domain      (:domain opts)
         settings    (or (:settings opts)
                         {(:key opts) (:value opts)})
-        live-domain (delay (defaults/read-domain domain))]
+        live-domain (delay (*read-domain* domain))]
     (reduce (fn [acc [k value]]
               (if (or (map? value) (vector? value))
                 (if (= (normalize-written value) (get @live-domain (name k)))

@@ -4,6 +4,7 @@
  {test
   {:doc "Run tests"
    :requires [[clojure.test :as t]
+              [utils.sh :as sh]
               [graph-test]
               [plan-test]
               [manifest-test]
@@ -20,7 +21,10 @@
               [stored-plan-test]
               [trust-test]
               [version-test]]
-   :task (let [result (t/run-tests 'graph-test 'plan-test 'manifest-test 'osx-test 'script-test 'execute-test 'assert-test 'orphan-test 'outcome-test 'check-test 'action-graph-test 'cache-test 'spec-gap-test 'stored-plan-test 'trust-test 'version-test)]
+   ;; No test may read the real machine: bound here rather than per-namespace
+   ;; so a new test namespace cannot forget to opt in.
+   :task (let [result (binding [sh/*live-queries?* false]
+                        (t/run-tests 'graph-test 'plan-test 'manifest-test 'osx-test 'script-test 'execute-test 'assert-test 'orphan-test 'outcome-test 'check-test 'action-graph-test 'cache-test 'spec-gap-test 'stored-plan-test 'trust-test 'version-test))]
            (when (or (pos? (:fail result)) (pos? (:error result)))
              (System/exit 1)))}
 

@@ -1,11 +1,23 @@
 (ns assert-test
-  (:require [clojure.test :refer [deftest testing is]]
+  (:require [clojure.test :refer [deftest testing is use-fixtures]]
+            [actions.brew :as brew]
             [clojure.string :as str]
             [execute :as e]
             [graph :as g]
             [check :as chk]
             [actions :as a]
             [outcome :as o]))
+
+(defn empty-brew
+  "install! reads the installed set to choose between installing and
+   skipping. Nothing is installed, so every declared package is work."
+  [f]
+  (binding [brew/*formulae-cache* (delay #{})
+            brew/*casks-cache*    (delay #{})
+            brew/*trusted-cache*  (delay {:formulae #{} :casks #{} :taps #{}})]
+    (f)))
+
+(use-fixtures :each empty-brew)
 
 (defn- mock-exec!
   [calls fail-pred]
