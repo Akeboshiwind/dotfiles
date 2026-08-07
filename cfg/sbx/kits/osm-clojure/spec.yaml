@@ -28,6 +28,23 @@ setup:
       description: clj-kondo
     - command: command -v clojure >/dev/null || (cd /tmp && curl -sL -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh && bash linux-install.sh)
       description: Clojure CLI
+    # A bb.edn with :deps sends babashka through deps.clj, which ignores the CLI
+    # installed above and fetches its own pinned clojure-tools.zip from github —
+    # where the proxy terminates TLS to inject credentials. bb is a native image
+    # carrying its own truststore, so it cannot be taught the proxy CA the way a
+    # JVM can, and the download dies on PKIX. Pointing deps.clj at the jar we
+    # already have removes the download instead of trying to fix its TLS.
+    #
+    # Both vars are needed: DEPS_CLJ_TOOLS_DIR alone still looks for the version
+    # deps.clj pins, which is not the one `latest` just installed.
+    - command: |
+        set -eu
+        grep -q DEPS_CLJ_TOOLS_DIR /etc/sandbox-persistent.sh || {
+          v=$(clojure --version | grep -oE '[0-9]+(\.[0-9]+){3}')
+          echo "export DEPS_CLJ_TOOLS_DIR=/usr/local/lib/clojure/libexec"
+          echo "export DEPS_CLJ_TOOLS_VERSION=$v"
+        } >> /etc/sandbox-persistent.sh
+      description: Let bb reuse the installed Clojure tools
 
 agentInstructions:
   content: |
