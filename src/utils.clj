@@ -1,5 +1,5 @@
 (ns utils
-  (:require [babashka.process :as process]
+  (:require [babashka.fs :as fs]
             [clojure.string :as str]))
 
 (defn expand-tilde
@@ -10,4 +10,4 @@
 (defn command-exists?
   "Check if a command is available on PATH."
   [cmd]
-  (zero? (:exit (process/shell {:out :string :err :string :continue true} "command" "-v" cmd))))
+  (some? (fs/which cmd)))
