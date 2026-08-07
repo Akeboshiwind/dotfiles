@@ -5,8 +5,12 @@ displayName: Clojure toolchain
 description: babashka, the Clojure CLI and clj-kondo. The agent image already ships a JDK.
 
 # The image has OpenJDK 25 at /usr/bin/java and presets JAVA_TOOL_OPTIONS with the
-# sandbox proxy, so Maven Central and Clojars resolve once allowed here. Note the
-# host pins temurin 21 via mise; this kit does not match that.
+# sandbox proxy, so Maven Central and Clojars resolve once allowed here. That JDK
+# is fine for babashka work, which is most of it.
+#
+# It is not fine for a JVM build: cfg/clojure pins temurin 21, and Gradle 8.x
+# cannot run on 25 at all. Stack osm-java alongside this kit for those repos:
+#   --kit ~/.config/sbx/kits/osm-java
 permissions:
   network:
     allow:

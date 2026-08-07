@@ -1,0 +1,61 @@
+schemaVersion: "2"
+kind: mixin
+name: osm-java
+displayName: JDK 21
+description: The JDK version cfg/clojure pins. The agent image ships only 25, which Gradle 8.x cannot run on.
+
+# Stacked rather than folded into osm-clojure: plenty of Clojure work here is
+# babashka-only, where the image's JDK 25 is fine and a second JDK is 300MB of
+# nothing. Reach for this kit when a repo drives a JVM build.
+#
+# apt's openjdk-21 is a different vendor to the temurin 21 cfg/clojure pins via
+# mise. Same language level; matching the vendor exactly would mean installing
+# mise here and paying for a download, which buys nothing.
+#
+# 25 is left installed. Gradle's toolchain detection scans /usr/lib/jvm, so both
+# appear in `javaToolchains` and a JavaLanguageVersion.of(21) pin resolves
+# without a toolchain-resolver plugin.
+setup:
+  install:
+    # Both JDKs share /etc/ssl/certs/java/cacerts, which does NOT carry the
+    # sandbox proxy CA even though the system bundle does — so a JVM sees
+    # `PKIX path building failed` where curl succeeds. Gradle's own hosts
+    # (services./plugins.gradle.org, repo1.maven.org) are not intercepted, but
+    # github.com is, and builds do resolve from there.
+    - command: |
+        set -eu
+        apt-get update
+        apt-get install -y --no-install-recommends openjdk-21-jdk-headless
+        rm -rf /var/lib/apt/lists/*
+
+        jdk=/usr/lib/jvm/java-21-openjdk-$(dpkg --print-architecture)
+
+        "$jdk/bin/keytool" -list -alias sbx-proxy-ca \
+          -keystore "$jdk/lib/security/cacerts" -storepass changeit >/dev/null 2>&1 \
+          || "$jdk/bin/keytool" -importcert -noprompt -trustcacerts -alias sbx-proxy-ca \
+               -file /usr/local/share/ca-certificates/proxy-ca.crt \
+               -keystore "$jdk/lib/security/cacerts" -storepass changeit
+
+        # update-alternatives ranks 25 above 21 and /usr/lib/jvm/default-java
+        # points at 25, so neither picks this up — JAVA_HOME has to say so.
+        grep -q JAVA_HOME /etc/sandbox-persistent.sh || {
+          echo "export JAVA_HOME=$jdk"
+          echo 'export PATH="$JAVA_HOME/bin:$PATH"'
+        } >> /etc/sandbox-persistent.sh
+      description: JDK 21
+
+agentInstructions:
+  content: |
+    ## JDK 21
+
+    `JAVA_HOME` points at JDK 21 and its `bin` leads `PATH`. The image's JDK 25
+    is still installed and is what `/usr/lib/jvm/default-java` and
+    `update-alternatives` resolve to, so a tool that ignores `JAVA_HOME` gets 25.
+
+    Gradle 8.x cannot run on 25 at all: its embedded Kotlin compiler throws
+    parsing the version string, and every `./gradlew` invocation dies in under a
+    second reporting only `25.0.3`, before any task starts. If you see that,
+    `JAVA_HOME` is not being honoured.
+
+    `./gradlew -q javaToolchains` is the gate worth checking — it proves both
+    that Gradle runs and that it can resolve a pinned toolchain.

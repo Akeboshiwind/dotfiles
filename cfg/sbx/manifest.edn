@@ -10,4 +10,5 @@
  :fs/symlink {"~/.config/sbx/kits/osm-claude" "./kits/osm-claude"
               "~/.config/sbx/kits/osm-clojure" "./kits/osm-clojure"
               "~/.config/sbx/kits/osm-git" "./kits/osm-git"
+              "~/.config/sbx/kits/osm-java" "./kits/osm-java"
               "~/.config/sbx/kits/osm-github" "./kits/osm-github"}}
