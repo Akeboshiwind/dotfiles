@@ -47,14 +47,45 @@ setup:
           echo "export DEPS_CLJ_TOOLS_VERSION=$v"
         } >> /etc/sandbox-persistent.sh
       description: Let bb reuse the installed Clojure tools
+    # As the agent, not root: bbin installs into $HOME/.local/bin, which is
+    # already on PATH, and root's copy would be invisible to everything.
+    - command: |
+        set -eu
+        command -v bbin >/dev/null || {
+          mkdir -p "$HOME/.local/bin"
+          curl -sL https://raw.githubusercontent.com/babashka/bbin/v0.2.4/bbin -o "$HOME/.local/bin/bbin"
+          chmod +x "$HOME/.local/bin/bbin"
+        }
+      user: "1000"
+      description: bbin
+    # Sourced, not assumed: bbin resolves its own deps through deps.clj, which
+    # cannot fetch clojure-tools here. The entry above wrote the vars that avoid
+    # that download, and an install step does not inherit them.
+    - command: |
+        set -eu
+        . /etc/sandbox-persistent.sh
+        command -v clj-nrepl-eval >/dev/null || \
+          "$HOME/.local/bin/bbin" install https://github.com/bhauman/clojure-mcp-light.git \
+            --git/tag v0.2.0 \
+            --main-opts '["-m" "clojure-mcp-light.nrepl-eval"]' \
+            --as clj-nrepl-eval
+      user: "1000"
+      description: clj-nrepl-eval
 
 agentInstructions:
   content: |
     ## Clojure
 
-    `bb`, `clojure` and `clj-kondo` are installed. They run on whichever JDK the
-    image or a stacked JDK kit provides; this kit does not manage one.
+    `bb`, `clojure`, `clj-kondo` and `clj-nrepl-eval` are installed. They run on
+    whichever JDK the image or a stacked JDK kit provides; this kit does not
+    manage one.
 
-    There is no shared nREPL here. The host editor's REPL is not reachable, and
-    one started in here is reachable only from inside the sandbox. Evaluate with
-    `bb -e` or `clojure -M -e` rather than looking for a running nREPL to join.
+    The host editor's REPL is not reachable. Start your own — `bb nrepl`, or
+    `clojure -M:nrepl` — then evaluate against it:
+
+        clj-nrepl-eval --discover-ports
+        clj-nrepl-eval -p 1339 "(+ 1 2 3)"
+
+    Session state persists between calls, so a namespace required in one
+    evaluation is still there in the next. Prefer this to `bb -e`, which starts
+    a fresh process each time and cannot see the state you just built up.
