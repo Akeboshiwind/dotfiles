@@ -1,0 +1,20 @@
+schemaVersion: "2"
+kind: mixin
+name: container-registries
+displayName: Container registry egress
+description: Egress for pulling container images from registries the default policy does not cover.
+
+# Only quay so far. Docker Hub, ghcr.io and mcr.microsoft.com all resolve without
+# help, so listing them would assert an allow this kit is not the reason for.
+#
+# quay.io itself is reachable too, but it is declared anyway: a pull is not done
+# until the blobs arrive, and half a registry is not a resource. Blobs 302 from
+# quay.io to an Akamai-signed URL on cdn01.quay.io — the numbered hosts rotate,
+# so all three are listed rather than the one that answered today.
+permissions:
+  network:
+    allow:
+      - quay.io
+      - cdn01.quay.io
+      - cdn02.quay.io
+      - cdn03.quay.io
