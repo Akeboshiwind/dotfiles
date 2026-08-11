@@ -31,4 +31,13 @@
               "~/.claude/skills/compete" "./skills/compete"
               "~/.claude/skills/explain-diff-html" "./skills/explain-diff-html"
               "~/.claude/skills/retrospective" "./skills/retrospective"
-              "~/.claude/skills/teach" "./skills/teach"}}
+              "~/.claude/skills/teach" "./skills/teach"}
+
+ ; Sandboxes read a copied store, not these links, so the copy has to be
+ ; refreshed after the links exist. --force because the prompt it otherwise
+ ; asks per skill would hang an apply; </dev/null so a missing --force fails
+ ; loudly instead of waiting on stdin forever.
+ :pkg/script {:sbx-skills-import
+              {:src "sbx skills import --force </dev/null"
+               :check {:path "scripts/skills-store-drift.sh"}
+               :dep/requires #{[:complete :fs/symlink]}}}}
