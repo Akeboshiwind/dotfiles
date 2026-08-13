@@ -1,0 +1,273 @@
+<!-- ===========================================================================
+     Components for explain-diff-html. Copy each block verbatim.
+     Blocks 1 and 2 are required by both components. Do not rename the classes.
+     =========================================================================== -->
+
+
+<!-- ===========================================================================
+     BLOCK 1 — Design tokens. Put this stylesheet first.
+     Both components read these variables. Without them they render unstyled.
+     =========================================================================== -->
+<style>
+:root {
+  --bg: #fbfaf8;
+  --surface: #ffffff;
+  --surface-2: #f3f1ec;
+  --ink: #23211e;
+  --ink-soft: #57534e;
+  --ink-faint: #8a847c;
+  --rule: #e2ded6;
+  --accent: #7c4a2d;
+  --accent-soft: #f0e4dc;
+  --good: #2f6f4f;
+  --good-soft: #e2f0e8;
+  --bad: #a33a3a;
+  --bad-soft: #f7e3e3;
+  --warn: #8a6d1f;
+  --warn-soft: #f7efd8;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --serif: Charter, Georgia, "Iowan Old Style", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17161a;
+    --surface: #1e1d22;
+    --surface-2: #26252b;
+    --ink: #e8e5e0;
+    --ink-soft: #b3aea6;
+    --ink-faint: #85807a;
+    --rule: #34323a;
+    --accent: #d99a72;
+    --accent-soft: #34281f;
+    --good: #7cc79b;
+    --good-soft: #1e2f26;
+    --bad: #e08585;
+    --bad-soft: #33211f;
+    --warn: #d8bb6a;
+    --warn-soft: #2e2718;
+  }
+}
+</style>
+
+
+<!-- ===========================================================================
+     BLOCK 2 — Page frame.
+     The sidebar is the first grid column. It collapses above the content on a
+     phone. scroll-margin-top stops a heading landing under the viewport edge.
+     =========================================================================== -->
+<style>
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.65;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+.layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 48px; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; gap: 0; } }
+main section { margin-bottom: 72px; scroll-margin-top: 24px; }
+</style>
+
+
+<!-- ===========================================================================
+     COMPONENT A — SIDEBAR
+     =========================================================================== -->
+
+<!-- A1: CSS. -->
+<style>
+nav.toc { position: sticky; top: 24px; font-size: 0.9rem; }
+@media (max-width: 900px) {
+  nav.toc { position: static; margin-bottom: 40px; padding: 18px; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; }
+}
+nav.toc h2 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--ink-faint); margin: 0 0 12px; font-family: var(--mono); font-weight: 600; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; }
+nav.toc li { margin: 0 0 3px; }
+nav.toc a { display: block; padding: 4px 10px; color: var(--ink-soft); text-decoration: none; border-left: 2px solid transparent; border-radius: 0 4px 4px 0; }
+nav.toc a:hover { color: var(--accent); background: var(--surface-2); }
+nav.toc a.active { color: var(--accent); border-left-color: var(--accent); background: var(--surface-2); }
+nav.toc .sub { padding-left: 16px; font-size: 0.85em; }
+</style>
+
+<!-- A2: Markup. Every href must match the id of a section element, or of
+     an h3 that carries an id. Add one .sub entry per h3 you want listed. -->
+<div class="wrap">
+<div class="layout">
+
+  <nav class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#background">1. Background</a></li>
+      <li><a href="#deep" class="sub">— For beginners</a></li>
+      <li><a href="#narrow" class="sub">— Directly relevant</a></li>
+      <li><a href="#intuition">2. Intuition</a></li>
+      <li><a href="#code">3. The code</a></li>
+      <li><a href="#quiz">4. Quiz</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <!-- Sections go here. Each one needs an id that a link above points at. -->
+  </main>
+
+</div>
+</div>
+
+<!-- A3: Scroll tracking. Highlights the entry for the section
+     now on screen. Reads only ids, so it needs no edits. -->
+<script>
+const targets = [...document.querySelectorAll('main section, main h3[id]')];
+const links = new Map([...document.querySelectorAll('nav.toc a')].map(a => [a.getAttribute('href').slice(1), a]));
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    const link = links.get(entry.target.id);
+    if (!link) return;
+    if (entry.isIntersecting) {
+      document.querySelectorAll('nav.toc a.active').forEach(a => a.classList.remove('active'));
+      link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-10% 0px -75% 0px' });
+targets.forEach(t => { if (t.id) observer.observe(t); });
+</script>
+
+
+<!-- ===========================================================================
+     COMPONENT B — QUIZ
+     Every option carries the same class, so the styling reveals nothing before
+     a click. The script shuffles each question's options on load, so the order
+     you write them in does not matter.
+     =========================================================================== -->
+
+<!-- B1: CSS. -->
+<style>
+.quiz { max-width: 44em; }
+.q { background: var(--surface); border: 1px solid var(--rule); border-radius: 11px; padding: 20px 22px; margin-bottom: 20px; }
+.q .qn { font-family: var(--mono); font-size: 0.68rem; color: var(--accent); font-weight: 700; letter-spacing: 0.06em; }
+.q .qt { font-weight: 600; margin: 6px 0 15px; font-size: 1.02rem; line-height: 1.5; }
+.opts { list-style: none; padding: 0; margin: 0; }
+.opts li { margin-bottom: 8px; }
+.opt {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  background: var(--surface-2); border: 1px solid var(--rule); border-radius: 8px;
+  padding: 11px 14px; font-family: var(--serif); font-size: 0.9rem; line-height: 1.45; color: var(--ink);
+  transition: border-color .12s, background .12s;
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt:disabled { cursor: default; }
+.opt.correct { background: var(--good-soft); border-color: var(--good); color: var(--good); }
+.opt.wrong { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.fb { margin-top: 12px; padding: 12px 15px; border-radius: 8px; font-size: 0.87rem; display: none; line-height: 1.55; }
+.fb.show { display: block; }
+.fb.r { background: var(--good-soft); border: 1px solid var(--good); }
+.fb.w { background: var(--bad-soft); border: 1px solid var(--bad); }
+.fb b { display: block; margin-bottom: 4px; }
+.score { font-family: var(--mono); font-size: 0.85rem; color: var(--ink-soft); padding: 16px; text-align: center; background: var(--surface-2); border-radius: 9px; }
+</style>
+
+<!-- B2: Markup. Place it last among the sections. The two ids are read by the
+     script. The cards are built at run time, so leave the div empty. -->
+<section id="quiz">
+  <h2><span class="num">Section 4</span>Quiz</h2>
+  <p>Five questions on the substance of the change. Options are shuffled each time you load the page.</p>
+  <div class="quiz" id="quizRoot"></div>
+  <div class="score" id="score">No questions answered yet.</div>
+</section>
+
+<!-- B3: Data and behaviour.
+     Replace the single example with five questions. Fill in the data only —
+     the code below it needs no edits.
+
+     q       question text. Takes inline HTML, so <code> is available.
+     options one object per option. Exactly one has ok: true.
+     t       option text. Plain text only. HTML here is shown literally.
+     why     shown after the click. Write one for every option, correct or not,
+             and name the misunderstanding each wrong option stands for. -->
+<script>
+const QUESTIONS = [
+  {
+    q: "Example question. Delete this object and write five of your own. Why does <code>foo()</code> take the buffer instead of the string?",
+    options: [
+      { t: "Because the caller already holds the buffer, so passing the string would copy it a second time.", ok: true,
+        why: "Correct. The buffer is live at the call site, and a string parameter would force a copy the caller has no way to avoid." },
+      { t: "Because the string type cannot represent the byte ranges that the parser reports back.", ok: false,
+        why: "The ranges are plain integers and index a string perfectly well. The reason is the copy, not the type." },
+      { t: "Because the buffer is mutable, and the function edits it in place before it returns.", ok: false,
+        why: "The function writes nothing. Every caller keeps its buffer unchanged, which is what makes the call safe to repeat." }
+    ]
+  }
+];
+
+function shuffle(a) {
+  const r = a.slice();
+  for (let i = r.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [r[i], r[j]] = [r[j], r[i]];
+  }
+  return r;
+}
+
+const answered = new Array(QUESTIONS.length).fill(null);
+
+function updateScore() {
+  const done = answered.filter(a => a !== null).length;
+  const right = answered.filter(a => a === true).length;
+  const el = document.getElementById('score');
+  if (done === 0) { el.textContent = 'No questions answered yet.'; return; }
+  el.textContent = `${right} of ${done} correct` + (done === QUESTIONS.length ? ` — all ${QUESTIONS.length} answered.` : '');
+}
+
+const root = document.getElementById('quizRoot');
+QUESTIONS.forEach((question, qi) => {
+  const card = document.createElement('div');
+  card.className = 'q';
+
+  const num = document.createElement('div');
+  num.className = 'qn';
+  num.textContent = `QUESTION ${qi + 1} OF ${QUESTIONS.length}`;
+  card.appendChild(num);
+
+  const title = document.createElement('div');
+  title.className = 'qt';
+  title.innerHTML = question.q;
+  card.appendChild(title);
+
+  const list = document.createElement('ul');
+  list.className = 'opts';
+
+  const feedback = document.createElement('div');
+  feedback.className = 'fb';
+
+  shuffle(question.options).forEach(option => {
+    const li = document.createElement('li');
+    const button = document.createElement('button');
+    button.className = 'opt';
+    button.type = 'button';
+    button.textContent = option.t;
+    button.addEventListener('click', () => {
+      if (answered[qi] !== null) return;
+      answered[qi] = option.ok;
+      list.querySelectorAll('button').forEach(b => { b.disabled = true; });
+      button.classList.add(option.ok ? 'correct' : 'wrong');
+      if (!option.ok) {
+        list.querySelectorAll('button').forEach(b => {
+          const match = question.options.find(o => o.t === b.textContent);
+          if (match && match.ok) b.classList.add('correct');
+        });
+      }
+      feedback.className = 'fb show ' + (option.ok ? 'r' : 'w');
+      feedback.innerHTML = '<b>' + (option.ok ? 'Correct' : 'Not quite') + '</b>' + option.why;
+      updateScore();
+    });
+    li.appendChild(button);
+    list.appendChild(li);
+  });
+
+  card.appendChild(list);
+  card.appendChild(feedback);
+  root.appendChild(card);
+});
+</script>
