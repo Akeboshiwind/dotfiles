@@ -24,7 +24,7 @@
 ;; Spinner
 ;; =============================================================================
 
-(def ^:private spinner-frames ["/" "-" "\\" "|"])
+(def ^:private spinner-frames ["⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏"])
 
 (defn- tty?
   "True when stdout is an interactive terminal."
