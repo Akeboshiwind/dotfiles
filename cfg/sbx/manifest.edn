@@ -13,4 +13,5 @@
               "~/.config/sbx/kits/osm-claude" "./kits/osm-claude"
               "~/.config/sbx/kits/osm-clojure" "./kits/osm-clojure"
               "~/.config/sbx/kits/osm-git" "./kits/osm-git"
-              "~/.config/sbx/kits/osm-github" "./kits/osm-github"}}
+              "~/.config/sbx/kits/osm-github" "./kits/osm-github"
+              "~/.config/sbx/kits/utf8-locale" "./kits/utf8-locale"}}

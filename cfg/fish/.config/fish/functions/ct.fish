@@ -21,12 +21,15 @@ function ct --wraps=claude --description 'Run Claude Code in a Docker sandbox'
     end
 
     # Kits carry what a sandbox never inherits from the host: CLAUDE.md and
-    # plugins, git identity, GitHub egress. git-ssh-sign is upstream's, pinned;
-    # its source must be in kit.allowedSources (see cfg/sbx/manifest.edn).
+    # plugins, git identity, GitHub egress. utf8-locale is here rather than
+    # per-tree because the image sets no LANG, and an ASCII locale fails in ways
+    # that read as real bugs. git-ssh-sign is upstream's, pinned; its source must
+    # be in kit.allowedSources (see cfg/sbx/manifest.edn).
     set -l kits \
         --kit $HOME/.config/sbx/kits/osm-claude \
         --kit $HOME/.config/sbx/kits/osm-git \
         --kit $HOME/.config/sbx/kits/osm-github \
+        --kit $HOME/.config/sbx/kits/utf8-locale \
         --kit "git+https://github.com/docker/sbx-kits-contrib.git#ref=v0.14.0&dir=git-ssh-sign"
 
     # Kits that cost real download time are limited to the trees that need them.

@@ -1,0 +1,32 @@
+schemaVersion: "2"
+kind: mixin
+name: utf8-locale
+displayName: UTF-8 locale
+description: Sets LANG to C.UTF-8, so tools can read and write non-ASCII filenames.
+
+# The image sets no LANG and no LC_* variable. A JVM then runs with
+# sun.jnu.encoding=ANSI_X3.4-1968 and throws InvalidPathException on any filename
+# that has a non-ASCII character. Other tools fail in their own ways.
+#
+# LANG alone is enough, because no LC_* variable is set to override it. LC_ALL
+# would also work, but it overrides every category and cannot be relaxed later.
+#
+# C.utf8 is part of glibc, so the locales package is not needed.
+setup:
+  install:
+    - command: |
+        set -eu
+        grep -q '^export LANG=' /etc/sandbox-persistent.sh || \
+          echo 'export LANG=C.UTF-8' >> /etc/sandbox-persistent.sh
+      description: UTF-8 locale
+
+agentInstructions:
+  content: |
+    ## Locale
+
+    LANG is C.UTF-8. Filenames with non-ASCII characters work.
+
+    A daemon keeps the locale it started with. If a build daemon started before
+    this kit ran, stop it — for Gradle, `./gradlew --stop`. Also delete build
+    output written under the old locale: an ASCII-locale process wrote those
+    filenames with `?` bytes, and later runs report the files as missing.
