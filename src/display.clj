@@ -39,7 +39,8 @@
 (defn with-spinner*
   "Run thunk while animating a spinner beside message on the current line.
    Animates only on an interactive terminal; otherwise just runs the thunk.
-   Clears the line before returning the thunk's result."
+   On success the line settles into a ticked, permanent line; if the thunk
+   throws, the line is erased instead — a tick never claims failed work."
   [message thunk]
   (if-not (tty?)
     (thunk)
@@ -50,14 +51,21 @@
                          (print (str "\r" (nth spinner-frames (mod i (count spinner-frames))) " " message))
                          (flush)
                          (Thread/sleep 80)
-                         (recur (inc i)))))]
+                         (recur (inc i)))))
+          erase! (fn []
+                   (reset! spinning false)
+                   @animator
+                   (print "\r\033[K")
+                   (flush))]
       (try
-        (thunk)
-        (finally
-          (reset! spinning false)
-          @animator
-          (print "\r\033[K")
-          (flush))))))
+        (let [result (thunk)]
+          (erase!)
+          (println (green "✓") message)
+          (flush)
+          result)
+        (catch Throwable t
+          (erase!)
+          (throw t))))))
 
 (defmacro with-spinner
   "Run body while showing message with an animated spinner (see with-spinner*)."
