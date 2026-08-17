@@ -63,44 +63,49 @@
                     ": " error)))
     (println)))
 
+(defn- node->result
+  "The display shape of one checked node."
+  [{:keys [ref check]}]
+  (let [[_ key] ref]
+    {:label (if (keyword? key) (name key) (str key))
+     :state (outcome->state check)
+     :action ref
+     :detail (when (:message check)
+               (:message check))
+     :from (:from check)
+     :to (:to check)
+     :instructions (:detail check)}))
+
+(defn- plan-sections
+  "Group the checked nodes into one section per action type, each carrying every
+   result (for the summary) and the subset worth showing: everything unsatisfied,
+   plus satisfied items that carry a warning message."
+  [action-graph]
+  (let [nodes (:nodes action-graph)]
+    (->> (:order action-graph)
+         (partition-by first)
+         (mapv (fn [group]
+                 (let [results (mapv #(node->result (get nodes %)) group)]
+                   {:action-type (ffirst group)
+                    :results results
+                    :changes (remove #(and (= :installed (:state %))
+                                           (nil? (:detail %)))
+                                     results)}))))))
+
 (defn show-plan
   "Show the status of all actions in the ActionGraph.
    Displays everything except satisfied (installed) items, grouped by type."
   [action-graph]
-  (let [nodes (:nodes action-graph)
-        batches (->> (:order action-graph)
-                     (partition-by first)
-                     (map (fn [group]
-                            [(ffirst group)
-                             (map #(get nodes %) group)])))
-        all-states (mapcat
-                     (fn [[action-type node-group]]
-                       (let [results (map (fn [{:keys [ref check]}]
-                                            (let [[_ key] ref
-                                                  state (outcome->state check)]
-                                              {:label (if (keyword? key) (name key) (str key))
-                                               :state state
-                                               :action ref
-                                               :detail (when (:message check)
-                                                         (:message check))
-                                               :from (:from check)
-                                               :to (:to check)
-                                               :instructions (:detail check)}))
-                                          node-group)
-                             ;; Show everything unsatisfied, plus satisfied items
-                             ;; that carry a warning message
-                             changes (remove #(and (= :installed (:state %))
-                                                   (nil? (:detail %)))
-                                             results)]
-                         (when (seq changes)
-                           (println (subs (str action-type) 1))
-                           (doseq [r changes]
-                             (d/render-plan-result r)))
-                         results))
-                     batches)
-        freq (frequencies (map :state all-states))
-        jumps (frequencies (keep (fn [{:keys [state from to]}]
-                                   (when (and (= :outdated state) from to)
-                                     (v/severity from to)))
-                                 all-states))]
-    (d/plan-summary freq jumps)))
+  (let [sections (plan-sections action-graph)
+        all-states (mapcat :results sections)]
+    (doseq [{:keys [action-type changes]} sections
+            :when (seq changes)]
+      (println (subs (str action-type) 1))
+      (doseq [r changes]
+        (d/render-plan-result r)))
+    (let [freq (frequencies (map :state all-states))
+          jumps (frequencies (keep (fn [{:keys [state from to]}]
+                                     (when (and (= :outdated state) from to)
+                                       (v/severity from to)))
+                                   all-states))]
+      (d/plan-summary freq jumps))))
