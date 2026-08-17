@@ -56,6 +56,7 @@
   "Print validation errors that would block an apply. No-op when nil/empty."
   [errors]
   (when (seq errors)
+    (d/end-spinner-block!)
     (println (d/red "Validation errors (--apply will be blocked):"))
     (doseq [{:keys [action key error]} errors]
       (println (str "  " (name action) " "
@@ -97,9 +98,11 @@
    Displays everything except satisfied (installed) items, grouped by type."
   [action-graph]
   (let [sections (plan-sections action-graph)
-        all-states (mapcat :results sections)]
-    (doseq [{:keys [action-type changes]} sections
-            :when (seq changes)]
+        all-states (mapcat :results sections)
+        body (filter (comp seq :changes) sections)]
+    (when (seq body)
+      (d/plan-heading))
+    (doseq [{:keys [action-type changes]} body]
       (println (subs (str action-type) 1))
       (doseq [r changes]
         (d/render-plan-result r)))

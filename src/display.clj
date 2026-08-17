@@ -11,6 +11,7 @@
 (def ^:private GREEN "\033[32m")
 (def ^:private RED "\033[31m")
 (def ^:private YELLOW "\033[33m")
+(def ^:private BOLD "\033[1m")
 (def ^:private BOLD-RED "\033[1;31m")
 (def ^:private RESET "\033[0m")
 
@@ -19,12 +20,18 @@
 (defn red "Wrap string in red ANSI color." [s] (str RED s RESET))
 (defn yellow "Wrap string in yellow ANSI color." [s] (str YELLOW s RESET))
 (defn bold-red "Wrap string in bold red ANSI color." [s] (str BOLD-RED s RESET))
+(defn bold "Wrap string in bold ANSI." [s] (str BOLD s RESET))
 
 ;; =============================================================================
 ;; Spinner
 ;; =============================================================================
 
 (def ^:private spinner-frames ["⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏"])
+
+(def ^:private ticked?
+  "True while a settled spinner line is the last thing printed, so
+   end-spinner-block! knows whether there is a block to close."
+  (atom false))
 
 (defn- tty?
   "True when stdout is an interactive terminal."
@@ -62,10 +69,23 @@
           (erase!)
           (println (green "✓") message)
           (flush)
+          (reset! ticked? true)
           result)
         (catch Throwable t
           (erase!)
           (throw t))))))
+
+(defn end-spinner-block!
+  "Close a run of ticked spinner lines with a blank line, so they read apart
+   from whatever prints next. No-op unless a tick is the last thing on screen,
+   which keeps a run that never spun (piped output, or a scope whose checks are
+   all local) from opening with a stray blank line. Returns true when it printed,
+   so a caller that was going to lead with a blank line anyway can skip its own."
+  []
+  (when (compare-and-set! ticked? true false)
+    (println)
+    (flush)
+    true))
 
 (defmacro with-spinner
   "Run body while showing message with an animated spinner (see with-spinner*)."
@@ -104,6 +124,12 @@
 ;; =============================================================================
 ;; Plan display
 ;; =============================================================================
+
+(defn plan-heading
+  "Open the plan body, set apart from whatever checking left on screen."
+  []
+  (end-spinner-block!)
+  (println (bold "Plan")))
 
 (def ^:private plan-icons
   {:installed  {:icon "✓" :color-fn green}
@@ -181,5 +207,8 @@
                      [:unknown (plan-icons :unknown)]
                      [:error (plan-icons :error)]
                      [:cancelled (plan-icons :cancelled)]])]
-    (println)
+    ;; A plan with no body prints no heading, so this blank line is the one
+    ;; closing the spinner block.
+    (when-not (end-spinner-block!)
+      (println))
     (println (str/join ", " parts)))))

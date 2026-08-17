@@ -5,6 +5,7 @@
             [plan :as p]
             [execute :as e]
             [cache :as c]
+            [display :as d]
             [graph :as g]
             [check :as chk]
             [status :as s]
@@ -120,6 +121,7 @@
    checkout or after editing the manifest."
   [entries cache action]
   (let [{:keys [checked symlinks errors]} (prepare-live entries cache action)]
+    (d/end-spinner-block!)
     (when errors
       (println (format-validation-errors errors))
       (System/exit 1))
