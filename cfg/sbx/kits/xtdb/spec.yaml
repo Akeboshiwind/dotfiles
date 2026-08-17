@@ -1,0 +1,75 @@
+schemaVersion: "2"
+kind: mixin
+name: xtdb
+displayName: XTDB build environment
+description: JDK 21 with binutils, the d2 diagram compiler, and egress to the Confluent and Quay repositories.
+
+# One kit for one repository. Each item is here because an XTDB build step stops
+# without it. Nothing here is Clojure tooling — stack osm-clojure for that.
+permissions:
+  network:
+    allow:
+      # io.confluent artifacts arrive through :modules:xtdb-kafka and land on
+      # :xtdb-core's testRuntimeClasspath, so every test task there needs them.
+      - packages.confluent.io
+      # Testcontainers pulls Keycloak. quay.io answers, then redirects the blobs
+      # to a signed URL on a numbered CDN host. Those hosts rotate.
+      - quay.io
+      - cdn01.quay.io
+      - cdn02.quay.io
+      - cdn03.quay.io
+      # The d2 release archive below.
+      - github.com
+      - objects.githubusercontent.com
+
+setup:
+  install:
+    # Gradle 8.x cannot run on the image's JDK 25. The Kotlin compiler it embeds
+    # fails to parse the version string, so no .kts script compiles and no task
+    # starts. update-alternatives and /usr/lib/jvm/default-java both prefer 25,
+    # so JAVA_HOME and PATH must name 21.
+    #
+    # binutils supplies objcopy, which jlink calls to strip debug symbols. It is
+    # not a JDK dependency and the image does not have it.
+    - command: |
+        set -eu
+        apt-get update
+        apt-get install -y --no-install-recommends openjdk-21-jdk-headless binutils
+        rm -rf /var/lib/apt/lists/*
+
+        jdk=/usr/lib/jvm/java-21-openjdk-$(dpkg --print-architecture)
+        grep -q JAVA_HOME /etc/sandbox-persistent.sh || {
+          echo "export JAVA_HOME=$jdk"
+          echo 'export PATH="$JAVA_HOME/bin:$PATH"'
+        } >> /etc/sandbox-persistent.sh
+      description: JDK 21 and binutils
+    # astro-d2 throws in astro:config:setup, so `yarn build` and `yarn dev` both
+    # stop before they do any work. The install script on d2lang.com needs an
+    # allow rule; the release archive does not.
+    - command: |
+        set -eu
+        command -v d2 >/dev/null || {
+          v=0.7.1
+          arch=$(dpkg --print-architecture)
+          cd "$(mktemp -d)"
+          curl -sSL -o d2.tar.gz \
+            "https://github.com/terrastruct/d2/releases/download/v$v/d2-v$v-linux-$arch.tar.gz"
+          tar xzf d2.tar.gz
+          install -m 0755 "d2-v$v/bin/d2" /usr/local/bin/d2
+        }
+      description: d2
+
+agentInstructions:
+  content: |
+    ## XTDB
+
+    JAVA_HOME points to JDK 21. The image's JDK 25 is still installed, and
+    `/usr/lib/jvm/default-java` still points to it, so a tool that ignores
+    JAVA_HOME runs on 25. Gradle fails on 25 and reports only the version string
+    `25.0.3` — if you see that, JAVA_HOME is not being read.
+
+    Run `./gradlew -q javaToolchains` before a build. It shows both that Gradle
+    runs and that it can find the pinned toolchain.
+
+    d2 is installed for the docs build. The docs also need the git submodules and
+    `docs/node_modules`, which this kit does not provide.

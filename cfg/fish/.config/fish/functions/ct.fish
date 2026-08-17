@@ -40,10 +40,7 @@ function ct --wraps=claude --description 'Run Claude Code in a Docker sandbox'
             --kit $HOME/.config/sbx/kits/allium
     end
     if _ct_under $dir $HOME/prog/work/xtdb/xtdb
-        set -a kits \
-            --kit $HOME/.config/sbx/kits/jdk-21 \
-            --kit $HOME/.config/sbx/kits/confluent-maven \
-            --kit $HOME/.config/sbx/kits/container-registries
+        set -a kits --kit $HOME/.config/sbx/kits/xtdb
     end
 
     # A linked worktree's .git is a pointer into the main checkout's
