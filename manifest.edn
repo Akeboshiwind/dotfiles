@@ -68,6 +68,7 @@
 
         ;; >> Launcher
         :tinystart
+        :minibar
 
         ;; >> Reading
         :calibre

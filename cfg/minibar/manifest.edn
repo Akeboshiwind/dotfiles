@@ -1,0 +1,7 @@
+{:assert
+ {:minibar-installed
+  {:src "test -d /Applications/MiniBar.app"
+   :message "MiniBar not installed, buy from Creem"
+   :instructions ["Requires macOS 26 or later"
+                  "Buy from https://www.creem.io/payment/prod_1zpRN8dSvhBFavhdSAvm0a"
+                  "Unzip the download and move MiniBar.app to /Applications/"]}}}
