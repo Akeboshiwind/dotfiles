@@ -35,7 +35,9 @@ function ct --wraps=claude --description 'Run Claude Code in a Docker sandbox'
     # Kits that cost real download time are limited to the trees that need them.
     set -l dir (pwd)
     if _ct_under $dir $HOME/dotfiles $HOME/prog/work/xtdb/xtdb
-        set -a kits --kit $HOME/.config/sbx/kits/osm-clojure
+        set -a kits \
+            --kit $HOME/.config/sbx/kits/osm-clojure \
+            --kit $HOME/.config/sbx/kits/allium
     end
     if _ct_under $dir $HOME/prog/work/xtdb/xtdb
         set -a kits \

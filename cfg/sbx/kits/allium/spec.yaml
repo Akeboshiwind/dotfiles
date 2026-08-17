@@ -1,0 +1,48 @@
+schemaVersion: "2"
+kind: mixin
+name: allium
+displayName: Allium CLI
+description: The allium command, for checking Allium specification files.
+
+# The binary comes from juxt/allium-tools, not juxt/allium — that repository is a
+# JavaScript project with no releases. The URL and the checksum below are the ones
+# the juxt/homebrew-allium formula uses for Linux.
+#
+# Only arm64 is installed. Upstream ships an x86_64 archive but leaves its
+# checksum empty in the formula, so there is nothing to verify it against. The
+# step stops with a message rather than install an unverified binary.
+permissions:
+  network:
+    allow:
+      - github.com
+      - objects.githubusercontent.com
+
+setup:
+  install:
+    - command: |
+        set -eu
+        command -v allium >/dev/null || {
+          arch=$(dpkg --print-architecture)
+          if [ "$arch" != "arm64" ]; then
+            echo "no verified allium build for $arch" >&2
+            exit 1
+          fi
+          v=3.5.3
+          sha=ea626c3d9ecf2b64b12b2820cb2fc41444bd30c53e591b990c022872da94d7c6
+          cd "$(mktemp -d)"
+          curl -sSL -o allium.tar.gz \
+            "https://github.com/juxt/allium-tools/releases/download/v$v/allium-aarch64-unknown-linux-gnu.tar.gz"
+          echo "$sha  allium.tar.gz" | sha256sum -c -
+          tar xzf allium.tar.gz
+          install -m 0755 allium /usr/local/bin/allium
+        }
+      description: allium
+
+agentInstructions:
+  content: |
+    ## Allium
+
+    `allium` checks specification files: `allium check <file>`.
+
+    The Allium Claude plugin comes from a different kit. The plugin can be
+    present without the command, so check for the command before you rely on it.
