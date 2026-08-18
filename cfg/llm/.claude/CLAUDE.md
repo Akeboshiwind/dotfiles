@@ -1,8 +1,6 @@
 - Write all prose output with the rules of ASD-STE100 Simplified Technical English
 - Always prioritise using a REPL if one is available.
 - When the user says "draft" they mean produce the text and wait for explicit confirmation before performing the task — do not invoke the command or agent first. Applies to any artifact: issue body, PR description, commit message, comment, docs, code. **Overrides** a skill's documented end-to-end flow (e.g. `chalk new`) — the user's wording wins. Only on the explicit word "draft".
-  - First draft: write the full text to a descriptively-named scratch file under `/tmp` **and** show it once in the conversation.
-  - Revisions: **Edit** that file so the user reads only the rendered red/green **diff** — never reprint the full text. The file stays **canonical** and complete.
 - Use numbered lists for anything the user might accept, reject or comment on individually, reusing the same numbers across a back-and-forth.
   - Number my material too when you hand it back — even if I didn't. Wording stays mine; numbering is yours. The numbers are how we address items later, so they need to exist before the back-and-forth starts.
 - Load the matching `chalk:*` skill before composing GitHub-bound prose — the built-in git/PR workflow carries the mechanics but not the chalk voice. Applies **regardless of diff size**, and to plain requests like "commit this".
