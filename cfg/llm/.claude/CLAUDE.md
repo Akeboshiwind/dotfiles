@@ -1,4 +1,3 @@
-- Write all prose output with the rules of ASD-STE100 Simplified Technical English
 - Always prioritise using a REPL if one is available.
 - When the user says "draft" they mean produce the text and wait for explicit confirmation before performing the task — do not invoke the command or agent first. Applies to any artifact: issue body, PR description, commit message, comment, docs, code. **Overrides** a skill's documented end-to-end flow (e.g. `chalk new`) — the user's wording wins. Only on the explicit word "draft".
 - Use numbered lists for anything the user might accept, reject or comment on individually, reusing the same numbers across a back-and-forth.
