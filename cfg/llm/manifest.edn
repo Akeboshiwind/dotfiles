@@ -18,7 +18,6 @@
  :claude/plugin {:playground {:dep/requires #{[:claude/marketplace :official]}}
                  :allium {:dep/requires #{[:claude/marketplace :juxt]}}
                  :chalk {:dep/requires #{[:claude/marketplace :juxt]}}
-                 :glance {:dep/requires #{[:claude/marketplace :juxt]}}
                  :chill {:dep/requires #{[:claude/marketplace :juxt]}}
                  :gradle-tests {:dep/requires #{[:claude/marketplace :xtdb]}}}
  :fs/symlink-folder {"~/.claude" "./.claude"}
