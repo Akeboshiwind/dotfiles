@@ -31,13 +31,18 @@ setup:
     #
     # binutils supplies objcopy, which jlink calls to strip debug symbols. It is
     # not a JDK dependency and the image does not have it.
+    #
+    # The JDK directory stands in for binutils in the guard — they install
+    # together, and nothing here removes one without the other.
     - command: |
         set -eu
-        apt-get update
-        apt-get install -y --no-install-recommends openjdk-21-jdk-headless binutils
-        rm -rf /var/lib/apt/lists/*
-
         jdk=/usr/lib/jvm/java-21-openjdk-$(dpkg --print-architecture)
+        [ -d "$jdk" ] || {
+          apt-get update
+          apt-get install -y --no-install-recommends openjdk-21-jdk-headless binutils
+          rm -rf /var/lib/apt/lists/*
+        }
+
         grep -q JAVA_HOME /etc/sandbox-persistent.sh || {
           echo "export JAVA_HOME=$jdk"
           echo 'export PATH="$JAVA_HOME/bin:$PATH"'

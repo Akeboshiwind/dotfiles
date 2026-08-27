@@ -60,9 +60,11 @@ setup:
     # writes /etc/gitconfig, keeping files/home/.gitconfig to identity alone.
     - command: |
         set -eu
-        apt-get update
-        apt-get install -y --no-install-recommends git-lfs
-        rm -rf /var/lib/apt/lists/*
+        command -v git-lfs >/dev/null || {
+          apt-get update
+          apt-get install -y --no-install-recommends git-lfs
+          rm -rf /var/lib/apt/lists/*
+        }
         git lfs install --system
       description: git-lfs
 
@@ -145,13 +147,21 @@ setup:
 
     # Plugin paths in installed_plugins.json are absolute, so the host's cache
     # cannot be copied in — the plugins have to be installed here.
+    #
+    # A marketplace is guarded on its install directory, which is named after the
+    # marketplace and not after the repository it was added from.
     - command: |
         set -eu
-        claude plugin marketplace add anthropics/claude-plugins-official
-        claude plugin marketplace add juxt/claude-plugins
-        claude plugin marketplace add xtdb/claude-plugins
+        add_marketplace() {
+          [ -d "$HOME/.claude/plugins/marketplaces/$1" ] || claude plugin marketplace add "$2"
+        }
+        add_marketplace claude-plugins-official anthropics/claude-plugins-official
+        add_marketplace juxt-plugins juxt/claude-plugins
+        add_marketplace xtdb-plugins xtdb/claude-plugins
+
         for p in playground allium chalk chill gradle-tests; do
-          claude plugin install "$p"
+          grep -q "\"$p@" "$HOME/.claude/plugins/installed_plugins.json" 2>/dev/null || \
+            claude plugin install "$p"
         done
       user: "1000"
       description: Install the plugins CLAUDE.md depends on
