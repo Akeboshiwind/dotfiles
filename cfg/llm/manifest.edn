@@ -40,4 +40,20 @@
  :pkg/script {:sbx-skills-import
               {:src "sbx skills import --force </dev/null"
                :check {:path "scripts/skills-store-drift.sh"}
-               :dep/requires #{[:complete :fs/symlink]}}}}
+               :dep/requires #{[:complete :fs/symlink]}}
+
+              ; The osm-base kit ships this tree to every sandbox, and sbx
+              ; rejects a symlink under files/ that resolves outside the kit — so
+              ; it has to be a copy, and generating it is what stops it drifting.
+              ; The copy is gitignored, leaving ./.claude as the only definition.
+              ;
+              ; settings.json is the sole exclusion: the built-in claude kit
+              ; rewrites it at create, after files/ are copied, so anything
+              ; landing there is lost. settings.osm.json beside it is what ct
+              ; passes with `claude --settings`.
+              ;
+              ; --delete so removing an output style propagates, rather than
+              ; leaving an orphan the sandbox still loads.
+              :sbx-kit-claude-config
+              {:src "rsync -a --delete --exclude settings.json cfg/llm/.claude/ cfg/sbx/kits/osm-base/files/home/.claude/"
+               :check "diff -rq -x settings.json cfg/llm/.claude cfg/sbx/kits/osm-base/files/home/.claude >/dev/null 2>&1"}}}
