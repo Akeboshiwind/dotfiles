@@ -71,8 +71,8 @@
       }
     }
   },
-  "alwaysThinkingEnabled": true,
   "outputStyle": "Chalk mindmap",
+  "alwaysThinkingEnabled": true,
   "effortLevel": "high",
   "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true,

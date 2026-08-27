@@ -1,15 +1,13 @@
 ;; Standalone microVM runner for coding agents — no relation to Docker
 ;; Desktop, and it leaves the OrbStack docker socket alone.
 {:pkg/brew {"docker/tap/sbx" {:trust true :cask true}}
+ ;; Kits are not installed anywhere. ct and the build scripts both pass --kit
+ ;; with a path into this directory, so a kit needs no well-known location.
+ ;;
  ;; Commit signing comes from the external git-ssh-sign kit, whose source has to
  ;; be allowlisted once on the host — sbx settings, not a file syn can own:
  ;;   sbx settings set kit.allowedSources '["docker.io/","github.com/docker/"]'
  ;;
- ;; One link per kit, not per file: sbx rejects any symlink under files/ that
- ;; resolves outside the kit, so the kit directory has to be the link.
- :fs/symlink {"~/.config/sbx/kits/osm-base" "./kits/osm-base"
-              "~/.config/sbx/kits/xtdb" "./kits/xtdb"}
-
  ;; A template is a cache of running the kits below, nothing more. Each entry
  ;; spells out its own stacking, because what a template contains is the thing a
  ;; reader comes here to find out.
