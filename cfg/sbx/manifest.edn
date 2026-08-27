@@ -8,4 +8,33 @@
  ;; One link per kit, not per file: sbx rejects any symlink under files/ that
  ;; resolves outside the kit, so the kit directory has to be the link.
  :fs/symlink {"~/.config/sbx/kits/osm-base" "./kits/osm-base"
-              "~/.config/sbx/kits/xtdb" "./kits/xtdb"}}
+              "~/.config/sbx/kits/xtdb" "./kits/xtdb"}
+
+ ;; A template is a cache of running the kits below, nothing more. Each entry
+ ;; spells out its own stacking, because what a template contains is the thing a
+ ;; reader comes here to find out.
+ ;;
+ ;; git-ssh-sign is deliberately absent: it resolves the signing key from the
+ ;; forwarded agent at signing time, so it has nothing to snapshot. ct applies it
+ ;; at create either way.
+ ;;
+ ;; :sbx-kit-claude-config is required so a build applies the kit ct will apply,
+ ;; not a half-populated one. It is not required because files/ ends up in the
+ ;; template — it does not; a kit's files/ tree is copied from the kit at every
+ ;; create, which is also why the freshness check ignores it.
+ ;;
+ ;; Nothing uses these yet — ct switches to `-t` separately.
+ :pkg/script
+ ;; Kits are named, not pathed: both scripts resolve them under cfg/sbx/kits from
+ ;; their own location, so nothing here depends on the symlinks or on syn's `cd`.
+ {:sbx-template-osm-base
+  {:src "scripts/sbx-build-template.sh osm-base osm-base"
+   :check "scripts/sbx-template-fresh.sh osm-base osm-base"
+   :dep/requires #{[:pkg/brew "docker/tap/sbx"]
+                   [:pkg/script :sbx-kit-claude-config]}}
+
+  :sbx-template-xtdb
+  {:src "scripts/sbx-build-template.sh xtdb osm-base xtdb"
+   :check "scripts/sbx-template-fresh.sh xtdb osm-base xtdb"
+   :dep/requires #{[:pkg/brew "docker/tap/sbx"]
+                   [:pkg/script :sbx-kit-claude-config]}}}}
