@@ -47,7 +47,9 @@
   "Run thunk while animating a spinner beside message on the current line.
    Animates only on an interactive terminal; otherwise just runs the thunk.
    On success the line settles into a ticked, permanent line; if the thunk
-   throws, the line is erased instead — a tick never claims failed work."
+   throws, the line is erased instead — a tick never claims failed work.
+   Settled lines are grey throughout: they are a record of work already done,
+   and the colours here are spent on the plan the reader came for."
   [message thunk]
   (if-not (tty?)
     (thunk)
@@ -67,7 +69,7 @@
       (try
         (let [result (thunk)]
           (erase!)
-          (println (green "✓") message)
+          (println (gray (str "✓ " message)))
           (flush)
           (reset! ticked? true)
           result)
