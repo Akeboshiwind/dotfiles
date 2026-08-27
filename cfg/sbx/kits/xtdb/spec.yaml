@@ -5,7 +5,7 @@ displayName: XTDB build environment
 description: JDK 21 with binutils, the d2 diagram compiler, and egress to the Confluent and Quay repositories.
 
 # One kit for one repository. Each item is here because an XTDB build step stops
-# without it. Nothing here is Clojure tooling — stack osm-clojure for that.
+# without it. Nothing here is Clojure tooling — osm-base carries that.
 permissions:
   network:
     allow:

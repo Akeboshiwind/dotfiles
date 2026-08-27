@@ -1,0 +1,220 @@
+schemaVersion: "2"
+kind: mixin
+name: osm-base
+displayName: Oliver's sandbox base
+description: Claude Code config and plugins, git identity, GitHub egress, the Clojure toolchain, allium and a UTF-8 locale.
+
+# files/home/.claude/ holds hand-copies of cfg/llm/.claude/ and will drift from
+# it. sbx rejects symlinks that leave the kit directory, so linking at the
+# canonical copies is not possible.
+#
+# The settings are settings.osm.json, not settings.json: the built-in claude kit
+# rewrites settings.json during install, after files/ are copied, so anything
+# landing there is lost. ct loads this file with `claude --settings`, which
+# layers on top rather than replacing. Dropped from the canonical copy: hooks
+# (clj-paren-repair-claude-hook is absent), voice (needs sox), and
+# permissions.defaultMode (would fight sbx's bypassPermissions).
+#
+# files/home/.gitconfig carries identity only. Signing belongs to git-ssh-sign,
+# which resolves the key from the forwarded agent at signing time, so a static
+# user.signingKey here would override it. Stack it, pinned, alongside this kit:
+#   --kit "git+https://github.com/docker/sbx-kits-contrib.git#ref=v0.14.0&dir=git-ssh-sign"
+# That source must be allowlisted once on the host — see cfg/sbx/manifest.edn.
+permissions:
+  network:
+    allow:
+      # gh, and the plugin marketplaces CLAUDE.md depends on.
+      - github.com
+      - api.github.com
+      - uploads.github.com
+      - codeload.github.com
+      - raw.githubusercontent.com
+      - objects.githubusercontent.com
+      # Dependency resolution, which outlives the installs below.
+      # JAVA_TOOL_OPTIONS arrives preset with the sandbox proxy.
+      - clojars.org
+      - repo.clojars.org
+      - repo1.maven.org
+      - download.clojure.org
+
+setup:
+  # Guarded so a re-run is a no-op. Each tool is its own entry: a failure then
+  # names the tool that broke rather than the whole toolchain.
+  install:
+    # First, because LANG is read by every process after it. The image sets no
+    # LANG and no LC_* variable, so a JVM runs with
+    # sun.jnu.encoding=ANSI_X3.4-1968 and throws InvalidPathException on any
+    # filename that has a non-ASCII character. Other tools fail in their own ways.
+    #
+    # LANG alone is enough, because no LC_* variable is set to override it.
+    # LC_ALL would also work, but it overrides every category and cannot be
+    # relaxed later. C.utf8 is part of glibc, so the locales package is not needed.
+    - command: |
+        set -eu
+        grep -q '^export LANG=' /etc/sandbox-persistent.sh || \
+          echo 'export LANG=C.UTF-8' >> /etc/sandbox-persistent.sh
+      description: UTF-8 locale
+
+    # Without git-lfs, LFS-tracked paths check out as pointer text and a repo
+    # carrying an LFS hook complains on every commit. --system registration
+    # writes /etc/gitconfig, keeping files/home/.gitconfig to identity alone.
+    - command: |
+        set -eu
+        apt-get update
+        apt-get install -y --no-install-recommends git-lfs
+        rm -rf /var/lib/apt/lists/*
+        git lfs install --system
+      description: git-lfs
+
+    # No JDK: the image ships one, and babashka and the Clojure CLI run on
+    # whatever it is. A build that pins a version wants a JDK kit stacked
+    # alongside — see the xtdb kit.
+    - command: command -v bb >/dev/null || curl -sL https://raw.githubusercontent.com/babashka/babashka/master/install | bash
+      description: babashka
+    - command: command -v clj-kondo >/dev/null || curl -sL https://raw.githubusercontent.com/clj-kondo/clj-kondo/master/script/install-clj-kondo | bash
+      description: clj-kondo
+    - command: command -v clojure >/dev/null || (cd /tmp && curl -sL -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh && bash linux-install.sh)
+      description: Clojure CLI
+    # A bb.edn with :deps sends babashka through deps.clj, which ignores the CLI
+    # installed above and fetches its own pinned clojure-tools.zip from github —
+    # where the proxy terminates TLS to inject credentials. bb is a native image
+    # carrying its own truststore, so it cannot be taught the proxy CA the way a
+    # JVM can, and the download dies on PKIX. Pointing deps.clj at the jar we
+    # already have removes the download instead of trying to fix its TLS.
+    #
+    # Both vars are needed: DEPS_CLJ_TOOLS_DIR alone still looks for the version
+    # deps.clj pins, which is not the one `latest` just installed.
+    - command: |
+        set -eu
+        grep -q DEPS_CLJ_TOOLS_DIR /etc/sandbox-persistent.sh || {
+          v=$(clojure --version | grep -oE '[0-9]+(\.[0-9]+){3}')
+          echo "export DEPS_CLJ_TOOLS_DIR=/usr/local/lib/clojure/libexec"
+          echo "export DEPS_CLJ_TOOLS_VERSION=$v"
+        } >> /etc/sandbox-persistent.sh
+      description: Let bb reuse the installed Clojure tools
+    # As the agent, not root: bbin installs into $HOME/.local/bin, which is
+    # already on PATH, and root's copy would be invisible to everything.
+    - command: |
+        set -eu
+        command -v bbin >/dev/null || {
+          mkdir -p "$HOME/.local/bin"
+          curl -sL https://raw.githubusercontent.com/babashka/bbin/v0.2.4/bbin -o "$HOME/.local/bin/bbin"
+          chmod +x "$HOME/.local/bin/bbin"
+        }
+      user: "1000"
+      description: bbin
+    # Sourced, not assumed: bbin resolves its own deps through deps.clj, which
+    # cannot fetch clojure-tools here. The entry above wrote the vars that avoid
+    # that download, and an install step does not inherit them.
+    - command: |
+        set -eu
+        . /etc/sandbox-persistent.sh
+        command -v clj-nrepl-eval >/dev/null || \
+          "$HOME/.local/bin/bbin" install https://github.com/bhauman/clojure-mcp-light.git \
+            --git/tag v0.2.0 \
+            --main-opts '["-m" "clojure-mcp-light.nrepl-eval"]' \
+            --as clj-nrepl-eval
+      user: "1000"
+      description: clj-nrepl-eval
+
+    # The binary comes from juxt/allium-tools, not juxt/allium — that repository
+    # is a JavaScript project with no releases. The URL and the checksum below are
+    # the ones the juxt/homebrew-allium formula uses for Linux.
+    #
+    # Only arm64 is installed. Upstream ships an x86_64 archive but leaves its
+    # checksum empty in the formula, so there is nothing to verify it against. The
+    # step stops with a message rather than install an unverified binary.
+    - command: |
+        set -eu
+        command -v allium >/dev/null || {
+          arch=$(dpkg --print-architecture)
+          if [ "$arch" != "arm64" ]; then
+            echo "no verified allium build for $arch" >&2
+            exit 1
+          fi
+          v=3.5.3
+          sha=ea626c3d9ecf2b64b12b2820cb2fc41444bd30c53e591b990c022872da94d7c6
+          cd "$(mktemp -d)"
+          curl -sSL -o allium.tar.gz \
+            "https://github.com/juxt/allium-tools/releases/download/v$v/allium-aarch64-unknown-linux-gnu.tar.gz"
+          echo "$sha  allium.tar.gz" | sha256sum -c -
+          tar xzf allium.tar.gz
+          install -m 0755 allium /usr/local/bin/allium
+        }
+      description: allium
+
+    # Plugin paths in installed_plugins.json are absolute, so the host's cache
+    # cannot be copied in — the plugins have to be installed here.
+    - command: |
+        set -eu
+        claude plugin marketplace add anthropics/claude-plugins-official
+        claude plugin marketplace add juxt/claude-plugins
+        claude plugin marketplace add xtdb/claude-plugins
+        for p in playground allium chalk chill gradle-tests; do
+          claude plugin install "$p"
+        done
+      user: "1000"
+      description: Install the plugins CLAUDE.md depends on
+
+  startup:
+    # The spec says nothing about files/ preserving mode, and the statusline is
+    # useless unless Claude Code can execute it.
+    - command: ["sh", "-c", "chmod 0755 /home/agent/.claude/statusline-command.py"]
+      user: "1000"
+      description: Keep the statusline script executable
+
+agentInstructions:
+  content: |
+    ## Scope
+
+    Not included: the `clj-paren-repair-claude-hook` hooks, the statusline, voice
+    mode and MCP servers. Personal skills arrive through the shared store via
+    `sbx skills import`, not through this kit.
+
+    ## Git identity
+
+    Commits are authored as Oliver Marshall. Signing is not configured by this
+    kit — stack `git-ssh-sign` for that.
+
+    git-lfs is installed and registered system-wide, so LFS-tracked files
+    resolve rather than checking out as pointer text.
+
+    ## GitHub
+
+    `gh` is authenticated through a host-side proxy — the token never enters this
+    VM. Use it for `gh pr create`, `gh issue comment` and `gh api`.
+
+    Do not push or pull. SSH remotes are unreachable from here, and pushing is
+    the host's job.
+
+    ## Clojure
+
+    `bb`, `clojure`, `clj-kondo` and `clj-nrepl-eval` are installed. They run on
+    whichever JDK the image or a stacked JDK kit provides; this kit does not
+    manage one.
+
+    The host editor's REPL is not reachable. Start your own — `bb nrepl`, or
+    `clojure -M:nrepl` — then evaluate against it:
+
+        clj-nrepl-eval --discover-ports
+        clj-nrepl-eval -p 1339 "(+ 1 2 3)"
+
+    Session state persists between calls, so a namespace required in one
+    evaluation is still there in the next. Prefer this to `bb -e`, which starts
+    a fresh process each time and cannot see the state you just built up.
+
+    ## Allium
+
+    `allium` checks specification files: `allium check <file>`.
+
+    The Allium Claude plugin comes from a different kit. The plugin can be
+    present without the command, so check for the command before you rely on it.
+
+    ## Locale
+
+    LANG is C.UTF-8. Filenames with non-ASCII characters work.
+
+    A daemon keeps the locale it started with. If a build daemon started before
+    this kit ran, stop it — for Gradle, `./gradlew --stop`. Also delete build
+    output written under the old locale: an ASCII-locale process wrote those
+    filenames with `?` bytes, and later runs report the files as missing.

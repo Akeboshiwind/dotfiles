@@ -7,10 +7,5 @@
  ;;
  ;; One link per kit, not per file: sbx rejects any symlink under files/ that
  ;; resolves outside the kit, so the kit directory has to be the link.
- :fs/symlink {"~/.config/sbx/kits/allium" "./kits/allium"
-              "~/.config/sbx/kits/osm-claude" "./kits/osm-claude"
-              "~/.config/sbx/kits/osm-clojure" "./kits/osm-clojure"
-              "~/.config/sbx/kits/osm-git" "./kits/osm-git"
-              "~/.config/sbx/kits/osm-github" "./kits/osm-github"
-              "~/.config/sbx/kits/utf8-locale" "./kits/utf8-locale"
+ :fs/symlink {"~/.config/sbx/kits/osm-base" "./kits/osm-base"
               "~/.config/sbx/kits/xtdb" "./kits/xtdb"}}
