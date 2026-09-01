@@ -50,7 +50,9 @@ function ct --wraps=claude --description 'Run Claude Code in a Docker sandbox'
 
     # sbx rejects --kit and -t when re-attaching, so both are creation-only. A
     # sandbox is keyed on its primary workspace, which is what ct passes as ".".
-    set -l existing (sbx ls --json 2>/dev/null |
+    # No daemon and no sbx both read as "no existing sandbox", so the lookup's
+    # own errors are dropped and the create below reports the problem in full.
+    set -l existing (_ct_wait --quiet "Looking for a sandbox on this workspace" sbx ls --json |
         jq -r --arg w (pwd) '.sandboxes[] | select(.workspaces[0] == $w) | .name' | head -n1)
 
     # Keyed on the workspace, like the sandbox itself, so it survives a rename.
@@ -72,13 +74,17 @@ function ct --wraps=claude --description 'Run Claude Code in a Docker sandbox'
             sbx run --name $existing -- $agent_args
             return
         end
-        sbx rm $existing; or return
+
+        # Only its confirmation is dropped — a failure still arrives on stderr.
+        _ct_wait "Removing '$existing'" sbx rm $existing >/dev/null; or return
+        _ct_say "Removed '$_ct_bold$existing$_ct_off'."
     end
 
     # Stamped before the run, which lasts as long as the session: a marker written
     # on exit could postdate a template rebuild that happened during it.
     mkdir -p $cache
     touch $marker
+    _ct_say "Creating a sandbox from template '$_ct_bold$template$_ct_off'."
     sbx run -t $template:latest $kit_args claude . $common -- $agent_args
 end
 
@@ -86,11 +92,13 @@ end
 # concatenation when any part of it is an unset list, taking the message with it.
 function _ct_palette --description 'Set the gutter palette for this ct invocation'
     set -g _ct_bold ''
+    set -g _ct_dim ''
     set -g _ct_off ''
     set -g _ct_badge ' ct '
     set -g _ct_gutter '▌'
     if isatty stderr
         set -g _ct_bold (set_color -o)
+        set -g _ct_dim (set_color brblack)
         set -g _ct_off (set_color normal)
         set -g _ct_badge (set_color -o black -b yellow)" ct "(set_color normal)
         set -g _ct_gutter (set_color yellow)"▌"(set_color normal)
@@ -116,4 +124,56 @@ function _ct_ask --description 'Ask on the gutter; true only on an explicit y'
     _ct_open
     read -P "$_ct_gutter $_ct_bold$argv[1]$_ct_off [y/N] " -l reply
     test "$reply" = y
+end
+
+# Stdout passes through untouched, so a caller can capture it; stderr comes back
+# down the gutter, and --quiet drops it instead for a lookup whose failure is
+# already a meaningful answer.
+function _ct_wait --description 'Run a command behind a spinner, replaying its output once it finishes'
+    argparse --stop-nonopt quiet -- $argv; or return 2
+    set -l message $argv[1]
+    set -l cmd $argv[2..-1]
+
+    if not isatty stderr
+        if set -q _flag_quiet
+            $cmd 2>/dev/null
+        else
+            $cmd
+        end
+        return $status
+    end
+
+    # An external process, because `&` on a fish function or begin block runs it
+    # in the foreground whenever job control is off, which is every shell that is
+    # not interactive.
+    fish --no-config --command '
+        # A command that returns promptly is never drawn over at all.
+        sleep 0.3
+        set -l frames ⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏
+        set -l i 1
+        # Bounded: an interrupt kills ct without unwinding it, and an unbounded
+        # spinner would then spin for the life of the terminal.
+        for tick in (seq 4000)
+            printf "\r\e[2K%s %s%s%s %s…" $argv[1] $argv[2] $frames[$i] $argv[3] $argv[4] >&2
+            set i (math "$i % "(count $frames)" + 1")
+            sleep 0.08
+        end' "$_ct_gutter" "$_ct_dim" "$_ct_off" "$message" &
+    set -l spinner $last_pid
+
+    # Held back rather than interleaved: the command writes to the one line the
+    # spinner is redrawing.
+    set -l scratch (mktemp -d -t ct.XXXXXX)
+    $cmd >$scratch/out 2>$scratch/err
+    set -l code $status
+
+    kill $spinner 2>/dev/null
+    printf '\r\e[2K' >&2
+    if not set -q _flag_quiet
+        while read -l line
+            _ct_say $line
+        end <$scratch/err
+    end
+    cat $scratch/out
+    rm -rf $scratch
+    return $code
 end
