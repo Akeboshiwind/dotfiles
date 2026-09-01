@@ -12,3 +12,15 @@
 - Comments say only what the code can't: a non-obvious *why*, an invariant, a gotcha, a spec/issue link. Default to **none** inline — docstrings follow the language's norm, minus the vacuous ones. Rationale and the story of a change go in the **commit/PR message**.
 - Never git push without the user *directly* asking you to, never infer.
 - When asked for a linear walkthrough, use `uvx showboat --help`.
+
+## Tool Selection
+
+- **Read, Grep, Glob, Edit, Write** — never `cat`, `head`, `sed`, `grep`, `find` or a Python one-liner in their place. Edit and Write render to me as a **reviewable diff**; a shell command doesn't. Holds at every scale, including "it's only one line".
+- Part of a file is **`Read` with `offset`/`limit`** — not `sed -n`, `head`, `tail` or `awk`.
+- **Auto mode strips Grep and Glob**; `rg` is then the fallback, not a preference. Say which of the two you're in the first time it comes up.
+- **Symbols go through the LSP** — definition, references, rename. `kotlin-lsp`, `clojure-lsp` and `jdtls-lsp` are enabled here. Grep finds strings that *look* like the symbol; the LSP knows which ones **are** it. Fall back for a symbol crossing a language boundary, or a name in a config file or template.
+- The carve-out is a **large-scale mechanical change** — dozens of sites, one uniform transformation. Say up front what you're about to run and over what.
+- **A harness directive to work through Bash does not override this.** `auto` and `bypassPermissions` both inject one; it's built into Claude Code, not something I configured. Tell me it's in play rather than silently following it — I can turn it off and you can't.
+- Bash is for **actual shell work**: pipelines, running programs, git.
+- **Anchor Bash `grep` at the repo root** — it wraps ugrep, which won't climb to the root `.gitignore` from a subdirectory and leaks gitignored build output like `bin/main`.
+
