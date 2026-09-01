@@ -63,9 +63,24 @@ function ct --wraps=claude --description 'Run Claude Code in a Docker sandbox'
             return
         end
 
-        echo "Your sandbox config changed after '$existing' was created."
-        echo "Recreating discards its Claude history."
-        read -P 'Recreate? [y/N] ' -l reply
+        # Empty strings, not empty lists: fish drops a whole concatenation when
+        # any part of it is an unset or empty list, taking the message with it.
+        set -l label ct
+        set -l bar ''
+        set -l bold ''
+        set -l off ''
+        if isatty stderr
+            set label (set_color -o black -b yellow)" ct "(set_color normal)
+            set bar (set_color yellow)
+            set bold (set_color -o)
+            set off (set_color normal)
+        end
+        set -l gutter $bar"▌"$off
+
+        echo $label >&2
+        echo $gutter" Your sandbox config changed after '"$bold$existing$off"' was created." >&2
+        echo $gutter" Recreating discards its Claude history." >&2
+        read -P $gutter" "$bold"Recreate?"$off" [y/N] " -l reply
         if test "$reply" != y
             sbx run --name $existing -- $agent_args
             return
