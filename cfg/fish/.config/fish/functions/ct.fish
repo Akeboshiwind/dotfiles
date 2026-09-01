@@ -3,6 +3,9 @@ function ct --wraps=claude --description 'Run Claude Code in a Docker sandbox'
     set -l kit_dir $HOME/dotfiles/cfg/sbx/kits
     set -l cache $HOME/.cache/sbx-templates
 
+    _ct_palette
+    set -e _ct_opened
+
     # --show-toplevel names a worktree, not the repository it belongs to. The
     # common dir points into the main checkout, so its parent is the repository
     # root — and it is the directory that has to be mounted anyway.
@@ -63,25 +66,9 @@ function ct --wraps=claude --description 'Run Claude Code in a Docker sandbox'
             return
         end
 
-        # Empty strings, not empty lists: fish drops a whole concatenation when
-        # any part of it is an unset or empty list, taking the message with it.
-        set -l label ct
-        set -l bar ''
-        set -l bold ''
-        set -l off ''
-        if isatty stderr
-            set label (set_color -o black -b yellow)" ct "(set_color normal)
-            set bar (set_color yellow)
-            set bold (set_color -o)
-            set off (set_color normal)
-        end
-        set -l gutter $bar"▌"$off
-
-        echo $label >&2
-        echo $gutter" Your sandbox config changed after '"$bold$existing$off"' was created." >&2
-        echo $gutter" Recreating discards its Claude history." >&2
-        read -P $gutter" "$bold"Recreate?"$off" [y/N] " -l reply
-        if test "$reply" != y
+        _ct_say "Your sandbox config changed after '$_ct_bold$existing$_ct_off' was created."
+        _ct_say "Recreating discards its Claude history."
+        if not _ct_ask "Recreate?"
             sbx run --name $existing -- $agent_args
             return
         end
@@ -93,4 +80,40 @@ function ct --wraps=claude --description 'Run Claude Code in a Docker sandbox'
     mkdir -p $cache
     touch $marker
     sbx run -t $template:latest $kit_args claude . $common -- $agent_args
+end
+
+# Every field stays set, empty away from a terminal: fish drops a whole
+# concatenation when any part of it is an unset list, taking the message with it.
+function _ct_palette --description 'Set the gutter palette for this ct invocation'
+    set -g _ct_bold ''
+    set -g _ct_off ''
+    set -g _ct_badge ' ct '
+    set -g _ct_gutter '▌'
+    if isatty stderr
+        set -g _ct_bold (set_color -o)
+        set -g _ct_off (set_color normal)
+        set -g _ct_badge (set_color -o black -b yellow)" ct "(set_color normal)
+        set -g _ct_gutter (set_color yellow)"▌"(set_color normal)
+    end
+end
+
+# Lazy, so a ct that has nothing to say stays silent, and the badge still lands
+# above the first line of whatever it does say.
+function _ct_open --description 'Print the ct badge, once per ct invocation'
+    if set -q _ct_opened
+        return
+    end
+    set -g _ct_opened
+    printf '%s\n' "$_ct_badge" >&2
+end
+
+function _ct_say --description 'Write one line of ct chatter down the gutter'
+    _ct_open
+    printf '%s %s\n' "$_ct_gutter" (string join ' ' -- $argv) >&2
+end
+
+function _ct_ask --description 'Ask on the gutter; true only on an explicit y'
+    _ct_open
+    read -P "$_ct_gutter $_ct_bold$argv[1]$_ct_off [y/N] " -l reply
+    test "$reply" = y
 end
