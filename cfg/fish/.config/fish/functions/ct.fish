@@ -128,7 +128,8 @@ end
 
 # Stdout passes through untouched, so a caller can capture it; stderr comes back
 # down the gutter, and --quiet drops it instead for a lookup whose failure is
-# already a meaningful answer.
+# already a meaningful answer. Stdin is closed: a command that prompts would
+# write it to the held-back stderr and then wait, invisibly, forever.
 function _ct_wait --description 'Run a command behind a spinner, replaying its output once it finishes'
     argparse --stop-nonopt quiet -- $argv; or return 2
     set -l message $argv[1]
@@ -136,9 +137,9 @@ function _ct_wait --description 'Run a command behind a spinner, replaying its o
 
     if not isatty stderr
         if set -q _flag_quiet
-            $cmd 2>/dev/null
+            $cmd </dev/null 2>/dev/null
         else
-            $cmd
+            $cmd </dev/null
         end
         return $status
     end
@@ -163,7 +164,7 @@ function _ct_wait --description 'Run a command behind a spinner, replaying its o
     # Held back rather than interleaved: the command writes to the one line the
     # spinner is redrawing.
     set -l scratch (mktemp -d -t ct.XXXXXX)
-    $cmd >$scratch/out 2>$scratch/err
+    $cmd </dev/null >$scratch/out 2>$scratch/err
     set -l code $status
 
     kill $spinner 2>/dev/null
