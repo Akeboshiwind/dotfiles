@@ -76,7 +76,7 @@ function ct --wraps=claude --description 'Run Claude Code in a Docker sandbox'
         end
 
         # Only its confirmation is dropped — a failure still arrives on stderr.
-        _ct_wait "Removing '$existing'" sbx rm $existing >/dev/null; or return
+        _ct_wait "Removing '$existing'" sbx rm --force $existing >/dev/null; or return
         _ct_say "Removed '$_ct_bold$existing$_ct_off'."
     end
 
