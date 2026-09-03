@@ -34,3 +34,4 @@
 ## Git
 
 - Never git push without the user *directly* asking you to, never infer.
+- Never add `Claude-Session` to the git commit
