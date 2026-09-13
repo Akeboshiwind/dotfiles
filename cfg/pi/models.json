@@ -1,0 +1,31 @@
+{
+  "providers": {
+    "doubleword": {
+      "baseUrl": "https://api.doubleword.ai/v1",
+      "api": "openai-completions",
+      "apiKey": "$DOUBLEWORD_API_KEY",
+      "compat": {
+        "cacheControlFormat": "anthropic",
+        "supportsDeveloperRole": false
+      },
+      "models": [
+        {
+          "id": "zai-org/GLM-5.3-Flash",
+          "name": "GLM 5.3 Flash (Doubleword)",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "contextWindow": 1310720,
+          "cost": { "input": 0.6, "output": 2.2, "cacheRead": 0.11, "cacheWrite": 0.75 }
+        },
+        {
+          "id": "openai/gpt-oss-20b",
+          "name": "GPT-OSS 20B (Doubleword)",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 131072,
+          "cost": { "input": 0.3, "output": 1.1, "cacheRead": 0.05, "cacheWrite": 0.35 }
+        }
+      ]
+    }
+  }
+}

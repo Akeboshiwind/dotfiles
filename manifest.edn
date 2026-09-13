@@ -54,6 +54,7 @@
 
         ;; >> AI
         :llm
+        :pi
         :sbx
 
         ;; >> Work

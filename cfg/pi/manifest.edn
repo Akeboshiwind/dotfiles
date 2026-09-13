@@ -1,0 +1,6 @@
+{ :pkg/npm {"@earendil-works/pi-coding-agent" {:args ["--ignore-scripts"]}}
+
+ ; pi manages it's own extensions and updates
+
+ :fs/symlink {"~/.pi/agent/models.json" "./models.json" ; Custom provider
+              "~/.pi/agent/settings.json" "./settings.json"}}

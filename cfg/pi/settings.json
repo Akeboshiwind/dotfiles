@@ -1,0 +1,11 @@
+{
+  "defaultProvider": "doubleword",
+  "defaultModel": "zai-org/GLM-5.3-Flash",
+  "lastChangelogVersion": "0.85.0",
+  "theme": "dark",
+  "tuiMode": "fullscreen",
+  "hideThinkingBlock": false,
+  "packages": [
+    "npm:pi-vim"
+  ]
+}
