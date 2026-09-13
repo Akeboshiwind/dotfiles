@@ -272,3 +272,17 @@
                       "errored" "s4" "never-attempted" "s5"}]
       (is (= {"errored" "s4" "never-attempted" "s5"}
              (e/recordable-symlinks ag {} previously))))))
+
+(deftest npm-args-test
+  (testing ":args land between the npm flags and the package name"
+    (let [calls (atom [])
+          plan {:pkg/script {:bootstrap {:src "echo ok"
+                                         :dep/provides #{:pkg/npm}}}
+                :pkg/npm {"plain" {}
+                          "flagged" {:args ["--ignore-scripts"]}}}
+          ag (build-and-check plan)
+          cmd-for (fn [pkg] (first (filter #(= pkg (last %)) @calls)))]
+      (with-redefs [a/exec! (mock-exec! calls (constantly false))]
+        (e/execute-plan ag))
+      (is (= ["npm" "install" "-g" "plain"] (cmd-for "plain")))
+      (is (= ["npm" "install" "-g" "--ignore-scripts" "flagged"] (cmd-for "flagged"))))))

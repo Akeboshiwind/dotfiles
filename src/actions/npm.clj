@@ -82,10 +82,15 @@
 (defmethod a/check :pkg/npm-uninstall [_ _key _opts]
   (o/drift :orphan))
 
+(defn install-cmd
+  [pkg {:keys [args]}]
+  (-> ["npm" "install" "-g"]
+      (into args)
+      (conj (name pkg))))
+
 (defmethod a/install! :pkg/npm [type opts items]
   (a/simple-install type opts "Installing npm packages"
-    (fn [pkg _item-opts]
-      ["npm" "install" "-g" (name pkg)])
+    install-cmd
     items))
 
 ;; -- Uninstall orphans
