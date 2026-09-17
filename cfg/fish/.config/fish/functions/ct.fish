@@ -50,10 +50,33 @@ function ct --wraps=claude --description 'Run Claude Code in a Docker sandbox'
 
     # sbx rejects --kit and -t when re-attaching, so both are creation-only. A
     # sandbox is keyed on its primary workspace, which is what ct passes as ".".
-    # No daemon and no sbx both read as "no existing sandbox", so the lookup's
-    # own errors are dropped and the create below reports the problem in full.
-    set -l existing (_ct_wait --quiet "Looking for a sandbox on this workspace" sbx ls --json |
-        jq -r --arg w (pwd) '.sandboxes[] | select(.workspaces[0] == $w) | .name' | head -n1)
+    # No daemon and no sbx both leave the listing empty, and jq reads empty input
+    # as no match and succeeds, so both still arrive below as "no existing
+    # sandbox" and the create reports the problem in full.
+    set -l scratch (mktemp -d -t ct-ls.XXXXXX)
+    _ct_wait --quiet "Looking for a sandbox on this workspace" sbx ls --json >$scratch/ls.json
+    # first(), rather than a `head -n1` downstream: head closes the pipe on a
+    # second match and jq dies of EPIPE instead of answering.
+    set -l existing (jq -r --arg w (pwd) \
+        'first(.sandboxes[] | select(.workspaces[0] == $w) | .name) // empty' \
+        <$scratch/ls.json 2>$scratch/jq.err)
+    set -l jq_status $status
+
+    if test $jq_status -ne 0
+        # sbx answered and the answer was unreadable, which is "unknown", not "no
+        # sandbox". Falling through to the create would skip the recreate prompt
+        # below and take the session history with it.
+        mkdir -p $cache
+        set -l kept $cache/broken-ls-(date +%Y%m%dT%H%M%S).json
+        cp $scratch/ls.json $kept
+        while read -l line
+            _ct_say $line
+        end <$scratch/jq.err
+        _ct_say "Could not read the sandbox list; kept it at '$_ct_bold$kept$_ct_off'."
+        rm -rf $scratch
+        return 1
+    end
+    rm -rf $scratch
 
     # Keyed on the workspace, like the sandbox itself, so it survives a rename.
     set -l marker $cache/ws(string replace -a / - (pwd))
