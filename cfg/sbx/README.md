@@ -1,15 +1,19 @@
 # sbx
 
 Docker Sandboxes runs a coding agent in a microVM.
-`ct` (a fish function in `cfg/fish`) is the entry point; this directory holds the kits and the template build that make a sandbox look like this machine.
+`ct` (a fish function in `cfg/fish`) is the entry point; this directory holds the kit and the template build that make a sandbox look like this machine.
 
 ```
-kits/osm-base/      every sandbox: Claude config and plugins, git identity,
-                    GitHub egress, the Clojure toolchain, allium, UTF-8 locale
-kits/xtdb/          ~/prog/work/xtdb/xtdb only: JDK 21, binutils, d2
+kits/osm-base/      the only kit: Claude config and plugins, git identity,
+                    GitHub egress, JDK 21, the Clojure toolchain, allium, d2,
+                    UTF-8 locale
 scripts/            (in the repository root) sbx-build-template.sh,
                     sbx-template-fresh.sh
 ```
+
+One kit and one template, so every sandbox is the same whatever repository it is working on.
+The cost is that what one repository needs, every sandbox carries — JDK 21 is pinned over the image's JDK 25 everywhere, and the Confluent and Quay hosts are reachable from everywhere.
+That is the trade the consistency is bought with.
 
 ## Kits apply at creation, and nowhere else
 
@@ -21,7 +25,7 @@ The one exception is skills.
 
 So changing a kit is two steps:
 
-1. `syn --apply` — syncs generated files and rebuilds any affected template.
+1. `syn --apply` — syncs generated files and rebuilds the template if `spec.yaml` changed.
 2. Recreate the sandbox — `ct` detects this and offers to do it.
 
 Recreating **discards that sandbox's Claude history**.
@@ -29,11 +33,11 @@ The transcripts live on per-sandbox volumes that `sbx rm` deletes; the workspace
 
 ## Templates cache the installs; the kits stay the definition
 
-`syn` builds one template per kit stack by creating a throwaway sandbox, letting the kits run, and snapshotting it with `sbx template save`.
+`syn` builds the template by creating a throwaway sandbox, letting the kit run, and snapshotting it with `sbx template save`.
 `ct` then boots from that template with `-t`.
 
 A template is only ever a cache.
-Delete one and sandboxes still come out correct, just slowly, because the kit's install steps run for real instead of finding their work done.
+Delete it and sandboxes still come out correct, just slowly, because the kit's install steps run for real instead of finding their work done.
 That is the property to preserve when changing anything here.
 
 ## Install and startup commands must be idempotent
@@ -71,14 +75,14 @@ Two consequences that look contradictory and are not:
 `settings.json` and `~/.claude.json` are recreated at every create.
 That is why `kits/osm-base/files/home/.claude/settings.osm.json` exists under a different name and `ct` passes it with `claude --settings`.
 
-## Adding a project
+## Adding what a project needs
 
-1. Write `kits/<repo-directory-name>/spec.yaml` — egress and setup specific to that repository.
-2. Add a `:sbx-template-<name>` entry to `manifest.edn`, stacking `osm-base` first.
-3. `syn --apply`.
+Add it to `kits/osm-base/spec.yaml` — the install step, and any host it has to reach — then `syn --apply` and recreate.
 
-`ct` needs no edit.
-It looks for a kit named after the repository directory, resolved from the git common dir so every worktree of a repository finds the same one.
+Name the repository in the comment, because the next reader's question is why a universal kit installs something only one build uses.
+Neither `manifest.edn` nor `ct` needs an edit.
+
+Every sandbox then carries it, which is the point and also the price: a tool that has to be absent elsewhere, or a version pin that fights another repository, does not belong here and wants a second template instead.
 
 ## Generated files
 
