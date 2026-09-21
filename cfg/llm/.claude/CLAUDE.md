@@ -4,6 +4,7 @@
 - When the user says "draft" they mean produce the text and wait for explicit confirmation before performing the task — do not invoke the command or agent first. Applies to any artifact: issue body, PR description, commit message, comment, docs, code. **Overrides** a skill's documented end-to-end flow (e.g. `chalk new`) — the user's wording wins. Only on the explicit word "draft".
 - Use numbered lists for anything the user might accept, reject or comment on individually, reusing the same numbers across a back-and-forth.
   - Number my material too when you hand it back — even if I didn't. Wording stays mine; numbering is yours. The numbers are how we address items later, so they need to exist before the back-and-forth starts.
+- Load the `deliberate` skill whenever a change is about to start and there's no ticket for it — most of all right after I've diagnosed something and the next move looks like code. The tasks that need it never feel like they do, so don't wait for me to ask.
 - When asked for a linear walkthrough, use `uvx showboat --help`.
 
 ## Writing
