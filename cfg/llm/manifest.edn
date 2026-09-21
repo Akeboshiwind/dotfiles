@@ -28,6 +28,7 @@
  ; needs a line here or it exists only on this machine.
  :fs/symlink {"~/.claude/skills/clojure-eval" "./skills/clojure-eval"
               "~/.claude/skills/compete" "./skills/compete"
+              "~/.claude/skills/deliberate" "./skills/deliberate"
               "~/.claude/skills/explain-diff-html" "./skills/explain-diff-html"
               "~/.claude/skills/retrospective" "./skills/retrospective"
               "~/.claude/skills/teach" "./skills/teach"}
