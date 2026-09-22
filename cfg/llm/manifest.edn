@@ -22,38 +22,14 @@
                  :gradle-tests {:dep/requires #{[:claude/marketplace :xtdb]}}}
  :fs/symlink-folder {"~/.claude" "./.claude"}
  ; Skills sit outside ./.claude so the folder walk above cannot reach them: it
- ; links files, and `sbx skills import` skips symlinked files inside a skill
- ; folder while resolving a symlinked skill folder itself. Linking each skill
- ; whole is what carries it into sandboxes. One entry per skill — a new skill
- ; needs a line here or it exists only on this machine.
+ ; links files, and these have to be whole-folder links. That was `sbx skills
+ ; import`'s constraint, which has gone with sbx — a folder link covering
+ ; ~/.claude/skills would now do, and collapsing this list is a pending tidy.
+ ; Until then, one entry per skill: a new skill needs a line here or nothing
+ ; links it.
  :fs/symlink {"~/.claude/skills/clojure-eval" "./skills/clojure-eval"
               "~/.claude/skills/compete" "./skills/compete"
               "~/.claude/skills/deliberate" "./skills/deliberate"
               "~/.claude/skills/explain-diff-html" "./skills/explain-diff-html"
               "~/.claude/skills/retrospective" "./skills/retrospective"
-              "~/.claude/skills/teach" "./skills/teach"}
-
- ; Sandboxes read a copied store, not these links, so the copy has to be
- ; refreshed after the links exist. --force because the prompt it otherwise
- ; asks per skill would hang an apply; </dev/null so a missing --force fails
- ; loudly instead of waiting on stdin forever.
- :pkg/script {:sbx-skills-import
-              {:src "sbx skills import --force </dev/null"
-               :check {:path "scripts/skills-store-drift.sh"}
-               :dep/requires #{[:complete :fs/symlink]}}
-
-              ; The osm-base kit ships this tree to every sandbox, and sbx
-              ; rejects a symlink under files/ that resolves outside the kit — so
-              ; it has to be a copy, and generating it is what stops it drifting.
-              ; The copy is gitignored, leaving ./.claude as the only definition.
-              ;
-              ; settings.json is the sole exclusion: the built-in claude kit
-              ; rewrites it at create, after files/ are copied, so anything
-              ; landing there is lost. settings.osm.json beside it is what ct
-              ; passes with `claude --settings`.
-              ;
-              ; --delete so removing an output style propagates, rather than
-              ; leaving an orphan the sandbox still loads.
-              :sbx-kit-claude-config
-              {:src "rsync -a --delete --exclude settings.json cfg/llm/.claude/ cfg/sbx/kits/osm-base/files/home/.claude/"
-               :check "diff -rq -x settings.json cfg/llm/.claude cfg/sbx/kits/osm-base/files/home/.claude >/dev/null 2>&1"}}}
+              "~/.claude/skills/teach" "./skills/teach"}}
