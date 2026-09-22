@@ -119,10 +119,8 @@
 (defn- action-comparator
   "Compare actions by [type key] for deterministic ordering."
   [[type-a key-a] [type-b key-b]]
-  (let [type-cmp (compare (str type-a) (str type-b))]
-    (if (zero? type-cmp)
-      (compare (str key-a) (str key-b))
-      type-cmp)))
+  (compare [(str type-a) (str key-a)]
+           [(str type-b) (str key-b)]))
 
 (defn topological-sort
   "Return actions in valid execution order (dependencies first).
