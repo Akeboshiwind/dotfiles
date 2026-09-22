@@ -20,16 +20,4 @@
                  :chalk {:dep/requires #{[:claude/marketplace :juxt]}}
                  :chill {:dep/requires #{[:claude/marketplace :juxt]}}
                  :gradle-tests {:dep/requires #{[:claude/marketplace :xtdb]}}}
- :fs/symlink-folder {"~/.claude" "./.claude"}
- ; Skills sit outside ./.claude so the folder walk above cannot reach them: it
- ; links files, and these have to be whole-folder links. That was `sbx skills
- ; import`'s constraint, which has gone with sbx — a folder link covering
- ; ~/.claude/skills would now do, and collapsing this list is a pending tidy.
- ; Until then, one entry per skill: a new skill needs a line here or nothing
- ; links it.
- :fs/symlink {"~/.claude/skills/clojure-eval" "./skills/clojure-eval"
-              "~/.claude/skills/compete" "./skills/compete"
-              "~/.claude/skills/deliberate" "./skills/deliberate"
-              "~/.claude/skills/explain-diff-html" "./skills/explain-diff-html"
-              "~/.claude/skills/retrospective" "./skills/retrospective"
-              "~/.claude/skills/teach" "./skills/teach"}}
+ :fs/symlink-folder {"~/.claude" "./.claude"}}
