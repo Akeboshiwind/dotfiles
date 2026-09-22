@@ -116,11 +116,16 @@
         (seq duplicates) (assoc :duplicates (vec duplicates))
         cycle-error (assoc :cycles [cycle-error])))))
 
+;; Creating a symlink under a parent that is itself a stale link to a deleted
+;; source fails with FileAlreadyExistsException.
+;; Cleanup therefore cannot be scheduled by name alongside :fs/symlink.
+(def ^:private action-phase {:fs/unlink -1})
+
 (defn- action-comparator
-  "Compare actions by [type key] for deterministic ordering."
+  "Compare actions by [phase type key] for deterministic ordering."
   [[type-a key-a] [type-b key-b]]
-  (compare [(str type-a) (str key-a)]
-           [(str type-b) (str key-b)]))
+  (compare [(action-phase type-a 0) (str type-a) (str key-a)]
+           [(action-phase type-b 0) (str type-b) (str key-b)]))
 
 (defn topological-sort
   "Return actions in valid execution order (dependencies first).

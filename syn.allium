@@ -483,7 +483,10 @@ rule FlagInvalidSecrets {
 
 rule ScheduleStaleUnlinks {
     -- A symlink recorded in the cache but absent from the current plan was
-    -- previously created by syn and is now stale: an unlink action is added.
+    -- previously created by syn and is now stale: an unlink action is added,
+    -- ordered before every other action. A stale link still occupying a path
+    -- the plan wants to build under makes the creation fail, so the cleanup
+    -- cannot be scheduled alongside the links that replace it.
     when: PlanAssembled(run)
     for record in cache.recorded_symlinks:
         ensures:

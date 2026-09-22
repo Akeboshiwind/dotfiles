@@ -152,6 +152,14 @@
               [:pkg/brew :c]]
              (g/topological-sort plan))))))
 
+(deftest unlink-order-test
+  (testing "stale symlinks are removed before new ones are created"
+    (let [plan {:fs/symlink {"~/.claude/skills/teach/SKILL.md" "./teach/SKILL.md"}
+                :fs/unlink {"~/.claude/skills/teach" "./teach"}}]
+      (is (= [[:fs/unlink "~/.claude/skills/teach"]
+              [:fs/symlink "~/.claude/skills/teach/SKILL.md"]]
+             (g/topological-sort plan))))))
+
 ;; =============================================================================
 ;; Edge cases
 ;; =============================================================================
@@ -169,8 +177,8 @@
                 :osx/defaults {:bar {:domain "com.example" :key "bar" :value 1}}
                 :pkg/script {:baz {:src "./baz.sh"}}}]
       (is (nil? (g/validate plan)))
-      (is (= [[:fs/symlink "~/.foo"]
-              [:fs/unlink "~/.old"]
+      (is (= [[:fs/unlink "~/.old"]
+              [:fs/symlink "~/.foo"]
               [:osx/defaults :bar]
               [:pkg/script :baz]]
              (g/topological-sort plan))))))
