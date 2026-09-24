@@ -25,3 +25,4 @@
 
 - Never git push without the user *directly* asking you to, never infer.
 - Never add `Claude-Session` to the git commit
+- Always use **Conventional Commits** style, typically: `fix`, `feat`, `tidy`, `refactor`, `docs`.
