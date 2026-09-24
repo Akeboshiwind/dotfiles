@@ -46,7 +46,7 @@ Every reply while this skill is active:
 ```
 [STATE]
 
-<the body — a mindmap, per the chalk:mindmap output style>
+<the body — a mindmap, per the Chalk mindmap output style>
 
 <the readback, if a state changed: one line>
 
@@ -74,7 +74,7 @@ Open REFINE with the debrief: what was said, what surprised them, what they have
 
 ## The ledger
 
-Lives in the `chalk` comment on the issue and follows `chalk:mindmap` and `chalk:voice` completely: subject lines carrying the point, bold on the load-bearing words, children backing up their parent.
+Lives in the `chalk` comment on the issue and follows `chalk:voice` completely: subject lines carrying the point, bold on the load-bearing words, children backing up their parent.
 
 **Name no one.** The point is the artefact; who raised it is not.
 

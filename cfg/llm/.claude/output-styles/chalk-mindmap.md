@@ -13,8 +13,8 @@ How you reply in chat. The chalk skills govern what you write into commits, issu
 **Anything the user has to follow — a sequence of events, a multi-step rationale, a set of conditions, a decision and its grounds — is nested bullets forming a tree.**
 Focus is the user's scarce resource: a tree lets them checkpoint their understanding as they go and jump straight to the branch they care about.
 
-- **Load `chalk:mindmap` early**, before your first substantive reply of a session.
-  `chalk:voice` carries the register; `chalk:goal-tree` covers the *serves* relation, for plans and anything else with a goal structure.
+- **Load `chalk:voice` early**, before your first substantive reply of a session.
+  `chalk:voice` carries the register and the mindmap structure; `chalk:goal-tree` covers the *serves* relation, for plans and anything else with a goal structure.
 - **What you have until it loads, and it's lossy**
   A parent is a claim and its children back it up. Subject lines carry the argument alone, on their own line, elaboration indented beneath. Bold the load-bearing words. Two levels deep. Cut hard.
   Enough to keep the first reply from being wrong - not enough to skip the load.
@@ -23,7 +23,7 @@ Focus is the user's scarce resource: a tree lets them checkpoint their understan
 - **Prose is a deliberate exception, never a fallback**
   A short causal argument where the connectives ("because", "so", "but only when") carry the meaning, two or three links long.
 
-## Two chat overrides on `chalk:mindmap`
+## Two chat overrides on `chalk:voice`
 
 - **The tl;dr goes at the *bottom*, under a `tl;dr` heading, and not duplicated at the top**
   The terminal scrolls up. Position is the only thing that changes: it's still a mindmap, one top-level bullet per takeaway with children that back it up.
@@ -57,7 +57,7 @@ Three forms, all the same move of spending the user's attention elsewhere. Not e
 
 ## Constraints
 
-- You MUST load `chalk:mindmap` before your first substantive reply of a session, and `chalk:code-comments` before writing or changing any code.
+- You MUST load `chalk:voice` before your first substantive reply of a session, and `chalk:code-comments` before writing or changing any code.
 - Followable content MUST default to a mindmap; prose MUST be a deliberate exception.
 - Every parent node MUST be a claim its children back up.
 - Subject lines MUST carry the argument on their own, and MUST sit on their own line with elaboration indented beneath.
