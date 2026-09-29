@@ -10,6 +10,7 @@
             :google-chrome {}
             :alcove {}
             :swish {}
+            "cameroncooke/axe/axe" {:trust true}
             ;; Fonts
             :font-ia-writer-mono {}
             :font-ia-writer-duo {}
