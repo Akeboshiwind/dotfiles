@@ -45,6 +45,7 @@
         :js
         :terraform
         :python
+        :ios
 
         ;; >> Deployment
         :aws
