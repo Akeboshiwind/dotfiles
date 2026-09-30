@@ -12,6 +12,9 @@
 - Load the matching `chalk:*` skill before composing GitHub-bound prose — the built-in git/PR workflow carries the mechanics but not the chalk voice. Applies **regardless of diff size**, and to plain requests like "commit this".
 - Bold important words.
 - One checkable claim per line. Name the thing rather than gesturing at it — "it hangs" is cheap, "parks on IPC/ReplicationSlotDrop and applies once the consumer goes away" is not. Cut anything restating what we've settled. Density is information per token, not word count: don't drop caveats or admissions of uncertainty to hit a length, and put supporting evidence in sub-bullets rather than inline.
+- **Show, don't tell.** Prose is fine, but where a code example shows the point more clearly, **lean on it** — I often find a small snippet clearer than a paragraph.
+  - Cut the example to the lines that show the point; elide the rest with `…`. A two-line repro beats a full file.
+  - Let prose frame it — what to look at, why it matters — and let the code carry the rest.
 - Comments say only what the code can't: a non-obvious *why*, an invariant, a gotcha, a spec/issue link. Default to **none** inline — docstrings follow the language's norm, minus the vacuous ones. Rationale and the story of a change go in the **commit/PR message**.
 
 ## Code
