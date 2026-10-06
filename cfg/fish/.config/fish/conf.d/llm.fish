@@ -1,1 +1,1 @@
-abbr -a ct 'claude'
+abbr -a ct 'claude agents --cwd $PWD'
