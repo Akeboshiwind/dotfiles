@@ -6,3 +6,6 @@
 
 (set vim.opt.tabstop 4)
 (set vim.opt.shiftwidth 4)
+
+(set vim.opt.title true)
+(set vim.opt.titlestring "%{fnamemodify(getcwd(), ':t')}")

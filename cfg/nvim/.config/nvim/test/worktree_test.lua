@@ -121,18 +121,32 @@ end
 local function _14_()
   local main, worktrees = h["repo-with-worktrees"]({"a.txt"}, {"feature"})
   local nvim = h.start(main, {"a.txt"})
+  local title
+  local function _15_()
+    return h["exec-lua"](nvim, "return vim.o.title and vim.api.nvim_eval_statusline(vim.o.titlestring, {}).str")
+  end
+  title = _15_
+  local before = title()
+  switch(nvim, worktrees.feature)
+  local after = title()
+  h.stop(nvim)
+  return h.check(((before == "repo") and (after == "feature")), ("titles were " .. vim.inspect({before, after})))
+end
+local function _16_()
+  local main, worktrees = h["repo-with-worktrees"]({"a.txt"}, {"feature"})
+  local nvim = h.start(main, {"a.txt"})
   pick_worktree(nvim, worktrees.feature)
   h["exec-lua"](nvim, "LazyVim.pick.open = function(command, opts) vim.g.picked = {command, opts.cwd} end")
   h.press(nvim, "<Esc> fw")
   local picked_3f
-  local function _15_()
+  local function _17_()
     return h["exec-lua"](nvim, "return vim.g.picked ~= nil")
   end
-  picked_3f = h["wait-until"](_15_, 5000)
+  picked_3f = h["wait-until"](_17_, 5000)
   local picked = h["exec-lua"](nvim, "return vim.g.picked")
   local dir = cwd(nvim)
   h.stop(nvim)
   h.check((picked_3f and vim.deep_equal(picked, {"files", worktrees.feature})), ("picker opened with " .. vim.inspect(picked)))
   return h.check((dir == main), ("switched anyway, cwd is " .. dir))
 end
-return h.run({{"switch saves this worktree's session and restores the target's", _2_}, {"switch to a worktree without a session opens its git status", _5_}, {"switch refuses while a buffer has unsaved changes", _7_}, {"switch stops LSP clients and announces WorktreeSwitched", _8_}, {"list shows each live worktree, with its agent's name", _10_}, {"<leader>gw switches to the picked worktree", _12_}, {"<leader>fw finds files in the picked worktree without switching", _14_}})
+return h.run({{"switch saves this worktree's session and restores the target's", _2_}, {"switch to a worktree without a session opens its git status", _5_}, {"switch refuses while a buffer has unsaved changes", _7_}, {"switch stops LSP clients and announces WorktreeSwitched", _8_}, {"list shows each live worktree, with its agent's name", _10_}, {"<leader>gw switches to the picked worktree", _12_}, {"the terminal title names the worktree, and follows a switch", _14_}, {"<leader>fw finds files in the picked worktree without switching", _16_}})

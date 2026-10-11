@@ -6,4 +6,6 @@ vim.g.autoformat = false
 vim.g["conjure#highlight#enabled"] = true
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
+vim.opt.title = true
+vim.opt.titlestring = "%{fnamemodify(getcwd(), ':t')}"
 return nil

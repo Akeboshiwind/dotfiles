@@ -109,6 +109,18 @@
           (h.stop nvim)
           (h.check switched? (.. "cwd is " dir)))))]
 
+   ["the terminal title names the worktree, and follows a switch"
+    (fn []
+      (let [(main worktrees) (h.repo-with-worktrees [:a.txt] [:feature])
+            nvim (h.start main [:a.txt])
+            title #(h.exec-lua nvim "return vim.o.title and vim.api.nvim_eval_statusline(vim.o.titlestring, {}).str")
+            before (title)]
+        (switch nvim worktrees.feature)
+        (let [after (title)]
+          (h.stop nvim)
+          (h.check (and (= before :repo) (= after :feature))
+                   (.. "titles were " (vim.inspect [before after]))))))]
+
    ["<leader>fw finds files in the picked worktree without switching"
     (fn []
       (let [(main worktrees) (h.repo-with-worktrees [:a.txt] [:feature])
