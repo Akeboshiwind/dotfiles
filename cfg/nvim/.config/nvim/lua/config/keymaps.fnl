@@ -5,6 +5,17 @@
 (map :i :fd :<ESC> { :desc "Quick Escape"})
 (map :n :<leader>fy "<cmd>Telescope filetypes<cr>" { :desc "Set filetype"})
 
+;;; Worktrees -----------------------------------------------------------------
+
+(map :n :<leader>gw
+     (fn [] (let [worktree (require :config.worktree)]
+              (worktree.pick "Switch to worktree" worktree.switch)))
+     {:desc "Switch worktree"})
+(map :n :<leader>fw
+     (fn [] (let [worktree (require :config.worktree)]
+              (worktree.pick "Find files in worktree" worktree.find-files)))
+     {:desc "Find files (other worktree)"})
+
 ;;; Git hunks -----------------------------------------------------------------
 
 (fn selected-lines []

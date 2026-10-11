@@ -35,12 +35,16 @@ local function unsaved_buffers()
   end
   return tbl_26_
 end
-local function clear()
+local function clearable_3f()
   local unsaved = unsaved_buffers()
   if (0 < #unsaved) then
     vim.notify(("Unsaved changes in:\n" .. table.concat(unsaved, "\n")), vim.log.levels.WARN)
-    return false
   else
+  end
+  return (0 == #unsaved)
+end
+local function clear()
+  if clearable_3f() then
     for _, client in ipairs(vim.lsp.get_clients()) do
       client:stop()
     end
@@ -52,6 +56,21 @@ local function clear()
       end
     end
     return true
+  else
+    return nil
+  end
+end
+local function has_files_3f()
+  local function _8_(_241)
+    return (vim.bo[_241].buflisted and file_buffer_3f(_241) and ("" ~= vim.api.nvim_buf_get_name(_241)))
+  end
+  return vim.iter(vim.api.nvim_list_bufs()):any(_8_)
+end
+local function save()
+  if has_files_3f() then
+    return require("persistence").save()
+  else
+    return nil
   end
 end
 local function reset()
@@ -62,4 +81,4 @@ local function reset()
     return nil
   end
 end
-return {["restore-on-start"] = restore_on_start, clear = clear, reset = reset}
+return {["restore-on-start"] = restore_on_start, ["clearable?"] = clearable_3f, clear = clear, ["has-files?"] = has_files_3f, save = save, reset = reset}

@@ -19,23 +19,35 @@
       (let [name (vim.api.nvim_buf_get_name buf)]
         (if (= "" name) "[No Name]" (vim.fn.fnamemodify name ":~:."))))))
 
+(fn clearable? []
+  "False, after listing them in a warning, while any file buffer has unsaved changes."
+  (let [unsaved (unsaved-buffers)]
+    (when (< 0 (length unsaved))
+      (vim.notify (.. "Unsaved changes in:\n" (table.concat unsaved "\n")) vim.log.levels.WARN))
+    (= 0 (length unsaved))))
+
 (fn clear []
   "Closes every tab, window, listed buffer and terminal, and stops every LSP client.
   Plugins' own unlisted buffers are left alone.
-  Returns false, closing nothing, while a file buffer has unsaved changes."
-  (let [unsaved (unsaved-buffers)]
-    (if (< 0 (length unsaved))
-        (do
-          (vim.notify (.. "Unsaved changes in:\n" (table.concat unsaved "\n")) vim.log.levels.WARN)
-          false)
-        (do
-          (each [_ client (ipairs (vim.lsp.get_clients))]
-            (client:stop))
-          (vim.cmd "silent! tabonly | silent! only")
-          (each [_ buf (ipairs (vim.api.nvim_list_bufs))]
-            (when (or (. vim.bo buf :buflisted) (= :terminal (. vim.bo buf :buftype)))
-              (vim.api.nvim_buf_delete buf {:force true})))
-          true))))
+  Returns false, closing nothing, unless `clearable?`."
+  (when (clearable?)
+    (each [_ client (ipairs (vim.lsp.get_clients))]
+      (client:stop))
+    (vim.cmd "silent! tabonly | silent! only")
+    (each [_ buf (ipairs (vim.api.nvim_list_bufs))]
+      (when (or (. vim.bo buf :buflisted) (= :terminal (. vim.bo buf :buftype)))
+        (vim.api.nvim_buf_delete buf {:force true})))
+    true))
+
+(fn has-files? []
+  (: (vim.iter (vim.api.nvim_list_bufs)) :any
+     #(and (. vim.bo $1 :buflisted) (file-buffer? $1) (not= "" (vim.api.nvim_buf_get_name $1)))))
+
+(fn save []
+  "Saves the cwd's session, unless no file is open: persistence's own exit save
+  skips that case too, and saving it would overwrite a session with an empty one."
+  (when (has-files?)
+    ((. (require :persistence) :save))))
 
 (fn reset []
   "Back to the dashboard, with the cwd's session file deleted so the next start doesn't restore it."
@@ -43,4 +55,4 @@
     (vim.fn.delete ((. (require :persistence) :current)))
     (Snacks.dashboard)))
 
-{: restore-on-start : clear : reset}
+{: restore-on-start : clearable? : clear : has-files? : save : reset}

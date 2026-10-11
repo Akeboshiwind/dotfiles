@@ -76,14 +76,39 @@ local function project(files)
   end
   return dir
 end
+local function git(dir, ...)
+  local result = vim.system({"git", "-C", dir, "-c", "user.name=test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false", ...}, {text = true, env = {GIT_CONFIG_GLOBAL = "/dev/null"}}):wait()
+  if (0 ~= result.code) then
+    error(result.stderr)
+  else
+  end
+  return vim.trim(result.stdout)
+end
+local function repo_with_worktrees(files, names)
+  local main = (tempdir() .. "/repo")
+  local worktrees = {}
+  vim.fn.mkdir(main)
+  for _, file in ipairs(files) do
+    vim.fn.writefile({file}, (main .. "/" .. file))
+  end
+  git(main, "init", "-q", "-b", "main")
+  git(main, "add", ".")
+  git(main, "commit", "-q", "-m", "init")
+  for _, name in ipairs(names) do
+    local path = (vim.fs.dirname(main) .. "/" .. name)
+    git(main, "worktree", "add", "-q", "-b", name, path)
+    worktrees[name] = vim.uv.fs_realpath(path)
+  end
+  return vim.uv.fs_realpath(main), worktrees
+end
 local function ends_with_3f(s, suffix)
   return vim.endswith((s or ""), suffix)
 end
 local function has_buffer_3f(names, suffix)
-  local function _4_(_241)
+  local function _5_(_241)
     return ends_with_3f(_241, suffix)
   end
-  return vim.iter(names):any(_4_)
+  return vim.iter(names):any(_5_)
 end
 local function check(ok_3f, message)
   if not ok_3f then
@@ -94,9 +119,9 @@ local function check(ok_3f, message)
 end
 local function run(tests)
   local failed = 0
-  for _, _6_ in ipairs(tests) do
-    local name = _6_[1]
-    local f = _6_[2]
+  for _, _7_ in ipairs(tests) do
+    local name = _7_[1]
+    local f = _7_[2]
     local t0 = vim.uv.hrtime()
     local ok_3f, err = pcall(f)
     local ms = math.floor(((vim.uv.hrtime() - t0) / 1000000))
@@ -111,13 +136,13 @@ local function run(tests)
     vim.fn.jobstop(chan)
   end
   vim.fn.delete(root, "rf")
-  local function _8_()
+  local function _9_()
     if (failed == 0) then
       return 0
     else
       return 1
     end
   end
-  return os.exit(_8_())
+  return os.exit(_9_())
 end
-return {["wait-until"] = wait_until, ["exec-lua"] = exec_lua, start = start, ["start-headless"] = start_headless, stop = stop, ["buffer-names"] = buffer_names, ["buffer-filetypes"] = buffer_filetypes, current = current, press = press, ["start-fake-lsp"] = start_fake_lsp, ["lsp-client-names"] = lsp_client_names, ["session-saved?"] = session_saved_3f, project = project, ["ends-with?"] = ends_with_3f, ["has-buffer?"] = has_buffer_3f, check = check, run = run}
+return {["wait-until"] = wait_until, ["exec-lua"] = exec_lua, start = start, ["start-headless"] = start_headless, stop = stop, ["buffer-names"] = buffer_names, ["buffer-filetypes"] = buffer_filetypes, current = current, press = press, ["start-fake-lsp"] = start_fake_lsp, ["lsp-client-names"] = lsp_client_names, ["session-saved?"] = session_saved_3f, project = project, git = git, ["repo-with-worktrees"] = repo_with_worktrees, ["ends-with?"] = ends_with_3f, ["has-buffer?"] = has_buffer_3f, check = check, run = run}

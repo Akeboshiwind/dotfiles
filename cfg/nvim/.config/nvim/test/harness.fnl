@@ -96,6 +96,33 @@
       (vim.fn.writefile [file] (.. dir "/" file)))
     dir))
 
+(fn git [dir ...]
+  (let [result (: (vim.system [:git :-C dir
+                               :-c :user.name=test :-c "user.email=test@example.com"
+                               :-c :commit.gpgsign=false ...]
+                              {:text true :env {:GIT_CONFIG_GLOBAL :/dev/null}})
+                  :wait)]
+    (when (not= 0 result.code) (error result.stderr))
+    (vim.trim result.stdout)))
+
+(fn repo-with-worktrees [files names]
+  "A repo committing `files`, plus a linked worktree beside it for each of `names`,
+  at a path whose basename is the name.
+  Returns the main checkout's path and a table of worktree paths by name."
+  (let [main (.. (tempdir) "/repo")
+        worktrees {}]
+    (vim.fn.mkdir main)
+    (each [_ file (ipairs files)]
+      (vim.fn.writefile [file] (.. main "/" file)))
+    (git main :init :-q :-b :main)
+    (git main :add :.)
+    (git main :commit :-q :-m :init)
+    (each [_ name (ipairs names)]
+      (let [path (.. (vim.fs.dirname main) "/" name)]
+        (git main :worktree :add :-q :-b name path)
+        (tset worktrees name (vim.uv.fs_realpath path))))
+    (values (vim.uv.fs_realpath main) worktrees)))
+
 (fn ends-with? [s suffix]
   (vim.endswith (or s "") suffix))
 
@@ -121,4 +148,4 @@
 
 {: wait-until : exec-lua : start : start-headless : stop : buffer-names : buffer-filetypes : current
  : press : start-fake-lsp : lsp-client-names : session-saved?
- : project : ends-with? : has-buffer? : check : run}
+ : project : git : repo-with-worktrees : ends-with? : has-buffer? : check : run}
