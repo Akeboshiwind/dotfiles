@@ -44,17 +44,18 @@
           (h.stop nvim)
           (h.check restored? "main's session wasn't saved on the way out"))))]
 
-   ["switch to a worktree without a session opens its git status"
+   ["switch to a worktree without a session opens nothing"
     (fn []
       (let [(main worktrees) (h.repo-with-worktrees [:a.txt] [:feature])
             nvim (h.start main [:a.txt])]
         (switch nvim worktrees.feature)
-        (let [picker? (h.wait-until #(= (. (h.current nvim) :filetype) :TelescopePrompt) 5000)
-              buf (h.current nvim)
+        (vim.wait 1000)
+        (let [buf (h.current nvim)
               names (h.buffer-names nvim)
               dir (cwd nvim)]
           (h.stop nvim)
-          (h.check picker? (.. "expected the git status picker, got " (vim.inspect buf)))
+          (h.check (vim.deep_equal buf {:name "" :filetype ""})
+                   (.. "expected an empty editor, got " (vim.inspect buf)))
           (h.check (= dir worktrees.feature) (.. "cwd is " dir))
           (h.check (not (under? names main)) (.. "main's buffers survived: " (vim.inspect names))))))]
 
