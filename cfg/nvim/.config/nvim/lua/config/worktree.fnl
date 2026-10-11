@@ -54,7 +54,7 @@
 
 (fn switch [dir]
   "Moves the whole editor to the worktree at `dir`: saves this session, closes everything,
-  then restores `dir`'s session, or opens its git status when it has none.
+  then restores `dir`'s session if it has one.
   Fires `User WorktreeSwitched` with {:from :to} as data.
   Refuses, changing nothing, while a file buffer has unsaved changes."
   (let [from (realpath (vim.fn.getcwd))
@@ -64,8 +64,6 @@
       (session.clear)
       (vim.cmd.cd (vim.fn.fnameescape to))
       ((. (require :persistence) :load))
-      (when (not (session.has-files?))
-        (LazyVim.pick.open :git_status))
       (vim.api.nvim_exec_autocmds :User {:pattern :WorktreeSwitched
                                          :data {: from : to}}))))
 

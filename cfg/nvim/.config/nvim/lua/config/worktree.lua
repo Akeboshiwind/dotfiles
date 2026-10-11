@@ -116,10 +116,6 @@ local function switch(dir)
     session.clear()
     vim.cmd.cd(vim.fn.fnameescape(to))
     require("persistence").load()
-    if not session["has-files?"]() then
-      LazyVim.pick.open("git_status")
-    else
-    end
     return vim.api.nvim_exec_autocmds("User", {pattern = "WorktreeSwitched", data = {from = from, to = to}})
   else
     return nil
