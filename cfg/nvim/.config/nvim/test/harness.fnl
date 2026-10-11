@@ -62,6 +62,34 @@
 (fn current [chan]
   (exec-lua chan "return {name = vim.api.nvim_buf_get_name(0), filetype = vim.bo.filetype}"))
 
+(fn press [chan keys]
+  (vim.rpcrequest chan :nvim_input keys))
+
+(fn start-fake-lsp [chan]
+  "Attaches an in-process LSP client named `fake` to the current buffer."
+  (exec-lua chan "
+    vim.lsp.start({name = 'fake', cmd = function(dispatchers)
+      local closing = false
+      local function exit()
+        if not closing then closing = true dispatchers.on_exit(0, 0) end
+      end
+      return {
+        request = function(method, _, callback)
+          callback(nil, method == 'initialize' and {capabilities = {}} or nil)
+          return true, 1
+        end,
+        notify = function(method) if method == 'exit' then exit() end return true end,
+        is_closing = function() return closing end,
+        terminate = exit,
+      }
+    end})"))
+
+(fn lsp-client-names [chan]
+  (exec-lua chan "return vim.tbl_map(function(c) return c.name end, vim.lsp.get_clients())"))
+
+(fn session-saved? [chan]
+  (= 1 (exec-lua chan "return vim.fn.filereadable(require('persistence').current())")))
+
 (fn project [files]
   (let [dir (tempdir)]
     (each [_ file (ipairs files)]
@@ -92,4 +120,5 @@
   (os.exit (if (= failed 0) 0 1)))
 
 {: wait-until : exec-lua : start : start-headless : stop : buffer-names : buffer-filetypes : current
+ : press : start-fake-lsp : lsp-client-names : session-saved?
  : project : ends-with? : has-buffer? : check : run}

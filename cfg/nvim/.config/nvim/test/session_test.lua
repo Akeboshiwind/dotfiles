@@ -51,4 +51,60 @@ local function _6_()
   h.stop(nvim)
   return h.check(not h["has-buffer?"](names, "/a.txt"), ("headless start restored the session: " .. vim.inspect(names)))
 end
-return h.run({{"a bare start restores the cwd's session", _1_}, {"a bare start without a session shows the dashboard", _3_}, {"a start with a file argument opens only that file", _5_}, {"a headless start leaves the session alone", _6_}})
+local function _8_()
+  local dir = h.project({"a.txt"})
+  save_session(dir, "a.txt")
+  local nvim = h.start(dir)
+  local function _9_()
+    return h["ends-with?"](h.current(nvim).name, "/a.txt")
+  end
+  h["wait-until"](_9_)
+  h["start-fake-lsp"](nvim)
+  h["exec-lua"](nvim, "vim.cmd.tabnew() vim.cmd.terminal()")
+  h.press(nvim, "<Esc><C-\\><C-n> qr")
+  do
+    local dashboard_3f
+    local function _10_()
+      return (h.current(nvim).filetype == "snacks_dashboard")
+    end
+    dashboard_3f = h["wait-until"](_10_, 5000)
+    local cleared_3f
+    local function _11_()
+      return (0 == #h["lsp-client-names"](nvim))
+    end
+    cleared_3f = h["wait-until"](_11_, 5000)
+    local names = h["buffer-names"](nvim)
+    local tabs = h["exec-lua"](nvim, "return #vim.api.nvim_list_tabpages()")
+    local saved_3f = h["session-saved?"](nvim)
+    h.stop(nvim)
+    h.check(dashboard_3f, ("expected the dashboard, got " .. vim.inspect(names)))
+    h.check(cleared_3f, "an LSP client outlived the reset")
+    h.check(not h["has-buffer?"](names, "/a.txt"), ("a.txt outlived the reset: " .. vim.inspect(names)))
+    local function _12_(_241)
+      return vim.startswith(_241, "term://")
+    end
+    h.check(not vim.iter(names):any(_12_), ("a terminal outlived the reset: " .. vim.inspect(names)))
+    h.check((tabs == 1), (tabs .. " tabs outlived the reset"))
+    h.check(not saved_3f, "the session file outlived the reset")
+  end
+  local nvim0 = h.start(dir)
+  local dashboard_3f
+  local function _13_()
+    return (h.current(nvim0).filetype == "snacks_dashboard")
+  end
+  dashboard_3f = h["wait-until"](_13_, 5000)
+  h.stop(nvim0)
+  return h.check(dashboard_3f, "the next start restored a session anyway")
+end
+local function _14_()
+  local dir = h.project({"a.txt"})
+  local nvim = h.start(dir, {"a.txt"})
+  h["exec-lua"](nvim, "vim.api.nvim_buf_set_lines(0, 0, -1, false, {'edited'})")
+  h.press(nvim, "<Esc> qr")
+  vim.wait(1000)
+  local buf = h.current(nvim)
+  local modified_3f = h["exec-lua"](nvim, "return vim.bo.modified")
+  h.stop(nvim)
+  return h.check((h["ends-with?"](buf.name, "/a.txt") and modified_3f), ("the edit did not survive: " .. vim.inspect(buf)))
+end
+return h.run({{"a bare start restores the cwd's session", _1_}, {"a bare start without a session shows the dashboard", _3_}, {"a start with a file argument opens only that file", _5_}, {"a headless start leaves the session alone", _6_}, {"<leader>qr resets to the dashboard and forgets the session", _8_}, {"<leader>qr refuses while a buffer has unsaved changes", _14_}})

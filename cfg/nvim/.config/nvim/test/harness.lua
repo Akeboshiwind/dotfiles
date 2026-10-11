@@ -57,6 +57,18 @@ end
 local function current(chan)
   return exec_lua(chan, "return {name = vim.api.nvim_buf_get_name(0), filetype = vim.bo.filetype}")
 end
+local function press(chan, keys)
+  return vim.rpcrequest(chan, "nvim_input", keys)
+end
+local function start_fake_lsp(chan)
+  return exec_lua(chan, "\n    vim.lsp.start({name = 'fake', cmd = function(dispatchers)\n      local closing = false\n      local function exit()\n        if not closing then closing = true dispatchers.on_exit(0, 0) end\n      end\n      return {\n        request = function(method, _, callback)\n          callback(nil, method == 'initialize' and {capabilities = {}} or nil)\n          return true, 1\n        end,\n        notify = function(method) if method == 'exit' then exit() end return true end,\n        is_closing = function() return closing end,\n        terminate = exit,\n      }\n    end})")
+end
+local function lsp_client_names(chan)
+  return exec_lua(chan, "return vim.tbl_map(function(c) return c.name end, vim.lsp.get_clients())")
+end
+local function session_saved_3f(chan)
+  return (1 == exec_lua(chan, "return vim.fn.filereadable(require('persistence').current())"))
+end
 local function project(files)
   local dir = tempdir()
   for _, file in ipairs(files) do
@@ -108,4 +120,4 @@ local function run(tests)
   end
   return os.exit(_8_())
 end
-return {["wait-until"] = wait_until, ["exec-lua"] = exec_lua, start = start, ["start-headless"] = start_headless, stop = stop, ["buffer-names"] = buffer_names, ["buffer-filetypes"] = buffer_filetypes, current = current, project = project, ["ends-with?"] = ends_with_3f, ["has-buffer?"] = has_buffer_3f, check = check, run = run}
+return {["wait-until"] = wait_until, ["exec-lua"] = exec_lua, start = start, ["start-headless"] = start_headless, stop = stop, ["buffer-names"] = buffer_names, ["buffer-filetypes"] = buffer_filetypes, current = current, press = press, ["start-fake-lsp"] = start_fake_lsp, ["lsp-client-names"] = lsp_client_names, ["session-saved?"] = session_saved_3f, project = project, ["ends-with?"] = ends_with_3f, ["has-buffer?"] = has_buffer_3f, check = check, run = run}

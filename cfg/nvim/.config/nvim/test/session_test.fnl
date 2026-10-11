@@ -46,4 +46,44 @@
               names (h.buffer-names nvim)]
           (h.stop nvim)
           (h.check (not (h.has-buffer? names :/a.txt))
-                   (.. "headless start restored the session: " (vim.inspect names))))))]])
+                   (.. "headless start restored the session: " (vim.inspect names))))))]
+
+   ["<leader>qr resets to the dashboard and forgets the session"
+    (fn []
+      (let [dir (h.project [:a.txt])]
+        (save-session dir :a.txt)
+        (let [nvim (h.start dir)]
+          (h.wait-until #(h.ends-with? (. (h.current nvim) :name) :/a.txt))
+          (h.start-fake-lsp nvim)
+          (h.exec-lua nvim "vim.cmd.tabnew() vim.cmd.terminal()")
+          (h.press nvim "<Esc><C-\\><C-n> qr")
+          (let [dashboard? (h.wait-until #(= (. (h.current nvim) :filetype) :snacks_dashboard) 5000)
+                cleared? (h.wait-until #(= 0 (length (h.lsp-client-names nvim))) 5000)
+                names (h.buffer-names nvim)
+                tabs (h.exec-lua nvim "return #vim.api.nvim_list_tabpages()")
+                saved? (h.session-saved? nvim)]
+            (h.stop nvim)
+            (h.check dashboard? (.. "expected the dashboard, got " (vim.inspect names)))
+            (h.check cleared? "an LSP client outlived the reset")
+            (h.check (not (h.has-buffer? names :/a.txt)) (.. "a.txt outlived the reset: " (vim.inspect names)))
+            (h.check (not (: (vim.iter names) :any #(vim.startswith $1 "term://")))
+                     (.. "a terminal outlived the reset: " (vim.inspect names)))
+            (h.check (= tabs 1) (.. tabs " tabs outlived the reset"))
+            (h.check (not saved?) "the session file outlived the reset"))
+          (let [nvim (h.start dir)
+                dashboard? (h.wait-until #(= (. (h.current nvim) :filetype) :snacks_dashboard) 5000)]
+            (h.stop nvim)
+            (h.check dashboard? "the next start restored a session anyway")))))]
+
+   ["<leader>qr refuses while a buffer has unsaved changes"
+    (fn []
+      (let [dir (h.project [:a.txt])
+            nvim (h.start dir [:a.txt])]
+        (h.exec-lua nvim "vim.api.nvim_buf_set_lines(0, 0, -1, false, {'edited'})")
+        (h.press nvim "<Esc> qr")
+        (vim.wait 1000)
+        (let [buf (h.current nvim)
+              modified? (h.exec-lua nvim "return vim.bo.modified")]
+          (h.stop nvim)
+          (h.check (and (h.ends-with? buf.name :/a.txt) modified?)
+                   (.. "the edit did not survive: " (vim.inspect buf))))))]])
