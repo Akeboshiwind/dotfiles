@@ -50,7 +50,8 @@
     "chalk@juxt-plugins": true,
     "chill@juxt-plugins": true,
     "gradle-tests@xtdb-plugins": true,
-    "swift-lsp@claude-plugins-official": true
+    "swift-lsp@claude-plugins-official": true,
+    "a-star@juxt-plugins": true
   },
   "extraKnownMarketplaces": {
     "juxt-plugins": {
@@ -79,8 +80,8 @@
   "skipDangerousModePermissionPrompt": true,
   "theme": "auto",
   "editorMode": "vim",
+  "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true,
-  "remoteControlAtStartup": true
+  "voiceEnabled": true
 }
