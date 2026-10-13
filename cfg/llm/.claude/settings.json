@@ -73,7 +73,7 @@
       }
     }
   },
-  "outputStyle": "Chalk mindmap",
+  "outputStyle": "Concise",
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
   "tui": "fullscreen",
