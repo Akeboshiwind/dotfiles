@@ -1,17 +1,10 @@
 ## Working with me
 
-- Always prioritise using a REPL if one is available.
-- When the user says "draft" they mean produce the text and wait for explicit confirmation before performing the task — do not invoke the command or agent first. Applies to any artifact: issue body, PR description, commit message, comment, docs, code. **Overrides** a skill's documented end-to-end flow (e.g. `chalk new`) — the user's wording wins. Only on the explicit word "draft".
-- Use numbered lists for anything the user might accept, reject or comment on individually, reusing the same numbers across a back-and-forth.
-  - Number my material too when you hand it back — even if I didn't. Wording stays mine; numbering is yours. The numbers are how we address items later, so they need to exist before the back-and-forth starts.
-- Load the `deliberate` skill whenever a change is about to start and there's no ticket for it — most of all right after I've diagnosed something and the next move looks like code. The tasks that need it never feel like they do, so don't wait for me to ask.
 - When asked for a linear walkthrough, use `uvx showboat --help`.
 
 ## Writing
 
-- Load the matching `chalk:*` skill before composing GitHub-bound prose — the built-in git/PR workflow carries the mechanics but not the chalk voice. Applies **regardless of diff size**, and to plain requests like "commit this".
 - Bold important words.
-- One checkable claim per line. Name the thing rather than gesturing at it — "it hangs" is cheap, "parks on IPC/ReplicationSlotDrop and applies once the consumer goes away" is not. Cut anything restating what we've settled. Density is information per token, not word count: don't drop caveats or admissions of uncertainty to hit a length, and put supporting evidence in sub-bullets rather than inline.
 - **Show, don't tell.** Prose is fine, but where a code example shows the point more clearly, **lean on it** — I often find a small snippet clearer than a paragraph.
   - Cut the example to the lines that show the point; elide the rest with `…`. A two-line repro beats a full file.
   - Let prose frame it — what to look at, why it matters — and let the code carry the rest.
@@ -27,6 +20,5 @@
 
 ## Git
 
-- Never git push without the user *directly* asking you to, never infer.
 - Never add `Claude-Session` to the git commit
 - Always use **Conventional Commits** style, typically: `fix`, `feat`, `tidy`, `refactor`, `docs`.
