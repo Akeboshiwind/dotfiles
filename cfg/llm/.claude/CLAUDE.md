@@ -16,6 +16,7 @@
 - We practise **red-green** development.
 - Make illegal states **unrepresentable**.
 - **Obviously no bugs** over *no obvious bugs*.
+- **Simple** (not braided) over easy (near at hand)
 - Write **below** the limit of your cleverness — code written at that limit is beyond your ability to debug.
 
 ## Git
