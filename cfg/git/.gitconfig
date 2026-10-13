@@ -15,6 +15,9 @@
 [commit]
     gpgSign = true
 
+[branch]
+    autoSetupMerge = simple
+
 [pull]
     # Assume `--rebase` when doing a `git pull`
     rebase = true
