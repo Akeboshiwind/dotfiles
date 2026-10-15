@@ -1,7 +1,6 @@
 ---
 name: ship
 description: Land the current branch straight on the base branch with no PR, then remove its worktree and pull the base in the main checkout. Use when the user says "/ship" or "ship it".
-disable-model-invocation: true
 ---
 
 # Ship

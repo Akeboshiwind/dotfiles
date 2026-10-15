@@ -1,7 +1,6 @@
 ---
 name: show
 description: Raise a PR for the current branch, merge it once CI passes without waiting for review, then remove its worktree and pull the base in the main checkout. Use when the user says "/show".
-disable-model-invocation: true
 ---
 
 # Show

@@ -1,7 +1,6 @@
 ---
 name: ask
 description: Raise a PR for the current branch for review and leave the worktree in place. Use when the user says "/ask".
-disable-model-invocation: true
 ---
 
 # Ask
