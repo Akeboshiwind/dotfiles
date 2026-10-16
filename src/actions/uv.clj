@@ -33,7 +33,7 @@
          (map (fn [n] [(keyword n) {}]))
          (into {}))))
 
-(defmethod a/orphans :uv/tool [_ declared]
+(defmethod a/orphans :uv/tool [_ declared _facts]
   (when (u/command-exists? "uv")
     (let [result (orphans (installed-set) declared)]
       (when (seq result)
@@ -41,13 +41,13 @@
 
 (def ^:dynamic *installed-cache* (delay (installed-set)))
 
-(defmethod a/check :uv/tool [_ key _opts]
+(defmethod a/check :uv/tool [_ key _opts _facts]
   (let [installed @*installed-cache*]
     (if (contains? installed (name key))
       o/satisfied
       (o/drift :missing))))
 
-(defmethod a/check :uv/tool-uninstall [_ _key _opts]
+(defmethod a/check :uv/tool-uninstall [_ _key _opts _facts]
   (o/drift :orphan))
 
 (defmethod a/install! :uv/tool [type opts items]

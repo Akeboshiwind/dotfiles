@@ -69,7 +69,7 @@
                 :pkg/brew-uninstall {:wget {}}}
           ag (g/build-action-graph plan)]
       ;; Mock: brew check returns error for neovim, others unknown
-      (with-redefs [a/check (fn [type key _]
+      (with-redefs [a/check (fn [type key _ _]
                               (cond
                                 (= [type key] [:pkg/brew :neovim]) (o/error "install failed")
                                 (= type :pkg/brew-uninstall) o/unknown
@@ -88,7 +88,7 @@
                                       :dep/requires #{[:assert :check-ok]}}}}
           ag (g/build-action-graph plan)]
       ;; Mock: assert throws an exception instead of returning an outcome
-      (with-redefs [a/check (fn [type key _]
+      (with-redefs [a/check (fn [type key _ _]
                               (if (= type :assert)
                                 (throw (Exception. "boom"))
                                 o/unknown))]
@@ -107,7 +107,7 @@
                                       :dep/provides #{:pkg/brew}}}
                 :pkg/brew {:neovim {}}}
           ag (g/build-action-graph plan)]
-      (with-redefs [a/check (fn [type key _]
+      (with-redefs [a/check (fn [type key _ _]
                               (if (= type :pkg/script)
                                 (o/conflict "file exists")
                                 o/unknown))]

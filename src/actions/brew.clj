@@ -105,7 +105,7 @@
         (assoc o/satisfied :message "untrusted tap — declare :trust to re-enable updates")
         (o/conflict "untrusted tap — declare :trust to allow install")))))
 
-(defmethod a/check :pkg/brew [_ key opts]
+(defmethod a/check :pkg/brew [_ key opts _facts]
   (let [pkg-name (name key)
         sn (short-name pkg-name)
         formulae @*formulae-cache*
@@ -122,7 +122,7 @@
           installed? o/satisfied
           :else (o/drift :missing)))))
 
-(defmethod a/check :brew/service [_ key opts]
+(defmethod a/check :brew/service [_ key opts _facts]
   (let [svc-name (name key)
         by-name @*services-cache*
         svc (get by-name svc-name)]
@@ -133,7 +133,7 @@
       (and (:sudo opts) (= "root" (:user svc))) o/satisfied
       :else (o/drift :missing))))
 
-(defmethod a/check :pkg/brew-uninstall [_ key opts]
+(defmethod a/check :pkg/brew-uninstall [_ key opts _facts]
   (o/drift :orphan))
 
 (defn leaves-set
@@ -246,7 +246,7 @@
          (map (fn [tap] [tap {}]))
          (into {}))))
 
-(defmethod a/orphans :pkg/brew [_ declared]
+(defmethod a/orphans :pkg/brew [_ declared _facts]
   (when (u/command-exists? "brew")
     (let [pkgs (orphans {:formulae (leaves-set) :casks (installed-set-full :cask)} declared)
           taps (orphan-taps (installed-taps) declared)]
@@ -320,7 +320,7 @@
 
 (defmethod a/requires :brew/untap [_] [:complete :pkg/brew])
 
-(defmethod a/check :brew/untap [_ key opts]
+(defmethod a/check :brew/untap [_ key opts _facts]
   (o/drift :orphan))
 
 (defmethod a/install! :brew/untap [type opts items]

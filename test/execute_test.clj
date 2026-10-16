@@ -35,7 +35,7 @@
    focus purely on execution logic, not check behavior."
   [plan]
   (let [ag (g/build-action-graph plan)]
-    (with-redefs [a/check (fn [_ _ _] o/unknown)]
+    (with-redefs [a/check (fn [_ _ _ _] o/unknown)]
       (chk/run-checks ag))))
 
 ;; =============================================================================

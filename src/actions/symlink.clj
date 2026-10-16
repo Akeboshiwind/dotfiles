@@ -48,7 +48,7 @@
       :else
       :missing)))
 
-(defmethod a/check :fs/symlink [_ target-str source-str]
+(defmethod a/check :fs/symlink [_ target-str source-str _facts]
   (let [target (io/file (u/expand-tilde target-str))
         target-path (.toPath target)
         source (io/file source-str)]
@@ -68,7 +68,7 @@
       :else
       (o/drift :missing))))
 
-(defmethod a/check :fs/unlink [_ target-str source-str]
+(defmethod a/check :fs/unlink [_ target-str source-str _facts]
   (let [target (io/file (u/expand-tilde target-str))
         target-path (.toPath target)]
     (cond

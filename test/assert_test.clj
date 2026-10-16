@@ -32,9 +32,9 @@
   [plan]
   (let [ag (g/build-action-graph plan)
         original-check a/check]
-    (with-redefs [a/check (fn [type key opts]
+    (with-redefs [a/check (fn [type key opts facts]
                             (if (= type :assert)
-                              (original-check type key opts)
+                              (original-check type key opts facts)
                               o/unknown))]
       (chk/run-checks ag))))
 
@@ -109,6 +109,6 @@
 
 (deftest assert-validates-src-or-path-test
   (testing "assert requires :src or :path — check returns error"
-    (let [result (a/check :assert :bad-check {:message "missing script"})]
+    (let [result (a/check :assert :bad-check {:message "missing script"} {})]
       (is (o/error? result)
           "should produce error outcome for missing :src/:path"))))

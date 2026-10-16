@@ -11,5 +11,5 @@
   (g/walk-graph action-graph
     (fn [_ag {:keys [ref opts] :as node}]
       (let [[type key] ref
-            outcome (a/check type key opts)]
+            outcome (a/check type key opts {})]
         (assoc node :check outcome)))))

@@ -30,7 +30,7 @@
          (map (fn [[id app-name]] [id {:name app-name}]))
          (into {}))))
 
-(defmethod a/orphans :pkg/mas [_ declared]
+(defmethod a/orphans :pkg/mas [_ declared _facts]
   (when (u/command-exists? "mas")
     (let [result (orphans (installed-map) declared)]
       (when (seq result)
@@ -38,14 +38,14 @@
 
 (def ^:dynamic *installed-cache* (delay (installed-map)))
 
-(defmethod a/check :pkg/mas [_ key opts]
+(defmethod a/check :pkg/mas [_ key opts _facts]
   (let [app-id (if (map? opts) (:id opts) opts)
         installed @*installed-cache*]
     (if (contains? installed app-id)
       o/satisfied
       (o/drift :missing))))
 
-(defmethod a/check :pkg/mas-uninstall [_ key opts]
+(defmethod a/check :pkg/mas-uninstall [_ key opts _facts]
   (o/drift :orphan))
 
 (defmethod a/install! :pkg/mas [type opts items]

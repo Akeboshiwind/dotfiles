@@ -33,7 +33,7 @@
         (:mcpServers (json/parse-string (slurp f) true))
         {}))))
 
-(defmethod a/check :claude/mcp [_ key {:keys [scope] :or {scope "user"}}]
+(defmethod a/check :claude/mcp [_ key {:keys [scope] :or {scope "user"}} _facts]
   ;; syn manages machine-global state, so only user-scope servers (recorded
   ;; in ~/.claude.json) can be declared; project/local registrations belong
   ;; to the projects they serve.
@@ -43,7 +43,7 @@
       o/satisfied
       (o/drift :missing))))
 
-(defmethod a/check :claude/marketplace [_ key opts]
+(defmethod a/check :claude/marketplace [_ key opts _facts]
   (let [source (or (:source opts) (name key))]
     (if (some (fn [[_k v]] (= source (get-in v [:source :repo]))) @*marketplace-cache*)
       o/satisfied
@@ -81,7 +81,7 @@
   (some (fn [[k v]] (when (str/starts-with? (name k) (str n "@")) [(name k) v]))
         plugin-cache))
 
-(defmethod a/check :claude/plugin [_ key _opts]
+(defmethod a/check :claude/plugin [_ key _opts _facts]
   (let [n (name key)]
     (if-let [[plugin-id records] (installed-plugin-entry @*plugin-cache* n)]
       (do @*marketplace-refresh*

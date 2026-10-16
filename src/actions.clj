@@ -86,18 +86,18 @@
   "Check whether an action is satisfied. No side effects.
    Returns a CheckOutcome (see outcome.clj).
    Each module manages its own caching internally."
-  (fn [type _key _opts] type))
+  (fn [type _key _opts _facts] type))
 
-(defmethod check :default [_ _ _]
+(defmethod check :default [_ _ _ _]
   o/unknown)
 
 (defmulti orphans
   "Query live system and compare against declared items to find orphans.
    Returns a plan fragment to merge (e.g. {:pkg/brew-uninstall {:wget {} ...}}), or nil.
    Default returns nil (no orphan detection for this action type)."
-  (fn [type _declared] type))
+  (fn [type _declared _facts] type))
 
-(defmethod orphans :default [_ _] nil)
+(defmethod orphans :default [_ _ _] nil)
 
 (defmulti install!
   "Install items of a given action type.

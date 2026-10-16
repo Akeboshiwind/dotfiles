@@ -101,7 +101,7 @@
     (vector? value) (mapv (fn [e] (if (map? e) (normalize-plist e) (str e))) value)
     :else           value))
 
-(defmethod a/check :osx/defaults [_ key opts]
+(defmethod a/check :osx/defaults [_ key opts _facts]
   (let [domain      (:domain opts)
         settings    (or (:settings opts)
                         {(:key opts) (:value opts)})

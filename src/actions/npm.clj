@@ -48,7 +48,7 @@
         base     (str/replace filename #"\.tgz$" "")]
     (str/replace base #"-\d[^-]*$" "")))
 
-(defmethod a/check :pkg/npm [_ key opts]
+(defmethod a/check :pkg/npm [_ key opts _facts]
   (let [k        (if (keyword? key) (name key) (str key))
         pkg-name (if (str/starts-with? k "http")
                    (pkg-name-from-url k)
@@ -73,13 +73,13 @@
          (map (fn [n] [(keyword n) {}]))
          (into {}))))
 
-(defmethod a/orphans :pkg/npm [_ declared]
+(defmethod a/orphans :pkg/npm [_ declared _facts]
   (when (u/command-exists? "npm")
     (let [result (orphans @*installed-cache* declared)]
       (when (seq result)
         {:pkg/npm-uninstall result}))))
 
-(defmethod a/check :pkg/npm-uninstall [_ _key _opts]
+(defmethod a/check :pkg/npm-uninstall [_ _key _opts _facts]
   (o/drift :orphan))
 
 (defn install-cmd

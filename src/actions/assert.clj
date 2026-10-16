@@ -22,7 +22,7 @@
     path (zero? (:exit (apply process/shell {:out :string :err :string :continue true} ["bash" path])))
     src  (zero? (:exit (process/shell {:out :string :err :string :continue true} "bash" "-c" src)))))
 
-(defmethod a/check :assert [_ key opts]
+(defmethod a/check :assert [_ key opts _facts]
   (if-not (or (:path opts) (:src opts) (:clj opts))
     (o/error "Either :path, :src, or :clj required")
     (if (run-check opts)

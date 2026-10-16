@@ -29,7 +29,7 @@
          (map (fn [n] [(keyword n) {}]))
          (into {}))))
 
-(defmethod a/orphans :pkg/bbin [_ declared]
+(defmethod a/orphans :pkg/bbin [_ declared _facts]
   (when (u/command-exists? "bbin")
     (let [result (orphans (installed-set) declared)]
       (when (seq result)
@@ -37,13 +37,13 @@
 
 (def ^:dynamic *installed-cache* (delay (installed-set)))
 
-(defmethod a/check :pkg/bbin [_ key opts]
+(defmethod a/check :pkg/bbin [_ key opts _facts]
   (let [installed @*installed-cache*]
     (if (contains? installed (name key))
       o/satisfied
       (o/drift :missing))))
 
-(defmethod a/check :pkg/bbin-uninstall [_ key opts]
+(defmethod a/check :pkg/bbin-uninstall [_ key opts _facts]
   (o/drift :orphan))
 
 (defn- build-cmd [pkg opts]

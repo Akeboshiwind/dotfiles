@@ -137,7 +137,7 @@
    graph resolves."
   [plan]
   (let [merged (->> (orphan-types)
-                    (keep #(a/orphans % (get plan % {})))
+                    (keep #(a/orphans % (get plan % {}) {}))
                     (apply merge {}))
         missing-bases (->> (keys merged)
                            (keep (fn [orphan-type]

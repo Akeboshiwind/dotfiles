@@ -25,7 +25,7 @@
         (a/exec! opts ["git" "-C" target "pull"]))
       {:exit exit :err err})))
 
-(defmethod a/check :git/clone [_ key opts]
+(defmethod a/check :git/clone [_ key opts _facts]
   (let [expanded (u/expand-tilde key)
         {:keys [ref]} opts]
     (if-not (fs/exists? expanded)

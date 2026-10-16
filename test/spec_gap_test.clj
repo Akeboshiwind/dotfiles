@@ -85,7 +85,7 @@
 
 (deftest claude-mcp-check-implemented-test
   (testing "MCP servers are checked for presence, not blindly re-registered"
-    (is (not (o/unknown? (a/check :claude/mcp :spec-gap-server {:command "echo"})))
+    (is (not (o/unknown? (a/check :claude/mcp :spec-gap-server {:command "echo"} {})))
         "check :claude/mcp falls through to the default unknown outcome")))
 
 ;; =============================================================================
@@ -102,7 +102,7 @@
                    (a/check :osx/defaults :spec-gap
                             {:domain "com.syn.spec-gap.nonexistent"
                              :settings {:complex-array [1 2 3]
-                                        :complex-dict {:a 1}}}))]
+                                        :complex-dict {:a 1}}} {}))]
       (is (o/drift? result)
           "complex values are skipped by the comparison, so a nonexistent domain checks as satisfied"))))
 
@@ -119,7 +119,7 @@
   (testing "a ref-less existing repo is satisfied but carries a warning message"
     (let [dir (str *tmp* "/refless-repo")]
       (fs/create-dirs dir)
-      (let [result (a/check :git/clone dir {:url "https://example.com/r.git"})]
+      (let [result (a/check :git/clone dir {:url "https://example.com/r.git"} {})]
         (is (o/satisfied? result))
         (is (some? (:message result))
             "no warning message on a satisfied ref-less clone — the plan report cannot surface it")))))

@@ -14,7 +14,7 @@
     path (slurp path)
     src src))
 
-(defmethod a/check :pkg/script [_ key opts]
+(defmethod a/check :pkg/script [_ key opts _facts]
   (let [{:keys [path src check]} opts]
     (cond
       (not (or path src))

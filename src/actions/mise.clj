@@ -40,7 +40,7 @@
          (map (fn [n] [(keyword n) {}]))
          (into {}))))
 
-(defmethod a/orphans :pkg/mise [_ declared]
+(defmethod a/orphans :pkg/mise [_ declared _facts]
   (when (u/command-exists? "mise")
     (let [result (orphans (installed-map) declared)]
       (when (seq result)
@@ -49,7 +49,7 @@
 (def ^:dynamic *installed-cache* (delay (installed-map)))
 (def ^:dynamic *outdated-cache* (delay (outdated-map)))
 
-(defmethod a/check :pkg/mise [_ key opts]
+(defmethod a/check :pkg/mise [_ key opts _facts]
   (if-not (:version opts)
     (o/error "Version required")
     (let [installed @*installed-cache*
@@ -70,7 +70,7 @@
         :else
         (o/version-drift (last (sort versions)) (:version opts))))))
 
-(defmethod a/check :pkg/mise-uninstall [_ key opts]
+(defmethod a/check :pkg/mise-uninstall [_ key opts _facts]
   (o/drift :orphan))
 
 (defmethod a/install! :pkg/mise [type opts items]
