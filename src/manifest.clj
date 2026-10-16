@@ -3,11 +3,16 @@
             [clojure.java.io :as io]
             [babashka.fs :as fs]))
 
+(defn parse-secrets'
+  "Pure parse of secrets.edn content into the secrets map."
+  [content]
+  (edn/read-string content))
+
 (def ^:private secrets
   (delay
     (let [secrets-file "secrets.edn"]
       (if (fs/exists? secrets-file)
-        (edn/read-string (slurp secrets-file))
+        (parse-secrets' (slurp secrets-file))
         {}))))
 
 (defn secret-reader'
