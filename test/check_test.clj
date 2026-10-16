@@ -175,19 +175,19 @@
 
 (deftest assert-check-satisfied-test
   (testing "assertion passes → satisfied"
-    (is (o/satisfied? (a/check :assert :test-assert {:src "exit 0"} {})))))
+    (is (o/satisfied? (support/check-live :assert :test-assert {:src "exit 0"})))))
 
 (deftest assert-check-failed-test
   (testing "assertion fails → error"
-    (is (o/error? (a/check :assert :test-assert {:src "exit 1"} {})))))
+    (is (o/error? (support/check-live :assert :test-assert {:src "exit 1"})))))
 
 (deftest assert-check-no-script-test
   (testing "no :path or :src → error"
-    (is (o/error? (a/check :assert :test-assert {} {})))))
+    (is (o/error? (support/check-live :assert :test-assert {})))))
 
 (deftest assert-check-custom-message-test
   (testing "custom message in error"
-    (let [result (a/check :assert :test-assert {:src "exit 1" :message "Remote Login disabled"} {})]
+    (let [result (support/check-live :assert :test-assert {:src "exit 1" :message "Remote Login disabled"})]
       (is (o/error? result))
       (is (= "Remote Login disabled" (:message result))))))
 

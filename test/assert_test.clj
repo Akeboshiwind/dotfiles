@@ -109,6 +109,6 @@
 
 (deftest assert-validates-src-or-path-test
   (testing "assert requires :src or :path — check returns error"
-    (let [result (a/check :assert :bad-check {:message "missing script"} {})]
+    (let [result (support/check-live :assert :bad-check {:message "missing script"})]
       (is (o/error? result)
           "should produce error outcome for missing :src/:path"))))

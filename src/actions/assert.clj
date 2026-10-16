@@ -3,6 +3,7 @@
             [babashka.process :as process]
             [clojure.string :as str]
             [display :as d]
+            [facts :as f]
             [outcome :as o]
             [utils.defaults :as defaults]))
 
@@ -22,13 +23,24 @@
     path (zero? (:exit (apply process/shell {:out :string :err :string :continue true} ["bash" path])))
     src  (zero? (:exit (process/shell {:out :string :err :string :continue true} "bash" "-c" src)))))
 
-(defmethod a/check :assert [_ key opts _facts]
-  (if-not (or (:path opts) (:src opts) (:clj opts))
-    (o/error "Either :path, :src, or :clj required")
-    (if (run-check opts)
+(defn- check-query [opts]
+  (let [spec (into {} (filter val) (select-keys opts [:path :src :clj]))]
+    (when (seq spec)
+      [:assert spec])))
+
+(defmethod a/queries :assert [_ declared]
+  (into #{} (keep (fn [[_ opts]] (check-query opts))) declared))
+
+(defmethod a/run-query :assert [[_ spec]]
+  (run-check spec))
+
+(defmethod a/check :assert [_ _key opts facts]
+  (if-let [q (check-query opts)]
+    (if (f/value facts q)
       o/satisfied
       (cond-> (o/error (or (:message opts) "assertion failed"))
-        (:instructions opts) (assoc :detail (:instructions opts))))))
+        (:instructions opts) (assoc :detail (:instructions opts))))
+    (o/error "Either :path, :src, or :clj required")))
 
 (defmethod a/install! :assert [_ opts items]
   (d/section "Checking assertions"
