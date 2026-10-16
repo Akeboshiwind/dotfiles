@@ -25,6 +25,20 @@
     end
     return {bg = vim.api.nvim_get_hl(0, {name = group, link = false}).bg}" name))
 
+(fn dashboard-label [nvim name]
+  (h.exec-lua nvim "
+    local name = ...
+    if vim.bo.filetype ~= 'snacks_dashboard' then return false end
+    for row, line in ipairs(vim.api.nvim_buf_get_lines(0, 0, -1, false)) do
+      local col = line:find(name, 1, true)
+      if col then
+        local marks = vim.api.nvim_buf_get_extmarks(0, -1, {row - 1, col - 1}, {row - 1, col - 1},
+                                                    {details = true, overlap = true})
+        return marks[1] and marks[1][4].hl_group or ''
+      end
+    end
+    return false" name))
+
 (fn pick-worktree [nvim dir]
   (h.exec-lua nvim "
     local dir = ...
@@ -150,6 +164,20 @@
           (h.check (not= warn in-main.bg) "main checkout's name is loud")
           (h.check in-feature "linked worktree's name missing")
           (h.check (= warn in-feature.bg) "linked worktree's name is quiet"))))]
+
+   ["the dashboard names the worktree, loud only in a linked one"
+    (fn []
+      (let [(main worktrees) (h.repo-with-worktrees [:a.txt] [:feature])
+            in-main (h.start main)
+            in-feature (h.start worktrees.feature)]
+        (h.wait-until #(and (dashboard-label in-main :repo) (dashboard-label in-feature :feature)) 5000)
+        (let [main-hl (dashboard-label in-main :repo)
+              feature-hl (dashboard-label in-feature :feature)]
+          (h.stop in-main)
+          (h.stop in-feature)
+          (h.check main-hl "main checkout's name missing")
+          (h.check (= main-hl :Comment) (.. "main checkout's name is " (vim.inspect main-hl)))
+          (h.check (= feature-hl :DiagnosticWarn) (.. "linked worktree's name is " (vim.inspect feature-hl))))))]
 
    ["<leader>fw finds files in the picked worktree without switching"
     (fn []
