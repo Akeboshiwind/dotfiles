@@ -221,7 +221,9 @@
             (str/includes? (ex-message e) "Secret not found")
             (do
               (println "ERROR:" (ex-message e))
-              (println "       Add it to secrets.edn (or set it to :secret/disabled)."))
+              (println (if (:encrypted data)
+                         "       Unlock it with git-crypt, or check the git-crypt filters in .git/config."
+                         "       Add it to secrets.edn (or set it to :secret/disabled).")))
 
             :else (throw e)))
         (System/exit 1))

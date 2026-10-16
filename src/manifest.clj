@@ -1,12 +1,15 @@
 (ns manifest
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
+            [clojure.string :as str]
             [babashka.fs :as fs]))
 
 (defn parse-secrets'
-  "Pure parse of secrets.edn content into the secrets map."
+  "Pure parse of secrets.edn content into the secrets map.
+   Returns nil when the content is still git-crypt ciphertext."
   [content]
-  (edn/read-string content))
+  (when-not (str/starts-with? content "\u0000GITCRYPT\u0000")
+    (edn/read-string content)))
 
 (def ^:private secrets
   (delay
@@ -16,12 +19,19 @@
         {}))))
 
 (defn secret-reader'
-  "Pure secret lookup. Returns value or throws if not found."
+  "Pure secret lookup. Returns value or throws if not found.
+   A nil secrets-map means secrets.edn is still encrypted."
   [secrets-map key]
   (let [value (get secrets-map key ::not-found)]
-    (if (= value ::not-found)
+    (cond
+      (nil? secrets-map)
+      (throw (ex-info (str "Secret not found: " key " (secrets.edn is still encrypted)")
+                      {:key key :encrypted true}))
+
+      (= value ::not-found)
       (throw (ex-info (str "Secret not found: " key) {:key key}))
-      value)))
+
+      :else value)))
 
 (defn- secret-reader
   "Reader function for #secret tag - looks up key in secrets.edn"
@@ -45,8 +55,9 @@
   (validate-secrets' @secrets))
 
 (defn all-secrets
-  "The parsed secrets map (secrets.edn). Used to fold secret values into the
-   manifest identity, so changing a secret invalidates a captured plan."
+  "The parsed secrets map (secrets.edn), or nil while it is still encrypted.
+   Used to fold secret values into the manifest identity, so changing a secret
+   invalidates a captured plan."
   []
   @secrets)
 

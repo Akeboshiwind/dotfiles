@@ -24,7 +24,20 @@
     (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Secret not found"
           (m/secret-reader' {:other "value"} :api-key)))
     (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Secret not found"
-          (m/secret-reader' {} :api-key)))))
+          (m/secret-reader' {} :api-key))))
+
+  (testing "names the cause when secrets.edn is still encrypted"
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Secret not found: :api-key \(secrets.edn is still encrypted\)"
+          (m/secret-reader' nil :api-key)))
+    (is (:encrypted (try (m/secret-reader' nil :api-key)
+                         (catch clojure.lang.ExceptionInfo e (ex-data e)))))))
+
+(deftest parse-secrets-test
+  (testing "parses plaintext EDN"
+    (is (= {:api-key "x"} (m/parse-secrets' "{:api-key \"x\"}"))))
+
+  (testing "git-crypt ciphertext parses to nil, not a map"
+    (is (nil? (m/parse-secrets' "\u0000GITCRYPT\u0000\u0012§garbage")))))
 
 ;; =============================================================================
 ;; entry->path tests
