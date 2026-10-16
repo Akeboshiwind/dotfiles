@@ -71,6 +71,9 @@
         :tinystart
         :minibar
 
+        ;; >> Hardware
+        {:pkg/brew {:elgato-stream-deck {}}}
+
         ;; >> Reading
         :calibre
 
