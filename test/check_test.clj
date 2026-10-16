@@ -319,7 +319,7 @@
 
 (deftest git-clone-check-missing-test
   (testing "no directory at target → drift(:missing)"
-    (let [result (a/check :git/clone (str *tmp* "/norepo") {:url "https://example.com/r.git"} {})]
+    (let [result (support/check-live :git/clone (str *tmp* "/norepo") {:url "https://example.com/r.git"})]
       (is (o/drift? result))
       (is (= :missing (:kind result))))))
 
@@ -327,13 +327,13 @@
   (testing "repo at the declared ref → satisfied"
     (let [dir (str *tmp* "/repo")
           sha (init-repo! dir)]
-      (is (o/satisfied? (a/check :git/clone dir {:url "ignored" :ref sha} {}))))))
+      (is (o/satisfied? (support/check-live :git/clone dir {:url "ignored" :ref sha}))))))
 
 (deftest git-clone-check-ref-mismatch-test
   (testing "repo at a different ref → drift(:outdated)"
     (let [dir (str *tmp* "/repo2")]
       (init-repo! dir)
-      (let [result (a/check :git/clone dir {:url "ignored" :ref "0000000000"} {})]
+      (let [result (support/check-live :git/clone dir {:url "ignored" :ref "0000000000"})]
         (is (o/drift? result))
         (is (= :outdated (:kind result)))))))
 
@@ -341,7 +341,7 @@
   (testing "existing directory with no declared ref → satisfied"
     (let [dir (str *tmp* "/repo3")]
       (fs/create-dirs dir)
-      (is (o/satisfied? (a/check :git/clone dir {:url "ignored"} {}))))))
+      (is (o/satisfied? (support/check-live :git/clone dir {:url "ignored"}))))))
 
 ;; =============================================================================
 ;; :claude/marketplace and :claude/plugin checks

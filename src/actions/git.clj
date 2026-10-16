@@ -5,6 +5,7 @@
             [babashka.process :as process]
             [clojure.string :as str]
             [display :as d]
+            [facts :as f]
             [outcome :as o]))
 
 (defmethod a/requires :git/clone [_] :git)
@@ -25,17 +26,25 @@
         (a/exec! opts ["git" "-C" target "pull"]))
       {:exit exit :err err})))
 
-(defmethod a/check :git/clone [_ key opts _facts]
-  (let [expanded (u/expand-tilde key)
-        {:keys [ref]} opts]
-    (if-not (fs/exists? expanded)
+(defmethod a/queries :git/clone [_ declared]
+  (into #{} (map (fn [[target _]] [:git :head (u/expand-tilde target)])) declared))
+
+(defmethod a/run-query :git [[_ _ expanded]]
+  (if-not (fs/exists? expanded)
+    {:exists? false}
+    {:exists? true
+     :head (str/trim (:out (process/shell {:out :string :err :string :continue true}
+                                          "git" "-C" expanded "rev-parse" "HEAD")))}))
+
+(defmethod a/check :git/clone [_ key opts facts]
+  (let [{:keys [ref]} opts
+        {:keys [exists? head]} (f/value facts [:git :head (u/expand-tilde key)])]
+    (if-not exists?
       (o/drift :missing)
       (if ref
-        (let [result (process/shell {:out :string :err :string :continue true}
-                                    "git" "-C" expanded "rev-parse" "HEAD")]
-          (if (str/starts-with? (str/trim (:out result)) ref)
-            o/satisfied
-            (o/drift :outdated)))
+        (if (str/starts-with? head ref)
+          o/satisfied
+          (o/drift :outdated))
         ;; No ref pinned: existence satisfies, but the repo will never be
         ;; updated by syn — surface that in the plan report.
         (assoc o/satisfied :message "no ref declared — repo is never updated")))))

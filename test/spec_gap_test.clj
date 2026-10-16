@@ -119,7 +119,7 @@
   (testing "a ref-less existing repo is satisfied but carries a warning message"
     (let [dir (str *tmp* "/refless-repo")]
       (fs/create-dirs dir)
-      (let [result (a/check :git/clone dir {:url "https://example.com/r.git"} {})]
+      (let [result (support/check-live :git/clone dir {:url "https://example.com/r.git"})]
         (is (o/satisfied? result))
         (is (some? (:message result))
             "no warning message on a satisfied ref-less clone — the plan report cannot surface it")))))
