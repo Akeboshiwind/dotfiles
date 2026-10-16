@@ -3,6 +3,7 @@
             [clojure.java.io :as io]
             [clojure.set :as set]
             [actions :as a]
+            [facts :as f]
             [utils :as u]))
 
 ;; >> Resolve symlinks to root of repo
@@ -127,17 +128,22 @@
        keys
        (remove #{:default})))
 
+(defn orphan-queries
+  "The set of query keys `calculate-orphans` reads for plan. Pure."
+  [plan]
+  (into #{} (mapcat #(a/orphan-queries % (get plan % {}))) (orphan-types)))
+
 (defn calculate-orphans
-  "Query live state and compute orphan removal actions for all action types
-   with orphan detection, not just those in the plan.
+  "Compute orphan removal actions from facts for all action types with orphan
+   detection, not just those in the plan.
    Each a/orphans impl returns a plan fragment or nil, possibly spanning
    several orphan action types (e.g. {:pkg/brew-uninstall {...} :brew/untap {...}}).
    When an orphan type requires [:complete base] and the base type is absent
    from the plan, the base is injected as an empty entry so the dependency
    graph resolves."
-  [plan]
+  [plan facts]
   (let [merged (->> (orphan-types)
-                    (keep #(a/orphans % (get plan % {})))
+                    (keep #(a/orphans % (get plan % {}) facts))
                     (apply merge {}))
         missing-bases (->> (keys merged)
                            (keep (fn [orphan-type]
@@ -172,14 +178,17 @@
 
 (defn build!
   "Build plan from entries. Takes [{:step map :source string} ...].
-   Returns {:plan map :order [[type key] ...] :symlinks map :errors [...]}
+   Returns {:plan map :symlinks map :errors [...] :facts snapshot}, where facts
+   holds the orphan queries' answers for the check phase to reuse.
    Impure: reads filesystem for path canonicalization, directory listing, and package queries."
   [entries cache]
   (let [{:keys [merged symlinks unlinks errors]} (assemble entries cache)
-        orphans (calculate-orphans merged)
+        facts (f/gather {} (orphan-queries merged))
+        orphans (calculate-orphans merged facts)
         plan (cond-> merged
                (seq unlinks) (assoc :fs/unlink unlinks)
                (seq orphans) (merge orphans))]
     {:plan plan
      :symlinks symlinks
-     :errors errors}))
+     :errors errors
+     :facts facts}))

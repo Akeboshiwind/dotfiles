@@ -1,10 +1,10 @@
 (ns action-graph-test
   (:require [clojure.test :refer [deftest testing is]]
             [graph :as g]
-            [check :as chk]
             [actions :as a]
             [outcome :as o]
-            [registry]))
+            [registry]
+            [support]))
 
 (deftest build-action-graph-structure-test
   (testing "builds nodes map with correct structure"
@@ -43,7 +43,7 @@
     (let [plan {:fs/symlink {}}
           ;; Simple plan with no real actions — use default unknown
           ag (g/build-action-graph {:pkg/script {:a {:src "echo"}}})
-          checked (chk/run-checks ag)]
+          checked (support/run-checks-live ag)]
       (is (every? #(some? (:check (val %))) (:nodes checked))))))
 
 (deftest walk-graph-cancels-dependents-test
@@ -53,7 +53,7 @@
                 :pkg/script {:setup {:src "echo ok"
                                       :dep/requires #{[:assert :remote-login]}}}}
           ag (g/build-action-graph plan)
-          checked (chk/run-checks ag)
+          checked (support/run-checks-live ag)
           assert-check (get-in checked [:nodes [:assert :remote-login] :check])
           script-check (get-in checked [:nodes [:pkg/script :setup] :check])]
       (is (o/error? assert-check))
@@ -69,12 +69,12 @@
                 :pkg/brew-uninstall {:wget {}}}
           ag (g/build-action-graph plan)]
       ;; Mock: brew check returns error for neovim, others unknown
-      (with-redefs [a/check (fn [type key _]
+      (with-redefs [a/check (fn [type key _ _]
                               (cond
                                 (= [type key] [:pkg/brew :neovim]) (o/error "install failed")
                                 (= type :pkg/brew-uninstall) o/unknown
                                 :else o/satisfied))]
-        (let [checked (chk/run-checks ag)
+        (let [checked (support/run-checks-live ag)
               brew-check (get-in checked [:nodes [:pkg/brew :neovim] :check])
               uninstall-check (get-in checked [:nodes [:pkg/brew-uninstall :wget] :check])]
           (is (o/error? brew-check))
@@ -88,11 +88,11 @@
                                       :dep/requires #{[:assert :check-ok]}}}}
           ag (g/build-action-graph plan)]
       ;; Mock: assert throws an exception instead of returning an outcome
-      (with-redefs [a/check (fn [type key _]
+      (with-redefs [a/check (fn [type key _ _]
                               (if (= type :assert)
                                 (throw (Exception. "boom"))
                                 o/unknown))]
-        (let [checked (chk/run-checks ag)
+        (let [checked (support/run-checks-live ag)
               assert-check (get-in checked [:nodes [:assert :check-ok] :check])
               script-check (get-in checked [:nodes [:pkg/script :setup] :check])]
           (is (o/error? assert-check)
@@ -107,11 +107,11 @@
                                       :dep/provides #{:pkg/brew}}}
                 :pkg/brew {:neovim {}}}
           ag (g/build-action-graph plan)]
-      (with-redefs [a/check (fn [type key _]
+      (with-redefs [a/check (fn [type key _ _]
                               (if (= type :pkg/script)
                                 (o/conflict "file exists")
                                 o/unknown))]
-        (let [checked (chk/run-checks ag)
+        (let [checked (support/run-checks-live ag)
               script-check (get-in checked [:nodes [:pkg/script :setup] :check])
               brew-check (get-in checked [:nodes [:pkg/brew :neovim] :check])]
           (is (o/conflict? script-check))
@@ -125,7 +125,7 @@
                                       :dep/provides #{:pkg/brew}}}
                 :pkg/brew {:neovim {}}}
           ag (g/build-action-graph plan)]
-      (let [checked (chk/run-checks ag)
+      (let [checked (support/run-checks-live ag)
             assert-check (get-in checked [:nodes [:assert :check] :check])
             script-check (get-in checked [:nodes [:pkg/script :setup] :check])
             brew-check (get-in checked [:nodes [:pkg/brew :neovim] :check])]
@@ -140,7 +140,7 @@
                 :pkg/script {:setup {:src "echo ok"
                                       :dep/requires #{[:assert :check-ok]}}}}
           ag (g/build-action-graph plan)
-          checked (chk/run-checks ag)
+          checked (support/run-checks-live ag)
           assert-check (get-in checked [:nodes [:assert :check-ok] :check])
           script-check (get-in checked [:nodes [:pkg/script :setup] :check])]
       (is (o/satisfied? assert-check))

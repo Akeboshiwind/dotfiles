@@ -2,16 +2,12 @@
   (:require [clojure.string :as str]
             [actions :as a]
             [display :as d]
+            [facts :as f]
             [outcome :as o]
             [utils.defaults :as defaults]
             [utils.sh :as sh]))
 
 (defmethod a/requires :osx/defaults [_] nil)
-
-(def ^:dynamic *read-domain*
-  "How :osx/defaults check reads live values. A var rather than a cache: the
-   domain differs per item, so there is nothing process-wide to memoise."
-  defaults/read-domain)
 
 (defn- xml-escape [s]
   (-> (str s)
@@ -101,26 +97,42 @@
     (vector? value) (mapv (fn [e] (if (map? e) (normalize-plist e) (str e))) value)
     :else           value))
 
-(defmethod a/check :osx/defaults [_ key opts]
-  (let [domain      (:domain opts)
-        settings    (or (:settings opts)
-                        {(:key opts) (:value opts)})
-        live-domain (delay (*read-domain* domain))]
-    (reduce (fn [acc [k value]]
-              (if (or (map? value) (vector? value))
-                (if (= (normalize-written value) (get @live-domain (name k)))
-                  acc
-                  (reduced (o/drift :wrong)))
-                (let [{:keys [exit out]} (sh/query! "osx/defaults check" {:continue true}
-                                                   ["defaults" "read" domain (name k)])]
-                  (cond
-                    (not (zero? exit))                       (reduced (o/drift :wrong))
-                    (not (defaults-value-matches? value out)) (reduced (o/drift :wrong))
-                    :else                                    acc))))
-            o/satisfied
-            settings)))
+(defn- settings-of [opts]
+  (or (:settings opts) {(:key opts) (:value opts)}))
 
-(defmethod a/install! :osx/defaults [_ opts items]
+(defn- complex? [value]
+  (or (map? value) (vector? value)))
+
+(defmethod a/queries :osx/defaults [_ declared]
+  (into #{}
+        (mapcat (fn [[_ {:keys [domain] :as opts}]]
+                  (for [[k value] (settings-of opts)]
+                    (if (complex? value)
+                      [:osx :domain domain]
+                      [:osx :read domain (name k)]))))
+        declared))
+
+(defmethod a/run-query :osx [[_ what domain k]]
+  (case what
+    :domain (defaults/read-domain domain)
+    :read (sh/query! "osx/defaults check" {:continue true}
+                     ["defaults" "read" domain k])))
+
+(defmethod a/check :osx/defaults [_ _key {:keys [domain] :as opts} facts]
+  (reduce (fn [acc [k value]]
+            (if (complex? value)
+              (if (= (normalize-written value) (get (f/value facts [:osx :domain domain]) (name k)))
+                acc
+                (reduced (o/drift :wrong)))
+              (let [{:keys [exit out]} (f/value facts [:osx :read domain (name k)])]
+                (cond
+                  (not (zero? exit))                       (reduced (o/drift :wrong))
+                  (not (defaults-value-matches? value out)) (reduced (o/drift :wrong))
+                  :else                                    acc))))
+          o/satisfied
+          (settings-of opts)))
+
+(defmethod a/install! :osx/defaults [_ opts items _facts]
   (d/section "Setting OSX defaults"
              (for [[config-name cfg] items
                    :let [domain (:domain cfg)

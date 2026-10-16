@@ -4,13 +4,11 @@
             [babashka.process :as process]
             [clojure.string :as str]
             [actions :as a]
-            [actions.brew :as brew]
             [actions.claude :as claude]
-            [actions.mas :as mas]
-            [actions.mise :as mise]
             [cache :as c]
             [outcome :as o]
-            [registry]))
+            [registry]
+            [support]))
 
 ;; =============================================================================
 ;; Temp directory fixture
@@ -36,14 +34,14 @@
           target (str *tmp* "/link.txt")]
       (spit source "hello")
       (fs/create-sym-link target source)
-      (is (o/satisfied? (a/check :fs/symlink target source))))))
+      (is (o/satisfied? (support/check-live :fs/symlink target source))))))
 
 (deftest symlink-check-missing-test
   (testing "target doesn't exist → drift(:missing)"
     (let [source (str *tmp* "/source.txt")
           target (str *tmp* "/nolink.txt")]
       (spit source "hello")
-      (let [result (a/check :fs/symlink target source)]
+      (let [result (support/check-live :fs/symlink target source)]
         (is (o/drift? result))
         (is (= :missing (:kind result)))))))
 
@@ -55,7 +53,7 @@
       (spit source "hello")
       (spit other "world")
       (fs/create-sym-link target other)
-      (let [result (a/check :fs/symlink target source)]
+      (let [result (support/check-live :fs/symlink target source)]
         (is (o/drift? result))
         (is (= :wrong (:kind result)))))))
 
@@ -65,7 +63,7 @@
           target (str *tmp* "/file.txt")]
       (spit source "hello")
       (spit target "existing")
-      (is (o/conflict? (a/check :fs/symlink target source))))))
+      (is (o/conflict? (support/check-live :fs/symlink target source))))))
 
 ;; =============================================================================
 ;; :fs/unlink check
@@ -74,7 +72,7 @@
 (deftest unlink-check-gone-test
   (testing "target doesn't exist → satisfied"
     (let [target (str *tmp* "/gone.txt")]
-      (is (o/satisfied? (a/check :fs/unlink target "/some/source"))))))
+      (is (o/satisfied? (support/check-live :fs/unlink target "/some/source"))))))
 
 (deftest unlink-check-stale-symlink-test
   (testing "valid stale symlink → drift(:orphan)"
@@ -82,7 +80,7 @@
           target (str *tmp* "/stale.txt")]
       (spit source "hello")
       (fs/create-sym-link target source)
-      (let [result (a/check :fs/unlink target source)]
+      (let [result (support/check-live :fs/unlink target source)]
         (is (o/drift? result))
         (is (= :orphan (:kind result)))))))
 
@@ -90,7 +88,7 @@
   (testing "regular file at target → conflict"
     (let [target (str *tmp* "/file.txt")]
       (spit target "hello")
-      (is (o/conflict? (a/check :fs/unlink target "/some/source"))))))
+      (is (o/conflict? (support/check-live :fs/unlink target "/some/source"))))))
 
 (deftest unlink-check-wrong-target-test
   (testing "symlink points elsewhere → conflict"
@@ -98,7 +96,7 @@
           target (str *tmp* "/link.txt")]
       (spit other "hello")
       (fs/create-sym-link target other)
-      (is (o/conflict? (a/check :fs/unlink target "/expected/source"))))))
+      (is (o/conflict? (support/check-live :fs/unlink target "/expected/source"))))))
 
 ;; =============================================================================
 ;; :pkg/brew check
@@ -106,36 +104,28 @@
 
 (deftest brew-check-installed-test
   (testing "installed formula → satisfied"
-    (binding [brew/*formulae-cache* (delay #{"neovim"})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {})]
-      (is (o/satisfied? (a/check :pkg/brew :neovim {}))))))
+    (let [facts (support/facts-of {[:brew :formulae] #{"neovim"} [:brew :casks] #{} [:brew :outdated] {}})]
+      (is (o/satisfied? (a/check :pkg/brew :neovim {} facts))))))
 
 (deftest brew-check-missing-test
   (testing "missing formula → drift(:missing)"
-    (binding [brew/*formulae-cache* (delay #{})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {})]
-      (let [result (a/check :pkg/brew :neovim {})]
+    (let [facts (support/facts-of {[:brew :formulae] #{} [:brew :casks] #{} [:brew :outdated] {}})]
+      (let [result (a/check :pkg/brew :neovim {} facts)]
         (is (o/drift? result))
         (is (= :missing (:kind result)))))))
 
 (deftest brew-check-outdated-test
   (testing "outdated formula → drift(:outdated) with version message"
-    (binding [brew/*formulae-cache* (delay #{"neovim"})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {"neovim" {:installed "0.9" :current "0.10"}})]
-      (let [result (a/check :pkg/brew :neovim {})]
+    (let [facts (support/facts-of {[:brew :formulae] #{"neovim"} [:brew :casks] #{} [:brew :outdated] {"neovim" {:installed "0.9" :current "0.10"}}})]
+      (let [result (a/check :pkg/brew :neovim {} facts)]
         (is (o/drift? result))
         (is (= :outdated (:kind result)))
         (is (= "0.9 → 0.10" (:message result)))))))
 
 (deftest brew-check-tap-qualified-test
   (testing "tap-qualified package uses short name for lookup"
-    (binding [brew/*formulae-cache* (delay #{"bbin"})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {})]
-      (is (o/satisfied? (a/check :pkg/brew (keyword "babashka/brew/bbin") {}))))))
+    (let [facts (support/facts-of {[:brew :formulae] #{"bbin"} [:brew :casks] #{} [:brew :outdated] {}})]
+      (is (o/satisfied? (a/check :pkg/brew (keyword "babashka/brew/bbin") {} facts))))))
 
 ;; =============================================================================
 ;; :brew/service check
@@ -143,20 +133,20 @@
 
 (deftest service-check-running-test
   (testing "running service → satisfied"
-    (binding [brew/*services-cache* (delay {"dnsmasq" {:name "dnsmasq" :status "started"}})]
-      (is (o/satisfied? (a/check :brew/service :dnsmasq {}))))))
+    (let [facts (support/facts-of {[:brew :services] {"dnsmasq" {:name "dnsmasq" :status "started"}}})]
+      (is (o/satisfied? (a/check :brew/service :dnsmasq {} facts))))))
 
 (deftest service-check-stopped-test
   (testing "stopped service → drift(:missing)"
-    (binding [brew/*services-cache* (delay {"dnsmasq" {:name "dnsmasq" :status "stopped"}})]
-      (let [result (a/check :brew/service :dnsmasq {})]
+    (let [facts (support/facts-of {[:brew :services] {"dnsmasq" {:name "dnsmasq" :status "stopped"}}})]
+      (let [result (a/check :brew/service :dnsmasq {} facts)]
         (is (o/drift? result))
         (is (= :missing (:kind result)))))))
 
 (deftest service-check-missing-test
   (testing "unknown service → drift(:missing)"
-    (binding [brew/*services-cache* (delay {})]
-      (let [result (a/check :brew/service :dnsmasq {})]
+    (let [facts (support/facts-of {[:brew :services] {}})]
+      (let [result (a/check :brew/service :dnsmasq {} facts)]
         (is (o/drift? result))
         (is (= :missing (:kind result)))))))
 
@@ -166,7 +156,7 @@
 
 (deftest brew-uninstall-check-test
   (testing "orphan to uninstall → drift(:orphan)"
-    (let [result (a/check :pkg/brew-uninstall :wget {})]
+    (let [result (a/check :pkg/brew-uninstall :wget {} {})]
       (is (o/drift? result))
       (is (= :orphan (:kind result))))))
 
@@ -176,19 +166,19 @@
 
 (deftest assert-check-satisfied-test
   (testing "assertion passes → satisfied"
-    (is (o/satisfied? (a/check :assert :test-assert {:src "exit 0"})))))
+    (is (o/satisfied? (support/check-live :assert :test-assert {:src "exit 0"})))))
 
 (deftest assert-check-failed-test
   (testing "assertion fails → error"
-    (is (o/error? (a/check :assert :test-assert {:src "exit 1"})))))
+    (is (o/error? (support/check-live :assert :test-assert {:src "exit 1"})))))
 
 (deftest assert-check-no-script-test
   (testing "no :path or :src → error"
-    (is (o/error? (a/check :assert :test-assert {})))))
+    (is (o/error? (support/check-live :assert :test-assert {})))))
 
 (deftest assert-check-custom-message-test
   (testing "custom message in error"
-    (let [result (a/check :assert :test-assert {:src "exit 1" :message "Remote Login disabled"})]
+    (let [result (support/check-live :assert :test-assert {:src "exit 1" :message "Remote Login disabled"})]
       (is (o/error? result))
       (is (= "Remote Login disabled" (:message result))))))
 
@@ -198,17 +188,17 @@
 
 (deftest script-check-no-check-key-test
   (testing "script without :check key → unknown"
-    (is (o/unknown? (a/check :pkg/script :setup {:src "echo hello"})))))
+    (is (o/unknown? (support/check-live :pkg/script :setup {:src "echo hello"})))))
 
 (deftest script-check-with-check-passes-test
   (testing "script with :check that passes → satisfied"
-    (is (o/satisfied? (a/check :pkg/script :setup {:src "echo hello" :check {:src "exit 0"}})))))
+    (is (o/satisfied? (support/check-live :pkg/script :setup {:src "echo hello" :check {:src "exit 0"}})))))
 
 (deftest script-check-content-changed-test
   (testing "DOTFILES_CONTENT_CHANGED=true when no cached record"
     (reset! a/*cache* {})
     (is (o/satisfied?
-          (a/check :pkg/script :test-script
+          (support/check-live :pkg/script :test-script
                    {:src "echo ok"
                     :check {:src "test \"$DOTFILES_CONTENT_CHANGED\" = \"true\""}}))))
 
@@ -217,7 +207,7 @@
           record (c/script-record content)]
       (reset! a/*cache* {:scripts {"test-script" record}})
       (is (o/satisfied?
-            (a/check :pkg/script :test-script
+            (support/check-live :pkg/script :test-script
                      {:src content
                       :check {:src "test \"$DOTFILES_CONTENT_CHANGED\" = \"false\""}})))))
 
@@ -225,7 +215,7 @@
     (let [old-record (c/script-record "old content")]
       (reset! a/*cache* {:scripts {"test-script" old-record}})
       (is (o/satisfied?
-            (a/check :pkg/script :test-script
+            (support/check-live :pkg/script :test-script
                      {:src "new content"
                       :check {:src "test \"$DOTFILES_CONTENT_CHANGED\" = \"true\""}})))
       ;; Clean up
@@ -233,13 +223,13 @@
 
 (deftest script-check-with-check-fails-test
   (testing "script with :check that fails → drift(:missing)"
-    (let [result (a/check :pkg/script :setup {:src "echo hello" :check {:src "exit 1"}})]
+    (let [result (support/check-live :pkg/script :setup {:src "echo hello" :check {:src "exit 1"}})]
       (is (o/drift? result))
       (is (= :missing (:kind result))))))
 
 (deftest script-check-no-script-test
   (testing "no :path or :src → error"
-    (is (o/error? (a/check :pkg/script :setup {})))))
+    (is (o/error? (support/check-live :pkg/script :setup {})))))
 
 ;; =============================================================================
 ;; :pkg/mise check
@@ -247,42 +237,56 @@
 
 (deftest mise-check-outdated-test
   (testing "outdated tool → drift(:outdated) with version message"
-    (binding [mise/*installed-cache* (delay {"node" #{"18.0.0" "20.0.0"}})]
-      (let [result (a/check :pkg/mise :node {:version "22.0.0"})]
+    (let [facts (support/facts-of {[:mise :installed] {"node" #{"18.0.0" "20.0.0"}}})]
+      (let [result (a/check :pkg/mise :node {:version "22.0.0"} facts)]
         (is (o/drift? result))
         (is (= :outdated (:kind result)))
         (is (= "20.0.0 → 22.0.0" (:message result)))))))
 
 (deftest mise-check-version-required-test
   (testing "mise tool declared without version → error"
-    (is (o/error? (a/check :pkg/mise :node {})))))
+    (is (o/error? (a/check :pkg/mise :node {} {})))))
 
 (deftest mise-check-pinned-satisfied-test
   (testing "pinned version installed → satisfied"
-    (binding [mise/*installed-cache* (delay {"node" #{"20.0.0"}})]
-      (is (o/satisfied? (a/check :pkg/mise :node {:version "20.0.0"}))))))
+    (let [facts (support/facts-of {[:mise :installed] {"node" #{"20.0.0"}}})]
+      (is (o/satisfied? (a/check :pkg/mise :node {:version "20.0.0"} facts))))))
 
 (deftest mise-check-missing-test
   (testing "tool not installed → drift(:missing)"
-    (binding [mise/*installed-cache* (delay {})]
-      (let [result (a/check :pkg/mise :node {:version "20.0.0"})]
+    (let [facts (support/facts-of {[:mise :installed] {}})]
+      (let [result (a/check :pkg/mise :node {:version "20.0.0"} facts)]
         (is (o/drift? result))
         (is (= :missing (:kind result)))))))
 
 (deftest mise-check-latest-current-test
   (testing "latest requested, no upgrade available → satisfied"
-    (binding [mise/*installed-cache* (delay {"node" #{"20.0.0"}})
-              mise/*outdated-cache* (delay {})]
-      (is (o/satisfied? (a/check :pkg/mise :node {:version "latest"}))))))
+    (let [facts (support/facts-of {[:mise :installed] {"node" #{"20.0.0"}} [:mise :outdated] {}})]
+      (is (o/satisfied? (a/check :pkg/mise :node {:version "latest"} facts))))))
 
 (deftest mise-check-latest-outdated-test
   (testing "latest requested, upgrade available → drift(:outdated) with version message"
-    (binding [mise/*installed-cache* (delay {"node" #{"20.0.0"}})
-              mise/*outdated-cache* (delay {"node" {:current "20.0.0" :latest "22.0.0"}})]
-      (let [result (a/check :pkg/mise :node {:version "latest"})]
+    (let [facts (support/facts-of {[:mise :installed] {"node" #{"20.0.0"}} [:mise :outdated] {"node" {:current "20.0.0" :latest "22.0.0"}}})]
+      (let [result (a/check :pkg/mise :node {:version "latest"} facts)]
         (is (o/drift? result))
         (is (= :outdated (:kind result)))
         (is (= "20.0.0 → 22.0.0" (:message result)))))))
+
+;; =============================================================================
+;; :pkg/npm check
+;; =============================================================================
+
+(deftest npm-check-test
+  (let [facts (support/facts-of {[:npm :installed] #{"happy-coder" "prettier"}
+                                 [:npm :outdated] {"prettier" {:current "3.0.0" :latest "3.1.0"}}})]
+    (testing "installed → satisfied"
+      (is (o/satisfied? (a/check :pkg/npm :happy-coder {} facts))))
+    (testing "a tarball URL is checked by the package name in its filename"
+      (is (o/satisfied? (a/check :pkg/npm "https://example.com/happy-coder-0.13.0.tgz" {} facts))))
+    (testing "outdated → drift(:outdated) with version message"
+      (is (= "3.0.0 → 3.1.0" (:message (a/check :pkg/npm :prettier {} facts)))))
+    (testing "absent → drift(:missing)"
+      (is (= :missing (:kind (a/check :pkg/npm :typescript {} facts)))))))
 
 ;; =============================================================================
 ;; :pkg/mas check
@@ -290,14 +294,14 @@
 
 (deftest mas-check-installed-test
   (testing "installed app → satisfied, for both id and {:id ...} declaration forms"
-    (binding [mas/*installed-cache* (delay {1295203466 "Windows App"})]
-      (is (o/satisfied? (a/check :pkg/mas "Windows App" 1295203466)))
-      (is (o/satisfied? (a/check :pkg/mas "Windows App" {:id 1295203466}))))))
+    (let [facts (support/facts-of {[:mas :installed] {1295203466 "Windows App"}})]
+      (is (o/satisfied? (a/check :pkg/mas "Windows App" 1295203466 facts)))
+      (is (o/satisfied? (a/check :pkg/mas "Windows App" {:id 1295203466} facts))))))
 
 (deftest mas-check-missing-test
   (testing "app not installed → drift(:missing)"
-    (binding [mas/*installed-cache* (delay {})]
-      (let [result (a/check :pkg/mas "Windows App" 1295203466)]
+    (let [facts (support/facts-of {[:mas :installed] {}})]
+      (let [result (a/check :pkg/mas "Windows App" 1295203466 facts)]
         (is (o/drift? result))
         (is (= :missing (:kind result)))))))
 
@@ -318,7 +322,7 @@
 
 (deftest git-clone-check-missing-test
   (testing "no directory at target → drift(:missing)"
-    (let [result (a/check :git/clone (str *tmp* "/norepo") {:url "https://example.com/r.git"})]
+    (let [result (support/check-live :git/clone (str *tmp* "/norepo") {:url "https://example.com/r.git"})]
       (is (o/drift? result))
       (is (= :missing (:kind result))))))
 
@@ -326,13 +330,13 @@
   (testing "repo at the declared ref → satisfied"
     (let [dir (str *tmp* "/repo")
           sha (init-repo! dir)]
-      (is (o/satisfied? (a/check :git/clone dir {:url "ignored" :ref sha}))))))
+      (is (o/satisfied? (support/check-live :git/clone dir {:url "ignored" :ref sha}))))))
 
 (deftest git-clone-check-ref-mismatch-test
   (testing "repo at a different ref → drift(:outdated)"
     (let [dir (str *tmp* "/repo2")]
       (init-repo! dir)
-      (let [result (a/check :git/clone dir {:url "ignored" :ref "0000000000"})]
+      (let [result (support/check-live :git/clone dir {:url "ignored" :ref "0000000000"})]
         (is (o/drift? result))
         (is (= :outdated (:kind result)))))))
 
@@ -340,7 +344,7 @@
   (testing "existing directory with no declared ref → satisfied"
     (let [dir (str *tmp* "/repo3")]
       (fs/create-dirs dir)
-      (is (o/satisfied? (a/check :git/clone dir {:url "ignored"}))))))
+      (is (o/satisfied? (support/check-live :git/clone dir {:url "ignored"}))))))
 
 ;; =============================================================================
 ;; :claude/marketplace and :claude/plugin checks
@@ -348,63 +352,68 @@
 
 (deftest claude-marketplace-check-test
   (testing "registered marketplace → satisfied; unregistered → drift"
-    (with-bindings {#'claude/*marketplace-cache* (delay {:jx {:source {:repo "juxt/plugins"}}})}
-      (is (o/satisfied? (a/check :claude/marketplace :plugins {:source "juxt/plugins"})))
-      (is (o/drift? (a/check :claude/marketplace :other {:source "acme/other"}))))))
+    (let [facts (support/facts-of {[:claude :marketplaces] {:jx {:source {:repo "juxt/plugins"}}}})]
+      (is (o/satisfied? (a/check :claude/marketplace :plugins {:source "juxt/plugins"} facts)))
+      (is (o/drift? (a/check :claude/marketplace :other {:source "acme/other"} facts))))))
 
 (deftest claude-plugin-check-test
   (testing "installed and current plugin → satisfied; missing → drift"
-    (with-bindings {#'claude/*plugin-cache* (delay {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]})
-                    #'claude/*marketplace-refresh* (delay nil)}
-      (with-redefs [claude/catalogue-version (fn [_mp _n] "0.11.2")]
-        (is (o/satisfied? (a/check :claude/plugin :chalk {})))
-        (is (o/drift? (a/check :claude/plugin :missing-plugin {})))))))
+    (let [facts (support/facts-of {[:claude :plugins] {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]}
+                                   [:claude :catalogue "chalk"] "0.11.2"})]
+      (is (o/satisfied? (a/check :claude/plugin :chalk {} facts)))
+      (is (o/drift? (a/check :claude/plugin :missing-plugin {} facts))))))
 
 (deftest claude-plugin-outdated-test
   (testing "installed plugin behind the refreshed marketplace catalogue → drift(:outdated)"
-    (with-bindings {#'claude/*plugin-cache* (delay {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]})
-                    #'claude/*marketplace-refresh* (delay nil)}
-      (with-redefs [claude/catalogue-version (fn [mp n]
-                                               (when (and (= mp "juxt-plugins") (= n "chalk"))
-                                                 "0.12.0"))]
-        (let [result (a/check :claude/plugin :chalk {})]
-          (is (o/drift? result))
-          (is (= :outdated (:kind result)))
-          (is (= "0.11.2 → 0.12.0" (:message result))))))))
+    (let [facts (support/facts-of {[:claude :plugins] {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]}
+                                   [:claude :catalogue "chalk"] "0.12.0"})
+          result (a/check :claude/plugin :chalk {} facts)]
+      (is (o/drift? result))
+      (is (= :outdated (:kind result)))
+      (is (= "0.11.2 → 0.12.0" (:message result))))))
+
+(deftest claude-plugin-catalogue-query-test
+  (testing "the catalogue is refreshed, then read, only for an installed plugin"
+    (let [refreshed (atom 0)]
+      (with-bindings {#'claude/*marketplace-refresh* (delay (swap! refreshed inc))}
+        (with-redefs [claude/installed-plugins (fn [] {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]})
+                      claude/catalogue-version (fn [mp n] (when (= [mp n] ["juxt-plugins" "chalk"]) "0.12.0"))]
+          (is (nil? (a/run-query [:claude :catalogue "missing-plugin"])))
+          (is (zero? @refreshed) "no installed plugin, no network refresh")
+          (is (= "0.12.0" (a/run-query [:claude :catalogue "chalk"])))
+          (is (= 1 @refreshed)))))))
 
 (deftest claude-mcp-check-test
   (testing "user-scope server present → satisfied; absent → drift(:missing)"
-    (with-bindings {#'claude/*mcp-cache* (delay {:my-server {:command "x"}})}
-      (is (o/satisfied? (a/check :claude/mcp :my-server {:command "x"})))
-      (let [result (a/check :claude/mcp :other {:command "x"})]
+    (let [facts (support/facts-of {[:claude :mcp] {:my-server {:command "x"}}})]
+      (is (o/satisfied? (a/check :claude/mcp :my-server {:command "x"} facts)))
+      (let [result (a/check :claude/mcp :other {:command "x"} facts)]
         (is (o/drift? result))
         (is (= :missing (:kind result))))))
 
   (testing "non-user scope → error (syn manages machine-global state only)"
-    (is (o/error? (a/check :claude/mcp :proj {:command "x" :scope "project"})))
-    (is (o/error? (a/check :claude/mcp :loc {:command "x" :scope "local"})))))
+    (is (o/error? (a/check :claude/mcp :proj {:command "x" :scope "project"} {})))
+    (is (o/error? (a/check :claude/mcp :loc {:command "x" :scope "local"} {})))))
 
 (deftest claude-plugin-update-command-test
   (testing "outdated plugin updates via its marketplace-qualified id (bare name → 'not found')"
-    (with-bindings {#'claude/*plugin-cache* (delay {(keyword "allium@juxt-plugins") [{:version "3.6.0"}]})}
-      (let [calls (atom [])]
-        (with-redefs [a/exec! (fn [_ args] (swap! calls conj args) {:exit 0 :err nil})]
-          (a/install! :claude/plugin {} {:allium {}}))
-        (is (some #(= ["claude" "plugin" "update" "allium@juxt-plugins"] %) @calls)))))
+    (let [calls (atom [])]
+      (with-redefs [a/exec! (fn [_ args] (swap! calls conj args) {:exit 0 :err nil})]
+        (a/install! :claude/plugin {} {:allium {}}
+                    (support/facts-of {[:claude :plugins] {(keyword "allium@juxt-plugins") [{:version "3.6.0"}]}})))
+      (is (some #(= ["claude" "plugin" "update" "allium@juxt-plugins"] %) @calls))))
 
   (testing "missing plugin installs by bare name"
-    (with-bindings {#'claude/*plugin-cache* (delay {})}
-      (let [calls (atom [])]
-        (with-redefs [a/exec! (fn [_ args] (swap! calls conj args) {:exit 0 :err nil})]
-          (a/install! :claude/plugin {} {:allium {}}))
-        (is (some #(= ["claude" "plugin" "install" "allium"] %) @calls))))))
+    (let [calls (atom [])]
+      (with-redefs [a/exec! (fn [_ args] (swap! calls conj args) {:exit 0 :err nil})]
+        (a/install! :claude/plugin {} {:allium {}} (support/facts-of {[:claude :plugins] {}})))
+      (is (some #(= ["claude" "plugin" "install" "allium"] %) @calls)))))
 
 (deftest claude-plugin-unknown-catalogue-version-test
   (testing "installed plugin with no catalogue version → satisfied (cannot determine drift)"
-    (with-bindings {#'claude/*plugin-cache* (delay {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]})
-                    #'claude/*marketplace-refresh* (delay nil)}
-      (with-redefs [claude/catalogue-version (fn [_mp _n] nil)]
-        (is (o/satisfied? (a/check :claude/plugin :chalk {})))))))
+    (is (o/satisfied? (a/check :claude/plugin :chalk {}
+                               (support/facts-of {[:claude :plugins] {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]}
+                                                  [:claude :catalogue "chalk"] nil}))))))
 
 ;; =============================================================================
 ;; Default check (unknown for unimplemented types)
@@ -412,4 +421,4 @@
 
 (deftest default-check-unknown-test
   (testing "unimplemented action type → unknown"
-    (is (o/unknown? (a/check :some/unimplemented :foo {})))))
+    (is (o/unknown? (a/check :some/unimplemented :foo {} {})))))

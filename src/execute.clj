@@ -2,6 +2,7 @@
   (:require [actions :as a]
             [graph :as g]
             [display :as d]
+            [facts :as f]
             [outcome :as o]
             [registry]))
 
@@ -21,7 +22,7 @@
   [ag cancelled type items]
   (if (empty? items)
     ag
-    (let [results (a/do-install! type {} items)
+    (let [results (a/do-install! type {} items (f/gather {} (a/install-queries type items)))
           result-by-action (into {} (map (fn [r] [(:action r) r])) results)]
       (reduce (fn [g [key _]]
                 (let [ref [type key]

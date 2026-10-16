@@ -8,12 +8,11 @@
             [clojure.string :as str]
             [babashka.fs :as fs]
             [actions :as a]
-            [actions.osx :as osx]
-            [check :as chk]
             [execute :as e]
             [graph :as g]
             [outcome :as o]
-            [registry]))
+            [registry]
+            [support]))
 
 (def ^:dynamic *tmp* nil)
 
@@ -47,7 +46,7 @@
                         bad-target bad-src}
               ag (-> {:fs/symlink symlinks}
                      g/build-action-graph
-                     chk/run-checks
+                     support/run-checks-live
                      e/execute-plan)]
           (is (= {good-target good-src} (recordable ag symlinks))
               "the conflicted symlink must not be recorded as owned")))
@@ -85,7 +84,7 @@
 
 (deftest claude-mcp-check-implemented-test
   (testing "MCP servers are checked for presence, not blindly re-registered"
-    (is (not (o/unknown? (a/check :claude/mcp :spec-gap-server {:command "echo"})))
+    (is (not (o/unknown? (support/check-live :claude/mcp :spec-gap-server {:command "echo"})))
         "check :claude/mcp falls through to the default unknown outcome")))
 
 ;; =============================================================================
@@ -98,11 +97,11 @@
 
 (deftest defaults-complex-values-compared-test
   (testing "array and dict values participate in drift detection"
-    (let [result (binding [osx/*read-domain* (constantly nil)]
-                   (a/check :osx/defaults :spec-gap
-                            {:domain "com.syn.spec-gap.nonexistent"
-                             :settings {:complex-array [1 2 3]
-                                        :complex-dict {:a 1}}}))]
+    (let [result (a/check :osx/defaults :spec-gap
+                          {:domain "com.syn.spec-gap.nonexistent"
+                           :settings {:complex-array [1 2 3]
+                                      :complex-dict {:a 1}}}
+                          (support/facts-of {[:osx :domain "com.syn.spec-gap.nonexistent"] nil}))]
       (is (o/drift? result)
           "complex values are skipped by the comparison, so a nonexistent domain checks as satisfied"))))
 
@@ -119,7 +118,7 @@
   (testing "a ref-less existing repo is satisfied but carries a warning message"
     (let [dir (str *tmp* "/refless-repo")]
       (fs/create-dirs dir)
-      (let [result (a/check :git/clone dir {:url "https://example.com/r.git"})]
+      (let [result (support/check-live :git/clone dir {:url "https://example.com/r.git"})]
         (is (o/satisfied? result))
         (is (some? (:message result))
             "no warning message on a satisfied ref-less clone — the plan report cannot surface it")))))

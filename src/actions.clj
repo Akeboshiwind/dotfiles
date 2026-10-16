@@ -82,33 +82,62 @@
 
 (defmethod requires :default [type] type)
 
+(defmulti queries
+  "The set of query keys `check` reads for these declared items of a type.
+   `declared` is {key opts}. A query key is a vector whose first element picks
+   the `run-query` method, e.g. [:fs :link \"~/.gitconfig\"]. Pure."
+  (fn [type _declared] type))
+
+(defmethod queries :default [_ _] #{})
+
+(defmulti orphan-queries
+  "The set of query keys `orphans` reads for this type's declared items. Pure."
+  (fn [type _declared] type))
+
+(defmethod orphan-queries :default [_ _] #{})
+
+(defmulti run-query
+  "Ask the machine the question a query key names, and return the answer.
+   Called only by the shell (facts/gather)."
+  first)
+
 (defmulti check
   "Check whether an action is satisfied. No side effects.
    Returns a CheckOutcome (see outcome.clj).
-   Each module manages its own caching internally."
-  (fn [type _key _opts] type))
+   `facts` holds the answers to the queries `queries` declared for this type
+   (see facts.clj)."
+  (fn [type _key _opts _facts] type))
 
-(defmethod check :default [_ _ _]
+(defmethod check :default [_ _ _ _]
   o/unknown)
 
 (defmulti orphans
-  "Query live system and compare against declared items to find orphans.
+  "Compare declared items against facts to find orphans. `facts` holds the
+   answers to the queries `orphan-queries` declared for this type.
    Returns a plan fragment to merge (e.g. {:pkg/brew-uninstall {:wget {} ...}}), or nil.
    Default returns nil (no orphan detection for this action type)."
-  (fn [type _declared] type))
+  (fn [type _declared _facts] type))
 
-(defmethod orphans :default [_ _] nil)
+(defmethod orphans :default [_ _ _] nil)
+
+(defmulti install-queries
+  "The set of query keys `install!` reads for these items of a type, gathered
+   right before the batch runs. Pure."
+  (fn [type _items] type))
+
+(defmethod install-queries :default [_ _] #{})
 
 (defmulti install!
   "Install items of a given action type.
    Dispatches on action type keyword (e.g. :pkg/brew).
-   Receives [type opts items] where:
+   Receives [type opts items facts] where:
    - type: action keyword
    - opts: execution options
-   - items: map of {name item-opts}"
-  (fn [type _opts _items] type))
+   - items: map of {name item-opts}
+   - facts: a facts snapshot (see facts.clj)"
+  (fn [type _opts _items _facts] type))
 
-(defmethod install! :default [type _opts _items]
+(defmethod install! :default [type _opts _items _facts]
   (println "Warning: no install! implementation for" type))
 
 ;; =============================================================================
@@ -157,7 +186,7 @@
 
 (defn do-install!
   "Call install! and validate each result. Single call site for executing actions."
-  [action-type opts items]
-  (let [results (install! action-type opts items)]
+  [action-type opts items facts]
+  (let [results (install! action-type opts items facts)]
     (run! #(validate-result! action-type %) results)
     results))

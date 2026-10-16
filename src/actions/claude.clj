@@ -5,6 +5,7 @@
             [babashka.fs :as fs]
             [cheshire.core :as json]
             [display :as d]
+            [facts :as f]
             [outcome :as o]
             [utils.sh :as sh]))
 
@@ -12,40 +13,31 @@
 (defmethod a/requires :claude/plugin [_] :claude/plugin)
 (defmethod a/requires :claude/mcp [_] :claude/mcp)
 
-(def ^:private ^:dynamic *marketplace-cache*
-  (delay
-    (let [f (io/file (str (System/getProperty "user.home") "/.claude/plugins/known_marketplaces.json"))]
-      (if (fs/exists? f)
-        (json/parse-string (slurp f) true)
-        {}))))
+(defn- read-json [path]
+  (let [f (io/file (str (System/getProperty "user.home") path))]
+    (when (fs/exists? f)
+      (json/parse-string (slurp f) true))))
 
-(def ^:private ^:dynamic *plugin-cache*
-  (delay
-    (let [f (io/file (str (System/getProperty "user.home") "/.claude/plugins/installed_plugins.json"))]
-      (if (fs/exists? f)
-        (:plugins (json/parse-string (slurp f) true))
-        {}))))
+(defn- installed-plugins []
+  (or (:plugins (read-json "/.claude/plugins/installed_plugins.json")) {}))
 
-(def ^:private ^:dynamic *mcp-cache*
-  (delay
-    (let [f (io/file (str (System/getProperty "user.home") "/.claude.json"))]
-      (if (fs/exists? f)
-        (:mcpServers (json/parse-string (slurp f) true))
-        {}))))
+(defmethod a/queries :claude/mcp [_ _] #{[:claude :mcp]})
 
-(defmethod a/check :claude/mcp [_ key {:keys [scope] :or {scope "user"}}]
+(defmethod a/check :claude/mcp [_ key {:keys [scope] :or {scope "user"}} facts]
   ;; syn manages machine-global state, so only user-scope servers (recorded
   ;; in ~/.claude.json) can be declared; project/local registrations belong
   ;; to the projects they serve.
   (if (not= scope "user")
     (o/error "only user-scope MCP servers can be managed from dotfiles")
-    (if (contains? @*mcp-cache* (keyword (name key)))
+    (if (contains? (f/value facts [:claude :mcp]) (keyword (name key)))
       o/satisfied
       (o/drift :missing))))
 
-(defmethod a/check :claude/marketplace [_ key opts]
+(defmethod a/queries :claude/marketplace [_ _] #{[:claude :marketplaces]})
+
+(defmethod a/check :claude/marketplace [_ key opts facts]
   (let [source (or (:source opts) (name key))]
-    (if (some (fn [[_k v]] (= source (get-in v [:source :repo]))) @*marketplace-cache*)
+    (if (some (fn [[_k v]] (= source (get-in v [:source :repo]))) (f/value facts [:claude :marketplaces]))
       o/satisfied
       (o/drift :missing))))
 
@@ -81,31 +73,50 @@
   (some (fn [[k v]] (when (str/starts-with? (name k) (str n "@")) [(name k) v]))
         plugin-cache))
 
-(defmethod a/check :claude/plugin [_ key _opts]
+(defn- refreshed-catalogue-version
+  "catalogue-version against a catalogue refreshed from its source this run."
+  [marketplace plugin-name]
+  @*marketplace-refresh*
+  (catalogue-version marketplace plugin-name))
+
+(defmethod a/run-query :claude [[_ what n]]
+  (case what
+    :mcp (or (:mcpServers (read-json "/.claude.json")) {})
+    :marketplaces (or (read-json "/.claude/plugins/known_marketplaces.json") {})
+    :plugins (installed-plugins)
+    :catalogue (when-let [[plugin-id _] (installed-plugin-entry (installed-plugins) n)]
+                 (refreshed-catalogue-version (second (str/split plugin-id #"@" 2)) n))))
+
+(defmethod a/queries :claude/plugin [_ declared]
+  (into #{[:claude :plugins]}
+        (map (fn [[k _]] [:claude :catalogue (name k)]))
+        declared))
+
+(defmethod a/check :claude/plugin [_ key _opts facts]
   (let [n (name key)]
-    (if-let [[plugin-id records] (installed-plugin-entry @*plugin-cache* n)]
-      (do @*marketplace-refresh*
-          (let [marketplace (second (str/split plugin-id #"@" 2))
-                installed-version (:version (first records))
-                latest (catalogue-version marketplace n)]
-            (if (and installed-version latest (not= installed-version latest))
-              (o/version-drift installed-version latest)
-              o/satisfied)))
+    (if-let [[_ records] (installed-plugin-entry (f/value facts [:claude :plugins]) n)]
+      (let [installed-version (:version (first records))
+            latest (f/value facts [:claude :catalogue n])]
+        (if (and installed-version latest (not= installed-version latest))
+          (o/version-drift installed-version latest)
+          o/satisfied))
       (o/drift :missing))))
 
-(defmethod a/install! :claude/marketplace [type opts items]
+(defmethod a/install! :claude/marketplace [type opts items _facts]
   (a/simple-install type opts "Adding Claude marketplaces"
     (fn [marketplace-name {:keys [source]}]
       ["claude" "plugin" "marketplace" "add" (or source (name marketplace-name))])
     items))
 
-(defmethod a/install! :claude/plugin [type opts items]
+(defmethod a/install-queries :claude/plugin [_ _] #{[:claude :plugins]})
+
+(defmethod a/install! :claude/plugin [type opts items facts]
   (a/simple-install type opts "Installing Claude plugins"
     (fn [plugin _item-opts]
       (let [n (name plugin)]
         ;; Outdated plugins are already installed — update instead of install.
         ;; update requires the marketplace-qualified id; the bare name is "not found".
-        (if-let [[plugin-id _] (installed-plugin-entry @*plugin-cache* n)]
+        (if-let [[plugin-id _] (installed-plugin-entry (f/value facts [:claude :plugins]) n)]
           ["claude" "plugin" "update" plugin-id]
           ["claude" "plugin" "install" n])))
     items))
@@ -136,6 +147,6 @@
            :status (if (zero? exit) :ok :error)
            :message err})))))
 
-(defmethod a/install! :claude/mcp [_ opts items]
+(defmethod a/install! :claude/mcp [_ opts items _facts]
   (d/section "Adding Claude MCP servers"
              (map (fn [[server-name item-opts]] (add-mcp opts server-name item-opts)) items)))

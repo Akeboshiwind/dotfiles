@@ -3,8 +3,8 @@
             [babashka.fs :as fs]
             [clojure.edn :as edn]
             [display :as d]
+            [facts :as f]
             [outcome :as o]
-            [utils :as u]
             [utils.sh :as sh]))
 
 (defmethod a/requires :pkg/bbin [_] :pkg/bbin)
@@ -29,21 +29,28 @@
          (map (fn [n] [(keyword n) {}]))
          (into {}))))
 
-(defmethod a/orphans :pkg/bbin [_ declared]
-  (when (u/command-exists? "bbin")
-    (let [result (orphans (installed-set) declared)]
+(defmethod a/run-query :bbin [[_ what]]
+  (case what
+    :installed (installed-set)))
+
+(defmethod a/orphan-queries :pkg/bbin [_ _]
+  #{[:command "bbin"] [:bbin :installed]})
+
+(defmethod a/orphans :pkg/bbin [_ declared facts]
+  (when (f/value facts [:command "bbin"])
+    (let [result (orphans (f/value facts [:bbin :installed]) declared)]
       (when (seq result)
         {:pkg/bbin-uninstall result}))))
 
-(def ^:dynamic *installed-cache* (delay (installed-set)))
+(defmethod a/queries :pkg/bbin [_ _] #{[:bbin :installed]})
 
-(defmethod a/check :pkg/bbin [_ key opts]
-  (let [installed @*installed-cache*]
+(defmethod a/check :pkg/bbin [_ key _opts facts]
+  (let [installed (f/value facts [:bbin :installed])]
     (if (contains? installed (name key))
       o/satisfied
       (o/drift :missing))))
 
-(defmethod a/check :pkg/bbin-uninstall [_ key opts]
+(defmethod a/check :pkg/bbin-uninstall [_ key opts _facts]
   (o/drift :orphan))
 
 (defn- build-cmd [pkg opts]
@@ -67,14 +74,14 @@
                      (:tool opts)        (conj "--tool"))]
     (into base-cmd opts-flags)))
 
-(defmethod a/install! :pkg/bbin [type opts items]
+(defmethod a/install! :pkg/bbin [type opts items _facts]
   (a/simple-install type opts "Installing bbin packages" build-cmd items))
 
 ;; -- Uninstall orphans
 
 (defmethod a/requires :pkg/bbin-uninstall [_] [:complete :pkg/bbin])
 
-(defmethod a/install! :pkg/bbin-uninstall [type opts items]
+(defmethod a/install! :pkg/bbin-uninstall [type opts items _facts]
   (a/simple-install type opts "Uninstalling bbin orphans"
     (fn [pkg _] ["bbin" "uninstall" (name pkg)])
     items))

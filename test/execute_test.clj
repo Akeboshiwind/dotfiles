@@ -12,9 +12,8 @@
   "install! reads the installed set to choose between installing and
    skipping. Nothing is installed, so every declared package is work."
   [f]
-  (binding [brew/*formulae-cache* (delay #{})
-            brew/*casks-cache*    (delay #{})
-            brew/*trusted-cache*  (delay {:formulae #{} :casks #{} :taps #{}})]
+  (with-redefs [brew/installed-set (constantly #{})
+                brew/trusted-map (constantly {:formulae #{} :casks #{} :taps #{}})]
     (f)))
 
 (use-fixtures :each empty-brew)
@@ -35,8 +34,8 @@
    focus purely on execution logic, not check behavior."
   [plan]
   (let [ag (g/build-action-graph plan)]
-    (with-redefs [a/check (fn [_ _ _] o/unknown)]
-      (chk/run-checks ag))))
+    (with-redefs [a/check (fn [_ _ _ _] o/unknown)]
+      (chk/run-checks ag {}))))
 
 ;; =============================================================================
 ;; Failure propagation tests
@@ -171,7 +170,7 @@
                 :pkg/brew {:neovim {} :ripgrep {} :wget {}}}
           ag (build-and-check plan)]
       (with-redefs [a/exec! (mock-exec! (atom []) (constantly false))
-                    a/do-install! (fn [type opts items]
+                    a/do-install! (fn [type opts items _facts]
                                     (swap! install-calls conj {:type type :items items})
                                     (mapv (fn [[k _]]
                                             {:action [type k]
@@ -200,7 +199,7 @@
                            :d {:dep/requires #{:test/mid}}}}
           ag (build-and-check plan)]
       (with-redefs [a/exec! (mock-exec! (atom []) (constantly false))
-                    a/do-install! (fn [type opts items]
+                    a/do-install! (fn [type opts items _facts]
                                     (swap! install-calls conj {:type type :items items})
                                     (mapv (fn [[k _]]
                                             {:action [type k]
