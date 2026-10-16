@@ -12,9 +12,8 @@
   "install! reads the installed set to choose between installing and
    skipping. Nothing is installed, so every declared package is work."
   [f]
-  (binding [brew/*formulae-cache* (delay #{})
-            brew/*casks-cache*    (delay #{})
-            brew/*trusted-cache*  (delay {:formulae #{} :casks #{} :taps #{}})]
+  (with-redefs [brew/installed-set (constantly #{})
+                brew/trusted-map (constantly {:formulae #{} :casks #{} :taps #{}})]
     (f)))
 
 (use-fixtures :each empty-brew)

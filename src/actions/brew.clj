@@ -58,11 +58,6 @@
      :casks (set (:casks raw))
      :taps (set (:taps raw))}))
 
-;; Module-level caching for install! — each delay runs at most once per process.
-(def ^:dynamic *formulae-cache* (delay (installed-set :formula)))
-(def ^:dynamic *casks-cache* (delay (installed-set :cask)))
-(def ^:dynamic *trusted-cache* (delay (trusted-map)))
-
 (defn- short-name
   "Extract short name from tap-qualified brew name.
    e.g. 'babashka/brew/bbin' -> 'bbin', 'neovim' -> 'neovim'"
@@ -76,6 +71,10 @@
   (let [parts (str/split full-name #"/")]
     (when (= 3 (count parts))
       (str/join "/" (take 2 parts)))))
+
+(defn- trust-queries [items]
+  (when (some (fn [[k _]] (tap-of (name k))) items)
+    #{[:brew :trusted]}))
 
 (defn- trusted?
   "Is this tap-qualified name covered by a trust grant in trust (a trusted-map
@@ -105,8 +104,7 @@
         (o/conflict "untrusted tap — declare :trust to allow install")))))
 
 (defmethod a/queries :pkg/brew [_ declared]
-  (cond-> #{[:brew :formulae] [:brew :casks] [:brew :outdated]}
-    (some (fn [[k _]] (tap-of (name k))) declared) (conj [:brew :trusted])))
+  (into #{[:brew :formulae] [:brew :casks] [:brew :outdated]} (trust-queries declared)))
 
 (defmethod a/check :pkg/brew [_ key opts facts]
   (let [pkg-name (name key)
@@ -274,17 +272,20 @@
       (merge (when (seq pkgs) {:pkg/brew-uninstall pkgs})
              (when (seq taps) {:brew/untap taps})))))
 
+(defmethod a/install-queries :pkg/brew [_ items]
+  (into #{[:brew :formulae] [:brew :casks]} (trust-queries items)))
+
 (defn- install-commands
   "The command sequence that makes one declared package true: converge the
    trust grant on the :trust declaration (per item, never the whole tap),
    then install if the package itself is absent or being upgraded."
-  [pkg-name {:keys [head cask trust]}]
+  [facts pkg-name {:keys [head cask trust]}]
   (let [tap (tap-of pkg-name)
-        granted? (and tap (trusted? @*trusted-cache* pkg-name))
+        granted? (and tap (trusted? (f/value facts [:brew :trusted]) pkg-name))
         grant? (and tap trust (not granted?))
         revoke? (and granted? (not trust))
-        installed? (or (contains? @*formulae-cache* (short-name pkg-name))
-                       (contains? @*casks-cache* (short-name pkg-name)))
+        installed? (or (contains? (f/value facts [:brew :formulae]) (short-name pkg-name))
+                       (contains? (f/value facts [:brew :casks]) (short-name pkg-name)))
         flag (if cask "--cask" "--formula")]
     (cond-> []
       grant? (conj ["brew" "trust" flag pkg-name])
@@ -305,10 +306,10 @@
           {:exit 0 :err nil}
           cmds))
 
-(defmethod a/install! :pkg/brew [type opts items _facts]
+(defmethod a/install! :pkg/brew [type opts items facts]
   (d/section "Installing brew packages"
     (map (fn [[pkg item-opts]]
-           (let [{:keys [exit err]} (run-commands! opts (install-commands (name pkg) item-opts))]
+           (let [{:keys [exit err]} (run-commands! opts (install-commands facts (name pkg) item-opts))]
              {:action [type pkg]
               :label (name pkg)
               :status (if (zero? exit) :ok :error)
@@ -319,13 +320,16 @@
 
 (defmethod a/requires :pkg/brew-uninstall [_] [:complete :pkg/brew])
 
-(defmethod a/install! :pkg/brew-uninstall [type opts items _facts]
+(defmethod a/install-queries :pkg/brew-uninstall [_ items]
+  (or (trust-queries items) #{}))
+
+(defmethod a/install! :pkg/brew-uninstall [type opts items facts]
   (let [results (d/section "Uninstalling brew orphans"
                   (map (fn [[pkg _]]
                          (let [pkg-name (if (keyword? pkg) (name pkg) (str pkg))
                                cmds (cond-> []
                                       ;; no grant outlives the package it was made for
-                                      (and (tap-of pkg-name) (trusted? @*trusted-cache* pkg-name))
+                                      (and (tap-of pkg-name) (trusted? (f/value facts [:brew :trusted]) pkg-name))
                                       (conj ["brew" "untrust" "--formula" pkg-name])
                                       true (conj ["brew" "uninstall" pkg-name]))
                                {:keys [exit err]} (run-commands! opts cmds)]

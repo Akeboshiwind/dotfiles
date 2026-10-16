@@ -119,6 +119,13 @@
 
 (defmethod orphans :default [_ _ _] nil)
 
+(defmulti install-queries
+  "The set of query keys `install!` reads for these items of a type, gathered
+   right before the batch runs. Pure."
+  (fn [type _items] type))
+
+(defmethod install-queries :default [_ _] #{})
+
 (defmulti install!
   "Install items of a given action type.
    Dispatches on action type keyword (e.g. :pkg/brew).
