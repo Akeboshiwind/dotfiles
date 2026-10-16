@@ -14,7 +14,6 @@
             [actions :as a]
             [actions.brew :as brew]
             [outcome :as o]
-            [plan :as p]
             [utils :as u]
             [registry]
             [support]))
@@ -40,109 +39,76 @@
 
 (deftest brew-check-declared-ungranted-test
   (testing "declared :trust, not yet trusted → drift(:wrong), granted on apply"
-    (binding [brew/*formulae-cache* (delay #{"babashka"})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {})
-              brew/*trusted-cache* no-trust]
-      (let [result (a/check :pkg/brew "borkdude/brew/babashka" {:trust true} {})]
+    (let [facts (support/facts-of {[:brew :formulae] #{"babashka"} [:brew :casks] #{} [:brew :outdated] {} [:brew :trusted] @no-trust})]
+      (let [result (a/check :pkg/brew "borkdude/brew/babashka" {:trust true} facts)]
         (is (o/drift? result))
         (is (= :wrong (:kind result))))))
 
   (testing "declared :trust, untrusted and missing → still trust drift(:wrong)"
-    (binding [brew/*formulae-cache* (delay #{})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {})
-              brew/*trusted-cache* no-trust]
-      (let [result (a/check :pkg/brew "borkdude/brew/babashka" {:trust true} {})]
+    (let [facts (support/facts-of {[:brew :formulae] #{} [:brew :casks] #{} [:brew :outdated] {} [:brew :trusted] @no-trust})]
+      (let [result (a/check :pkg/brew "borkdude/brew/babashka" {:trust true} facts)]
         (is (o/drift? result))
         (is (= :wrong (:kind result)))))))
 
 (deftest brew-check-undeclared-granted-test
   (testing "trusted but :trust not declared → drift(:wrong), revoked on apply"
-    (binding [brew/*formulae-cache* (delay #{"babashka"})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {})
-              brew/*trusted-cache* (delay {:formulae #{"borkdude/brew/babashka"} :taps #{}})]
-      (let [result (a/check :pkg/brew "borkdude/brew/babashka" {} {})]
+    (let [facts (support/facts-of {[:brew :formulae] #{"babashka"} [:brew :casks] #{} [:brew :outdated] {} [:brew :trusted] {:formulae #{"borkdude/brew/babashka"} :taps #{}}})]
+      (let [result (a/check :pkg/brew "borkdude/brew/babashka" {} facts)]
         (is (o/drift? result))
         (is (= :wrong (:kind result)))))))
 
 (deftest brew-check-unconsented-installed-test
   (testing "untrusted, no :trust, installed → satisfied but warned to declare :trust"
-    (binding [brew/*formulae-cache* (delay #{"babashka"})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {})
-              brew/*trusted-cache* no-trust]
-      (let [result (a/check :pkg/brew "borkdude/brew/babashka" {} {})]
+    (let [facts (support/facts-of {[:brew :formulae] #{"babashka"} [:brew :casks] #{} [:brew :outdated] {} [:brew :trusted] @no-trust})]
+      (let [result (a/check :pkg/brew "borkdude/brew/babashka" {} facts)]
         (is (o/satisfied? result))
         (is (string? (:message result)))
         (is (str/includes? (:message result) ":trust"))))))
 
 (deftest brew-check-unconsented-missing-test
   (testing "untrusted, no :trust, not installed → conflict (install is known to fail)"
-    (binding [brew/*formulae-cache* (delay #{})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {})
-              brew/*trusted-cache* no-trust]
-      (let [result (a/check :pkg/brew "borkdude/brew/babashka" {} {})]
+    (let [facts (support/facts-of {[:brew :formulae] #{} [:brew :casks] #{} [:brew :outdated] {} [:brew :trusted] @no-trust})]
+      (let [result (a/check :pkg/brew "borkdude/brew/babashka" {} facts)]
         (is (o/conflict? result))
         (is (str/includes? (str (:message result)) ":trust"))))))
 
 (deftest brew-check-trusted-declared-test
   (testing "declared :trust and trusted, installed → satisfied, no warning"
-    (binding [brew/*formulae-cache* (delay #{"babashka"})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {})
-              brew/*trusted-cache* (delay {:formulae #{"borkdude/brew/babashka"} :taps #{}})]
-      (let [result (a/check :pkg/brew "borkdude/brew/babashka" {:trust true} {})]
+    (let [facts (support/facts-of {[:brew :formulae] #{"babashka"} [:brew :casks] #{} [:brew :outdated] {} [:brew :trusted] {:formulae #{"borkdude/brew/babashka"} :taps #{}}})]
+      (let [result (a/check :pkg/brew "borkdude/brew/babashka" {:trust true} facts)]
         (is (o/satisfied? result))
         (is (nil? (:message result)))))))
 
 (deftest brew-check-whole-tap-trust-test
   (testing "a grant for the whole tap counts as trusted (e.g. granted by hand)"
-    (binding [brew/*formulae-cache* (delay #{"babashka"})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {})
-              brew/*trusted-cache* (delay {:formulae #{} :taps #{"borkdude/brew"}})]
-      (is (o/satisfied? (a/check :pkg/brew "borkdude/brew/babashka" {:trust true} {}))))))
+    (let [facts (support/facts-of {[:brew :formulae] #{"babashka"} [:brew :casks] #{} [:brew :outdated] {} [:brew :trusted] {:formulae #{} :taps #{"borkdude/brew"}}})]
+      (is (o/satisfied? (a/check :pkg/brew "borkdude/brew/babashka" {:trust true} facts))))))
 
 (deftest brew-check-official-inert-test
   (testing "official formulae never enter trust branches"
-    (binding [brew/*formulae-cache* (delay #{"neovim"})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {})
-              brew/*trusted-cache* no-trust]
-      (let [result (a/check :pkg/brew :neovim {} {})]
+    (let [facts (support/facts-of {[:brew :formulae] #{"neovim"} [:brew :casks] #{} [:brew :outdated] {} [:brew :trusted] @no-trust})]
+      (let [result (a/check :pkg/brew :neovim {} facts)]
         (is (o/satisfied? result))
         (is (nil? (:message result))))
       ;; :trust on an official package is meaningless and inert
-      (is (o/satisfied? (a/check :pkg/brew :neovim {:trust true} {})))))
+      (is (o/satisfied? (a/check :pkg/brew :neovim {:trust true} facts)))))
 
   (testing "missing official formula is plain drift(:missing), unchanged"
-    (binding [brew/*formulae-cache* (delay #{})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {})
-              brew/*trusted-cache* no-trust]
-      (let [result (a/check :pkg/brew :neovim {} {})]
+    (let [facts (support/facts-of {[:brew :formulae] #{} [:brew :casks] #{} [:brew :outdated] {} [:brew :trusted] @no-trust})]
+      (let [result (a/check :pkg/brew :neovim {} facts)]
         (is (o/drift? result))
         (is (= :missing (:kind result)))))))
 
 (deftest brew-check-trust-precedes-outdated-test
   (testing "trust drift wins over outdated — brew's answers are unreliable for ignored taps"
-    (binding [brew/*formulae-cache* (delay #{"babashka"})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {"babashka" {:installed "1.0" :current "1.1"}})
-              brew/*trusted-cache* no-trust]
-      (let [result (a/check :pkg/brew "borkdude/brew/babashka" {:trust true} {})]
+    (let [facts (support/facts-of {[:brew :formulae] #{"babashka"} [:brew :casks] #{} [:brew :outdated] {"babashka" {:installed "1.0" :current "1.1"}} [:brew :trusted] @no-trust})]
+      (let [result (a/check :pkg/brew "borkdude/brew/babashka" {:trust true} facts)]
         (is (o/drift? result))
         (is (= :wrong (:kind result))))))
 
   (testing "trusted and declared, outdated → normal drift(:outdated)"
-    (binding [brew/*formulae-cache* (delay #{"babashka"})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {"babashka" {:installed "1.0" :current "1.1"}})
-              brew/*trusted-cache* (delay {:formulae #{"borkdude/brew/babashka"} :taps #{}})]
-      (let [result (a/check :pkg/brew "borkdude/brew/babashka" {:trust true} {})]
+    (let [facts (support/facts-of {[:brew :formulae] #{"babashka"} [:brew :casks] #{} [:brew :outdated] {"babashka" {:installed "1.0" :current "1.1"}} [:brew :trusted] {:formulae #{"borkdude/brew/babashka"} :taps #{}}})]
+      (let [result (a/check :pkg/brew "borkdude/brew/babashka" {:trust true} facts)]
         (is (o/drift? result))
         (is (= :outdated (:kind result)))))))
 
@@ -268,13 +234,13 @@
 
 (deftest brew-orphans-includes-untap-test
   (testing "a/orphans :pkg/brew reports orphan taps alongside package orphans"
-    (with-redefs [u/command-exists? (fn [cmd] (= cmd "brew"))
-                  brew/leaves-set (fn [] #{"wget"})
-                  brew/installed-set-full (fn [_] #{})
-                  brew/installed-taps (fn [] #{"oven-sh/bun"})]
-      (let [result (a/orphans :pkg/brew {:neovim {}} {})]
-        (is (= {"wget" {}} (:pkg/brew-uninstall result)))
-        (is (= {"oven-sh/bun" {}} (:brew/untap result)))))))
+    (let [result (a/orphans :pkg/brew {:neovim {}}
+                            (support/facts-of {[:command "brew"] true
+                                               [:brew :leaves] #{"wget"}
+                                               [:brew :casks-full] #{}
+                                               [:brew :taps] #{"oven-sh/bun"}}))]
+      (is (= {"wget" {}} (:pkg/brew-uninstall result)))
+      (is (= {"oven-sh/bun" {}} (:brew/untap result))))))
 
 (deftest calculate-orphans-preserves-untap-test
   (testing "untap orphans survive plan merging (base-type injection must not clobber them)"

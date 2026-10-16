@@ -4,8 +4,8 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [display :as d]
+            [facts :as f]
             [outcome :as o]
-            [utils :as u]
             [utils.sh :as sh]))
 
 (defmethod a/requires :pkg/brew [_] :pkg/brew)
@@ -58,11 +58,9 @@
      :casks (set (:casks raw))
      :taps (set (:taps raw))}))
 
-;; Module-level caching — each delay runs at most once per process.
+;; Module-level caching for install! — each delay runs at most once per process.
 (def ^:dynamic *formulae-cache* (delay (installed-set :formula)))
 (def ^:dynamic *casks-cache* (delay (installed-set :cask)))
-(def ^:dynamic *outdated-cache* (delay (outdated-map)))
-(def ^:dynamic *services-cache* (delay (services-map)))
 (def ^:dynamic *trusted-cache* (delay (trusted-map)))
 
 (defn- short-name
@@ -80,9 +78,10 @@
       (str/join "/" (take 2 parts)))))
 
 (defn- trusted?
-  "Is this tap-qualified name covered by a trust grant — its own, or its tap's?"
-  [full-name]
-  (let [{:keys [formulae casks taps]} @*trusted-cache*]
+  "Is this tap-qualified name covered by a trust grant in trust (a trusted-map
+   result) — its own, or its tap's?"
+  [trust full-name]
+  (let [{:keys [formulae casks taps]} trust]
     (boolean (or (contains? (or formulae #{}) full-name)
                  (contains? (or casks #{}) full-name)
                  (contains? (or taps #{}) (tap-of full-name))))))
@@ -91,8 +90,8 @@
   "Trust outcome for a tap-qualified package, nil when trust needs no attention.
    Precedes the installed/outdated logic: brew ignores items from untrusted
    taps, so its answers about them are unreliable."
-  [pkg-name declared? installed?]
-  (let [granted? (trusted? pkg-name)]
+  [trust pkg-name declared? installed?]
+  (let [granted? (trusted? trust pkg-name)]
     (cond
       (and declared? (not granted?))
       (assoc (o/drift :wrong) :message "untrusted")
@@ -105,26 +104,32 @@
         (assoc o/satisfied :message "untrusted tap — declare :trust to re-enable updates")
         (o/conflict "untrusted tap — declare :trust to allow install")))))
 
-(defmethod a/check :pkg/brew [_ key opts _facts]
+(defmethod a/queries :pkg/brew [_ declared]
+  (cond-> #{[:brew :formulae] [:brew :casks] [:brew :outdated]}
+    (some (fn [[k _]] (tap-of (name k))) declared) (conj [:brew :trusted])))
+
+(defmethod a/check :pkg/brew [_ key opts facts]
   (let [pkg-name (name key)
         sn (short-name pkg-name)
-        formulae @*formulae-cache*
-        casks @*casks-cache*
-        outdated @*outdated-cache*
+        formulae (f/value facts [:brew :formulae])
+        casks (f/value facts [:brew :casks])
+        outdated (f/value facts [:brew :outdated])
         installed? (or (contains? formulae sn)
                        (contains? casks sn))
         out-info (or (get outdated sn)
                      (get outdated pkg-name))]
     (or (when (tap-of pkg-name)
-          (trust-check pkg-name (boolean (:trust opts)) installed?))
+          (trust-check (f/value facts [:brew :trusted]) pkg-name (boolean (:trust opts)) installed?))
         (cond
           out-info (o/version-drift (:installed out-info) (:current out-info))
           installed? o/satisfied
           :else (o/drift :missing)))))
 
-(defmethod a/check :brew/service [_ key opts _facts]
+(defmethod a/queries :brew/service [_ _] #{[:brew :services]})
+
+(defmethod a/check :brew/service [_ key opts facts]
   (let [svc-name (name key)
-        by-name @*services-cache*
+        by-name (f/value facts [:brew :services])
         svc (get by-name svc-name)]
     (cond
       (nil? svc) (o/drift :missing)
@@ -246,10 +251,26 @@
          (map (fn [tap] [tap {}]))
          (into {}))))
 
-(defmethod a/orphans :pkg/brew [_ declared _facts]
-  (when (u/command-exists? "brew")
-    (let [pkgs (orphans {:formulae (leaves-set) :casks (installed-set-full :cask)} declared)
-          taps (orphan-taps (installed-taps) declared)]
+(defmethod a/run-query :brew [[_ what]]
+  (case what
+    :formulae (installed-set :formula)
+    :casks (installed-set :cask)
+    :outdated (outdated-map)
+    :services (services-map)
+    :trusted (trusted-map)
+    :leaves (leaves-set)
+    :casks-full (installed-set-full :cask)
+    :taps (installed-taps)))
+
+(defmethod a/orphan-queries :pkg/brew [_ _]
+  #{[:command "brew"] [:brew :leaves] [:brew :casks-full] [:brew :taps]})
+
+(defmethod a/orphans :pkg/brew [_ declared facts]
+  (when (f/value facts [:command "brew"])
+    (let [pkgs (orphans {:formulae (f/value facts [:brew :leaves])
+                         :casks (f/value facts [:brew :casks-full])}
+                        declared)
+          taps (orphan-taps (f/value facts [:brew :taps]) declared)]
       (merge (when (seq pkgs) {:pkg/brew-uninstall pkgs})
              (when (seq taps) {:brew/untap taps})))))
 
@@ -259,7 +280,7 @@
    then install if the package itself is absent or being upgraded."
   [pkg-name {:keys [head cask trust]}]
   (let [tap (tap-of pkg-name)
-        granted? (and tap (trusted? pkg-name))
+        granted? (and tap (trusted? @*trusted-cache* pkg-name))
         grant? (and tap trust (not granted?))
         revoke? (and granted? (not trust))
         installed? (or (contains? @*formulae-cache* (short-name pkg-name))
@@ -304,7 +325,7 @@
                          (let [pkg-name (if (keyword? pkg) (name pkg) (str pkg))
                                cmds (cond-> []
                                       ;; no grant outlives the package it was made for
-                                      (and (tap-of pkg-name) (trusted? pkg-name))
+                                      (and (tap-of pkg-name) (trusted? @*trusted-cache* pkg-name))
                                       (conj ["brew" "untrust" "--formula" pkg-name])
                                       true (conj ["brew" "uninstall" pkg-name]))
                                {:keys [exit err]} (run-commands! opts cmds)]

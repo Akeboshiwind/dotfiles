@@ -4,7 +4,6 @@
             [babashka.process :as process]
             [clojure.string :as str]
             [actions :as a]
-            [actions.brew :as brew]
             [actions.claude :as claude]
             [cache :as c]
             [outcome :as o]
@@ -105,36 +104,28 @@
 
 (deftest brew-check-installed-test
   (testing "installed formula → satisfied"
-    (binding [brew/*formulae-cache* (delay #{"neovim"})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {})]
-      (is (o/satisfied? (a/check :pkg/brew :neovim {} {}))))))
+    (let [facts (support/facts-of {[:brew :formulae] #{"neovim"} [:brew :casks] #{} [:brew :outdated] {}})]
+      (is (o/satisfied? (a/check :pkg/brew :neovim {} facts))))))
 
 (deftest brew-check-missing-test
   (testing "missing formula → drift(:missing)"
-    (binding [brew/*formulae-cache* (delay #{})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {})]
-      (let [result (a/check :pkg/brew :neovim {} {})]
+    (let [facts (support/facts-of {[:brew :formulae] #{} [:brew :casks] #{} [:brew :outdated] {}})]
+      (let [result (a/check :pkg/brew :neovim {} facts)]
         (is (o/drift? result))
         (is (= :missing (:kind result)))))))
 
 (deftest brew-check-outdated-test
   (testing "outdated formula → drift(:outdated) with version message"
-    (binding [brew/*formulae-cache* (delay #{"neovim"})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {"neovim" {:installed "0.9" :current "0.10"}})]
-      (let [result (a/check :pkg/brew :neovim {} {})]
+    (let [facts (support/facts-of {[:brew :formulae] #{"neovim"} [:brew :casks] #{} [:brew :outdated] {"neovim" {:installed "0.9" :current "0.10"}}})]
+      (let [result (a/check :pkg/brew :neovim {} facts)]
         (is (o/drift? result))
         (is (= :outdated (:kind result)))
         (is (= "0.9 → 0.10" (:message result)))))))
 
 (deftest brew-check-tap-qualified-test
   (testing "tap-qualified package uses short name for lookup"
-    (binding [brew/*formulae-cache* (delay #{"bbin"})
-              brew/*casks-cache* (delay #{})
-              brew/*outdated-cache* (delay {})]
-      (is (o/satisfied? (a/check :pkg/brew (keyword "babashka/brew/bbin") {} {}))))))
+    (let [facts (support/facts-of {[:brew :formulae] #{"bbin"} [:brew :casks] #{} [:brew :outdated] {}})]
+      (is (o/satisfied? (a/check :pkg/brew (keyword "babashka/brew/bbin") {} facts))))))
 
 ;; =============================================================================
 ;; :brew/service check
@@ -142,20 +133,20 @@
 
 (deftest service-check-running-test
   (testing "running service → satisfied"
-    (binding [brew/*services-cache* (delay {"dnsmasq" {:name "dnsmasq" :status "started"}})]
-      (is (o/satisfied? (a/check :brew/service :dnsmasq {} {}))))))
+    (let [facts (support/facts-of {[:brew :services] {"dnsmasq" {:name "dnsmasq" :status "started"}}})]
+      (is (o/satisfied? (a/check :brew/service :dnsmasq {} facts))))))
 
 (deftest service-check-stopped-test
   (testing "stopped service → drift(:missing)"
-    (binding [brew/*services-cache* (delay {"dnsmasq" {:name "dnsmasq" :status "stopped"}})]
-      (let [result (a/check :brew/service :dnsmasq {} {})]
+    (let [facts (support/facts-of {[:brew :services] {"dnsmasq" {:name "dnsmasq" :status "stopped"}}})]
+      (let [result (a/check :brew/service :dnsmasq {} facts)]
         (is (o/drift? result))
         (is (= :missing (:kind result)))))))
 
 (deftest service-check-missing-test
   (testing "unknown service → drift(:missing)"
-    (binding [brew/*services-cache* (delay {})]
-      (let [result (a/check :brew/service :dnsmasq {} {})]
+    (let [facts (support/facts-of {[:brew :services] {}})]
+      (let [result (a/check :brew/service :dnsmasq {} facts)]
         (is (o/drift? result))
         (is (= :missing (:kind result)))))))
 
