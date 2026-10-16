@@ -352,35 +352,42 @@
 
 (deftest claude-marketplace-check-test
   (testing "registered marketplace → satisfied; unregistered → drift"
-    (with-bindings {#'claude/*marketplace-cache* (delay {:jx {:source {:repo "juxt/plugins"}}})}
-      (is (o/satisfied? (a/check :claude/marketplace :plugins {:source "juxt/plugins"} {})))
-      (is (o/drift? (a/check :claude/marketplace :other {:source "acme/other"} {}))))))
+    (let [facts (support/facts-of {[:claude :marketplaces] {:jx {:source {:repo "juxt/plugins"}}}})]
+      (is (o/satisfied? (a/check :claude/marketplace :plugins {:source "juxt/plugins"} facts)))
+      (is (o/drift? (a/check :claude/marketplace :other {:source "acme/other"} facts))))))
 
 (deftest claude-plugin-check-test
   (testing "installed and current plugin → satisfied; missing → drift"
-    (with-bindings {#'claude/*plugin-cache* (delay {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]})
-                    #'claude/*marketplace-refresh* (delay nil)}
-      (with-redefs [claude/catalogue-version (fn [_mp _n] "0.11.2")]
-        (is (o/satisfied? (a/check :claude/plugin :chalk {} {})))
-        (is (o/drift? (a/check :claude/plugin :missing-plugin {} {})))))))
+    (let [facts (support/facts-of {[:claude :plugins] {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]}
+                                   [:claude :catalogue "chalk"] "0.11.2"})]
+      (is (o/satisfied? (a/check :claude/plugin :chalk {} facts)))
+      (is (o/drift? (a/check :claude/plugin :missing-plugin {} facts))))))
 
 (deftest claude-plugin-outdated-test
   (testing "installed plugin behind the refreshed marketplace catalogue → drift(:outdated)"
-    (with-bindings {#'claude/*plugin-cache* (delay {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]})
-                    #'claude/*marketplace-refresh* (delay nil)}
-      (with-redefs [claude/catalogue-version (fn [mp n]
-                                               (when (and (= mp "juxt-plugins") (= n "chalk"))
-                                                 "0.12.0"))]
-        (let [result (a/check :claude/plugin :chalk {} {})]
-          (is (o/drift? result))
-          (is (= :outdated (:kind result)))
-          (is (= "0.11.2 → 0.12.0" (:message result))))))))
+    (let [facts (support/facts-of {[:claude :plugins] {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]}
+                                   [:claude :catalogue "chalk"] "0.12.0"})
+          result (a/check :claude/plugin :chalk {} facts)]
+      (is (o/drift? result))
+      (is (= :outdated (:kind result)))
+      (is (= "0.11.2 → 0.12.0" (:message result))))))
+
+(deftest claude-plugin-catalogue-query-test
+  (testing "the catalogue is refreshed, then read, only for an installed plugin"
+    (let [refreshed (atom 0)]
+      (with-bindings {#'claude/*marketplace-refresh* (delay (swap! refreshed inc))}
+        (with-redefs [claude/installed-plugins (fn [] {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]})
+                      claude/catalogue-version (fn [mp n] (when (= [mp n] ["juxt-plugins" "chalk"]) "0.12.0"))]
+          (is (nil? (a/run-query [:claude :catalogue "missing-plugin"])))
+          (is (zero? @refreshed) "no installed plugin, no network refresh")
+          (is (= "0.12.0" (a/run-query [:claude :catalogue "chalk"])))
+          (is (= 1 @refreshed)))))))
 
 (deftest claude-mcp-check-test
   (testing "user-scope server present → satisfied; absent → drift(:missing)"
-    (with-bindings {#'claude/*mcp-cache* (delay {:my-server {:command "x"}})}
-      (is (o/satisfied? (a/check :claude/mcp :my-server {:command "x"} {})))
-      (let [result (a/check :claude/mcp :other {:command "x"} {})]
+    (let [facts (support/facts-of {[:claude :mcp] {:my-server {:command "x"}}})]
+      (is (o/satisfied? (a/check :claude/mcp :my-server {:command "x"} facts)))
+      (let [result (a/check :claude/mcp :other {:command "x"} facts)]
         (is (o/drift? result))
         (is (= :missing (:kind result))))))
 
@@ -405,10 +412,9 @@
 
 (deftest claude-plugin-unknown-catalogue-version-test
   (testing "installed plugin with no catalogue version → satisfied (cannot determine drift)"
-    (with-bindings {#'claude/*plugin-cache* (delay {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]})
-                    #'claude/*marketplace-refresh* (delay nil)}
-      (with-redefs [claude/catalogue-version (fn [_mp _n] nil)]
-        (is (o/satisfied? (a/check :claude/plugin :chalk {} {})))))))
+    (is (o/satisfied? (a/check :claude/plugin :chalk {}
+                               (support/facts-of {[:claude :plugins] {(keyword "chalk@juxt-plugins") [{:version "0.11.2"}]}
+                                                  [:claude :catalogue "chalk"] nil}))))))
 
 ;; =============================================================================
 ;; Default check (unknown for unimplemented types)

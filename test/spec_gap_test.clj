@@ -84,7 +84,7 @@
 
 (deftest claude-mcp-check-implemented-test
   (testing "MCP servers are checked for presence, not blindly re-registered"
-    (is (not (o/unknown? (a/check :claude/mcp :spec-gap-server {:command "echo"} {})))
+    (is (not (o/unknown? (support/check-live :claude/mcp :spec-gap-server {:command "echo"})))
         "check :claude/mcp falls through to the default unknown outcome")))
 
 ;; =============================================================================
