@@ -10,7 +10,8 @@
             [plan :as p]
             [utils :as u]
             ;; Load action impls
-            [execute]))
+            [execute]
+            [support]))
 
 ;; =============================================================================
 ;; brew deps-graph parsing
@@ -215,3 +216,12 @@
       (let [positions (into {} (map-indexed (fn [i a] [a i])) order)]
         (is (> (positions [:pkg/brew-uninstall :wget])
                (positions [:pkg/brew :neovim])))))))
+
+(deftest uv-orphans-test
+  (testing "undeclared uv tools are orphans"
+    (is (= {:uv/tool-uninstall {:ruff {}}}
+           (a/orphans :uv/tool {:black {}}
+                      (support/facts-of {[:command "uv"] true
+                                         [:uv :installed] #{"black" "ruff"}})))))
+  (testing "no uv, no orphans"
+    (is (nil? (a/orphans :uv/tool {} (support/facts-of {[:command "uv"] false}))))))

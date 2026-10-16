@@ -2,8 +2,8 @@
   (:require [actions :as a]
             [clojure.string :as str]
             [display :as d]
+            [facts :as f]
             [outcome :as o]
-            [utils :as u]
             [utils.sh :as sh]))
 
 (defmethod a/requires :uv/tool [_] :uv/tool)
@@ -33,16 +33,23 @@
          (map (fn [n] [(keyword n) {}]))
          (into {}))))
 
-(defmethod a/orphans :uv/tool [_ declared _facts]
-  (when (u/command-exists? "uv")
-    (let [result (orphans (installed-set) declared)]
+(defmethod a/run-query :uv [[_ what]]
+  (case what
+    :installed (installed-set)))
+
+(defmethod a/orphan-queries :uv/tool [_ _]
+  #{[:command "uv"] [:uv :installed]})
+
+(defmethod a/orphans :uv/tool [_ declared facts]
+  (when (f/value facts [:command "uv"])
+    (let [result (orphans (f/value facts [:uv :installed]) declared)]
       (when (seq result)
         {:uv/tool-uninstall result}))))
 
-(def ^:dynamic *installed-cache* (delay (installed-set)))
+(defmethod a/queries :uv/tool [_ _] #{[:uv :installed]})
 
-(defmethod a/check :uv/tool [_ key _opts _facts]
-  (let [installed @*installed-cache*]
+(defmethod a/check :uv/tool [_ key _opts facts]
+  (let [installed (f/value facts [:uv :installed])]
     (if (contains? installed (name key))
       o/satisfied
       (o/drift :missing))))

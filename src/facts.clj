@@ -2,7 +2,8 @@
   "A facts snapshot is {query-key {:at millis :value v}}, with :error msg in
    place of :value when the query failed. The shell gathers it; checks only
    read it."
-  (:require [actions :as a]))
+  (:require [actions :as a]
+            [utils :as u]))
 
 (defn value
   "The answer to query k. Throws if k was never gathered or its query failed."
@@ -25,3 +26,6 @@
   (reduce (fn [acc k] (assoc acc k (ask k)))
           facts
           (remove #(contains? facts %) queries)))
+
+(defmethod a/run-query :command [[_ cmd]]
+  (u/command-exists? cmd))

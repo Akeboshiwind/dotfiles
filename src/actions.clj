@@ -90,6 +90,12 @@
 
 (defmethod queries :default [_ _] #{})
 
+(defmulti orphan-queries
+  "The set of query keys `orphans` reads for this type's declared items. Pure."
+  (fn [type _declared] type))
+
+(defmethod orphan-queries :default [_ _] #{})
+
 (defmulti run-query
   "Ask the machine the question a query key names, and return the answer.
    Called only by the shell (facts/gather)."

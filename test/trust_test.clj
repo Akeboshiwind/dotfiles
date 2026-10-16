@@ -16,7 +16,8 @@
             [outcome :as o]
             [plan :as p]
             [utils :as u]
-            [registry]))
+            [registry]
+            [support]))
 
 (def no-trust (delay {:formulae #{} :taps #{}}))
 
@@ -281,7 +282,7 @@
                   brew/leaves-set (fn [] #{})
                   brew/installed-set-full (fn [_] #{})
                   brew/installed-taps (fn [] #{"oven-sh/bun"})]
-      (let [result (p/calculate-orphans {:pkg/brew {:neovim {}}})]
+      (let [result (support/orphans-live {:pkg/brew {:neovim {}}})]
         (is (= {"oven-sh/bun" {}} (:brew/untap result))))))
 
   (testing "orphans for types absent from the plan still get their graph dependency injected"
@@ -289,7 +290,7 @@
                   brew/leaves-set (fn [] #{"wget"})
                   brew/installed-set-full (fn [_] #{})
                   brew/installed-taps (fn [] #{"oven-sh/bun"})]
-      (let [result (p/calculate-orphans {})]
+      (let [result (support/orphans-live {})]
         (is (= {"wget" {}} (:pkg/brew-uninstall result)))
         (is (= {"oven-sh/bun" {}} (:brew/untap result)))
         (is (= {} (:pkg/brew result)) ":pkg/brew injected so [:complete :pkg/brew] resolves")))))
