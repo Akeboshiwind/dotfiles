@@ -502,9 +502,12 @@ rule ScheduleOrphanUninstalls {
     -- The manifest is the single source of truth for every package manager
     -- syn can drive: anything explicitly installed but not declared is drift
     -- to be removed. Every available manager with orphan detection is
-    -- therefore queried on every run — whether or not the manifest declares
-    -- anything for it (removing a manager's last declaration means "nothing
-    -- should be installed via this manager", not "stop managing it").
+    -- therefore queried on every unscoped run — whether or not the manifest
+    -- declares anything for it (removing a manager's last declaration means
+    -- "nothing should be installed via this manager", not "stop managing it").
+    -- A scoped run queries only the managers whose removal actions its scope
+    -- targets; any other removal would be dropped by
+    -- ScopeFilterRemovesUnrelatedActions, since nothing depends on a removal.
     -- Undeclared items become uninstall actions, ordered after every action
     -- of the base type.
     when: PlanAssembled(run)

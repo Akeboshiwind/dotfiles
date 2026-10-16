@@ -190,7 +190,7 @@
           ;; Only bbin's orphan detection runs; it sees "neil" as undeclared
           result (with-redefs [u/command-exists? (fn [cmd] (= cmd "bbin"))
                                bbin/installed-set (fn [] #{"jet" "neil"})]
-                   (p/build! entries {}))]
+                   (p/build! entries {} nil))]
       ;; neil should appear as :pkg/bbin-uninstall in the plan
       (is (= {:neil {}} (get-in result [:plan :pkg/bbin-uninstall])))
       ;; uninstall should be in the ActionGraph order
@@ -202,7 +202,7 @@
                            :pkg/bbin {:jet {}}}}
                    :source "/test"]
           result (with-redefs [u/command-exists? (constantly false)]
-                   (p/build! entries {}))]
+                   (p/build! entries {} nil))]
       (is (nil? (get-in result [:plan :pkg/bbin-uninstall]))))))
 
 (deftest uninstall-ordering-test
@@ -225,3 +225,14 @@
                                          [:uv :installed] #{"black" "ruff"}})))))
   (testing "no uv, no orphans"
     (is (nil? (a/orphans :uv/tool {} (support/facts-of {[:command "uv"] false}))))))
+
+(deftest orphan-types-for-scope-test
+  (testing "an unscoped run detects orphans for every type that has detection"
+    (is (= #{:pkg/brew :pkg/mise :pkg/npm :uv/tool :pkg/mas :pkg/bbin}
+           (set (p/orphan-types-for nil)))))
+  (testing "a scoped run detects only the orphans it could act on"
+    (is (empty? (p/orphan-types-for :fs/symlink)))
+    (is (= [:pkg/npm] (p/orphan-types-for :pkg/npm)))
+    (is (= [:pkg/brew] (p/orphan-types-for :pkg/brew)))
+    (is (= [:pkg/brew] (p/orphan-types-for :brew/untap)) "taps come from brew's detection")
+    (is (= [:pkg/npm] (p/orphan-types-for :pkg/npm-uninstall)))))

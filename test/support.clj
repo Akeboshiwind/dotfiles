@@ -22,4 +22,5 @@
 
 (defn orphans-live
   [plan]
-  (p/calculate-orphans plan (f/gather {} (p/orphan-queries plan))))
+  (let [types (p/orphan-types-for nil)]
+    (p/calculate-orphans plan types (f/gather {} (p/orphan-queries plan types)))))

@@ -103,6 +103,13 @@
 
 (defmethod orphan-queries :default [_ _] #{})
 
+(defmulti orphan-outputs
+  "The action types this type's `orphans` can put in a plan fragment. Pure.
+   Default: its uninstall-type."
+  identity)
+
+(defmethod orphan-outputs :default [type] #{(uninstall-type type)})
+
 (defmulti run-query
   "Ask the machine the question a query key names, and return the answer.
    Called only by the shell (facts/gather)."

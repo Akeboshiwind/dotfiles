@@ -62,13 +62,13 @@
       (is (thrown-with-msg?
             clojure.lang.ExceptionInfo
             #"Path escapes base directory|Path traversal"
-            (p/build! entries {})))))
+            (p/build! entries {} nil)))))
 
   (testing "paths that stay within base directory should succeed"
     (let [entries [{:step {:fs/symlink {"~/.config/app" "./config/settings.json"}}
                     :source "/Users/test/dotfiles/cfg/app"}]]
       ;; This should not throw (file doesn't need to exist for path resolution)
-      (is (map? (p/build! entries {}))))))
+      (is (map? (p/build! entries {} nil))))))
 
 ;; =============================================================================
 ;; PATH-002: Plain relative paths not handled
@@ -78,7 +78,7 @@
   (testing "plain relative paths (no ./ prefix) should resolve"
     (let [entries [{:step {:fs/symlink {"~/.config/app" "config/settings.json"}}
                     :source "/Users/test/dotfiles/cfg/app"}]
-          result (p/build! entries {})]
+          result (p/build! entries {} nil)]
       (is (= "/Users/test/dotfiles/cfg/app/config/settings.json"
              (get-in result [:plan :fs/symlink "~/.config/app"])))))
 
@@ -88,19 +88,19 @@
       (is (thrown-with-msg?
             clojure.lang.ExceptionInfo
             #"Path escapes base directory"
-            (p/build! entries {})))))
+            (p/build! entries {} nil)))))
 
   (testing "absolute paths pass through unchanged"
     (let [entries [{:step {:fs/symlink {"~/.config/app" "/etc/some/config"}}
                     :source "/Users/test/dotfiles/cfg/app"}]
-          result (p/build! entries {})]
+          result (p/build! entries {} nil)]
       (is (= "/etc/some/config"
              (get-in result [:plan :fs/symlink "~/.config/app"])))))
 
   (testing "home paths pass through unchanged"
     (let [entries [{:step {:fs/symlink {"~/.config/app" "~/some/config"}}
                     :source "/Users/test/dotfiles/cfg/app"}]
-          result (p/build! entries {})]
+          result (p/build! entries {} nil)]
       (is (= "~/some/config"
              (get-in result [:plan :fs/symlink "~/.config/app"]))))))
 
