@@ -2,8 +2,8 @@
   (:require [actions :as a]
             [cheshire.core :as json]
             [display :as d]
+            [facts :as f]
             [outcome :as o]
-            [utils :as u]
             [utils.sh :as sh]))
 
 (defmethod a/requires :pkg/mise [_] :pkg/mise)
@@ -40,27 +40,35 @@
          (map (fn [n] [(keyword n) {}]))
          (into {}))))
 
-(defmethod a/orphans :pkg/mise [_ declared _facts]
-  (when (u/command-exists? "mise")
-    (let [result (orphans (installed-map) declared)]
+(defmethod a/run-query :mise [[_ what]]
+  (case what
+    :installed (installed-map)
+    :outdated (outdated-map)))
+
+(defmethod a/orphan-queries :pkg/mise [_ _]
+  #{[:command "mise"] [:mise :installed]})
+
+(defmethod a/orphans :pkg/mise [_ declared facts]
+  (when (f/value facts [:command "mise"])
+    (let [result (orphans (f/value facts [:mise :installed]) declared)]
       (when (seq result)
         {:pkg/mise-uninstall result}))))
 
-(def ^:dynamic *installed-cache* (delay (installed-map)))
-(def ^:dynamic *outdated-cache* (delay (outdated-map)))
+(defmethod a/queries :pkg/mise [_ declared]
+  (cond-> #{[:mise :installed]}
+    (some (fn [[_ opts]] (= "latest" (:version opts))) declared) (conj [:mise :outdated])))
 
-(defmethod a/check :pkg/mise [_ key opts _facts]
+(defmethod a/check :pkg/mise [_ key opts facts]
   (if-not (:version opts)
     (o/error "Version required")
-    (let [installed @*installed-cache*
-          tool-name (name key)
-          versions  (get installed tool-name)]
+    (let [tool-name (name key)
+          versions  (get (f/value facts [:mise :installed]) tool-name)]
       (cond
         (nil? versions)
         (o/drift :missing)
 
         (= "latest" (:version opts))
-        (if-let [{:keys [current latest]} (get @*outdated-cache* tool-name)]
+        (if-let [{:keys [current latest]} (get (f/value facts [:mise :outdated]) tool-name)]
           (o/version-drift current latest)
           o/satisfied)
 
