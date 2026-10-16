@@ -283,6 +283,22 @@
         (is (= "20.0.0 → 22.0.0" (:message result)))))))
 
 ;; =============================================================================
+;; :pkg/npm check
+;; =============================================================================
+
+(deftest npm-check-test
+  (let [facts (support/facts-of {[:npm :installed] #{"happy-coder" "prettier"}
+                                 [:npm :outdated] {"prettier" {:current "3.0.0" :latest "3.1.0"}}})]
+    (testing "installed → satisfied"
+      (is (o/satisfied? (a/check :pkg/npm :happy-coder {} facts))))
+    (testing "a tarball URL is checked by the package name in its filename"
+      (is (o/satisfied? (a/check :pkg/npm "https://example.com/happy-coder-0.13.0.tgz" {} facts))))
+    (testing "outdated → drift(:outdated) with version message"
+      (is (= "3.0.0 → 3.1.0" (:message (a/check :pkg/npm :prettier {} facts)))))
+    (testing "absent → drift(:missing)"
+      (is (= :missing (:kind (a/check :pkg/npm :typescript {} facts)))))))
+
+;; =============================================================================
 ;; :pkg/mas check
 ;; =============================================================================
 
