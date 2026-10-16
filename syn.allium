@@ -574,8 +574,12 @@ rule BeginChecks {
 -- Check phase
 -- =============================================================================
 
--- Checks run in dependency order and are read-only: no check mutates the
--- machine. Each action family determines its outcome from live system state.
+-- Checks are read-only: no check mutates the machine. Each action family
+-- declares the questions its checks ask of the machine; those are answered
+-- once, before any check runs, into a facts snapshot, and every outcome below
+-- is derived from that snapshot. Outcomes are then evaluated in dependency
+-- order, so a blocking outcome cancels its dependents' checks; their check
+-- commands and assertions have already run, but their answers are not read.
 
 rule CheckSymlinks {
     when: run: Run.status becomes checking

@@ -3,7 +3,7 @@
 
 (def ^:dynamic *live-queries?*
   "Whether a query may read the real machine. The test task binds this false:
-   a query reaching the machine under test has escaped the cache that was
+   a query reaching the machine under test has escaped the facts that were
    meant to answer it, and would otherwise report the developer's own box."
   true)
 
@@ -18,6 +18,6 @@
   ([label opts args]
    (when-not *live-queries?*
      (throw (ex-info (str "unstubbed query: " label
-                          " — stub it, or the cache var that wraps it")
+                          " — stub it, or pass the fact it answers")
                      {:label label :args args})))
    (apply process/shell (merge {:out :string :err :string} opts) args)))

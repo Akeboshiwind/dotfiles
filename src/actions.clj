@@ -112,7 +112,8 @@
   o/unknown)
 
 (defmulti orphans
-  "Query live system and compare against declared items to find orphans.
+  "Compare declared items against facts to find orphans. `facts` holds the
+   answers to the queries `orphan-queries` declared for this type.
    Returns a plan fragment to merge (e.g. {:pkg/brew-uninstall {:wget {} ...}}), or nil.
    Default returns nil (no orphan detection for this action type)."
   (fn [type _declared _facts] type))
