@@ -124,4 +124,25 @@ end
 local function find_files(dir)
   return LazyVim.pick.open("files", {cwd = dir})
 end
-return {list = list, pick = pick, switch = switch, ["find-files"] = find_files}
+local function read_info(dir)
+  local result = vim.system({"git", "rev-parse", "--path-format=absolute", "--show-toplevel", "--git-dir", "--git-common-dir"}, {text = true, cwd = dir}):wait()
+  if (0 == result.code) then
+    local _let_18_ = vim.split(result.stdout, "\n", {trimempty = true})
+    local top = _let_18_[1]
+    local git_dir = _let_18_[2]
+    local common_dir = _let_18_[3]
+    return {name = vim.fs.basename(top), ["linked?"] = (git_dir ~= common_dir)}
+  else
+    return false
+  end
+end
+local infos = {}
+local function info()
+  local cwd = vim.fn.getcwd()
+  if (nil == infos[cwd]) then
+    infos[cwd] = read_info(cwd)
+  else
+  end
+  return (infos[cwd] or nil)
+end
+return {list = list, pick = pick, switch = switch, ["find-files"] = find_files, info = info}

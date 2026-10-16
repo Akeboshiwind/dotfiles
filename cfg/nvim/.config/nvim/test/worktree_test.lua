@@ -15,6 +15,12 @@ local function under_3f(names, dir)
   end
   return vim.iter(names):any(_1_)
 end
+local function statusline_label(nvim, name)
+  return h["exec-lua"](nvim, "\n    local name = ...\n    local line = vim.api.nvim_eval_statusline(vim.o.statusline, {highlights = true})\n    local at = line.str:find(' ' .. name .. ' ', 1, true)\n    if not at then return false end\n    local group\n    for _, hl in ipairs(line.highlights) do\n      if hl.start < at then group = hl.group end\n    end\n    return {bg = vim.api.nvim_get_hl(0, {name = group, link = false}).bg}", name)
+end
+local function dashboard_label(nvim, name)
+  return h["exec-lua"](nvim, "\n    local name = ...\n    if vim.bo.filetype ~= 'snacks_dashboard' then return false end\n    for row, line in ipairs(vim.api.nvim_buf_get_lines(0, 0, -1, false)) do\n      local col = line:find(name, 1, true)\n      if col then\n        local marks = vim.api.nvim_buf_get_extmarks(0, -1, {row - 1, col - 1}, {row - 1, col - 1},\n                                                    {details = true, overlap = true})\n        return marks[1] and marks[1][4].hl_group or ''\n      end\n    end\n    return false", name)
+end
 local function pick_worktree(nvim, dir)
   return h["exec-lua"](nvim, "\n    local dir = ...\n    vim.ui.select = function(items, _, choose)\n      for _, item in ipairs(items) do\n        if item.path == dir then return choose(item) end\n      end\n      choose(nil)\n    end", dir)
 end
@@ -131,18 +137,56 @@ end
 local function _15_()
   local main, worktrees = h["repo-with-worktrees"]({"a.txt"}, {"feature"})
   local nvim = h.start(main, {"a.txt"})
+  local _
+  local function _16_()
+    return statusline_label(nvim, "repo")
+  end
+  _ = h["wait-until"](_16_, 5000)
+  local in_main = statusline_label(nvim, "repo")
+  switch(nvim, worktrees.feature)
+  local function _17_()
+    return statusline_label(nvim, "feature")
+  end
+  h["wait-until"](_17_, 5000)
+  local in_feature = statusline_label(nvim, "feature")
+  local warn = h["exec-lua"](nvim, "return vim.api.nvim_get_hl(0, {name = 'DiagnosticWarn', link = false}).fg")
+  h.stop(nvim)
+  h.check(in_main, "main checkout's name missing")
+  h.check((warn ~= in_main.bg), "main checkout's name is loud")
+  h.check(in_feature, "linked worktree's name missing")
+  return h.check((warn == in_feature.bg), "linked worktree's name is quiet")
+end
+local function _18_()
+  local main, worktrees = h["repo-with-worktrees"]({"a.txt"}, {"feature"})
+  local in_main = h.start(main)
+  local in_feature = h.start(worktrees.feature)
+  local function _19_()
+    return (dashboard_label(in_main, "repo") and dashboard_label(in_feature, "feature"))
+  end
+  h["wait-until"](_19_, 5000)
+  local main_hl = dashboard_label(in_main, "repo")
+  local feature_hl = dashboard_label(in_feature, "feature")
+  h.stop(in_main)
+  h.stop(in_feature)
+  h.check(main_hl, "main checkout's name missing")
+  h.check((main_hl == "Comment"), ("main checkout's name is " .. vim.inspect(main_hl)))
+  return h.check((feature_hl == "DiagnosticWarn"), ("linked worktree's name is " .. vim.inspect(feature_hl)))
+end
+local function _20_()
+  local main, worktrees = h["repo-with-worktrees"]({"a.txt"}, {"feature"})
+  local nvim = h.start(main, {"a.txt"})
   pick_worktree(nvim, worktrees.feature)
   h["exec-lua"](nvim, "LazyVim.pick.open = function(command, opts) vim.g.picked = {command, opts.cwd} end")
   h.press(nvim, "<Esc> fw")
   local picked_3f
-  local function _16_()
+  local function _21_()
     return h["exec-lua"](nvim, "return vim.g.picked ~= nil")
   end
-  picked_3f = h["wait-until"](_16_, 5000)
+  picked_3f = h["wait-until"](_21_, 5000)
   local picked = h["exec-lua"](nvim, "return vim.g.picked")
   local dir = cwd(nvim)
   h.stop(nvim)
   h.check((picked_3f and vim.deep_equal(picked, {"files", worktrees.feature})), ("picker opened with " .. vim.inspect(picked)))
   return h.check((dir == main), ("switched anyway, cwd is " .. dir))
 end
-return h.run({{"switch saves this worktree's session and restores the target's", _2_}, {"switch to a worktree without a session opens nothing", _5_}, {"switch refuses while a buffer has unsaved changes", _6_}, {"switch stops LSP clients and announces WorktreeSwitched", _7_}, {"list shows each live worktree, with its agent's name", _9_}, {"<leader>gw switches to the picked worktree", _11_}, {"the terminal title names the worktree, and follows a switch", _13_}, {"<leader>fw finds files in the picked worktree without switching", _15_}})
+return h.run({{"switch saves this worktree's session and restores the target's", _2_}, {"switch to a worktree without a session opens nothing", _5_}, {"switch refuses while a buffer has unsaved changes", _6_}, {"switch stops LSP clients and announces WorktreeSwitched", _7_}, {"list shows each live worktree, with its agent's name", _9_}, {"<leader>gw switches to the picked worktree", _11_}, {"the terminal title names the worktree, and follows a switch", _13_}, {"the statusline names the worktree, loud only in a linked one", _15_}, {"the dashboard names the worktree, loud only in a linked one", _18_}, {"<leader>fw finds files in the picked worktree without switching", _20_}})

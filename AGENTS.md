@@ -25,3 +25,10 @@ Clear and reinstall treesitter parsers:
 rm -rf ~/.local/share/nvim/site/parser/
 nvim -c ':TSUpdate'
 ```
+
+## Landing work
+
+- **One feature branch per card**, `worktree-<slug>`, off `main`.
+- **Tidies and advances both land on the feature branch**, as separate commits — `tidy(…)` for structure, `feat(…)`/`fix(…)` for behaviour — each with its tests passing first. Push the branch as commits land.
+- **The branch lands on `main` by PR** (`/show` or `/ask`).
+- **Branch cleanup:** once merged, delete the local branch and its worktree; offer before deleting a remote branch.
