@@ -3,5 +3,9 @@
             :lazygit {}
             :gh {}
             :git-crypt {}}
+ :pkg/script {:git-crypt-worktrees
+              {:path "cfg/git/git-crypt-worktrees.sh"
+               :check "git config filter.git-crypt.clean | grep -q -- --key-file"
+               :dep/requires #{[:pkg/brew :git-crypt]}}}
  :fs/symlink {"~/.gitconfig" "./.gitconfig"
               "~/Library/Application Support/lazygit/config.yml" "./lazygit.yml"}}
