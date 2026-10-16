@@ -4,9 +4,9 @@
             [clojure.string :as str]
             [execute :as e]
             [graph :as g]
-            [check :as chk]
             [actions :as a]
-            [outcome :as o]))
+            [outcome :as o]
+            [support]))
 
 (defn empty-brew
   "install! reads the installed set to choose between installing and
@@ -36,7 +36,7 @@
                             (if (= type :assert)
                               (original-check type key opts facts)
                               o/unknown))]
-      (chk/run-checks ag))))
+      (support/run-checks-live ag))))
 
 ;; =============================================================================
 ;; Assert check tests (assert is a check-only concern)

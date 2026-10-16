@@ -36,7 +36,7 @@
   [plan]
   (let [ag (g/build-action-graph plan)]
     (with-redefs [a/check (fn [_ _ _ _] o/unknown)]
-      (chk/run-checks ag))))
+      (chk/run-checks ag {}))))
 
 ;; =============================================================================
 ;; Failure propagation tests

@@ -82,10 +82,24 @@
 
 (defmethod requires :default [type] type)
 
+(defmulti queries
+  "The set of query keys `check` reads for these declared items of a type.
+   `declared` is {key opts}. A query key is a vector whose first element picks
+   the `run-query` method, e.g. [:fs :link \"~/.gitconfig\"]. Pure."
+  (fn [type _declared] type))
+
+(defmethod queries :default [_ _] #{})
+
+(defmulti run-query
+  "Ask the machine the question a query key names, and return the answer.
+   Called only by the shell (facts/gather)."
+  first)
+
 (defmulti check
   "Check whether an action is satisfied. No side effects.
    Returns a CheckOutcome (see outcome.clj).
-   Each module manages its own caching internally."
+   `facts` holds the answers to the queries `queries` declared for this type
+   (see facts.clj)."
   (fn [type _key _opts _facts] type))
 
 (defmethod check :default [_ _ _ _]

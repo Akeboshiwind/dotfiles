@@ -8,6 +8,7 @@
             [display :as d]
             [graph :as g]
             [check :as chk]
+            [facts :as f]
             [status :as s]
             [stored-plan :as sp]))
 
@@ -85,7 +86,7 @@
     (when (and action (empty? (:order ag)))
       (println "No actions found for action" action)
       (System/exit 1))
-    {:checked (chk/run-checks ag)
+    {:checked (chk/run-checks ag (f/gather {} (chk/queries ag)))
      :symlinks symlinks
      :errors (seq (concat (m/validate-secrets) errors))}))
 

@@ -10,7 +10,8 @@
             [actions.mise :as mise]
             [cache :as c]
             [outcome :as o]
-            [registry]))
+            [registry]
+            [support]))
 
 ;; =============================================================================
 ;; Temp directory fixture
@@ -36,14 +37,14 @@
           target (str *tmp* "/link.txt")]
       (spit source "hello")
       (fs/create-sym-link target source)
-      (is (o/satisfied? (a/check :fs/symlink target source {}))))))
+      (is (o/satisfied? (support/check-live :fs/symlink target source))))))
 
 (deftest symlink-check-missing-test
   (testing "target doesn't exist → drift(:missing)"
     (let [source (str *tmp* "/source.txt")
           target (str *tmp* "/nolink.txt")]
       (spit source "hello")
-      (let [result (a/check :fs/symlink target source {})]
+      (let [result (support/check-live :fs/symlink target source)]
         (is (o/drift? result))
         (is (= :missing (:kind result)))))))
 
@@ -55,7 +56,7 @@
       (spit source "hello")
       (spit other "world")
       (fs/create-sym-link target other)
-      (let [result (a/check :fs/symlink target source {})]
+      (let [result (support/check-live :fs/symlink target source)]
         (is (o/drift? result))
         (is (= :wrong (:kind result)))))))
 
@@ -65,7 +66,7 @@
           target (str *tmp* "/file.txt")]
       (spit source "hello")
       (spit target "existing")
-      (is (o/conflict? (a/check :fs/symlink target source {}))))))
+      (is (o/conflict? (support/check-live :fs/symlink target source))))))
 
 ;; =============================================================================
 ;; :fs/unlink check
@@ -74,7 +75,7 @@
 (deftest unlink-check-gone-test
   (testing "target doesn't exist → satisfied"
     (let [target (str *tmp* "/gone.txt")]
-      (is (o/satisfied? (a/check :fs/unlink target "/some/source" {}))))))
+      (is (o/satisfied? (support/check-live :fs/unlink target "/some/source"))))))
 
 (deftest unlink-check-stale-symlink-test
   (testing "valid stale symlink → drift(:orphan)"
@@ -82,7 +83,7 @@
           target (str *tmp* "/stale.txt")]
       (spit source "hello")
       (fs/create-sym-link target source)
-      (let [result (a/check :fs/unlink target source {})]
+      (let [result (support/check-live :fs/unlink target source)]
         (is (o/drift? result))
         (is (= :orphan (:kind result)))))))
 
@@ -90,7 +91,7 @@
   (testing "regular file at target → conflict"
     (let [target (str *tmp* "/file.txt")]
       (spit target "hello")
-      (is (o/conflict? (a/check :fs/unlink target "/some/source" {}))))))
+      (is (o/conflict? (support/check-live :fs/unlink target "/some/source"))))))
 
 (deftest unlink-check-wrong-target-test
   (testing "symlink points elsewhere → conflict"
@@ -98,7 +99,7 @@
           target (str *tmp* "/link.txt")]
       (spit other "hello")
       (fs/create-sym-link target other)
-      (is (o/conflict? (a/check :fs/unlink target "/expected/source" {}))))))
+      (is (o/conflict? (support/check-live :fs/unlink target "/expected/source"))))))
 
 ;; =============================================================================
 ;; :pkg/brew check

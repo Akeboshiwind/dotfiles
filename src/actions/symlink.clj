@@ -3,6 +3,7 @@
             [clojure.java.io :as io]
             [babashka.fs :as fs]
             [display :as d]
+            [facts :as f]
             [outcome :as o]
             [utils :as u])
   (:import [java.nio.file Files]))
@@ -48,38 +49,53 @@
       :else
       :missing)))
 
-(defmethod a/check :fs/symlink [_ target-str source-str _facts]
+(defn- link-state
+  [target-str]
   (let [target (io/file (u/expand-tilde target-str))
         target-path (.toPath target)
-        source (io/file source-str)]
+        exists? (fs/exists? target {:nofollow-links true})
+        symlink? (and exists? (Files/isSymbolicLink target-path))]
+    {:exists? exists?
+     :symlink? symlink?
+     :dest (when symlink? (str (Files/readSymbolicLink target-path)))}))
+
+(defmethod a/run-query :fs [[_ _ target-str]]
+  (link-state target-str))
+
+(defn- link-queries [declared]
+  (into #{} (map (fn [[target _]] [:fs :link target])) declared))
+
+(defmethod a/queries :fs/symlink [_ declared] (link-queries declared))
+(defmethod a/queries :fs/unlink [_ declared] (link-queries declared))
+
+(defn- points-at? [{:keys [dest]} source-str]
+  (= dest (str (.toPath (io/file source-str)))))
+
+(defmethod a/check :fs/symlink [_ target-str source-str facts]
+  (let [state (f/value facts [:fs :link target-str])]
     (cond
-      (and (fs/exists? target {:nofollow-links true})
-           (Files/isSymbolicLink target-path)
-           (= (Files/readSymbolicLink target-path) (.toPath source)))
+      (and (:symlink? state) (points-at? state source-str))
       o/satisfied
 
-      (and (fs/exists? target {:nofollow-links true})
-           (Files/isSymbolicLink target-path))
+      (:symlink? state)
       (o/drift :wrong)
 
-      (fs/exists? target {:nofollow-links true})
+      (:exists? state)
       (o/conflict "regular file exists at target")
 
       :else
       (o/drift :missing))))
 
-(defmethod a/check :fs/unlink [_ target-str source-str _facts]
-  (let [target (io/file (u/expand-tilde target-str))
-        target-path (.toPath target)]
+(defmethod a/check :fs/unlink [_ target-str source-str facts]
+  (let [state (f/value facts [:fs :link target-str])]
     (cond
-      (not (fs/exists? target {:nofollow-links true}))
+      (not (:exists? state))
       o/satisfied
 
-      (not (Files/isSymbolicLink target-path))
+      (not (:symlink? state))
       (o/conflict "not a symlink")
 
-      (not= (Files/readSymbolicLink target-path)
-            (.toPath (io/file source-str)))
+      (not (points-at? state source-str))
       (o/conflict "points elsewhere")
 
       :else

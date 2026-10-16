@@ -9,11 +9,11 @@
             [babashka.fs :as fs]
             [actions :as a]
             [actions.osx :as osx]
-            [check :as chk]
             [execute :as e]
             [graph :as g]
             [outcome :as o]
-            [registry]))
+            [registry]
+            [support]))
 
 (def ^:dynamic *tmp* nil)
 
@@ -47,7 +47,7 @@
                         bad-target bad-src}
               ag (-> {:fs/symlink symlinks}
                      g/build-action-graph
-                     chk/run-checks
+                     support/run-checks-live
                      e/execute-plan)]
           (is (= {good-target good-src} (recordable ag symlinks))
               "the conflicted symlink must not be recorded as owned")))
