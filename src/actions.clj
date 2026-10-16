@@ -70,6 +70,13 @@
                :message err}))
           items))))
 
+(defn uninstall-type
+  "The action type that removes a type's orphans, by naming convention.
+   e.g. :pkg/brew -> :pkg/brew-uninstall, :uv/tool -> :uv/tool-uninstall"
+  [action-type]
+  (keyword (namespace action-type)
+           (str (name action-type) "-uninstall")))
+
 ;; =============================================================================
 ;; Multimethods
 ;; =============================================================================
