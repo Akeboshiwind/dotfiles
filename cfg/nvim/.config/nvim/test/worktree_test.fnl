@@ -12,6 +12,19 @@
 (fn under? [names dir]
   (: (vim.iter names) :any #(vim.startswith $1 (.. dir "/"))))
 
+(fn statusline-label [nvim name]
+  "The statusline's `name` label and its background, or false while it isn't shown."
+  (h.exec-lua nvim "
+    local name = ...
+    local line = vim.api.nvim_eval_statusline(vim.o.statusline, {highlights = true})
+    local at = line.str:find(' ' .. name .. ' ', 1, true)
+    if not at then return false end
+    local group
+    for _, hl in ipairs(line.highlights) do
+      if hl.start < at then group = hl.group end
+    end
+    return {bg = vim.api.nvim_get_hl(0, {name = group, link = false}).bg}" name))
+
 (fn pick-worktree [nvim dir]
   (h.exec-lua nvim "
     local dir = ...
@@ -121,6 +134,22 @@
           (h.stop nvim)
           (h.check (and (= before :repo) (= after :feature))
                    (.. "titles were " (vim.inspect [before after]))))))]
+
+   ["the statusline names the worktree, loud only in a linked one"
+    (fn []
+      (let [(main worktrees) (h.repo-with-worktrees [:a.txt] [:feature])
+            nvim (h.start main [:a.txt])
+            _ (h.wait-until #(statusline-label nvim :repo) 5000)
+            in-main (statusline-label nvim :repo)]
+        (switch nvim worktrees.feature)
+        (h.wait-until #(statusline-label nvim :feature) 5000)
+        (let [in-feature (statusline-label nvim :feature)
+              warn (h.exec-lua nvim "return vim.api.nvim_get_hl(0, {name = 'DiagnosticWarn', link = false}).fg")]
+          (h.stop nvim)
+          (h.check in-main "main checkout's name missing")
+          (h.check (not= warn in-main.bg) "main checkout's name is loud")
+          (h.check in-feature "linked worktree's name missing")
+          (h.check (= warn in-feature.bg) "linked worktree's name is quiet"))))]
 
    ["<leader>fw finds files in the picked worktree without switching"
     (fn []

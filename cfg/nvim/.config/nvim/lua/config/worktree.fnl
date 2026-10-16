@@ -70,4 +70,25 @@
 (fn find-files [dir]
   (LazyVim.pick.open :files {:cwd dir}))
 
-{: list : pick : switch : find-files}
+(fn read-info [dir]
+  (let [result (: (vim.system [:git :rev-parse :--path-format=absolute
+                               :--show-toplevel :--git-dir :--git-common-dir]
+                              {:text true :cwd dir})
+                  :wait)]
+    (if (= 0 result.code)
+        (let [[top git-dir common-dir] (vim.split result.stdout "\n" {:trimempty true})]
+          {:name (vim.fs.basename top) :linked? (not= git-dir common-dir)})
+        false)))
+
+;; Keyed by cwd, whose worktree never changes, so entries are never invalidated.
+;; `false` records "not a repository", so the statusline doesn't run git on every redraw there.
+(local infos {})
+
+(fn info []
+  "The worktree the cwd is in, as {:name :linked?}, or nil outside a git repository."
+  (let [cwd (vim.fn.getcwd)]
+    (when (= nil (. infos cwd))
+      (tset infos cwd (read-info cwd)))
+    (or (. infos cwd) nil)))
+
+{: list : pick : switch : find-files : info}
