@@ -4,6 +4,7 @@
             [clojure.set :as set]
             [actions :as a]
             [facts :as f]
+            [graph :as g]
             [utils :as u]))
 
 ;; >> Resolve symlinks to root of repo
@@ -128,21 +129,28 @@
        keys
        (remove #{:default})))
 
+(defn orphan-types-for
+  "The orphan types whose actions a run scoped to scope can contain: those whose
+   orphan-outputs meet its scope-types. Every orphan type when scope is nil."
+  [scope]
+  (cond->> (orphan-types)
+    scope (filter #(seq (set/intersection (g/scope-types scope) (a/orphan-outputs %))))))
+
 (defn orphan-queries
-  "The set of query keys `calculate-orphans` reads for plan. Pure."
-  [plan]
-  (into #{} (mapcat #(a/orphan-queries % (get plan % {}))) (orphan-types)))
+  "The set of query keys `calculate-orphans` reads for plan over types. Pure."
+  [plan types]
+  (into #{} (mapcat #(a/orphan-queries % (get plan % {}))) types))
 
 (defn calculate-orphans
-  "Compute orphan removal actions from facts for all action types with orphan
-   detection, not just those in the plan.
+  "Compute orphan removal actions from facts for the given orphan types, whether
+   or not the plan declares anything for them.
    Each a/orphans impl returns a plan fragment or nil, possibly spanning
    several orphan action types (e.g. {:pkg/brew-uninstall {...} :brew/untap {...}}).
    When an orphan type requires [:complete base] and the base type is absent
    from the plan, the base is injected as an empty entry so the dependency
    graph resolves."
-  [plan facts]
-  (let [merged (->> (orphan-types)
+  [plan types facts]
+  (let [merged (->> types
                     (keep #(a/orphans % (get plan % {}) facts))
                     (apply merge {}))
         missing-bases (->> (keys merged)
@@ -178,13 +186,16 @@
 
 (defn build!
   "Build plan from entries. Takes [{:step map :source string} ...].
+   Orphans are detected only for (orphan-types-for scope); scope is nil for an
+   unscoped run.
    Returns {:plan map :symlinks map :errors [...] :facts snapshot}, where facts
    holds the orphan queries' answers for the check phase to reuse.
    Impure: reads filesystem for path canonicalization, directory listing, and package queries."
-  [entries cache]
+  [entries cache scope]
   (let [{:keys [merged symlinks unlinks errors]} (assemble entries cache)
-        facts (f/gather {} (orphan-queries merged))
-        orphans (calculate-orphans merged facts)
+        types (orphan-types-for scope)
+        facts (f/gather {} (orphan-queries merged types))
+        orphans (calculate-orphans merged types facts)
         plan (cond-> merged
                (seq unlinks) (assoc :fs/unlink unlinks)
                (seq orphans) (merge orphans))]

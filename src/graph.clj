@@ -154,19 +154,18 @@
           (recur (into needed deps)
                  (into (pop queue) deps)))))))
 
-(defn- uninstall-type
-  "Derive the uninstall action type for a given action type.
-   e.g. :pkg/brew -> :pkg/brew-uninstall, :uv/tool -> :uv/tool-uninstall"
+(defn scope-types
+  "The action types a scope on action-type targets: the type and its uninstall
+   variant."
   [action-type]
-  (keyword (namespace action-type)
-           (str (name action-type) "-uninstall")))
+  #{action-type (a/uninstall-type action-type)})
 
 (defn filter-order
-  "Filter execution order to only include actions of the given type
-   (and its uninstall variant), plus any actions they transitively depend on.
+  "Filter execution order to only include actions of the scope-types of
+   action-type, plus any actions they transitively depend on.
    Returns actions in dependency order (dependencies first)."
   [plan order action-type]
-  (let [types #{action-type (uninstall-type action-type)}
+  (let [types (scope-types action-type)
         targets (filterv #(contains? types (first %)) order)
         needed (transitive-deps plan (set targets))]
     (filterv needed order)))

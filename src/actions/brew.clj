@@ -263,6 +263,8 @@
 (defmethod a/orphan-queries :pkg/brew [_ _]
   #{[:command "brew"] [:brew :leaves] [:brew :casks-full] [:brew :taps]})
 
+(defmethod a/orphan-outputs :pkg/brew [_] #{:pkg/brew-uninstall :brew/untap})
+
 (defmethod a/orphans :pkg/brew [_ declared facts]
   (when (f/value facts [:command "brew"])
     (let [pkgs (orphans {:formulae (f/value facts [:brew :leaves])

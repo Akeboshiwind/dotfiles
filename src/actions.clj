@@ -70,6 +70,13 @@
                :message err}))
           items))))
 
+(defn uninstall-type
+  "The action type that removes a type's orphans, by naming convention.
+   e.g. :pkg/brew -> :pkg/brew-uninstall, :uv/tool -> :uv/tool-uninstall"
+  [action-type]
+  (keyword (namespace action-type)
+           (str (name action-type) "-uninstall")))
+
 ;; =============================================================================
 ;; Multimethods
 ;; =============================================================================
@@ -95,6 +102,13 @@
   (fn [type _declared] type))
 
 (defmethod orphan-queries :default [_ _] #{})
+
+(defmulti orphan-outputs
+  "The action types this type's `orphans` can put in a plan fragment. Pure.
+   Default: its uninstall-type."
+  identity)
+
+(defmethod orphan-outputs :default [type] #{(uninstall-type type)})
 
 (defmulti run-query
   "Ask the machine the question a query key names, and return the answer.
