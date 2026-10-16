@@ -6,7 +6,6 @@
             [actions :as a]
             [actions.brew :as brew]
             [actions.claude :as claude]
-            [actions.mas :as mas]
             [cache :as c]
             [outcome :as o]
             [registry]
@@ -304,14 +303,14 @@
 
 (deftest mas-check-installed-test
   (testing "installed app → satisfied, for both id and {:id ...} declaration forms"
-    (binding [mas/*installed-cache* (delay {1295203466 "Windows App"})]
-      (is (o/satisfied? (a/check :pkg/mas "Windows App" 1295203466 {})))
-      (is (o/satisfied? (a/check :pkg/mas "Windows App" {:id 1295203466} {}))))))
+    (let [facts (support/facts-of {[:mas :installed] {1295203466 "Windows App"}})]
+      (is (o/satisfied? (a/check :pkg/mas "Windows App" 1295203466 facts)))
+      (is (o/satisfied? (a/check :pkg/mas "Windows App" {:id 1295203466} facts))))))
 
 (deftest mas-check-missing-test
   (testing "app not installed → drift(:missing)"
-    (binding [mas/*installed-cache* (delay {})]
-      (let [result (a/check :pkg/mas "Windows App" 1295203466 {})]
+    (let [facts (support/facts-of {[:mas :installed] {}})]
+      (let [result (a/check :pkg/mas "Windows App" 1295203466 facts)]
         (is (o/drift? result))
         (is (= :missing (:kind result)))))))
 

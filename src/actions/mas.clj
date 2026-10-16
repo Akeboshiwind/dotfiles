@@ -2,8 +2,8 @@
   (:require [actions :as a]
             [clojure.string :as str]
             [display :as d]
+            [facts :as f]
             [outcome :as o]
-            [utils :as u]
             [utils.sh :as sh]))
 
 (defmethod a/requires :pkg/mas [_] :pkg/mas)
@@ -30,17 +30,24 @@
          (map (fn [[id app-name]] [id {:name app-name}]))
          (into {}))))
 
-(defmethod a/orphans :pkg/mas [_ declared _facts]
-  (when (u/command-exists? "mas")
-    (let [result (orphans (installed-map) declared)]
+(defmethod a/run-query :mas [[_ what]]
+  (case what
+    :installed (installed-map)))
+
+(defmethod a/orphan-queries :pkg/mas [_ _]
+  #{[:command "mas"] [:mas :installed]})
+
+(defmethod a/orphans :pkg/mas [_ declared facts]
+  (when (f/value facts [:command "mas"])
+    (let [result (orphans (f/value facts [:mas :installed]) declared)]
       (when (seq result)
         {:pkg/mas-uninstall result}))))
 
-(def ^:dynamic *installed-cache* (delay (installed-map)))
+(defmethod a/queries :pkg/mas [_ _] #{[:mas :installed]})
 
-(defmethod a/check :pkg/mas [_ key opts _facts]
+(defmethod a/check :pkg/mas [_ _key opts facts]
   (let [app-id (if (map? opts) (:id opts) opts)
-        installed @*installed-cache*]
+        installed (f/value facts [:mas :installed])]
     (if (contains? installed app-id)
       o/satisfied
       (o/drift :missing))))
