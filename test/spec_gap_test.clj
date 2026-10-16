@@ -8,7 +8,6 @@
             [clojure.string :as str]
             [babashka.fs :as fs]
             [actions :as a]
-            [actions.osx :as osx]
             [execute :as e]
             [graph :as g]
             [outcome :as o]
@@ -98,11 +97,11 @@
 
 (deftest defaults-complex-values-compared-test
   (testing "array and dict values participate in drift detection"
-    (let [result (binding [osx/*read-domain* (constantly nil)]
-                   (a/check :osx/defaults :spec-gap
-                            {:domain "com.syn.spec-gap.nonexistent"
-                             :settings {:complex-array [1 2 3]
-                                        :complex-dict {:a 1}}} {}))]
+    (let [result (a/check :osx/defaults :spec-gap
+                          {:domain "com.syn.spec-gap.nonexistent"
+                           :settings {:complex-array [1 2 3]
+                                      :complex-dict {:a 1}}}
+                          (support/facts-of {[:osx :domain "com.syn.spec-gap.nonexistent"] nil}))]
       (is (o/drift? result)
           "complex values are skipped by the comparison, so a nonexistent domain checks as satisfied"))))
 
