@@ -49,7 +49,7 @@
         ;; updated by syn — surface that in the plan report.
         (assoc o/satisfied :message "no ref declared — repo is never updated")))))
 
-(defmethod a/install! :git/clone [_ opts items]
+(defmethod a/install! :git/clone [_ opts items _facts]
   (d/section "Cloning git repos"
     (map (fn [[target {:keys [url ref]}]]
            (let [expanded (u/expand-tilde target)

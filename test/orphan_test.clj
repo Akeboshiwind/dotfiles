@@ -133,7 +133,7 @@
   (testing ":pkg/brew-uninstall runs brew uninstall for each item plus autoremove"
     (let [calls (atom [])]
       (with-redefs [a/exec! (mock-exec! calls)]
-        (a/install! :pkg/brew-uninstall {} {"wget" {} "curl" {}}))
+        (a/install! :pkg/brew-uninstall {} {"wget" {} "curl" {}} {}))
       (is (some #(= ["brew" "uninstall" "wget"] %) @calls))
       (is (some #(= ["brew" "uninstall" "curl"] %) @calls))
       (is (some #(= ["brew" "autoremove"] %) @calls))))
@@ -145,7 +145,7 @@
   (testing ":pkg/bbin-uninstall runs bbin uninstall for each item"
     (let [calls (atom [])]
       (with-redefs [a/exec! (mock-exec! calls)]
-        (a/install! :pkg/bbin-uninstall {} {:neil {}}))
+        (a/install! :pkg/bbin-uninstall {} {:neil {}} {}))
       (is (some #(= ["bbin" "uninstall" "neil"] %) @calls))))
 
   (testing ":pkg/bbin-uninstall requires [:complete :pkg/bbin]"
@@ -155,7 +155,7 @@
   (testing ":pkg/mise-uninstall runs mise uninstall for each item"
     (let [calls (atom [])]
       (with-redefs [a/exec! (mock-exec! calls)]
-        (a/install! :pkg/mise-uninstall {} {:python {}}))
+        (a/install! :pkg/mise-uninstall {} {:python {}} {}))
       (is (some #(= ["mise" "uninstall" "python"] %) @calls))))
 
   (testing ":pkg/mise-uninstall requires [:complete :pkg/mise]"
@@ -165,7 +165,7 @@
   (testing ":pkg/mas-uninstall runs mas uninstall for each item"
     (let [calls (atom [])]
       (with-redefs [a/exec! (mock-exec! calls)]
-        (a/install! :pkg/mas-uninstall {} {497799835 {}}))
+        (a/install! :pkg/mas-uninstall {} {497799835 {}} {}))
       (is (some #(= ["mas" "uninstall" "497799835"] %) @calls))))
 
   (testing ":pkg/mas-uninstall requires [:complete :pkg/mas]"

@@ -52,7 +52,7 @@
       :else
       (o/drift :missing))))
 
-(defmethod a/install! :pkg/script [_ opts items]
+(defmethod a/install! :pkg/script [_ opts items _facts]
   (d/section "Running scripts"
     (map (fn [[script-name {:keys [path src env] :as script-opts}]]
            (let [cmd (cond

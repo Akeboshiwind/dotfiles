@@ -122,13 +122,14 @@
 (defmulti install!
   "Install items of a given action type.
    Dispatches on action type keyword (e.g. :pkg/brew).
-   Receives [type opts items] where:
+   Receives [type opts items facts] where:
    - type: action keyword
    - opts: execution options
-   - items: map of {name item-opts}"
-  (fn [type _opts _items] type))
+   - items: map of {name item-opts}
+   - facts: a facts snapshot (see facts.clj)"
+  (fn [type _opts _items _facts] type))
 
-(defmethod install! :default [type _opts _items]
+(defmethod install! :default [type _opts _items _facts]
   (println "Warning: no install! implementation for" type))
 
 ;; =============================================================================
@@ -177,7 +178,7 @@
 
 (defn do-install!
   "Call install! and validate each result. Single call site for executing actions."
-  [action-type opts items]
-  (let [results (install! action-type opts items)]
+  [action-type opts items facts]
+  (let [results (install! action-type opts items facts)]
     (run! #(validate-result! action-type %) results)
     results))

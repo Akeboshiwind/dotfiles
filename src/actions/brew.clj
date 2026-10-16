@@ -305,7 +305,7 @@
           {:exit 0 :err nil}
           cmds))
 
-(defmethod a/install! :pkg/brew [type opts items]
+(defmethod a/install! :pkg/brew [type opts items _facts]
   (d/section "Installing brew packages"
     (map (fn [[pkg item-opts]]
            (let [{:keys [exit err]} (run-commands! opts (install-commands (name pkg) item-opts))]
@@ -319,7 +319,7 @@
 
 (defmethod a/requires :pkg/brew-uninstall [_] [:complete :pkg/brew])
 
-(defmethod a/install! :pkg/brew-uninstall [type opts items]
+(defmethod a/install! :pkg/brew-uninstall [type opts items _facts]
   (let [results (d/section "Uninstalling brew orphans"
                   (map (fn [[pkg _]]
                          (let [pkg-name (if (keyword? pkg) (name pkg) (str pkg))
@@ -344,12 +344,12 @@
 (defmethod a/check :brew/untap [_ key opts _facts]
   (o/drift :orphan))
 
-(defmethod a/install! :brew/untap [type opts items]
+(defmethod a/install! :brew/untap [type opts items _facts]
   (a/simple-install type opts "Removing orphaned brew taps"
     (fn [tap _] ["brew" "untap" (name tap)])
     items))
 
-(defmethod a/install! :brew/service [type opts items]
+(defmethod a/install! :brew/service [type opts items _facts]
   (a/simple-install type opts "Starting brew services"
     (fn [svc {:keys [restart sudo]}]
       (let [cmd (if restart

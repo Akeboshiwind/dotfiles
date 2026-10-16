@@ -74,14 +74,14 @@
                      (:tool opts)        (conj "--tool"))]
     (into base-cmd opts-flags)))
 
-(defmethod a/install! :pkg/bbin [type opts items]
+(defmethod a/install! :pkg/bbin [type opts items _facts]
   (a/simple-install type opts "Installing bbin packages" build-cmd items))
 
 ;; -- Uninstall orphans
 
 (defmethod a/requires :pkg/bbin-uninstall [_] [:complete :pkg/bbin])
 
-(defmethod a/install! :pkg/bbin-uninstall [type opts items]
+(defmethod a/install! :pkg/bbin-uninstall [type opts items _facts]
   (a/simple-install type opts "Uninstalling bbin orphans"
     (fn [pkg _] ["bbin" "uninstall" (name pkg)])
     items))

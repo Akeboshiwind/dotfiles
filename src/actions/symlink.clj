@@ -120,11 +120,11 @@
             {:action [:fs/symlink target-str] :label target-str :status :ok}
             {:action [:fs/symlink target-str] :label target-str :status :error}))))))
 
-(defmethod a/install! :fs/unlink [_ _opts items]
+(defmethod a/install! :fs/unlink [_ _opts items _facts]
   (when (seq items)
     (d/section "Cleaning stale symlinks"
                (map (fn [[target source]] (unlink-one target source)) items))))
 
-(defmethod a/install! :fs/symlink [_ opts items]
+(defmethod a/install! :fs/symlink [_ opts items _facts]
   (d/section "Creating symlinks"
              (map (fn [[target source]] (link-one opts target source)) items)))

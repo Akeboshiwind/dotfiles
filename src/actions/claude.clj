@@ -104,13 +104,13 @@
           o/satisfied))
       (o/drift :missing))))
 
-(defmethod a/install! :claude/marketplace [type opts items]
+(defmethod a/install! :claude/marketplace [type opts items _facts]
   (a/simple-install type opts "Adding Claude marketplaces"
     (fn [marketplace-name {:keys [source]}]
       ["claude" "plugin" "marketplace" "add" (or source (name marketplace-name))])
     items))
 
-(defmethod a/install! :claude/plugin [type opts items]
+(defmethod a/install! :claude/plugin [type opts items _facts]
   (a/simple-install type opts "Installing Claude plugins"
     (fn [plugin _item-opts]
       (let [n (name plugin)]
@@ -147,6 +147,6 @@
            :status (if (zero? exit) :ok :error)
            :message err})))))
 
-(defmethod a/install! :claude/mcp [_ opts items]
+(defmethod a/install! :claude/mcp [_ opts items _facts]
   (d/section "Adding Claude MCP servers"
              (map (fn [[server-name item-opts]] (add-mcp opts server-name item-opts)) items)))

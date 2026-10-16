@@ -57,7 +57,7 @@
 (defmethod a/check :uv/tool-uninstall [_ _key _opts _facts]
   (o/drift :orphan))
 
-(defmethod a/install! :uv/tool [type opts items]
+(defmethod a/install! :uv/tool [type opts items _facts]
   (a/simple-install type opts "Installing uv tools"
     (fn [pkg item-opts]
       (let [pkg-name (name pkg)
@@ -70,7 +70,7 @@
 
 (defmethod a/requires :uv/tool-uninstall [_] [:complete :uv/tool])
 
-(defmethod a/install! :uv/tool-uninstall [type opts items]
+(defmethod a/install! :uv/tool-uninstall [type opts items _facts]
   (a/simple-install type opts "Uninstalling uv tool orphans"
     (fn [pkg _] ["uv" "tool" "uninstall" (name pkg)])
     items))

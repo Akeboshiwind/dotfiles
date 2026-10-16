@@ -171,7 +171,7 @@
                 :pkg/brew {:neovim {} :ripgrep {} :wget {}}}
           ag (build-and-check plan)]
       (with-redefs [a/exec! (mock-exec! (atom []) (constantly false))
-                    a/do-install! (fn [type opts items]
+                    a/do-install! (fn [type opts items _facts]
                                     (swap! install-calls conj {:type type :items items})
                                     (mapv (fn [[k _]]
                                             {:action [type k]
@@ -200,7 +200,7 @@
                            :d {:dep/requires #{:test/mid}}}}
           ag (build-and-check plan)]
       (with-redefs [a/exec! (mock-exec! (atom []) (constantly false))
-                    a/do-install! (fn [type opts items]
+                    a/do-install! (fn [type opts items _facts]
                                     (swap! install-calls conj {:type type :items items})
                                     (mapv (fn [[k _]]
                                             {:action [type k]

@@ -97,7 +97,7 @@
       (into args)
       (conj (name pkg))))
 
-(defmethod a/install! :pkg/npm [type opts items]
+(defmethod a/install! :pkg/npm [type opts items _facts]
   (a/simple-install type opts "Installing npm packages"
     install-cmd
     items))
@@ -106,7 +106,7 @@
 
 (defmethod a/requires :pkg/npm-uninstall [_] [:complete :pkg/npm])
 
-(defmethod a/install! :pkg/npm-uninstall [type opts items]
+(defmethod a/install! :pkg/npm-uninstall [type opts items _facts]
   (a/simple-install type opts "Uninstalling npm orphans"
     (fn [pkg _] ["npm" "uninstall" "-g" (name pkg)])
     items))

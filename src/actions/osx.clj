@@ -132,7 +132,7 @@
           o/satisfied
           (settings-of opts)))
 
-(defmethod a/install! :osx/defaults [_ opts items]
+(defmethod a/install! :osx/defaults [_ opts items _facts]
   (d/section "Setting OSX defaults"
              (for [[config-name cfg] items
                    :let [domain (:domain cfg)

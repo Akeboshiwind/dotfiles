@@ -131,7 +131,7 @@
                 brew/*casks-cache* (delay #{})
                 brew/*trusted-cache* no-trust]
         (with-redefs [a/exec! (mock-exec! calls)]
-          (a/install! :pkg/brew {} {"borkdude/brew/babashka" {:trust true}})))
+          (a/install! :pkg/brew {} {"borkdude/brew/babashka" {:trust true}} {})))
       (let [trust-idx (.indexOf @calls ["brew" "trust" "--formula" "borkdude/brew/babashka"])
             install-idx (.indexOf @calls ["brew" "install" "borkdude/brew/babashka"])]
         (is (nat-int? trust-idx) "grants trust per formula, never the whole tap")
@@ -145,7 +145,7 @@
                 brew/*casks-cache* (delay #{})
                 brew/*trusted-cache* no-trust]
         (with-redefs [a/exec! (mock-exec! calls)]
-          (a/install! :pkg/brew {} {"borkdude/brew/babashka" {:trust true}})))
+          (a/install! :pkg/brew {} {"borkdude/brew/babashka" {:trust true}} {})))
       (is (nat-int? (.indexOf @calls ["brew" "trust" "--formula" "borkdude/brew/babashka"])))
       (is (neg? (.indexOf @calls ["brew" "install" "borkdude/brew/babashka"]))))))
 
@@ -156,7 +156,7 @@
                 brew/*casks-cache* (delay #{})
                 brew/*trusted-cache* (delay {:formulae #{"borkdude/brew/babashka"} :taps #{}})]
         (with-redefs [a/exec! (mock-exec! calls)]
-          (a/install! :pkg/brew {} {"borkdude/brew/babashka" {}})))
+          (a/install! :pkg/brew {} {"borkdude/brew/babashka" {}} {})))
       (is (nat-int? (.indexOf @calls ["brew" "untrust" "--formula" "borkdude/brew/babashka"])))
       (is (neg? (.indexOf @calls ["brew" "install" "borkdude/brew/babashka"]))))))
 
@@ -167,7 +167,7 @@
                 brew/*casks-cache* (delay #{})
                 brew/*trusted-cache* (delay {:formulae #{"borkdude/brew/babashka"} :taps #{}})]
         (with-redefs [a/exec! (mock-exec! calls)]
-          (a/install! :pkg/brew {} {"borkdude/brew/babashka" {:trust true}})))
+          (a/install! :pkg/brew {} {"borkdude/brew/babashka" {:trust true}} {})))
       (is (= [["brew" "install" "borkdude/brew/babashka"]] @calls))))
 
   (testing "official item never gets trust commands, even with a stray :trust"
@@ -176,7 +176,7 @@
                 brew/*casks-cache* (delay #{})
                 brew/*trusted-cache* no-trust]
         (with-redefs [a/exec! (mock-exec! calls)]
-          (a/install! :pkg/brew {} {:neovim {:trust true}})))
+          (a/install! :pkg/brew {} {:neovim {:trust true}} {})))
       (is (= [["brew" "install" "neovim"]] @calls)))))
 
 ;; =============================================================================
@@ -188,7 +188,7 @@
     (let [calls (atom [])]
       (binding [brew/*trusted-cache* (delay {:formulae #{"babashka/brew/bbin"} :taps #{}})]
         (with-redefs [a/exec! (mock-exec! calls)]
-          (a/install! :pkg/brew-uninstall {} {"babashka/brew/bbin" {}})))
+          (a/install! :pkg/brew-uninstall {} {"babashka/brew/bbin" {}} {})))
       (is (nat-int? (.indexOf @calls ["brew" "untrust" "--formula" "babashka/brew/bbin"])))
       (is (nat-int? (.indexOf @calls ["brew" "uninstall" "babashka/brew/bbin"])))))
 
@@ -196,7 +196,7 @@
     (let [calls (atom [])]
       (binding [brew/*trusted-cache* no-trust]
         (with-redefs [a/exec! (mock-exec! calls)]
-          (a/install! :pkg/brew-uninstall {} {"wget" {}})))
+          (a/install! :pkg/brew-uninstall {} {"wget" {}} {})))
       (is (not-any? #(= "untrust" (second %)) @calls)))))
 
 ;; =============================================================================
@@ -226,7 +226,7 @@
   (testing ":brew/untap removes the tap"
     (let [calls (atom [])]
       (with-redefs [a/exec! (mock-exec! calls)]
-        (a/install! :brew/untap {} {"oven-sh/bun" {}}))
+        (a/install! :brew/untap {} {"oven-sh/bun" {}} {}))
       (is (some #(= ["brew" "untap" "oven-sh/bun"] %) @calls))))
 
   (testing ":brew/untap orders within the brew family"

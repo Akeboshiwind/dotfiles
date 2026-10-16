@@ -42,7 +42,7 @@
         (:instructions opts) (assoc :detail (:instructions opts))))
     (o/error "Either :path, :src, or :clj required")))
 
-(defmethod a/install! :assert [_ opts items]
+(defmethod a/install! :assert [_ opts items _facts]
   (d/section "Checking assertions"
     (map (fn [[k {:keys [message instructions] :as cfg}]]
            (if (run-check cfg)

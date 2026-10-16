@@ -21,7 +21,7 @@
   [ag cancelled type items]
   (if (empty? items)
     ag
-    (let [results (a/do-install! type {} items)
+    (let [results (a/do-install! type {} items {})
           result-by-action (into {} (map (fn [r] [(:action r) r])) results)]
       (reduce (fn [g [key _]]
                 (let [ref [type key]

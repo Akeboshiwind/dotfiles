@@ -55,7 +55,7 @@
 (defmethod a/check :pkg/mas-uninstall [_ key opts _facts]
   (o/drift :orphan))
 
-(defmethod a/install! :pkg/mas [type opts items]
+(defmethod a/install! :pkg/mas [type opts items _facts]
   (a/simple-install type opts "Installing Mac App Store apps"
     (fn [app-name _] (name app-name))
     (fn [_app-name app-opts]
@@ -67,7 +67,7 @@
 
 (defmethod a/requires :pkg/mas-uninstall [_] [:complete :pkg/mas])
 
-(defmethod a/install! :pkg/mas-uninstall [type opts items]
+(defmethod a/install! :pkg/mas-uninstall [type opts items _facts]
   (a/simple-install type opts "Uninstalling Mac App Store orphans"
     (fn [app-id opts] (or (:name opts) (str app-id)))
     (fn [app-id _] ["mas" "uninstall" (str (if (keyword? app-id) (name app-id) app-id))])
