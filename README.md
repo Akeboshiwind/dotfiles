@@ -17,7 +17,8 @@ Babashka-based dotfile manager. Installs packages and symlinks config files via 
 1. Create macOS account and sign into Mac App Store (so [mas](https://github.com/mas-cli/mas) works)
 2. Clone this repo to `~/dotfiles`
 3. Install prerequisites: [Homebrew](https://brew.sh), then `brew install temurin borkdude/brew/babashka git-crypt`
-4. Unlock secrets: `git-crypt unlock` (requires GPG key)
+4. Unlock secrets: `git-crypt unlock` (requires GPG key).
+   `syn --apply` then points the git-crypt filters at the shared key so git worktrees can use it; `unlock` resets them, so re-run `syn --apply` after any later unlock.
 5. Run `~/dotfiles/cfg/bin/bin/syn`
 
 ## Usage
