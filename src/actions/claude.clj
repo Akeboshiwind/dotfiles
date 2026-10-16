@@ -21,8 +21,6 @@
 (defn- installed-plugins []
   (or (:plugins (read-json "/.claude/plugins/installed_plugins.json")) {}))
 
-(def ^:private ^:dynamic *plugin-cache* (delay (installed-plugins)))
-
 (defmethod a/queries :claude/mcp [_ _] #{[:claude :mcp]})
 
 (defmethod a/check :claude/mcp [_ key {:keys [scope] :or {scope "user"}} facts]
@@ -110,13 +108,15 @@
       ["claude" "plugin" "marketplace" "add" (or source (name marketplace-name))])
     items))
 
-(defmethod a/install! :claude/plugin [type opts items _facts]
+(defmethod a/install-queries :claude/plugin [_ _] #{[:claude :plugins]})
+
+(defmethod a/install! :claude/plugin [type opts items facts]
   (a/simple-install type opts "Installing Claude plugins"
     (fn [plugin _item-opts]
       (let [n (name plugin)]
         ;; Outdated plugins are already installed — update instead of install.
         ;; update requires the marketplace-qualified id; the bare name is "not found".
-        (if-let [[plugin-id _] (installed-plugin-entry @*plugin-cache* n)]
+        (if-let [[plugin-id _] (installed-plugin-entry (f/value facts [:claude :plugins]) n)]
           ["claude" "plugin" "update" plugin-id]
           ["claude" "plugin" "install" n])))
     items))
