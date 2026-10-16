@@ -197,48 +197,48 @@
 
 (deftest script-check-no-check-key-test
   (testing "script without :check key → unknown"
-    (is (o/unknown? (a/check :pkg/script :setup {:src "echo hello"} {})))))
+    (is (o/unknown? (support/check-live :pkg/script :setup {:src "echo hello"})))))
 
 (deftest script-check-with-check-passes-test
   (testing "script with :check that passes → satisfied"
-    (is (o/satisfied? (a/check :pkg/script :setup {:src "echo hello" :check {:src "exit 0"}} {})))))
+    (is (o/satisfied? (support/check-live :pkg/script :setup {:src "echo hello" :check {:src "exit 0"}})))))
 
 (deftest script-check-content-changed-test
   (testing "DOTFILES_CONTENT_CHANGED=true when no cached record"
     (reset! a/*cache* {})
     (is (o/satisfied?
-          (a/check :pkg/script :test-script
+          (support/check-live :pkg/script :test-script
                    {:src "echo ok"
-                    :check {:src "test \"$DOTFILES_CONTENT_CHANGED\" = \"true\""}} {}))))
+                    :check {:src "test \"$DOTFILES_CONTENT_CHANGED\" = \"true\""}}))))
 
   (testing "DOTFILES_CONTENT_CHANGED=false when content unchanged"
     (let [content "echo ok"
           record (c/script-record content)]
       (reset! a/*cache* {:scripts {"test-script" record}})
       (is (o/satisfied?
-            (a/check :pkg/script :test-script
+            (support/check-live :pkg/script :test-script
                      {:src content
-                      :check {:src "test \"$DOTFILES_CONTENT_CHANGED\" = \"false\""}} {})))))
+                      :check {:src "test \"$DOTFILES_CONTENT_CHANGED\" = \"false\""}})))))
 
   (testing "DOTFILES_CONTENT_CHANGED=true when content changed"
     (let [old-record (c/script-record "old content")]
       (reset! a/*cache* {:scripts {"test-script" old-record}})
       (is (o/satisfied?
-            (a/check :pkg/script :test-script
+            (support/check-live :pkg/script :test-script
                      {:src "new content"
-                      :check {:src "test \"$DOTFILES_CONTENT_CHANGED\" = \"true\""}} {})))
+                      :check {:src "test \"$DOTFILES_CONTENT_CHANGED\" = \"true\""}})))
       ;; Clean up
       (reset! a/*cache* nil))))
 
 (deftest script-check-with-check-fails-test
   (testing "script with :check that fails → drift(:missing)"
-    (let [result (a/check :pkg/script :setup {:src "echo hello" :check {:src "exit 1"}} {})]
+    (let [result (support/check-live :pkg/script :setup {:src "echo hello" :check {:src "exit 1"}})]
       (is (o/drift? result))
       (is (= :missing (:kind result))))))
 
 (deftest script-check-no-script-test
   (testing "no :path or :src → error"
-    (is (o/error? (a/check :pkg/script :setup {} {})))))
+    (is (o/error? (support/check-live :pkg/script :setup {})))))
 
 ;; =============================================================================
 ;; :pkg/mise check
