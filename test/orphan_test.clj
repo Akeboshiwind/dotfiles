@@ -3,7 +3,6 @@
             [clojure.string :as str]
             [actions :as a]
             [actions.brew :as brew]
-            [actions.bbin :as bbin]
             [actions.mise :as mise]
             [actions.mas :as mas]
             [graph :as g]
@@ -97,13 +96,6 @@
                                {"babashka/brew/bbin" {} :neovim {}})]
       (is (= {"wget" {}} result)))))
 
-(deftest bbin-orphans-test
-  (testing "script not in manifest is orphaned"
-    (is (= {:neil {}} (bbin/orphans #{"jet" "neil"} {:jet {}}))))
-
-  (testing "no orphans"
-    (is (empty? (bbin/orphans #{"jet"} {:jet {}})))))
-
 (deftest mise-orphans-test
   (testing "tool not in manifest is orphaned"
     (is (= {:python {}} (mise/orphans {"node" #{"20"} "python" #{"3.12"}} {:node {:version "20"}}))))
@@ -141,16 +133,6 @@
   (testing ":pkg/brew-uninstall requires [:complete :pkg/brew]"
     (is (= [:complete :pkg/brew] (a/requires :pkg/brew-uninstall)))))
 
-(deftest bbin-uninstall-action-test
-  (testing ":pkg/bbin-uninstall runs bbin uninstall for each item"
-    (let [calls (atom [])]
-      (with-redefs [a/exec! (mock-exec! calls)]
-        (a/install! :pkg/bbin-uninstall {} {:neil {}} {}))
-      (is (some #(= ["bbin" "uninstall" "neil"] %) @calls))))
-
-  (testing ":pkg/bbin-uninstall requires [:complete :pkg/bbin]"
-    (is (= [:complete :pkg/bbin] (a/requires :pkg/bbin-uninstall)))))
-
 (deftest mise-uninstall-action-test
   (testing ":pkg/mise-uninstall runs mise uninstall for each item"
     (let [calls (atom [])]
@@ -184,26 +166,26 @@
   ;; (methods a/orphans), so it cannot be with-redefs'd to a plain fn — mock
   ;; the per-type helpers the implementations call instead.
   (testing "build! adds uninstall actions from a/orphans to plan"
-    (let [entries [{:step {:pkg/script {:bbin-bootstrap {:src "echo ok" :dep/provides #{:pkg/bbin}}}
-                           :pkg/bbin {:jet {}}}}
+    (let [entries [{:step {:pkg/script {:homebrew {:src "echo ok" :dep/provides #{:pkg/brew}}}
+                           :pkg/brew {:jq {}}}}
                    :source "/test"]
-          ;; Only bbin's orphan detection runs; it sees "neil" as undeclared
-          result (with-redefs [u/command-exists? (fn [cmd] (= cmd "bbin"))
-                               bbin/installed-set (fn [] #{"jet" "neil"})]
+          ;; Only brew's orphan detection runs; it sees "wget" as undeclared
+          result (with-redefs [u/command-exists? (fn [cmd] (= cmd "brew"))
+                               brew/leaves-set (fn [] #{"jq" "wget"})
+                               brew/installed-set-full (fn [_] #{})
+                               brew/installed-taps (fn [] #{})]
                    (p/build! entries {} nil))]
-      ;; neil should appear as :pkg/bbin-uninstall in the plan
-      (is (= {:neil {}} (get-in result [:plan :pkg/bbin-uninstall])))
-      ;; uninstall should be in the ActionGraph order
+      (is (= {"wget" {}} (get-in result [:plan :pkg/brew-uninstall])))
       (let [ag (g/build-action-graph (:plan result))]
-        (is (some #{[:pkg/bbin-uninstall :neil]} (:order ag))))))
+        (is (some #{[:pkg/brew-uninstall "wget"]} (:order ag))))))
 
   (testing "build! does not add uninstall actions when no orphans"
-    (let [entries [{:step {:pkg/script {:bbin-bootstrap {:src "echo ok" :dep/provides #{:pkg/bbin}}}
-                           :pkg/bbin {:jet {}}}}
+    (let [entries [{:step {:pkg/script {:homebrew {:src "echo ok" :dep/provides #{:pkg/brew}}}
+                           :pkg/brew {:jq {}}}}
                    :source "/test"]
           result (with-redefs [u/command-exists? (constantly false)]
                    (p/build! entries {} nil))]
-      (is (nil? (get-in result [:plan :pkg/bbin-uninstall]))))))
+      (is (nil? (get-in result [:plan :pkg/brew-uninstall]))))))
 
 (deftest uninstall-ordering-test
   (testing "uninstall actions sort after their install counterparts ([:complete type] dep)"
@@ -219,7 +201,7 @@
 
 (deftest orphan-types-for-scope-test
   (testing "an unscoped run detects orphans for every type that has detection"
-    (is (= #{:pkg/brew :pkg/mise :pkg/npm :pkg/mas :pkg/bbin}
+    (is (= #{:pkg/brew :pkg/mise :pkg/npm :pkg/mas}
            (set (p/orphan-types-for nil)))))
   (testing "a scoped run detects only the orphans it could act on"
     (is (empty? (p/orphan-types-for :fs/symlink)))

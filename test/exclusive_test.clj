@@ -22,6 +22,17 @@
   (testing "no uv, no extras"
     (is (= [] (a/extras :uv/tool #{} (support/facts-of {[:command "uv"] false}))))))
 
+(deftest bbin-extras-test
+  (testing "installed but undeclared bbin scripts are extras"
+    (is (= [{:name "neil"}]
+           (a/extras :pkg/bbin #{"jet"} (support/facts-of {[:command "bbin"] true
+                                                           [:bbin :installed] #{"jet" "neil"}})))))
+  (testing "removing them runs bbin uninstall for each"
+    (let [calls (atom [])]
+      (with-redefs [a/exec! (fn [_ args] (swap! calls conj args) {:exit 0 :err nil})]
+        (with-out-str (a/remove-extras! :pkg/bbin {} [{:name "neil"}] {})))
+      (is (= [["bbin" "uninstall" "neil"]] @calls)))))
+
 (deftest exclusive-check-test
   (testing "extras are the node's drift"
     (let [result (a/check :syn/exclusive :uv/tool {} (support/facts-of uv-facts))]

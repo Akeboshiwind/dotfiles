@@ -20,27 +20,16 @@
          (map name)
          set)))
 
-(defn orphans
-  "Find bbin scripts installed but not declared."
-  [installed-names declared-items]
-  (let [declared (into #{} (map (comp name key)) declared-items)]
-    (->> installed-names
-         (remove declared)
-         (map (fn [n] [(keyword n) {}]))
-         (into {}))))
-
 (defmethod a/run-query :bbin [[_ what]]
   (case what
     :installed (installed-set)))
 
-(defmethod a/orphan-queries :pkg/bbin [_ _]
-  #{[:command "bbin"] [:bbin :installed]})
+(defmethod a/extras-queries :pkg/bbin [_] #{[:command "bbin"] [:bbin :installed]})
 
-(defmethod a/orphans :pkg/bbin [_ declared facts]
-  (when (f/value facts [:command "bbin"])
-    (let [result (orphans (f/value facts [:bbin :installed]) declared)]
-      (when (seq result)
-        {:pkg/bbin-uninstall result}))))
+(defmethod a/extras :pkg/bbin [_ declared facts]
+  (if (f/value facts [:command "bbin"])
+    (->> (f/value facts [:bbin :installed]) (remove declared) sort (mapv (fn [n] {:name n})))
+    []))
 
 (defmethod a/queries :pkg/bbin [_ _] #{[:bbin :installed]})
 
@@ -49,9 +38,6 @@
     (if (contains? installed (name key))
       o/satisfied
       (o/drift :missing))))
-
-(defmethod a/check :pkg/bbin-uninstall [_ key opts _facts]
-  (o/drift :orphan))
 
 (defn- build-cmd [pkg opts]
   (let [pkg-name (name pkg)
@@ -77,11 +63,7 @@
 (defmethod a/install! :pkg/bbin [type opts items _facts]
   (a/simple-install type opts "Installing bbin packages" build-cmd items))
 
-;; -- Uninstall orphans
-
-(defmethod a/requires :pkg/bbin-uninstall [_] [:complete :pkg/bbin])
-
-(defmethod a/install! :pkg/bbin-uninstall [type opts items _facts]
-  (a/simple-install type opts "Uninstalling bbin orphans"
-    (fn [pkg _] ["bbin" "uninstall" (name pkg)])
-    items))
+(defmethod a/remove-extras! :pkg/bbin [type opts extras _facts]
+  (a/simple-install type opts "Uninstalling bbin scripts"
+    (fn [pkg _] ["bbin" "uninstall" pkg])
+    (into {} (map (fn [{n :name}] [n {}])) extras)))
