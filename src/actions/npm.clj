@@ -69,6 +69,8 @@
   "Packages that ship with Node; npm needs them, so they are never extras."
   #{"npm" "corepack"})
 
+(defmethod a/manifest :pkg/npm [_] {:syn/exclusive {:pkg/npm {}}})
+
 (defmethod a/extras-queries :pkg/npm [_] #{[:command "npm"] [:npm :installed]})
 
 (defmethod a/extras :pkg/npm [_ declared facts]

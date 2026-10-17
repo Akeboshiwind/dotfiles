@@ -229,6 +229,8 @@
     :casks-full (installed-set-full :cask)
     :taps (installed-taps)))
 
+(defmethod a/manifest :pkg/brew [_] {:syn/exclusive {:pkg/brew {}}})
+
 (defmethod a/extras-queries :pkg/brew [_]
   #{[:command "brew"] [:brew :leaves] [:brew :casks-full] [:brew :taps]})
 

@@ -1,5 +1,6 @@
 (ns manifest
-  (:require [clojure.edn :as edn]
+  (:require [actions :as a]
+            [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [babashka.fs :as fs]))
@@ -100,21 +101,22 @@
   []
   (str (fs/canonicalize ".")))
 
-(defn exclusive-entry
-  "The plan entry for the managers declared exclusive: one :syn/exclusive node
-   per manager, run after all of that manager's installs. nil for none."
-  [managers]
-  (when-not (or (nil? managers) (set? managers))
-    (throw (ex-info ":syn/exclusive must be a set of managers" {:value managers})))
-  (when (seq managers)
-    {:step {:syn/exclusive (into {} (map (fn [m] [m {:dep/requires #{[:complete m]}}])) managers)}
-     :source nil}))
+(defn plugin-entries
+  "One entry per action plugin that contributes a manifest fragment, marked
+   with the plugin's type: [{:step map :source nil :plugin type} ...]."
+  []
+  ((requiring-resolve 'registry/ensure-loaded!))
+  (->> (keys (methods a/manifest))
+       (remove #{:default})
+       (sort-by str)
+       (keep (fn [t] (when-let [fragment (a/manifest t)]
+                       {:step fragment :source nil :plugin t})))
+       vec))
 
 (defn load-manifest
-  "Load plan from manifest.edn, resolving all entries.
-   Returns [{:step map :source string-or-nil} ...]."
+  "Load plan from manifest.edn, resolving all entries, followed by the
+   plugins' fragments. Returns [{:step map :source string-or-nil} ...], with
+   :plugin on the plugin entries."
   []
-  (let [{:keys [plan] :as root-manifest} (edn/read-string {:readers edn-readers} (slurp "manifest.edn"))
-        exclusive (exclusive-entry (:syn/exclusive root-manifest))]
-    (cond-> (mapv resolve-entry plan)
-      exclusive (conj exclusive))))
+  (let [{:keys [plan]} (edn/read-string {:readers edn-readers} (slurp "manifest.edn"))]
+    (into (mapv resolve-entry plan) (plugin-entries))))

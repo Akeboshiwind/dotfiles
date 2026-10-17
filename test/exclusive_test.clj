@@ -6,6 +6,7 @@
             [graph :as g]
             [manifest :as m]
             [outcome :as o]
+            [plan :as p]
             [registry]
             [support]))
 
@@ -113,14 +114,42 @@
   (testing "declining removes nothing"
     (is (nil? (:removed (apply-uv {:tty? true :answer "n" :shown [{:name "ruff"}]}))))))
 
-(deftest exclusive-entry-test
-  (testing "one node per exclusive manager, after that manager's installs"
-    (is (= {:syn/exclusive {:uv/tool {:dep/requires #{[:complete :uv/tool]}}}}
-           (:step (m/exclusive-entry #{:uv/tool})))))
-  (testing "nothing declared exclusive adds nothing"
-    (is (nil? (m/exclusive-entry nil))))
-  (testing "anything but a set is rejected"
-    (is (thrown? clojure.lang.ExceptionInfo (m/exclusive-entry {:uv/tool {}})))))
+(defn- plugin [type step] {:step step :source nil :plugin type})
+(defn- module [source step] {:step step :source source})
+
+(deftest plugin-fragments-test
+  (testing "every manager that defines extras declares itself exclusive"
+    (is (= #{:pkg/brew :pkg/npm :pkg/mise :pkg/mas :uv/tool :pkg/bbin}
+           (set (keys (apply merge (map (comp :syn/exclusive :step) (m/plugin-entries)))))))))
+
+(deftest merge-layers-test
+  (testing "an exclusive manager becomes a node that runs after its installs"
+    (is (= {:uv/tool {:dep/requires #{[:complete :uv/tool]}}}
+           (:syn/exclusive (:merged (p/merge-layers [(plugin :uv/tool {:syn/exclusive {:uv/tool {}}})]))))))
+
+  (testing "the manifest opts a manager out with false"
+    (let [{:keys [merged errors]} (p/merge-layers [(module "cfg/x" {:syn/exclusive {:pkg/mas false}})
+                                                   (plugin :pkg/mas {:syn/exclusive {:pkg/mas {}}})])]
+      (is (nil? (:syn/exclusive merged)))
+      (is (empty? errors) "replacing a plugin's declaration is not a duplicate")))
+
+  (testing "a manifest declaration of the same item replaces the plugin's"
+    (is (= {:jq {:head true}}
+           (:pkg/brew (:merged (p/merge-layers [(module "cfg/x" {:pkg/brew {:jq {:head true}}})
+                                                (plugin :pkg/jq {:pkg/brew {:jq {}}})]))))))
+
+  (testing "duplicates within the manifest are still errors"
+    (is (= 1 (count (:errors (p/merge-layers [(module "cfg/a" {:pkg/brew {:jq {}}})
+                                              (module "cfg/b" {:pkg/brew {:jq {}}})]))))))
+
+  (testing "duplicates between plugins are errors, labelled by plugin"
+    (is (= ["plugin pkg/a" "plugin pkg/b"]
+           (:sources (first (:errors (p/merge-layers [(plugin :pkg/a {:pkg/brew {:jq {}}})
+                                                      (plugin :pkg/b {:pkg/brew {:jq {}}})])))))))
+
+  (testing "anything but a map or false is rejected"
+    (is (thrown? clojure.lang.ExceptionInfo
+                 (p/merge-layers [(module "cfg/x" {:syn/exclusive {:pkg/brew true}})])))))
 
 (deftest exclusive-scope-test
   (testing "a scope on a manager includes its exclusive node; other scopes don't"

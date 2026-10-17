@@ -28,6 +28,8 @@
   (case what
     :installed (installed-set)))
 
+(defmethod a/manifest :uv/tool [_] {:syn/exclusive {:uv/tool {}}})
+
 (defmethod a/extras-queries :uv/tool [_] #{[:command "uv"] [:uv :installed]})
 
 (defmethod a/extras :uv/tool [_ declared facts]

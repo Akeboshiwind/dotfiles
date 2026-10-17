@@ -36,6 +36,8 @@
     :installed (installed-map)
     :outdated (outdated-map)))
 
+(defmethod a/manifest :pkg/mise [_] {:syn/exclusive {:pkg/mise {}}})
+
 (defmethod a/extras-queries :pkg/mise [_] #{[:command "mise"] [:mise :installed]})
 
 (defmethod a/extras :pkg/mise [_ declared facts]

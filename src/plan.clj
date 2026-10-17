@@ -72,6 +72,9 @@
 
 ;; >> Validate and merge steps
 
+(defn- source-label [{:keys [source plugin]}]
+  (if plugin (str "plugin " (subs (str plugin) 1)) source))
+
 (defn find-duplicate-keys
   "Find keys that appear in multiple entries within the same action type.
    Takes [{:step map :source string} ...]. Returns seq of error maps."
@@ -81,9 +84,9 @@
     (for [action-type action-types
           :let [;; Collect [key source] pairs for this action type
                 key-sources (->> entries
-                                 (mapcat (fn [{:keys [step source]}]
+                                 (mapcat (fn [{:keys [step] :as entry}]
                                            (for [k (keys (get step action-type))]
-                                             [k source])))
+                                             [k (source-label entry)])))
                                  (group-by first))
                 ;; Find keys with multiple sources
                 duplicates (->> key-sources
@@ -98,7 +101,34 @@
 (defn- merge-steps
   "Merge all step maps into a single map, combining same action types"
   [entries]
-  (apply merge-with merge (map :step entries)))
+  (apply merge-with merge {} (map :step entries)))
+
+(defn- expand-exclusive
+  "Turn the merged :syn/exclusive map {manager opts-or-false} into one node per
+   manager that runs after all of that manager's installs. false opts a
+   manager out."
+  [merged]
+  (let [declared (:syn/exclusive merged)
+        nodes (into {}
+                    (keep (fn [[manager opts]]
+                            (cond
+                              (false? opts) nil
+                              (map? opts) [manager (assoc opts :dep/requires #{[:complete manager]})]
+                              :else (throw (ex-info ":syn/exclusive values must be a map or false"
+                                                    {:manager manager :value opts})))))
+                    declared)]
+    (if (seq nodes)
+      (assoc merged :syn/exclusive nodes)
+      (dissoc merged :syn/exclusive))))
+
+(defn merge-layers
+  "Merge plugin entries beneath the user's: a user declaration of a
+   [type key] replaces a plugin's. Duplicates within a layer are errors.
+   Returns {:merged plan-map :errors [...]}."
+  [entries]
+  (let [{plugin true user false} (group-by (comp some? :plugin) entries)]
+    {:merged (expand-exclusive (merge-with merge (merge-steps plugin) (merge-steps user)))
+     :errors (concat (find-duplicate-keys user) (find-duplicate-keys plugin))}))
 
 ;; >> Calculate stale symlinks to unlink
 
@@ -127,8 +157,7 @@
   (let [processed (->> entries
                        resolve-symlink-paths!
                        expand-symlink-folders!)
-        duplicate-errors (find-duplicate-keys processed)
-        merged (merge-steps processed)
+        {:keys [merged] duplicate-errors :errors} (merge-layers processed)
         {:keys [unlinks symlinks]} (calculate-unlinks cache merged)]
     {:merged merged
      :symlinks symlinks

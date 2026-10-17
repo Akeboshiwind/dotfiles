@@ -36,7 +36,8 @@ external entity PackageManager {
     -- A package manager syn can drive: brew, mise, mas, bbin, npm, uv.
     name: String
     available: Boolean                    -- the manager's command exists on PATH
-    exclusive: Boolean                    -- the root manifest lists it in :syn/exclusive
+    exclusive: Boolean                    -- its plugin declares it exclusive, and the
+                                          -- manifest doesn't opt it out with false
     explicitly_installed: Set<String>     -- user-requested items only, not transitive dependencies
     third_party_sources: Set<String>      -- installed sources outside the manager's
                                           -- official registry (e.g. brew taps)
@@ -87,6 +88,8 @@ entity Module {
     -- or an inline declaration block.
     manifest: Manifest
     source_dir: String?                   -- null for inline entries
+    from_plugin: Boolean                  -- a fragment an action plugin contributes;
+                                          -- merged beneath the manifest's own modules
     has_escaping_source: Boolean          -- a declared relative source path resolves
                                           -- outside source_dir
 }
@@ -458,12 +461,16 @@ rule AssemblePlan {
     ensures: PlanAssembled(run)
     @guidance
         -- Declarations of the same action type from different modules are
-        -- merged into a single collection before graph construction.
+        -- merged into a single collection before graph construction. Plugin
+        -- fragments are merged first and the manifest's modules on top, so a
+        -- module's declaration of an (action type, key) replaces a plugin's.
 }
 
 rule FlagDuplicateDeclarations {
     -- The same (action type, key) declared by more than one module is a
-    -- validation error naming all declaring sources. It does not stop the
+    -- validation error naming all declaring sources. Modules are compared
+    -- with modules and plugin fragments with plugin fragments; a module
+    -- replacing a plugin's declaration is not a duplicate. It does not stop the
     -- plan from being displayed; it blocks apply.
     when: PlanAssembled(run)
     for action in run.actions where declaring_modules.count > 1:

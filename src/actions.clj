@@ -90,6 +90,14 @@
 
 (defmethod queries :default [_ _] #{})
 
+(defmulti manifest
+  "A manifest fragment this plugin contributes beneath the user's manifest, or
+   nil. The fragment is shaped like a manifest step and may name any type; the
+   user's own declaration of the same [type key] replaces it."
+  identity)
+
+(defmethod manifest :default [_] nil)
+
 (defmulti declared-identity
   "What a declared item is installed as, to compare with what its manager
    reports installed. Pure. Default: the key's name."

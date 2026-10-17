@@ -30,6 +30,8 @@
 (defmethod a/declared-identity :pkg/mas [_ _key opts]
   (str (app-id opts)))
 
+(defmethod a/manifest :pkg/mas [_] {:syn/exclusive {:pkg/mas {}}})
+
 (defmethod a/extras-queries :pkg/mas [_] #{[:command "mas"] [:mas :installed]})
 
 (defmethod a/extras :pkg/mas [_ declared facts]

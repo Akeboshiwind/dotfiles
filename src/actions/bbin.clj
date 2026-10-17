@@ -24,6 +24,8 @@
   (case what
     :installed (installed-set)))
 
+(defmethod a/manifest :pkg/bbin [_] {:syn/exclusive {:pkg/bbin {}}})
+
 (defmethod a/extras-queries :pkg/bbin [_] #{[:command "bbin"] [:bbin :installed]})
 
 (defmethod a/extras :pkg/bbin [_ declared facts]
