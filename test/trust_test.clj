@@ -13,6 +13,7 @@
             [clojure.string :as str]
             [actions :as a]
             [actions.brew :as brew]
+            [graph :as g]
             [outcome :as o]
             [utils :as u]
             [registry]
@@ -241,7 +242,7 @@
       (let [result (support/orphans-live {:pkg/brew {:neovim {}}})]
         (is (= {"oven-sh/bun" {}} (:brew/untap result))))))
 
-  (testing "orphans for types absent from the plan still get their graph dependency injected"
+  (testing "orphans for types absent from the plan form a valid graph on their own"
     (with-redefs [u/command-exists? (fn [cmd] (= cmd "brew"))
                   brew/leaves-set (fn [] #{"wget"})
                   brew/installed-set-full (fn [_] #{})
@@ -249,4 +250,4 @@
       (let [result (support/orphans-live {})]
         (is (= {"wget" {}} (:pkg/brew-uninstall result)))
         (is (= {"oven-sh/bun" {}} (:brew/untap result)))
-        (is (= {} (:pkg/brew result)) ":pkg/brew injected so [:complete :pkg/brew] resolves")))))
+        (is (nil? (g/validate result)) "[:complete :pkg/brew] needs nothing when no brew item is declared")))))

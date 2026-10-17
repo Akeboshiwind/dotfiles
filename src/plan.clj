@@ -145,22 +145,11 @@
   "Compute orphan removal actions from facts for the given orphan types, whether
    or not the plan declares anything for them.
    Each a/orphans impl returns a plan fragment or nil, possibly spanning
-   several orphan action types (e.g. {:pkg/brew-uninstall {...} :brew/untap {...}}).
-   When an orphan type requires [:complete base] and the base type is absent
-   from the plan, the base is injected as an empty entry so the dependency
-   graph resolves."
+   several orphan action types (e.g. {:pkg/brew-uninstall {...} :brew/untap {...}})."
   [plan types facts]
-  (let [merged (->> types
-                    (keep #(a/orphans % (get plan % {}) facts))
-                    (apply merge {}))
-        missing-bases (->> (keys merged)
-                           (keep (fn [orphan-type]
-                                   (let [req (a/requires orphan-type)]
-                                     (when (and (vector? req) (= :complete (first req)))
-                                       (second req)))))
-                           (remove #(or (contains? plan %)
-                                        (contains? merged %))))]
-    (reduce (fn [acc base] (assoc acc base {})) merged missing-bases)))
+  (->> types
+       (keep #(a/orphans % (get plan % {}) facts))
+       (apply merge {})))
 
 ;; >> Plan builder
 

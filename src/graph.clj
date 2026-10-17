@@ -35,7 +35,6 @@
                              :when (seq reqs)]
                          [action reqs]))]
     {:actions (set actions)
-     :action-types (set (keys plan))
      :providers (->> by-cap
                      (map (fn [[cap [[_ action]]]] [cap action]))
                      (into {}))
@@ -58,14 +57,12 @@
     :else req))
 
 (defn- find-missing
-  "Find requirements with no provider."
-  [{:keys [action-types providers requires]}]
+  "Find capability requirements with no provider. [:complete type] is never
+   missing: with nothing of that type declared, it requires nothing."
+  [{:keys [providers requires]}]
   (for [[action reqs] requires
         req reqs
-        :when (cond
-                (keyword? req) (not (contains? providers req))
-                (complete-cap? req) (not (contains? action-types (second req)))
-                :else false)]
+        :when (and (keyword? req) (not (contains? providers req)))]
     {:action action :missing-capability req}))
 
 (defn- actions-of-type
