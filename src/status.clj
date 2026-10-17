@@ -99,6 +99,20 @@
                                            (nil? (:detail %)))
                                      results)}))))))
 
+(defn manifest-lines
+  "The merged manifest as display lines: each type, then its keys, marked
+   with the plugin that contributed them. Only :syn/exclusive shows its
+   options, since other options may hold secrets. Pure."
+  [merged origin]
+  (for [[type items] (sort-by (comp str key) merged)
+        line (cons (subs (str type) 1)
+                   (for [[k opts] (sort-by (comp str key) items)
+                         :let [plugin (get origin [type k])]]
+                     (str "  " (pr-str k)
+                          (when (= :syn/exclusive type) (str " " (pr-str (dissoc opts :dep/requires))))
+                          (when plugin (str " ; from plugin " (subs (str plugin) 1))))))]
+    line))
+
 (defn show-plan
   "Show the status of all actions in the ActionGraph.
    Displays everything except satisfied (installed) items, grouped by type."

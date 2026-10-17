@@ -7,6 +7,7 @@
             [manifest :as m]
             [outcome :as o]
             [plan :as p]
+            [status :as s]
             [registry]
             [support]))
 
@@ -156,6 +157,13 @@
   (testing "anything but a map or false is rejected"
     (is (thrown? clojure.lang.ExceptionInfo
                  (p/merge-layers [(module "cfg/x" {:syn/exclusive {:pkg/brew true}})])))))
+
+(deftest manifest-lines-test
+  (testing "plugin entries are marked; options show only for :syn/exclusive"
+    (is (= ["pkg/brew" "  :jq" "syn/exclusive" "  :pkg/brew {} ; from plugin pkg/brew"]
+           (s/manifest-lines {:pkg/brew {:jq {:secret "x"}}
+                              :syn/exclusive {:pkg/brew {:dep/requires #{[:complete :pkg/brew]}}}}
+                             {[:syn/exclusive :pkg/brew] :pkg/brew})))))
 
 (deftest exclusive-scope-test
   (testing "a scope on a manager includes its exclusive node; other scopes don't"

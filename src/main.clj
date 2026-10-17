@@ -38,6 +38,7 @@
   (println "  --plan      Show what's installed, missing, and outdated (default)")
   (println "  --fresh     With --apply: ignore the stored plan and check live")
   (println "  --show      Re-display the last stored plan and its status (no checks)")
+  (println "  --manifest  Print the merged manifest, marking what plugins contribute")
   (println "  --help      Show this help message")
   (println "")
   (println "Examples:")
@@ -59,9 +60,10 @@
               (= arg "--apply") (assoc acc :apply-mode true)
               (= arg "--fresh") (assoc acc :fresh true)
               (= arg "--show") (assoc acc :show true)
+              (= arg "--manifest") (assoc acc :manifest true)
               (str/starts-with? arg ":") (assoc acc :action (keyword (subs arg 1)))
               :else acc))
-          {:action nil :plan-mode false :apply-mode false :fresh false :show false :help false}
+          {:action nil :plan-mode false :apply-mode false :fresh false :show false :manifest false :help false}
           args))
 
 (defn- filter-action-graph
@@ -196,7 +198,7 @@
    valid stored plan or checking live under --fresh), or shows-and-stores a fresh
    plan (plan mode, the default)."
   [& args]
-  (let [{:keys [action apply-mode fresh show help]} (parse-args args)]
+  (let [{:keys [action apply-mode fresh show manifest help]} (parse-args args)]
     (when help
       (print-help)
       (System/exit 0))
@@ -208,9 +210,11 @@
           (run-show! cache)
           ;; Plan and apply need the manifest; a broken one aborts here (caught below).
           (let [entries (m/load-manifest)]
-            (if apply-mode
-              (run-apply! entries cache action fresh)
-              (run-plan! entries cache action (sp/manifest-identity entries cache))))))
+            (cond
+              manifest (let [{:keys [merged origin]} (p/assemble entries cache)]
+                         (run! println (s/manifest-lines merged origin)))
+              apply-mode (run-apply! entries cache action fresh)
+              :else (run-plan! entries cache action (sp/manifest-identity entries cache))))))
       (catch clojure.lang.ExceptionInfo e
         (let [data (ex-data e)]
           (cond
