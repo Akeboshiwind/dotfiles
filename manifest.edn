@@ -1,4 +1,4 @@
-{:syn/exclusive #{:uv/tool :pkg/bbin :pkg/npm :pkg/mise :pkg/mas}
+{:syn/exclusive #{:uv/tool :pkg/bbin :pkg/npm :pkg/mise :pkg/mas :pkg/brew}
  :plan [;; >> Bootstrap (provides :pkg/brew, :pkg/mise, :pkg/mas, :pkg/bbin, :brew/service)
         {:pkg/script
          {:homebrew

@@ -136,9 +136,6 @@
       (and (:sudo opts) (= "root" (:user svc))) o/satisfied
       :else (o/drift :missing))))
 
-(defmethod a/check :pkg/brew-uninstall [_ key opts _facts]
-  (o/drift :orphan))
-
 (defn leaves-set
   "Return #{name ...} of explicitly installed formulae (not deps).
    Uses `brew leaves --installed-on-request` to exclude transitive dependencies."
@@ -197,37 +194,14 @@
         (recur (into seen deps)
                (into (pop queue) new-deps))))))
 
-(defn- declared-names
-  "Extract the set of names from declared :pkg/brew items.
-   Returns both the raw name and its short form for tap-qualified names."
-  [brew-items]
-  (reduce (fn [s [k _]]
-            (let [n (name k)]
-              (-> s (conj n) (conj (short-name n)))))
-          #{}
-          brew-items))
-
-(defn- declared?
-  "Check if an installed package name matches any declared name."
-  [declared-set installed-name]
-  (or (contains? declared-set installed-name)
-      (contains? declared-set (short-name installed-name))))
-
-(defn orphans
-  "Find brew formulae/casks that are leaves (explicitly installed) but not declared.
-   installed-state is {:formulae #{...} :casks #{...}}.
-   declared-items is the :pkg/brew map from the plan."
-  [{:keys [formulae casks]} declared-items]
-  (let [declared (declared-names declared-items)
-        formula-orphans (->> formulae
-                             (remove (fn [f] (declared? declared f)))
-                             (map (fn [f] [f {}]))
-                             (into {}))
-        cask-orphans (->> casks
-                          (remove (fn [c] (declared? declared c)))
-                          (map (fn [c] [c {}]))
-                          (into {}))]
-    (merge formula-orphans cask-orphans)))
+(defn extra-packages
+  "The explicitly installed formulae and casks no declared name covers. A
+   tap-qualified name and its short form cover each other."
+  [{:keys [formulae casks]} declared]
+  (let [covered (into declared (map short-name) declared)]
+    (into (sorted-set)
+          (remove #(or (contains? covered %) (contains? covered (short-name %))))
+          (concat formulae casks))))
 
 (defn installed-taps
   "Return #{tap ...} of installed third-party taps."
@@ -239,15 +213,10 @@
          (remove str/blank?)
          set)))
 
-(defn orphan-taps
-  "Find installed taps that no declared package comes from.
-   declared-items is the :pkg/brew map from the plan."
-  [installed declared-items]
-  (let [in-use (into #{} (keep (fn [[k _]] (tap-of (name k)))) declared-items)]
-    (->> installed
-         (remove in-use)
-         (map (fn [tap] [tap {}]))
-         (into {}))))
+(defn extra-taps
+  "The installed taps no declared name comes from."
+  [installed declared]
+  (into (sorted-set) (remove (set (keep tap-of declared))) installed))
 
 (defmethod a/run-query :brew [[_ what]]
   (case what
@@ -260,19 +229,20 @@
     :casks-full (installed-set-full :cask)
     :taps (installed-taps)))
 
-(defmethod a/orphan-queries :pkg/brew [_ _]
+(defmethod a/extras-queries :pkg/brew [_]
   #{[:command "brew"] [:brew :leaves] [:brew :casks-full] [:brew :taps]})
 
-(defmethod a/orphan-outputs :pkg/brew [_] #{:pkg/brew-uninstall :brew/untap})
+(defmethod a/extras :pkg/brew [_ declared facts]
+  (if (f/value facts [:command "brew"])
+    (into (mapv (fn [n] {:name n})
+                (extra-packages {:formulae (f/value facts [:brew :leaves])
+                                 :casks (f/value facts [:brew :casks-full])}
+                                declared))
+          (map (fn [t] {:name t :tap true}))
+          (extra-taps (f/value facts [:brew :taps]) declared))
+    []))
 
-(defmethod a/orphans :pkg/brew [_ declared facts]
-  (when (f/value facts [:command "brew"])
-    (let [pkgs (orphans {:formulae (f/value facts [:brew :leaves])
-                         :casks (f/value facts [:brew :casks-full])}
-                        declared)
-          taps (orphan-taps (f/value facts [:brew :taps]) declared)]
-      (merge (when (seq pkgs) {:pkg/brew-uninstall pkgs})
-             (when (seq taps) {:brew/untap taps})))))
+(defmethod a/removal-queries :pkg/brew [_] #{[:brew :trusted]})
 
 (defmethod a/install-queries :pkg/brew [_ items]
   (into #{[:brew :formulae] [:brew :casks]} (trust-queries items)))
@@ -318,42 +288,29 @@
               :message err}))
          items)))
 
-;; -- Uninstall orphans
+(defn- remove-package! [type opts facts pkg-name]
+  (let [cmds (cond-> []
+               ;; no grant outlives the package it was made for
+               (and (tap-of pkg-name) (trusted? (f/value facts [:brew :trusted]) pkg-name))
+               (conj ["brew" "untrust" "--formula" pkg-name])
+               true (conj ["brew" "uninstall" pkg-name]))
+        {:keys [exit err]} (run-commands! opts cmds)]
+    {:action [type pkg-name]
+     :label pkg-name
+     :status (if (zero? exit) :ok :error)
+     :message err}))
 
-(defmethod a/requires :pkg/brew-uninstall [_] [:complete :pkg/brew])
-
-(defmethod a/install-queries :pkg/brew-uninstall [_ items]
-  (or (trust-queries items) #{}))
-
-(defmethod a/install! :pkg/brew-uninstall [type opts items facts]
-  (let [results (d/section "Uninstalling brew orphans"
-                  (map (fn [[pkg _]]
-                         (let [pkg-name (if (keyword? pkg) (name pkg) (str pkg))
-                               cmds (cond-> []
-                                      ;; no grant outlives the package it was made for
-                                      (and (tap-of pkg-name) (trusted? (f/value facts [:brew :trusted]) pkg-name))
-                                      (conj ["brew" "untrust" "--formula" pkg-name])
-                                      true (conj ["brew" "uninstall" pkg-name]))
-                               {:keys [exit err]} (run-commands! opts cmds)]
-                           {:action [type pkg]
-                            :label pkg-name
-                            :status (if (zero? exit) :ok :error)
-                            :message err}))
-                       items))]
-    (a/exec! opts ["brew" "autoremove"])
-    results))
-
-;; -- Untap orphan sources
-
-(defmethod a/requires :brew/untap [_] [:complete :pkg/brew])
-
-(defmethod a/check :brew/untap [_ key opts _facts]
-  (o/drift :orphan))
-
-(defmethod a/install! :brew/untap [type opts items _facts]
-  (a/simple-install type opts "Removing orphaned brew taps"
-    (fn [tap _] ["brew" "untap" (name tap)])
-    items))
+(defmethod a/remove-extras! :pkg/brew [type opts extras facts]
+  (let [{taps true pkgs false} (group-by (comp boolean :tap) extras)
+        removed (d/section "Uninstalling brew packages"
+                  (map (fn [{n :name}] (remove-package! type opts facts n)) pkgs))]
+    (when (seq pkgs)
+      (a/exec! opts ["brew" "autoremove"]))
+    (into removed
+          (when (seq taps)
+            (a/simple-install type opts "Removing brew taps"
+              (fn [tap _] ["brew" "untap" tap])
+              (into {} (map (fn [{t :name}] [t {}])) taps))))))
 
 (defmethod a/install! :brew/service [type opts items _facts]
   (a/simple-install type opts "Starting brew services"

@@ -54,7 +54,9 @@
     (assoc outcome :source source)))
 
 (defmethod a/install-queries :syn/exclusive [_ items]
-  (into base-queries (mapcat (comp a/extras-queries key)) items))
+  (into base-queries
+        (mapcat (fn [[manager _]] (into (a/extras-queries manager) (a/removal-queries manager))))
+        items))
 
 (defn- label [manager] (subs (str manager) 1))
 

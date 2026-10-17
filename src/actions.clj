@@ -122,6 +122,13 @@
    defines this."
   (fn [manager _declared _facts] manager))
 
+(defmulti removal-queries
+  "The set of query keys `remove-extras!` reads for a manager, gathered at
+   apply time. Pure."
+  identity)
+
+(defmethod removal-queries :default [_] #{})
+
 (defmulti remove-extras!
   "Remove extras (as returned by `extras`) from a manager. Returns install!
    result maps."

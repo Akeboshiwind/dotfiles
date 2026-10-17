@@ -58,41 +58,27 @@
 ;; orphans — per-action orphan detection
 ;; =============================================================================
 
-(deftest brew-orphans-test
-  (testing "formula not in manifest is orphaned"
-    (let [result (brew/orphans {:formulae #{"neovim" "ripgrep" "wget"} :casks #{}}
-                               {:neovim {} :ripgrep {}})]
-      (is (= {"wget" {}} result))))
+(deftest brew-extra-packages-test
+  (testing "a formula not declared is extra"
+    (is (= #{"wget"} (brew/extra-packages {:formulae #{"neovim" "ripgrep" "wget"} :casks #{}}
+                                          #{"neovim" "ripgrep"}))))
 
   (testing "only leaves are candidates, so no false positives"
-    (let [result (brew/orphans {:formulae #{"neovim"} :casks #{}}
-                               {:neovim {}})]
-      (is (empty? result))))
+    (is (empty? (brew/extra-packages {:formulae #{"neovim"} :casks #{}} #{"neovim"}))))
 
-  (testing "cask not in manifest is orphaned"
-    (let [result (brew/orphans {:formulae #{} :casks #{"firefox" "slack"}}
-                               {:firefox {:cask true}})]
-      (is (= {"slack" {}} result))))
+  (testing "a cask not declared is extra"
+    (is (= #{"slack"} (brew/extra-packages {:formulae #{} :casks #{"firefox" "slack"}} #{"firefox"}))))
 
-  (testing "no orphans returns empty"
-    (let [result (brew/orphans {:formulae #{"neovim" "ripgrep"} :casks #{}}
-                               {:neovim {} :ripgrep {}})]
-      (is (empty? result))))
+  (testing "tap-qualified: an installed full name is covered by a declared short name"
+    (is (empty? (brew/extra-packages {:formulae #{"babashka/brew/bbin"} :casks #{}} #{"bbin"}))))
 
-  (testing "tap-qualified: installed full-name matched by manifest short name"
-    (let [result (brew/orphans {:formulae #{"babashka/brew/bbin"} :casks #{}}
-                               {:bbin {}})]
-      (is (empty? result))))
+  (testing "tap-qualified: declared by full name"
+    (is (empty? (brew/extra-packages {:formulae #{"babashka/brew/bbin" "borkdude/brew/babashka"} :casks #{}}
+                                     #{"babashka/brew/bbin" "borkdude/brew/babashka"}))))
 
-  (testing "tap-qualified: manifest uses full-name string key"
-    (let [result (brew/orphans {:formulae #{"babashka/brew/bbin" "borkdude/brew/babashka"} :casks #{}}
-                               {"babashka/brew/bbin" {} "borkdude/brew/babashka" {}})]
-      (is (empty? result))))
-
-  (testing "tap-qualified: mix of string and keyword keys"
-    (let [result (brew/orphans {:formulae #{"babashka/brew/bbin" "neovim" "wget"} :casks #{}}
-                               {"babashka/brew/bbin" {} :neovim {}})]
-      (is (= {"wget" {}} result)))))
+  (testing "tap-qualified: a mix of full and short names"
+    (is (= #{"wget"} (brew/extra-packages {:formulae #{"babashka/brew/bbin" "neovim" "wget"} :casks #{}}
+                                          #{"babashka/brew/bbin" "neovim"})))))
 
 ;; =============================================================================
 ;; Uninstall action implementations
@@ -105,70 +91,11 @@
     (swap! calls conj args)
     {:exit 0 :err nil}))
 
-(deftest brew-uninstall-action-test
-  (testing ":pkg/brew-uninstall runs brew uninstall for each item plus autoremove"
+(deftest brew-remove-extras-test
+  (testing "removing extras runs brew uninstall for each, then autoremove"
     (let [calls (atom [])]
       (with-redefs [a/exec! (mock-exec! calls)]
-        (a/install! :pkg/brew-uninstall {} {"wget" {} "curl" {}} {}))
-      (is (some #(= ["brew" "uninstall" "wget"] %) @calls))
-      (is (some #(= ["brew" "uninstall" "curl"] %) @calls))
-      (is (some #(= ["brew" "autoremove"] %) @calls))))
+        (with-out-str (a/remove-extras! :pkg/brew {} [{:name "curl"} {:name "wget"}]
+                                        (support/facts-of {[:brew :trusted] {:formulae #{} :taps #{}}}))))
+      (is (= [["brew" "uninstall" "curl"] ["brew" "uninstall" "wget"] ["brew" "autoremove"]] @calls)))))
 
-  (testing ":pkg/brew-uninstall requires [:complete :pkg/brew]"
-    (is (= [:complete :pkg/brew] (a/requires :pkg/brew-uninstall)))))
-
-;; =============================================================================
-;; Graph ordering: uninstalls before installs
-;; =============================================================================
-
-;; =============================================================================
-;; build! integration: orphans appear in plan
-;; =============================================================================
-
-(deftest build-includes-orphans-test
-  ;; a/orphans is a multimethod that plan/calculate-orphans introspects with
-  ;; (methods a/orphans), so it cannot be with-redefs'd to a plain fn — mock
-  ;; the per-type helpers the implementations call instead.
-  (testing "build! adds uninstall actions from a/orphans to plan"
-    (let [entries [{:step {:pkg/script {:homebrew {:src "echo ok" :dep/provides #{:pkg/brew}}}
-                           :pkg/brew {:jq {}}}}
-                   :source "/test"]
-          ;; Only brew's orphan detection runs; it sees "wget" as undeclared
-          result (with-redefs [u/command-exists? (fn [cmd] (= cmd "brew"))
-                               brew/leaves-set (fn [] #{"jq" "wget"})
-                               brew/installed-set-full (fn [_] #{})
-                               brew/installed-taps (fn [] #{})]
-                   (p/build! entries {} nil))]
-      (is (= {"wget" {}} (get-in result [:plan :pkg/brew-uninstall])))
-      (let [ag (g/build-action-graph (:plan result))]
-        (is (some #{[:pkg/brew-uninstall "wget"]} (:order ag))))))
-
-  (testing "build! does not add uninstall actions when no orphans"
-    (let [entries [{:step {:pkg/script {:homebrew {:src "echo ok" :dep/provides #{:pkg/brew}}}
-                           :pkg/brew {:jq {}}}}
-                   :source "/test"]
-          result (with-redefs [u/command-exists? (constantly false)]
-                   (p/build! entries {} nil))]
-      (is (nil? (get-in result [:plan :pkg/brew-uninstall]))))))
-
-(deftest uninstall-ordering-test
-  (testing "uninstall actions sort after their install counterparts ([:complete type] dep)"
-    (let [plan {:pkg/brew-uninstall {:wget {}}
-                :pkg/brew {:neovim {}}
-                :pkg/script {:homebrew {:dep/provides #{:pkg/brew}}}}
-          order (g/topological-sort plan)]
-      ;; script (provides :pkg/brew), then brew (requires :pkg/brew),
-      ;; then brew-uninstall (requires [:complete :pkg/brew])
-      (let [positions (into {} (map-indexed (fn [i a] [a i])) order)]
-        (is (> (positions [:pkg/brew-uninstall :wget])
-               (positions [:pkg/brew :neovim])))))))
-
-(deftest orphan-types-for-scope-test
-  (testing "an unscoped run detects orphans for every type that has detection"
-    (is (= #{:pkg/brew}
-           (set (p/orphan-types-for nil)))))
-  (testing "a scoped run detects only the orphans it could act on"
-    (is (empty? (p/orphan-types-for :fs/symlink)))
-    (is (= [:pkg/brew] (p/orphan-types-for :pkg/brew)))
-    (is (= [:pkg/brew] (p/orphan-types-for :brew/untap)) "taps come from brew's detection")
-    (is (= [:pkg/brew] (p/orphan-types-for :pkg/brew-uninstall)))))
