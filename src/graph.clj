@@ -189,6 +189,15 @@
      :order order
      :parsed parsed}))
 
+(defn with-origin
+  "Mark each node a plugin contributed with :origin, the plugin's type."
+  [action-graph origin]
+  (reduce-kv (fn [ag ref plugin]
+               (cond-> ag
+                 (get-in ag [:nodes ref]) (assoc-in [:nodes ref :origin] plugin)))
+             action-graph
+             origin))
+
 (defn dependents-of
   "Return set of actions that directly or transitively depend on the given action."
   [{:keys [parsed order]} action]

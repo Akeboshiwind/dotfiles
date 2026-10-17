@@ -147,6 +147,12 @@
            (:sources (first (:errors (p/merge-layers [(plugin :pkg/a {:pkg/brew {:jq {}}})
                                                       (plugin :pkg/b {:pkg/brew {:jq {}}})])))))))
 
+  (testing "origin names the plugin behind each declaration the manifest didn't replace"
+    (is (= {[:syn/exclusive :pkg/brew] :pkg/brew}
+           (:origin (p/merge-layers [(module "cfg/x" {:pkg/brew {:jq {}}})
+                                     (plugin :pkg/brew {:syn/exclusive {:pkg/brew {}}})
+                                     (plugin :pkg/jq {:pkg/brew {:jq {}}})])))))
+
   (testing "anything but a map or false is rejected"
     (is (thrown? clojure.lang.ExceptionInfo
                  (p/merge-layers [(module "cfg/x" {:syn/exclusive {:pkg/brew true}})])))))

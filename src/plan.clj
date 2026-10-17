@@ -124,11 +124,19 @@
 (defn merge-layers
   "Merge plugin entries beneath the user's: a user declaration of a
    [type key] replaces a plugin's. Duplicates within a layer are errors.
-   Returns {:merged plan-map :errors [...]}."
+   Returns {:merged plan-map :errors [...] :origin {[type key] plugin}}, where
+   :origin names the plugin behind each declaration the user didn't replace."
   [entries]
-  (let [{plugin true user false} (group-by (comp some? :plugin) entries)]
-    {:merged (expand-exclusive (merge-with merge (merge-steps plugin) (merge-steps user)))
-     :errors (concat (find-duplicate-keys user) (find-duplicate-keys plugin))}))
+  (let [{plugin true user false} (group-by (comp some? :plugin) entries)
+        user-merged (merge-steps user)]
+    {:merged (expand-exclusive (merge-with merge (merge-steps plugin) user-merged))
+     :errors (concat (find-duplicate-keys user) (find-duplicate-keys plugin))
+     :origin (into {}
+                   (for [{:keys [plugin step]} plugin
+                         [type items] step
+                         [k _] items
+                         :when (not (contains? (get user-merged type) k))]
+                     [[type k] plugin]))}))
 
 ;; >> Calculate stale symlinks to unlink
 
@@ -157,21 +165,23 @@
   (let [processed (->> entries
                        resolve-symlink-paths!
                        expand-symlink-folders!)
-        {:keys [merged] duplicate-errors :errors} (merge-layers processed)
+        {:keys [merged origin] duplicate-errors :errors} (merge-layers processed)
         {:keys [unlinks symlinks]} (calculate-unlinks cache merged)]
     {:merged merged
+     :origin origin
      :symlinks symlinks
      :unlinks unlinks
      :errors duplicate-errors}))
 
 (defn build!
   "Build plan from entries. Takes [{:step map :source string} ...].
-   Returns {:plan map :symlinks map :errors [...]}.
+   Returns {:plan map :origin {[type key] plugin} :symlinks map :errors [...]}.
    Impure: reads the filesystem for path canonicalization and directory listing."
   [entries cache]
-  (let [{:keys [merged symlinks unlinks errors]} (assemble entries cache)
+  (let [{:keys [merged origin symlinks unlinks errors]} (assemble entries cache)
         plan (cond-> merged
                (seq unlinks) (assoc :fs/unlink unlinks))]
     {:plan plan
+     :origin origin
      :symlinks symlinks
      :errors errors}))

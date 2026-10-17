@@ -80,8 +80,8 @@
    run resolves to no actions. This is the expensive path — it queries package
    managers for each action's live state."
   [entries cache action]
-  (let [{:keys [plan symlinks errors]} (p/build! entries cache)
-        ag (g/build-action-graph plan)
+  (let [{:keys [plan origin symlinks errors]} (p/build! entries cache)
+        ag (g/with-origin (g/build-action-graph plan) origin)
         ag (if action (filter-action-graph ag plan action) ag)]
     (when (and action (empty? (:order ag)))
       (println "No actions found for action" action)

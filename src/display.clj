@@ -184,7 +184,10 @@
   (when (> (count extras) extras-shown)
     (println "   " (gray (str "… (+" (- (count extras) extras-shown) ")")))))
 
-(defn render-plan-result [{:keys [label state detail instructions from to extras] :as result}]
+(defn- provenance [origin]
+  (when origin (gray (str " · from plugin " (subs (str origin) 1)))))
+
+(defn render-plan-result [{:keys [label state detail instructions from to extras origin] :as result}]
   (let [jump (version-jump result)
         {:keys [icon color-fn]} (or jump (get plan-icons state (plan-icons :unknown)))
         line (cond
@@ -192,7 +195,7 @@
                jump   (str label "  " (version-detail from to color-fn))
                detail (str label (str "  " (gray detail)))
                :else  label)]
-    (println " " (color-fn icon) line)
+    (println " " (color-fn icon) (str line (provenance origin)))
     (render-extras extras)
     (when (seq instructions)
       (doseq [instr instructions]

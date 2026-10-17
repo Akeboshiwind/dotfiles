@@ -66,7 +66,7 @@
 
 (defn- node->result
   "The display shape of one checked node."
-  [{:keys [ref check]}]
+  [{:keys [ref check origin]}]
   (let [[type key] ref]
     {:label (cond
               (= :syn/exclusive type) (subs (str key) 1)
@@ -76,6 +76,7 @@
      :action ref
      :detail (when (:message check)
                (:message check))
+     :origin origin
      :extras (:extras check)
      :source (:source check)
      :from (:from check)
