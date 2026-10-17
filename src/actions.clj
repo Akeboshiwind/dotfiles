@@ -70,13 +70,6 @@
                :message err}))
           items))))
 
-(defn uninstall-type
-  "The action type that removes a type's orphans, by naming convention.
-   e.g. :pkg/brew -> :pkg/brew-uninstall, :uv/tool -> :uv/tool-uninstall"
-  [action-type]
-  (keyword (namespace action-type)
-           (str (name action-type) "-uninstall")))
-
 ;; =============================================================================
 ;; Multimethods
 ;; =============================================================================
@@ -96,12 +89,6 @@
   (fn [type _declared] type))
 
 (defmethod queries :default [_ _] #{})
-
-(defmulti orphan-queries
-  "The set of query keys `orphans` reads for this type's declared items. Pure."
-  (fn [type _declared] type))
-
-(defmethod orphan-queries :default [_ _] #{})
 
 (defmulti declared-identity
   "What a declared item is installed as, to compare with what its manager
@@ -134,13 +121,6 @@
    result maps."
   (fn [manager _opts _extras _facts] manager))
 
-(defmulti orphan-outputs
-  "The action types this type's `orphans` can put in a plan fragment. Pure.
-   Default: its uninstall-type."
-  identity)
-
-(defmethod orphan-outputs :default [type] #{(uninstall-type type)})
-
 (defmulti run-query
   "Ask the machine the question a query key names, and return the answer.
    Called only by the shell (facts/gather)."
@@ -155,15 +135,6 @@
 
 (defmethod check :default [_ _ _ _]
   o/unknown)
-
-(defmulti orphans
-  "Compare declared items against facts to find orphans. `facts` holds the
-   answers to the queries `orphan-queries` declared for this type.
-   Returns a plan fragment to merge (e.g. {:pkg/brew-uninstall {:wget {} ...}}), or nil.
-   Default returns nil (no orphan detection for this action type)."
-  (fn [type _declared _facts] type))
-
-(defmethod orphans :default [_ _ _] nil)
 
 (defmulti install-queries
   "The set of query keys `install!` reads for these items of a type, gathered

@@ -4,7 +4,8 @@
 -- Scope: the dotfile-manager engine (manifest → plan → check → report/apply)
 -- Includes: manifest and module loading, plan assembly (path resolution,
 --   symlink-folder expansion, duplicate detection), stale-symlink cleanup,
---   orphan detection (packages and third-party package sources),
+--   exclusive package managers (removing what a manager has installed that the
+--   manifest doesn't declare, including third-party package sources),
 --   package-source trust, capability-based dependency ordering, the check phase,
 --   plan display, apply execution with failure propagation, symlink-ownership
 --   and script-run caching, secrets validation, persisted-plan capture (a plan
@@ -35,7 +36,6 @@ external entity PackageManager {
     -- A package manager syn can drive: brew, mise, mas, bbin, npm, uv.
     name: String
     available: Boolean                    -- the manager's command exists on PATH
-    supports_orphan_detection: Boolean
     exclusive: Boolean                    -- the root manifest lists it in :syn/exclusive
     explicitly_installed: Set<String>     -- user-requested items only, not transitive dependencies
     third_party_sources: Set<String>      -- installed sources outside the manager's
@@ -212,8 +212,8 @@ entity ValidationError {
 entity Action {
     run: Run
     key: String
-    kind: SymlinkAction | UnlinkAction | PackageAction | UninstallAction |
-          SourceRemovalAction | ScriptAction | AssertAction | ServiceAction |
+    kind: SymlinkAction | UnlinkAction | PackageAction |
+          ScriptAction | AssertAction | ServiceAction |
           DefaultsAction | GitCloneAction | ClaudeResourceAction | ExclusiveAction
 
     declaring_modules: Set<Module>        -- modules that declared this (type, key)
@@ -222,7 +222,7 @@ entity Action {
 
     in_scope: Boolean                     -- true when run.scope = null; otherwise true only if
                                           -- the action's type matches the scope (or its
-                                          -- uninstall variant), or the action is a transitive
+                                          -- exclusive node), or the action is a transitive
                                           -- dependency of one that does
 
     check_outcome: unchecked | satisfied | drift | unknown | conflict | error | cancelled
@@ -273,23 +273,14 @@ variant PackageAction : Action {
                                           -- or the manager imposes no trust requirement)
 }
 
-variant UninstallAction : Action {
-    manager: PackageManager
-}
-
 variant ExclusiveAction : Action {
     -- One per exclusive manager: "this manager has installed only what the
     -- manifest declares". Ordered after every action of the manager's type.
     manager: PackageManager
     declared: Set<String>                 -- every item the manifest declares for it,
                                           -- read from the manifest files
-    extras: manager.explicitly_installed - declared
-}
-
-variant SourceRemovalAction : Action {
-    -- Removal of an orphaned third-party package source (e.g. a brew tap).
-    manager: PackageManager
-    source: String
+    extras: manager.explicitly_installed - declared   -- plus any third-party source no
+                                                        -- declared item comes from
 }
 
 variant ScriptAction : Action {
@@ -512,47 +503,6 @@ rule ScheduleStaleUnlinks {
                 )
 }
 
-rule ScheduleOrphanUninstalls {
-    -- The manifest is the single source of truth for every package manager
-    -- syn can drive: anything explicitly installed but not declared is drift
-    -- to be removed. Every available manager with orphan detection is
-    -- therefore queried on every unscoped run — whether or not the manifest
-    -- declares anything for it (removing a manager's last declaration means
-    -- "nothing should be installed via this manager", not "stop managing it").
-    -- A scoped run queries only the managers whose removal actions its scope
-    -- targets; any other removal would be dropped by
-    -- ScopeFilterRemovesUnrelatedActions, since nothing depends on a removal.
-    -- Undeclared items become uninstall actions, ordered after every action
-    -- of the base type.
-    when: PlanAssembled(run)
-    for manager in PackageManagers where available and supports_orphan_detection and not exclusive:
-        ensures:
-            for item in manager.explicitly_installed:
-                if not run.actions.any(a => a.kind = PackageAction and a.key = item):
-                    UninstallAction.created(run: run, manager: manager, key: item)
-    @guidance
-        -- Tap-qualified names (e.g. babashka/brew/bbin) match their short
-        -- form (bbin) when comparing declared names against installed ones.
-}
-
-rule ScheduleOrphanSourceRemovals {
-    -- The single-source-of-truth stance extends to package sources: a
-    -- third-party source is justified only by declared packages that come
-    -- from it. An installed source no declaration uses is drift to be
-    -- removed; removing it also drops any trust grants made under it.
-    when: PlanAssembled(run)
-    for manager in PackageManagers where available and supports_orphan_detection and not exclusive:
-        ensures:
-            for source in manager.third_party_sources:
-                if not run.actions.any(a => a.kind = PackageAction and a.source = source):
-                    SourceRemovalAction.created(run: run, manager: manager, source: source)
-    @guidance
-        -- Homebrew taps are the only third-party sources today. Orphanhood
-        -- is judged against declared packages, not installed ones, so a
-        -- source whose last installed package is an orphan being removed
-        -- this run is itself removed in the same run.
-}
-
 rule GraphErrorsAbortRun {
     when: PlanAssembled(run)
     requires: run.graph_errors
@@ -582,9 +532,9 @@ rule BeginChecks {
     requires: run.scope = null or run.actions.any(a => a.in_scope)
     ensures: run.status = checking
     @guidance
-        -- Graph validation and the scope filter run after stale unlinks and
-        -- orphan uninstalls have been merged into the plan, so injected
-        -- actions participate in ordering and validation.
+        -- Graph validation and the scope filter run after stale unlinks have
+        -- been merged into the plan, so injected actions participate in
+        -- ordering and validation.
 }
 
 -- =============================================================================
@@ -676,25 +626,6 @@ rule CheckPackages {
         -- same: declare :trust on the package (or remove it).
 }
 
-rule CheckUninstalls {
-    when: run: Run.status becomes checking
-    for action in run.actions where kind = UninstallAction:
-        ensures:
-            action.check_outcome = drift
-    @guidance
-        -- Orphans always need action by construction; drift kind is orphan.
-}
-
-rule CheckSourceRemovals {
-    when: run: Run.status becomes checking
-    for action in run.actions where kind = SourceRemovalAction:
-        ensures:
-            action.check_outcome = drift
-    @guidance
-        -- Orphaned sources always need action by construction; drift kind
-        -- is orphan.
-}
-
 rule CheckExclusiveManagers {
     when: run: Run.status becomes checking
     for action in run.actions where kind = ExclusiveAction:
@@ -706,6 +637,11 @@ rule CheckExclusiveManagers {
             else:
                 action.check_outcome = drift
     @guidance
+        -- The manifest is the single source of truth for every manager it
+        -- declares exclusive: anything such a manager has installed and the
+        -- manifest doesn't declare is drift, whether or not the manifest
+        -- declares anything for it (no declarations means "nothing should be
+        -- installed via this manager", not "stop managing it").
         -- Drift kind is extra; the extras are its data. A manifest read from any
         -- root but the pinned one can never remove anything, so a scratch
         -- manifest that declares little is a conflict, not a mass removal.
@@ -913,8 +849,8 @@ rule ExecuteActions {
         -- reconciles the grant (granting before installing, so the manager
         -- will load the item). Trust is granted per item, never for a whole
         -- source — whole-source trust would extend to items the manifest
-        -- never declared. Uninstalling a third-party orphan also revokes
-        -- any grant made for it.
+        -- never declared. Removing a third-party extra also revokes any
+        -- grant made for it.
 }
 
 rule ApplyCompletes {

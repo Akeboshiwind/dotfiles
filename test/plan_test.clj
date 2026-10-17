@@ -1,14 +1,6 @@
 (ns plan-test
-  (:require [clojure.test :refer [deftest testing is use-fixtures]]
+  (:require [clojure.test :refer [deftest testing is]]
             [plan :as p]))
-
-(defn no-orphan-detection
-  "build! asks every action type for its orphans, which queries the machine.
-   These tests are about path resolution, so answer nothing."
-  [f]
-  (with-redefs [p/calculate-orphans (constantly {})] (f)))
-
-(use-fixtures :each no-orphan-detection)
 
 ;; =============================================================================
 ;; find-duplicate-keys tests
@@ -62,13 +54,13 @@
       (is (thrown-with-msg?
             clojure.lang.ExceptionInfo
             #"Path escapes base directory|Path traversal"
-            (p/build! entries {} nil)))))
+            (p/build! entries {})))))
 
   (testing "paths that stay within base directory should succeed"
     (let [entries [{:step {:fs/symlink {"~/.config/app" "./config/settings.json"}}
                     :source "/Users/test/dotfiles/cfg/app"}]]
       ;; This should not throw (file doesn't need to exist for path resolution)
-      (is (map? (p/build! entries {} nil))))))
+      (is (map? (p/build! entries {}))))))
 
 ;; =============================================================================
 ;; PATH-002: Plain relative paths not handled
@@ -78,7 +70,7 @@
   (testing "plain relative paths (no ./ prefix) should resolve"
     (let [entries [{:step {:fs/symlink {"~/.config/app" "config/settings.json"}}
                     :source "/Users/test/dotfiles/cfg/app"}]
-          result (p/build! entries {} nil)]
+          result (p/build! entries {})]
       (is (= "/Users/test/dotfiles/cfg/app/config/settings.json"
              (get-in result [:plan :fs/symlink "~/.config/app"])))))
 
@@ -88,19 +80,19 @@
       (is (thrown-with-msg?
             clojure.lang.ExceptionInfo
             #"Path escapes base directory"
-            (p/build! entries {} nil)))))
+            (p/build! entries {})))))
 
   (testing "absolute paths pass through unchanged"
     (let [entries [{:step {:fs/symlink {"~/.config/app" "/etc/some/config"}}
                     :source "/Users/test/dotfiles/cfg/app"}]
-          result (p/build! entries {} nil)]
+          result (p/build! entries {})]
       (is (= "/etc/some/config"
              (get-in result [:plan :fs/symlink "~/.config/app"])))))
 
   (testing "home paths pass through unchanged"
     (let [entries [{:step {:fs/symlink {"~/.config/app" "~/some/config"}}
                     :source "/Users/test/dotfiles/cfg/app"}]
-          result (p/build! entries {} nil)]
+          result (p/build! entries {})]
       (is (= "~/some/config"
              (get-in result [:plan :fs/symlink "~/.config/app"]))))))
 

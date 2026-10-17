@@ -78,15 +78,15 @@
   "Build the plan, filter by scope, and run the live check phase. Returns
    {:checked ActionGraph :symlinks map :errors seq-or-nil}. Exits if a scoped
    run resolves to no actions. This is the expensive path — it queries package
-   managers for orphans and for each action's live state."
+   managers for each action's live state."
   [entries cache action]
-  (let [{:keys [plan symlinks errors facts]} (p/build! entries cache action)
+  (let [{:keys [plan symlinks errors]} (p/build! entries cache)
         ag (g/build-action-graph plan)
         ag (if action (filter-action-graph ag plan action) ag)]
     (when (and action (empty? (:order ag)))
       (println "No actions found for action" action)
       (System/exit 1))
-    {:checked (chk/run-checks ag (f/gather facts (chk/queries ag)))
+    {:checked (chk/run-checks ag (f/gather {} (chk/queries ag)))
      :symlinks symlinks
      :errors (seq (concat (m/validate-secrets) errors))}))
 

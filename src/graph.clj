@@ -151,19 +151,12 @@
           (recur (into needed deps)
                  (into (pop queue) deps)))))))
 
-(defn scope-types
-  "The action types a scope on action-type targets: the type and its uninstall
-   variant."
-  [action-type]
-  #{action-type (a/uninstall-type action-type)})
-
 (defn filter-order
-  "Filter execution order to only include actions of the scope-types of
-   action-type and its :syn/exclusive node, plus any actions they transitively
-   depend on. Returns actions in dependency order (dependencies first)."
+  "Filter execution order to only include actions of the given type and its
+   :syn/exclusive node, plus any actions they transitively depend on.
+   Returns actions in dependency order (dependencies first)."
   [plan order action-type]
-  (let [types (scope-types action-type)
-        targets (filterv #(or (contains? types (first %))
+  (let [targets (filterv #(or (= action-type (first %))
                               (= % [:syn/exclusive action-type]))
                          order)
         needed (transitive-deps plan (set targets))]
