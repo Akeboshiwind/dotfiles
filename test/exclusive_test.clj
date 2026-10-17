@@ -40,6 +40,18 @@
                      (support/facts-of {[:command "npm"] true
                                         [:npm :installed] #{"prettier" "left-pad" "npm" "corepack"}}))))))
 
+(deftest mise-extras-test
+  (testing "installed but undeclared mise tools are extras"
+    (is (= [{:name "python"}]
+           (a/extras :pkg/mise #{"node"}
+                     (support/facts-of {[:command "mise"] true
+                                        [:mise :installed] {"node" #{"20"} "python" #{"3.12"}}})))))
+  (testing "removing them runs mise uninstall for each"
+    (let [calls (atom [])]
+      (with-redefs [a/exec! (fn [_ args] (swap! calls conj args) {:exit 0 :err nil})]
+        (with-out-str (a/remove-extras! :pkg/mise {} [{:name "python"}] {})))
+      (is (= [["mise" "uninstall" "python"]] @calls)))))
+
 (deftest exclusive-check-test
   (testing "extras are the node's drift"
     (let [result (a/check :syn/exclusive :uv/tool {} (support/facts-of uv-facts))]

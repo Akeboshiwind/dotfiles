@@ -3,7 +3,6 @@
             [clojure.string :as str]
             [actions :as a]
             [actions.brew :as brew]
-            [actions.mise :as mise]
             [actions.mas :as mas]
             [graph :as g]
             [plan :as p]
@@ -96,13 +95,6 @@
                                {"babashka/brew/bbin" {} :neovim {}})]
       (is (= {"wget" {}} result)))))
 
-(deftest mise-orphans-test
-  (testing "tool not in manifest is orphaned"
-    (is (= {:python {}} (mise/orphans {"node" #{"20"} "python" #{"3.12"}} {:node {:version "20"}}))))
-
-  (testing "no orphans"
-    (is (empty? (mise/orphans {"node" #{"20"}} {:node {:version "20"}})))))
-
 (deftest mas-orphans-test
   (testing "app not in manifest is orphaned"
     (is (= {497799835 {:name "Xcode"}} (mas/orphans {904280696 "Things3" 497799835 "Xcode"} {:things3 904280696}))))
@@ -132,16 +124,6 @@
 
   (testing ":pkg/brew-uninstall requires [:complete :pkg/brew]"
     (is (= [:complete :pkg/brew] (a/requires :pkg/brew-uninstall)))))
-
-(deftest mise-uninstall-action-test
-  (testing ":pkg/mise-uninstall runs mise uninstall for each item"
-    (let [calls (atom [])]
-      (with-redefs [a/exec! (mock-exec! calls)]
-        (a/install! :pkg/mise-uninstall {} {:python {}} {}))
-      (is (some #(= ["mise" "uninstall" "python"] %) @calls))))
-
-  (testing ":pkg/mise-uninstall requires [:complete :pkg/mise]"
-    (is (= [:complete :pkg/mise] (a/requires :pkg/mise-uninstall)))))
 
 (deftest mas-uninstall-action-test
   (testing ":pkg/mas-uninstall runs mas uninstall for each item"
@@ -201,11 +183,11 @@
 
 (deftest orphan-types-for-scope-test
   (testing "an unscoped run detects orphans for every type that has detection"
-    (is (= #{:pkg/brew :pkg/mise :pkg/mas}
+    (is (= #{:pkg/brew :pkg/mas}
            (set (p/orphan-types-for nil)))))
   (testing "a scoped run detects only the orphans it could act on"
     (is (empty? (p/orphan-types-for :fs/symlink)))
-    (is (= [:pkg/mise] (p/orphan-types-for :pkg/mise)))
+    (is (= [:pkg/mas] (p/orphan-types-for :pkg/mas)))
     (is (= [:pkg/brew] (p/orphan-types-for :pkg/brew)))
     (is (= [:pkg/brew] (p/orphan-types-for :brew/untap)) "taps come from brew's detection")
-    (is (= [:pkg/mise] (p/orphan-types-for :pkg/mise-uninstall)))))
+    (is (= [:pkg/mas] (p/orphan-types-for :pkg/mas-uninstall)))))

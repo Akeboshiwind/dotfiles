@@ -31,28 +31,17 @@
                     [(name tool) {:current current :latest latest}]))
           raw)))
 
-(defn orphans
-  "Find mise tools installed but not declared."
-  [installed-tools declared-items]
-  (let [declared (into #{} (map (comp name key)) declared-items)]
-    (->> (keys installed-tools)
-         (remove declared)
-         (map (fn [n] [(keyword n) {}]))
-         (into {}))))
-
 (defmethod a/run-query :mise [[_ what]]
   (case what
     :installed (installed-map)
     :outdated (outdated-map)))
 
-(defmethod a/orphan-queries :pkg/mise [_ _]
-  #{[:command "mise"] [:mise :installed]})
+(defmethod a/extras-queries :pkg/mise [_] #{[:command "mise"] [:mise :installed]})
 
-(defmethod a/orphans :pkg/mise [_ declared facts]
-  (when (f/value facts [:command "mise"])
-    (let [result (orphans (f/value facts [:mise :installed]) declared)]
-      (when (seq result)
-        {:pkg/mise-uninstall result}))))
+(defmethod a/extras :pkg/mise [_ declared facts]
+  (if (f/value facts [:command "mise"])
+    (->> (keys (f/value facts [:mise :installed])) (remove declared) sort (mapv (fn [n] {:name n})))
+    []))
 
 (defmethod a/queries :pkg/mise [_ declared]
   (cond-> #{[:mise :installed]}
@@ -78,9 +67,6 @@
         :else
         (o/version-drift (last (sort versions)) (:version opts))))))
 
-(defmethod a/check :pkg/mise-uninstall [_ key opts _facts]
-  (o/drift :orphan))
-
 (defmethod a/install! :pkg/mise [type opts items _facts]
   (a/simple-install type opts "Installing mise tools"
     (fn [tool item-opts] (str (name tool) "@" (:version item-opts)))
@@ -91,11 +77,7 @@
           ["mise" "install" tool-str])))
     items))
 
-;; -- Uninstall orphans
-
-(defmethod a/requires :pkg/mise-uninstall [_] [:complete :pkg/mise])
-
-(defmethod a/install! :pkg/mise-uninstall [type opts items _facts]
-  (a/simple-install type opts "Uninstalling mise orphans"
-    (fn [tool _] ["mise" "uninstall" (name tool)])
-    items))
+(defmethod a/remove-extras! :pkg/mise [type opts extras _facts]
+  (a/simple-install type opts "Uninstalling mise tools"
+    (fn [tool _] ["mise" "uninstall" tool])
+    (into {} (map (fn [{n :name}] [n {}])) extras)))
