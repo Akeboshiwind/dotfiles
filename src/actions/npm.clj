@@ -66,30 +66,19 @@
       :else       (o/drift :missing))))
 
 (def ^:private builtin-packages
-  "Packages that ship with Node and should not be treated as orphans."
+  "Packages that ship with Node; npm needs them, so they are never extras."
   #{"npm" "corepack"})
 
-(defn orphans
-  "Find globally installed npm packages not declared in the manifest."
-  [installed-names declared-items]
-  (let [declared (into #{} (map (comp name key)) declared-items)]
-    (->> installed-names
+(defmethod a/extras-queries :pkg/npm [_] #{[:command "npm"] [:npm :installed]})
+
+(defmethod a/extras :pkg/npm [_ declared facts]
+  (if (f/value facts [:command "npm"])
+    (->> (f/value facts [:npm :installed])
          (remove declared)
          (remove builtin-packages)
-         (map (fn [n] [(keyword n) {}]))
-         (into {}))))
-
-(defmethod a/orphan-queries :pkg/npm [_ _]
-  #{[:command "npm"] [:npm :installed]})
-
-(defmethod a/orphans :pkg/npm [_ declared facts]
-  (when (f/value facts [:command "npm"])
-    (let [result (orphans (f/value facts [:npm :installed]) declared)]
-      (when (seq result)
-        {:pkg/npm-uninstall result}))))
-
-(defmethod a/check :pkg/npm-uninstall [_ _key _opts _facts]
-  (o/drift :orphan))
+         sort
+         (mapv (fn [n] {:name n})))
+    []))
 
 (defn install-cmd
   [pkg {:keys [args]}]
@@ -102,11 +91,7 @@
     install-cmd
     items))
 
-;; -- Uninstall orphans
-
-(defmethod a/requires :pkg/npm-uninstall [_] [:complete :pkg/npm])
-
-(defmethod a/install! :pkg/npm-uninstall [type opts items _facts]
-  (a/simple-install type opts "Uninstalling npm orphans"
-    (fn [pkg _] ["npm" "uninstall" "-g" (name pkg)])
-    items))
+(defmethod a/remove-extras! :pkg/npm [type opts extras _facts]
+  (a/simple-install type opts "Uninstalling npm packages"
+    (fn [pkg _] ["npm" "uninstall" "-g" pkg])
+    (into {} (map (fn [{n :name}] [n {}])) extras)))

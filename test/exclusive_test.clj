@@ -33,6 +33,13 @@
         (with-out-str (a/remove-extras! :pkg/bbin {} [{:name "neil"}] {})))
       (is (= [["bbin" "uninstall" "neil"]] @calls)))))
 
+(deftest npm-extras-test
+  (testing "undeclared global packages are extras; the ones node ships never are"
+    (is (= [{:name "left-pad"}]
+           (a/extras :pkg/npm #{"prettier"}
+                     (support/facts-of {[:command "npm"] true
+                                        [:npm :installed] #{"prettier" "left-pad" "npm" "corepack"}}))))))
+
 (deftest exclusive-check-test
   (testing "extras are the node's drift"
     (let [result (a/check :syn/exclusive :uv/tool {} (support/facts-of uv-facts))]

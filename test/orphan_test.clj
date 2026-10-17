@@ -201,11 +201,11 @@
 
 (deftest orphan-types-for-scope-test
   (testing "an unscoped run detects orphans for every type that has detection"
-    (is (= #{:pkg/brew :pkg/mise :pkg/npm :pkg/mas}
+    (is (= #{:pkg/brew :pkg/mise :pkg/mas}
            (set (p/orphan-types-for nil)))))
   (testing "a scoped run detects only the orphans it could act on"
     (is (empty? (p/orphan-types-for :fs/symlink)))
-    (is (= [:pkg/npm] (p/orphan-types-for :pkg/npm)))
+    (is (= [:pkg/mise] (p/orphan-types-for :pkg/mise)))
     (is (= [:pkg/brew] (p/orphan-types-for :pkg/brew)))
     (is (= [:pkg/brew] (p/orphan-types-for :brew/untap)) "taps come from brew's detection")
-    (is (= [:pkg/npm] (p/orphan-types-for :pkg/npm-uninstall)))))
+    (is (= [:pkg/mise] (p/orphan-types-for :pkg/mise-uninstall)))))
