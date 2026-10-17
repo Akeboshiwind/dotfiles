@@ -13,9 +13,6 @@
 
 (defmethod a/requires :syn/exclusive [_] nil)
 
-(defn- declared-name [key]
-  (if (keyword? key) (name key) (str key)))
-
 (defn- declared-set
   []
   (let [entries (m/load-manifest)
@@ -25,7 +22,7 @@
      :id (sp/manifest-identity entries cache)
      :types (into {}
                   (for [[type items] (dissoc merged :syn/exclusive)]
-                    [type (into #{} (map (comp declared-name key)) items)]))}))
+                    [type (into #{} (map (fn [[k opts]] (a/declared-identity type k opts))) items)]))}))
 
 (defmethod a/run-query :manifest [[_ what]]
   (case what :declared (declared-set)))

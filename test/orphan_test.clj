@@ -3,7 +3,6 @@
             [clojure.string :as str]
             [actions :as a]
             [actions.brew :as brew]
-            [actions.mas :as mas]
             [graph :as g]
             [plan :as p]
             [utils :as u]
@@ -95,13 +94,6 @@
                                {"babashka/brew/bbin" {} :neovim {}})]
       (is (= {"wget" {}} result)))))
 
-(deftest mas-orphans-test
-  (testing "app not in manifest is orphaned"
-    (is (= {497799835 {:name "Xcode"}} (mas/orphans {904280696 "Things3" 497799835 "Xcode"} {:things3 904280696}))))
-
-  (testing "no orphans"
-    (is (empty? (mas/orphans {904280696 "Things3"} {:things3 904280696})))))
-
 ;; =============================================================================
 ;; Uninstall action implementations
 ;; =============================================================================
@@ -124,16 +116,6 @@
 
   (testing ":pkg/brew-uninstall requires [:complete :pkg/brew]"
     (is (= [:complete :pkg/brew] (a/requires :pkg/brew-uninstall)))))
-
-(deftest mas-uninstall-action-test
-  (testing ":pkg/mas-uninstall runs mas uninstall for each item"
-    (let [calls (atom [])]
-      (with-redefs [a/exec! (mock-exec! calls)]
-        (a/install! :pkg/mas-uninstall {} {497799835 {}} {}))
-      (is (some #(= ["mas" "uninstall" "497799835"] %) @calls))))
-
-  (testing ":pkg/mas-uninstall requires [:complete :pkg/mas]"
-    (is (= [:complete :pkg/mas] (a/requires :pkg/mas-uninstall)))))
 
 ;; =============================================================================
 ;; Graph ordering: uninstalls before installs
@@ -183,11 +165,10 @@
 
 (deftest orphan-types-for-scope-test
   (testing "an unscoped run detects orphans for every type that has detection"
-    (is (= #{:pkg/brew :pkg/mas}
+    (is (= #{:pkg/brew}
            (set (p/orphan-types-for nil)))))
   (testing "a scoped run detects only the orphans it could act on"
     (is (empty? (p/orphan-types-for :fs/symlink)))
-    (is (= [:pkg/mas] (p/orphan-types-for :pkg/mas)))
     (is (= [:pkg/brew] (p/orphan-types-for :pkg/brew)))
     (is (= [:pkg/brew] (p/orphan-types-for :brew/untap)) "taps come from brew's detection")
-    (is (= [:pkg/mas] (p/orphan-types-for :pkg/mas-uninstall)))))
+    (is (= [:pkg/brew] (p/orphan-types-for :pkg/brew-uninstall)))))

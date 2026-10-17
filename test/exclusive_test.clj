@@ -52,6 +52,20 @@
         (with-out-str (a/remove-extras! :pkg/mise {} [{:name "python"}] {})))
       (is (= [["mise" "uninstall" "python"]] @calls)))))
 
+(deftest mas-extras-test
+  (testing "apps are compared by id, since mas keys are display names"
+    (is (= "1295203466" (a/declared-identity :pkg/mas "Windows App" 1295203466)))
+    (is (= "1295203466" (a/declared-identity :pkg/mas "Windows App" {:id 1295203466})))
+    (is (= [{:name "497799835" :label "Xcode"}]
+           (a/extras :pkg/mas #{"904280696"}
+                     (support/facts-of {[:command "mas"] true
+                                        [:mas :installed] {904280696 "Things3" 497799835 "Xcode"}})))))
+  (testing "removing them runs mas uninstall by id"
+    (let [calls (atom [])]
+      (with-redefs [a/exec! (fn [_ args] (swap! calls conj args) {:exit 0 :err nil})]
+        (with-out-str (a/remove-extras! :pkg/mas {} [{:name "497799835" :label "Xcode"}] {})))
+      (is (= [["mas" "uninstall" "497799835"]] @calls)))))
+
 (deftest exclusive-check-test
   (testing "extras are the node's drift"
     (let [result (a/check :syn/exclusive :uv/tool {} (support/facts-of uv-facts))]
