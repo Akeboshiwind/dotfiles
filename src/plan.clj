@@ -30,11 +30,10 @@
     step))
 
 (defn- resolve-symlink-paths! [entries]
-  (mapv (fn [{:keys [step source]}]
-          {:step (-> step
-                     (resolve-paths-in-action! source :fs/symlink)
-                     (resolve-paths-in-action! source :fs/symlink-folder))
-           :source source})
+  (mapv (fn [{:keys [source] :as entry}]
+          (update entry :step #(-> %
+                                   (resolve-paths-in-action! source :fs/symlink)
+                                   (resolve-paths-in-action! source :fs/symlink-folder))))
         entries))
 
 ;; >> Breakdown :fs/symlink-folders into individual :fs/symlinks
@@ -69,10 +68,7 @@
     step))
 
 (defn- expand-symlink-folders! [entries]
-  (mapv (fn [{:keys [step source]}]
-          {:step (expand-symlink-folder! step)
-           :source source})
-        entries))
+  (mapv #(update % :step expand-symlink-folder!) entries))
 
 ;; >> Validate and merge steps
 
