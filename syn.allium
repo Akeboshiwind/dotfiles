@@ -36,6 +36,7 @@ external entity PackageManager {
     name: String
     available: Boolean                    -- the manager's command exists on PATH
     supports_orphan_detection: Boolean
+    exclusive: Boolean                    -- the root manifest lists it in :syn/exclusive
     explicitly_installed: Set<String>     -- user-requested items only, not transitive dependencies
     third_party_sources: Set<String>      -- installed sources outside the manager's
                                           -- official registry (e.g. brew taps)
@@ -55,6 +56,7 @@ entity Manifest {
     modules: Module with manifest = this
     folder_declarations: FolderDeclaration with manifest = this
 
+    root: String                          -- the directory the manifest was read from
     identity: String                      -- hash identifying this manifest; a
                                           -- persisted plan is valid to replay only
                                           -- against a manifest with the same identity
@@ -108,6 +110,9 @@ entity StateCache {
     recorded_symlinks: RecordedSymlink with cache = this
     script_records: ScriptRecord with cache = this
     stored_plan: StoredPlan with cache = this   -- at most one; the last plan captured
+    pinned_root: String?                  -- the manifest root recorded by the first
+                                          -- successful apply; exclusive managers only
+                                          -- remove against this root
 }
 
 entity RecordedSymlink {
@@ -209,7 +214,7 @@ entity Action {
     key: String
     kind: SymlinkAction | UnlinkAction | PackageAction | UninstallAction |
           SourceRemovalAction | ScriptAction | AssertAction | ServiceAction |
-          DefaultsAction | GitCloneAction | ClaudeResourceAction
+          DefaultsAction | GitCloneAction | ClaudeResourceAction | ExclusiveAction
 
     declaring_modules: Set<Module>        -- modules that declared this (type, key)
     provides: Set<String>                 -- capability keywords this action enables
@@ -221,7 +226,7 @@ entity Action {
                                           -- dependency of one that does
 
     check_outcome: unchecked | satisfied | drift | unknown | conflict | error | cancelled
-    drift_kind: missing | outdated | wrong | orphan when check_outcome = drift
+    drift_kind: missing | outdated | wrong | orphan | extra when check_outcome = drift
     check_message: String?
 
     result: pending | applied | skipped | failed
@@ -270,6 +275,15 @@ variant PackageAction : Action {
 
 variant UninstallAction : Action {
     manager: PackageManager
+}
+
+variant ExclusiveAction : Action {
+    -- One per exclusive manager: "this manager has installed only what the
+    -- manifest declares". Ordered after every action of the manager's type.
+    manager: PackageManager
+    declared: Set<String>                 -- every item the manifest declares for it,
+                                          -- read from the manifest files
+    extras: manager.explicitly_installed - declared
 }
 
 variant SourceRemovalAction : Action {
@@ -511,7 +525,7 @@ rule ScheduleOrphanUninstalls {
     -- Undeclared items become uninstall actions, ordered after every action
     -- of the base type.
     when: PlanAssembled(run)
-    for manager in PackageManagers where available and supports_orphan_detection:
+    for manager in PackageManagers where available and supports_orphan_detection and not exclusive:
         ensures:
             for item in manager.explicitly_installed:
                 if not run.actions.any(a => a.kind = PackageAction and a.key = item):
@@ -527,7 +541,7 @@ rule ScheduleOrphanSourceRemovals {
     -- from it. An installed source no declaration uses is drift to be
     -- removed; removing it also drops any trust grants made under it.
     when: PlanAssembled(run)
-    for manager in PackageManagers where available and supports_orphan_detection:
+    for manager in PackageManagers where available and supports_orphan_detection and not exclusive:
         ensures:
             for source in manager.third_party_sources:
                 if not run.actions.any(a => a.kind = PackageAction and a.source = source):
@@ -679,6 +693,25 @@ rule CheckSourceRemovals {
     @guidance
         -- Orphaned sources always need action by construction; drift kind
         -- is orphan.
+}
+
+rule CheckExclusiveManagers {
+    when: run: Run.status becomes checking
+    for action in run.actions where kind = ExclusiveAction:
+        ensures:
+            if cache.pinned_root = null or manifest.root != cache.pinned_root:
+                action.check_outcome = conflict
+            else if action.extras.count = 0:
+                action.check_outcome = satisfied
+            else:
+                action.check_outcome = drift
+    @guidance
+        -- Drift kind is extra; the extras are its data. A manifest read from any
+        -- root but the pinned one can never remove anything, so a scratch
+        -- manifest that declares little is a conflict, not a mass removal.
+        -- Applying it removes only extras the plan showed that are still extra
+        -- on facts gathered at apply time, after per-manager confirmation at an
+        -- interactive terminal; without one it removes nothing.
 }
 
 rule CheckScripts {
@@ -888,6 +921,13 @@ rule ApplyCompletes {
     when: run: Run.all_resolved
     requires: run.status = applying
     ensures: run.status = complete
+}
+
+rule PinRootOnApply {
+    when: run: Run.status transitions_to complete
+    requires: run.mode = apply
+    requires: cache.pinned_root = null
+    ensures: cache.pinned_root = manifest.root
 }
 
 rule SpendStoredPlanOnApply {

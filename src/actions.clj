@@ -103,6 +103,22 @@
 
 (defmethod orphan-queries :default [_ _] #{})
 
+(defmulti extras-queries
+  "The set of query keys `extras` reads for an exclusive manager. Pure."
+  identity)
+
+(defmulti extras
+  "What an exclusive manager has installed that `declared`, the set of names
+   the manifest declares for it, does not include: a sorted vector of
+   {:name string} maps. Pure. A manager can only be declared exclusive if it
+   defines this."
+  (fn [manager _declared _facts] manager))
+
+(defmulti remove-extras!
+  "Remove extras (as returned by `extras`) from a manager. Returns install!
+   result maps."
+  (fn [manager _opts _extras _facts] manager))
+
 (defmulti orphan-outputs
   "The action types this type's `orphans` can put in a plan fragment. Pure.
    Default: its uninstall-type."

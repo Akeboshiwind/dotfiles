@@ -1,4 +1,5 @@
-{:plan [;; >> Bootstrap (provides :pkg/brew, :pkg/mise, :pkg/mas, :pkg/bbin, :brew/service)
+{:syn/exclusive #{:uv/tool}
+ :plan [;; >> Bootstrap (provides :pkg/brew, :pkg/mise, :pkg/mas, :pkg/bbin, :brew/service)
         {:pkg/script
          {:homebrew
           {:path "scripts/install-homebrew.sh"

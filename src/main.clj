@@ -98,6 +98,7 @@
   [pre-cache executed symlinks]
   (c/save-cache!
     (-> @a/*cache*
+        (update :pinned-root #(or % (m/root)))
         (assoc :symlinks (e/recordable-symlinks executed symlinks (get pre-cache :symlinks {})))
         (update :stored-plan #(when % (sp/spend %))))))
 

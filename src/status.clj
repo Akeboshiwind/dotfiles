@@ -67,12 +67,17 @@
 (defn- node->result
   "The display shape of one checked node."
   [{:keys [ref check]}]
-  (let [[_ key] ref]
-    {:label (if (keyword? key) (name key) (str key))
+  (let [[type key] ref]
+    {:label (cond
+              (= :syn/exclusive type) (subs (str key) 1)
+              (keyword? key) (name key)
+              :else (str key))
      :state (outcome->state check)
      :action ref
      :detail (when (:message check)
                (:message check))
+     :extras (:extras check)
+     :source (:source check)
      :from (:from check)
      :to (:to check)
      :instructions (:detail check)}))
@@ -110,5 +115,15 @@
           jumps (frequencies (keep (fn [{:keys [state from to]}]
                                      (when (and (= :outdated state) from to)
                                        (v/severity from to)))
-                                   all-states))]
-      (d/plan-summary freq jumps))))
+                                   all-states))
+          exclusive (->> (:order action-graph)
+                         (filter #(= :syn/exclusive (first %)))
+                         (map #(node->result (get (:nodes action-graph) %))))
+          clean (->> exclusive (filter #(= :installed (:state %))) (map :label))
+          source (some :source exclusive)]
+      (d/plan-summary freq jumps)
+      (when (seq clean)
+        (println (d/gray (str "exclusive, nothing extra: " (str/join ", " clean)))))
+      (when (:at source)
+        (println (d/gray (str "declared set read from " (:root source) " "
+                              (fmt-duration (- (System/currentTimeMillis) (:at source))) " ago")))))))

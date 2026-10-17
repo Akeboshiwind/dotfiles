@@ -159,11 +159,13 @@
 
 (defn filter-order
   "Filter execution order to only include actions of the scope-types of
-   action-type, plus any actions they transitively depend on.
-   Returns actions in dependency order (dependencies first)."
+   action-type and its :syn/exclusive node, plus any actions they transitively
+   depend on. Returns actions in dependency order (dependencies first)."
   [plan order action-type]
   (let [types (scope-types action-type)
-        targets (filterv #(contains? types (first %)) order)
+        targets (filterv #(or (contains? types (first %))
+                              (= % [:syn/exclusive action-type]))
+                         order)
         needed (transitive-deps plan (set targets))]
     (filterv needed order)))
 

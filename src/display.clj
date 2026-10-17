@@ -33,7 +33,7 @@
    end-spinner-block! knows whether there is a block to close."
   (atom false))
 
-(defn- tty?
+(defn tty?
   "True when stdout is an interactive terminal."
   []
   (if-let [console (System/console)]
@@ -139,6 +139,7 @@
    :outdated   {:icon "↑" :color-fn yellow}
    :wrong      {:icon "!" :color-fn red}
    :orphan     {:icon "⌫" :color-fn yellow}
+   :extra      {:icon "⌫" :color-fn yellow}
    :unknown    {:icon "?" :color-fn gray}
    :error      {:icon "✗" :color-fn red}
    :cancelled  {:icon "⊘" :color-fn gray}})
@@ -169,14 +170,30 @@
     (str (gray (str from " → " (subs to 0 i)))
          (when (seq moved) (color-fn moved)))))
 
-(defn render-plan-result [{:keys [label state detail instructions from to] :as result}]
+(defn extra-label
+  "How an extra reads in a list: its label or name, marked when it is a tap."
+  [{:keys [name label tap]}]
+  (str (or label name) (when tap " (tap)")))
+
+(def ^:private extras-shown 10)
+
+(defn- render-extras
+  [extras]
+  (doseq [e (take extras-shown extras)]
+    (println "   " (gray (extra-label e))))
+  (when (> (count extras) extras-shown)
+    (println "   " (gray (str "… (+" (- (count extras) extras-shown) ")")))))
+
+(defn render-plan-result [{:keys [label state detail instructions from to extras] :as result}]
   (let [jump (version-jump result)
         {:keys [icon color-fn]} (or jump (get plan-icons state (plan-icons :unknown)))
         line (cond
+               (seq extras) (str label "  " (gray (str (count extras) " not declared")))
                jump   (str label "  " (version-detail from to color-fn))
                detail (str label (str "  " (gray detail)))
                :else  label)]
     (println " " (color-fn icon) line)
+    (render-extras extras)
     (when (seq instructions)
       (doseq [instr instructions]
         (println "   " (gray instr))))))
@@ -204,6 +221,7 @@
                     [[:missing (plan-icons :missing)]
                      [:outdated (plan-icons :outdated)]
                      [:orphan (plan-icons :orphan)]
+                     [:extra (plan-icons :extra)]
                      [:installed (plan-icons :installed)]
                      [:wrong (plan-icons :wrong)]
                      [:unknown (plan-icons :unknown)]

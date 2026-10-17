@@ -95,9 +95,26 @@
   [entry]
   (resolve-entry' read-edn-file entry))
 
+(defn root
+  "The directory syn reads its manifest from."
+  []
+  (str (fs/canonicalize ".")))
+
+(defn exclusive-entry
+  "The plan entry for the managers declared exclusive: one :syn/exclusive node
+   per manager, run after all of that manager's installs. nil for none."
+  [managers]
+  (when-not (or (nil? managers) (set? managers))
+    (throw (ex-info ":syn/exclusive must be a set of managers" {:value managers})))
+  (when (seq managers)
+    {:step {:syn/exclusive (into {} (map (fn [m] [m {:dep/requires #{[:complete m]}}])) managers)}
+     :source nil}))
+
 (defn load-manifest
   "Load plan from manifest.edn, resolving all entries.
    Returns [{:step map :source string-or-nil} ...]."
   []
-  (let [{:keys [plan]} (edn/read-string {:readers edn-readers} (slurp "manifest.edn"))]
-    (mapv resolve-entry plan)))
+  (let [{:keys [plan] :as root-manifest} (edn/read-string {:readers edn-readers} (slurp "manifest.edn"))
+        exclusive (exclusive-entry (:syn/exclusive root-manifest))]
+    (cond-> (mapv resolve-entry plan)
+      exclusive (conj exclusive))))

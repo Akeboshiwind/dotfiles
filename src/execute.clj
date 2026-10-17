@@ -16,13 +16,21 @@
             ag
             deps)))
 
+(defn- plan-check-facts
+  [ag type items]
+  (let [at (System/currentTimeMillis)]
+    (into {} (map (fn [[k _]] [[:plan :check [type k]] {:at at :value (get-in ag [:nodes [type k] :check])}]))
+          items)))
+
 (defn- flush-batch!
   "Execute accumulated actionable items as a single install! call.
    Returns updated graph with results applied and failures propagated."
   [ag cancelled type items]
   (if (empty? items)
     ag
-    (let [results (a/do-install! type {} items (f/gather {} (a/install-queries type items)))
+    (let [results (a/do-install! type {} items
+                                 (merge (f/gather {} (a/install-queries type items))
+                                        (plan-check-facts ag type items)))
           result-by-action (into {} (map (fn [r] [(:action r) r])) results)]
       (reduce (fn [g [key _]]
                 (let [ref [type key]

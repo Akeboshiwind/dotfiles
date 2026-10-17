@@ -217,18 +217,9 @@
         (is (> (positions [:pkg/brew-uninstall :wget])
                (positions [:pkg/brew :neovim])))))))
 
-(deftest uv-orphans-test
-  (testing "undeclared uv tools are orphans"
-    (is (= {:uv/tool-uninstall {:ruff {}}}
-           (a/orphans :uv/tool {:black {}}
-                      (support/facts-of {[:command "uv"] true
-                                         [:uv :installed] #{"black" "ruff"}})))))
-  (testing "no uv, no orphans"
-    (is (nil? (a/orphans :uv/tool {} (support/facts-of {[:command "uv"] false}))))))
-
 (deftest orphan-types-for-scope-test
   (testing "an unscoped run detects orphans for every type that has detection"
-    (is (= #{:pkg/brew :pkg/mise :pkg/npm :uv/tool :pkg/mas :pkg/bbin}
+    (is (= #{:pkg/brew :pkg/mise :pkg/npm :pkg/mas :pkg/bbin}
            (set (p/orphan-types-for nil)))))
   (testing "a scoped run detects only the orphans it could act on"
     (is (empty? (p/orphan-types-for :fs/symlink)))
