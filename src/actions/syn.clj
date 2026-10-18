@@ -3,7 +3,6 @@
    whose drift is :extra, whatever it has installed that the manifest doesn't
    declare."
   (:require [actions :as a]
-            [clojure.string :as str]
             [display :as d]
             [facts :as f]
             [manifest :as m]
@@ -60,12 +59,6 @@
 
 (defn- label [manager] (subs (str manager) 1))
 
-(defn- confirm? [manager extras]
-  (print (str "Remove from " (label manager) " (" (count extras) "): "
-              (str/join ", " (map d/extra-label extras)) "? [y/N] "))
-  (flush)
-  (= "y" (some-> (read-line) str/trim str/lower-case)))
-
 (defn removable
   "The extras an apply may remove: those the plan showed that are still extra
    on facts gathered for this apply. Pure."
@@ -82,8 +75,6 @@
     (cond
       (not (o/drift? fresh)) (skip (or (:message fresh) "no extras left"))
       (empty? to-remove) (skip "none of the extras the plan showed are left")
-      (not (d/tty?)) (skip "removal needs an interactive terminal")
-      (not (confirm? manager to-remove)) (skip "declined")
       :else
       (let [results (a/remove-extras! manager {} to-remove facts)
             failed (count (filter #(= :error (:status %)) results))]

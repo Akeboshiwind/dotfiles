@@ -33,7 +33,7 @@
    end-spinner-block! knows whether there is a block to close."
   (atom false))
 
-(defn tty?
+(defn- tty?
   "True when stdout is an interactive terminal."
   []
   (if-let [console (System/console)]

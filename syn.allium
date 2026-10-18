@@ -653,8 +653,7 @@ rule CheckExclusiveManagers {
         -- root but the pinned one can never remove anything, so a scratch
         -- manifest that declares little is a conflict, not a mass removal.
         -- Applying it removes only extras the plan showed that are still extra
-        -- on facts gathered at apply time, after per-manager confirmation at an
-        -- interactive terminal; without one it removes nothing.
+        -- on facts gathered at apply time.
 }
 
 rule CheckScripts {

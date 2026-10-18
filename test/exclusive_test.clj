@@ -2,7 +2,6 @@
   (:require [clojure.test :refer [deftest testing is]]
             [actions :as a]
             [actions.syn :as syn]
-            [display :as d]
             [graph :as g]
             [manifest :as m]
             [outcome :as o]
@@ -94,26 +93,23 @@
     (is (= [{:name "ruff"}]
            (syn/removable [{:name "ruff"} {:name "gone"}] [{:name "ruff"} {:name "new"}])))))
 
-(defn- apply-uv [{:keys [tty? answer shown]}]
+(defn- apply-uv [shown]
   (let [removed (atom nil)
         facts (assoc (support/facts-of uv-facts)
                      [:plan :check [:syn/exclusive :uv/tool]] {:at 0 :value {:extras shown}})]
-    (with-redefs [d/tty? (constantly tty?)
-                  read-line (constantly answer)
-                  a/remove-extras! (fn [_ _ extras _] (reset! removed extras) [])]
+    (with-redefs [a/remove-extras! (fn [_ _ extras _] (reset! removed extras) [])]
       {:results (with-out-str (a/install! :syn/exclusive {} {:uv/tool {}} facts))
        :removed @removed})))
 
 (deftest exclusive-install-test
-  (testing "removes only what the plan showed, after confirmation at a terminal"
-    (is (= [{:name "ruff"}]
-           (:removed (apply-uv {:tty? true :answer "y" :shown [{:name "ruff"}]})))))
-  (testing "without a terminal, nothing is removed"
-    (let [{:keys [results removed]} (apply-uv {:tty? false :answer "y" :shown [{:name "ruff"}]})]
+  (testing "removes what the plan showed that is still extra"
+    (is (= [{:name "ruff"}] (:removed (apply-uv [{:name "ruff"}])))))
+  (testing "something the plan didn't show is left alone"
+    (is (= [{:name "ruff"}] (:removed (apply-uv [{:name "ruff"} {:name "gone"}])))))
+  (testing "nothing the plan showed is still extra: nothing removed"
+    (let [{:keys [results removed]} (apply-uv [{:name "gone"}])]
       (is (nil? removed))
-      (is (re-find #"interactive terminal" results))))
-  (testing "declining removes nothing"
-    (is (nil? (:removed (apply-uv {:tty? true :answer "n" :shown [{:name "ruff"}]}))))))
+      (is (re-find #"none of the extras the plan showed" results)))))
 
 (defn- plugin [type step] {:step step :source nil :plugin type})
 (defn- module [source step] {:step step :source source})
