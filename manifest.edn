@@ -39,6 +39,7 @@
         :fzf
         :zoxide
         :bin
+        {:pkg/brew {:arq {}}}
 
         ;; >> Languages
         :clojure
