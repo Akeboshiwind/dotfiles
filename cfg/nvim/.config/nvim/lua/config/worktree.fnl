@@ -13,6 +13,33 @@
           (values (realpath row.cwd) row.name))
         {})))
 
+(fn read-info [dir]
+  (let [(ran? result) (pcall #(: (vim.system [:git :rev-parse :--path-format=absolute
+                                              :--show-toplevel :--git-dir :--git-common-dir]
+                                             {:text true :cwd dir})
+                                 :wait))]
+    (if (and ran? (= 0 result.code))
+        (let [[top git-dir common-dir] (vim.split result.stdout "\n" {:trimempty true})]
+          {:name (vim.fs.basename top) :linked? (not= git-dir common-dir) :repo common-dir})
+        false)))
+
+;; Keyed by cwd, whose worktree never changes, so entries are never invalidated.
+;; `false` records "not a repository", so the statusline doesn't run git on every redraw there.
+(local infos {})
+
+;; getcwd() is "" once the cwd is deleted.
+(var last-cwd "")
+
+(fn info []
+  "The worktree the cwd is in, as {:name :linked? :repo}, or nil outside a git repository.
+  `repo` is the repository's common git directory, which outlives a deleted worktree."
+  (let [cwd (case (vim.fn.getcwd)
+              "" last-cwd
+              dir (do (set last-cwd dir) dir))]
+    (when (= nil (. infos cwd))
+      (tset infos cwd (read-info cwd)))
+    (or (. infos cwd) nil)))
+
 (fn parse-worktree [block]
   (let [item {}]
     (each [_ line (ipairs (vim.split block "\n"))]
@@ -30,8 +57,10 @@
   `?agents` maps worktree paths to agent names; it defaults to the running Claude agents."
   (let [agents (or ?agents (live-agents))
         cwd (realpath (vim.fn.getcwd))
-        result (: (vim.system [:git :worktree :list :--porcelain] {:text true}) :wait)]
-    (if (not= 0 result.code)
+        repo (?. (info) :repo)
+        result (when repo
+                 (: (vim.system [:git :worktree :list :--porcelain] {:text true :cwd repo}) :wait))]
+    (if (or (= nil result) (not= 0 result.code))
         []
         (icollect [_ block (ipairs (vim.split result.stdout "\n\n" {:trimempty true}))]
           (let [item (parse-worktree block)]
@@ -69,26 +98,5 @@
 
 (fn find-files [dir]
   (LazyVim.pick.open :files {:cwd dir}))
-
-(fn read-info [dir]
-  (let [result (: (vim.system [:git :rev-parse :--path-format=absolute
-                               :--show-toplevel :--git-dir :--git-common-dir]
-                              {:text true :cwd dir})
-                  :wait)]
-    (if (= 0 result.code)
-        (let [[top git-dir common-dir] (vim.split result.stdout "\n" {:trimempty true})]
-          {:name (vim.fs.basename top) :linked? (not= git-dir common-dir)})
-        false)))
-
-;; Keyed by cwd, whose worktree never changes, so entries are never invalidated.
-;; `false` records "not a repository", so the statusline doesn't run git on every redraw there.
-(local infos {})
-
-(fn info []
-  "The worktree the cwd is in, as {:name :linked?}, or nil outside a git repository."
-  (let [cwd (vim.fn.getcwd)]
-    (when (= nil (. infos cwd))
-      (tset infos cwd (read-info cwd)))
-    (or (. infos cwd) nil)))
 
 {: list : pick : switch : find-files : info}

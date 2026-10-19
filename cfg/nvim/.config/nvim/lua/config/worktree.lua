@@ -29,6 +29,44 @@ local function live_agents()
     return {}
   end
 end
+local function read_info(dir)
+  local ran_3f, result
+  local function _5_()
+    return vim.system({"git", "rev-parse", "--path-format=absolute", "--show-toplevel", "--git-dir", "--git-common-dir"}, {text = true, cwd = dir}):wait()
+  end
+  ran_3f, result = pcall(_5_)
+  if (ran_3f and (0 == result.code)) then
+    local _let_6_ = vim.split(result.stdout, "\n", {trimempty = true})
+    local top = _let_6_[1]
+    local git_dir = _let_6_[2]
+    local common_dir = _let_6_[3]
+    return {name = vim.fs.basename(top), ["linked?"] = (git_dir ~= common_dir), repo = common_dir}
+  else
+    return false
+  end
+end
+local infos = {}
+local last_cwd = ""
+local function info()
+  local cwd
+  do
+    local case_8_ = vim.fn.getcwd()
+    if (case_8_ == "") then
+      cwd = last_cwd
+    elseif (nil ~= case_8_) then
+      local dir = case_8_
+      last_cwd = dir
+      cwd = dir
+    else
+      cwd = nil
+    end
+  end
+  if (nil == infos[cwd]) then
+    infos[cwd] = read_info(cwd)
+  else
+  end
+  return (infos[cwd] or nil)
+end
 local function parse_worktree(block)
   local item = {}
   for _, line in ipairs(vim.split(block, "\n")) do
@@ -49,8 +87,22 @@ end
 local function list(_3fagents)
   local agents = (_3fagents or live_agents())
   local cwd = realpath(vim.fn.getcwd())
-  local result = vim.system({"git", "worktree", "list", "--porcelain"}, {text = true}):wait()
-  if (0 ~= result.code) then
+  local repo
+  do
+    local t_12_ = info()
+    if (nil ~= t_12_) then
+      t_12_ = t_12_.repo
+    else
+    end
+    repo = t_12_
+  end
+  local result
+  if repo then
+    result = vim.system({"git", "worktree", "list", "--porcelain"}, {text = true, cwd = repo}):wait()
+  else
+    result = nil
+  end
+  if ((nil == result) or (0 ~= result.code)) then
     return {}
   else
     local tbl_26_ = {}
@@ -78,35 +130,35 @@ local function list(_3fagents)
   end
 end
 local function format_item(item)
-  local _9_
+  local _18_
   if item["current?"] then
-    _9_ = "* "
+    _18_ = "* "
   else
-    _9_ = "  "
+    _18_ = "  "
   end
-  local _11_
+  local _20_
   if item.branch then
-    _11_ = ("  [" .. item.branch .. "]")
+    _20_ = ("  [" .. item.branch .. "]")
   else
-    _11_ = ""
+    _20_ = ""
   end
-  local _13_
+  local _22_
   if item.agent then
-    _13_ = ("  " .. item.agent)
+    _22_ = ("  " .. item.agent)
   else
-    _13_ = ""
+    _22_ = ""
   end
-  return (_9_ .. item.name .. _11_ .. _13_)
+  return (_18_ .. item.name .. _20_ .. _22_)
 end
 local function pick(prompt, on_choice)
-  local function _15_(_241)
+  local function _24_(_241)
     if _241 then
       return on_choice(_241.path)
     else
       return nil
     end
   end
-  return vim.ui.select(list(), {prompt = prompt, format_item = format_item}, _15_)
+  return vim.ui.select(list(), {prompt = prompt, format_item = format_item}, _24_)
 end
 local function switch(dir)
   local from = realpath(vim.fn.getcwd())
@@ -123,26 +175,5 @@ local function switch(dir)
 end
 local function find_files(dir)
   return LazyVim.pick.open("files", {cwd = dir})
-end
-local function read_info(dir)
-  local result = vim.system({"git", "rev-parse", "--path-format=absolute", "--show-toplevel", "--git-dir", "--git-common-dir"}, {text = true, cwd = dir}):wait()
-  if (0 == result.code) then
-    local _let_18_ = vim.split(result.stdout, "\n", {trimempty = true})
-    local top = _let_18_[1]
-    local git_dir = _let_18_[2]
-    local common_dir = _let_18_[3]
-    return {name = vim.fs.basename(top), ["linked?"] = (git_dir ~= common_dir)}
-  else
-    return false
-  end
-end
-local infos = {}
-local function info()
-  local cwd = vim.fn.getcwd()
-  if (nil == infos[cwd]) then
-    infos[cwd] = read_info(cwd)
-  else
-  end
-  return (infos[cwd] or nil)
 end
 return {list = list, pick = pick, switch = switch, ["find-files"] = find_files, info = info}
