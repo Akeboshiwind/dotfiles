@@ -137,6 +137,19 @@
           (h.stop nvim)
           (h.check switched? (.. "cwd is " dir)))))]
 
+   ["<leader>gw switches away from a worktree that has been deleted"
+    (fn []
+      (let [(main worktrees) (h.repo-with-worktrees [:a.txt] [:feature])
+            nvim (h.start worktrees.feature [:a.txt])]
+        (h.check (h.wait-until #(statusline-label nvim :feature) 5000) "statusline never named feature")
+        (vim.fn.delete worktrees.feature :rf)
+        (pick-worktree nvim main)
+        (h.press nvim "<Esc> gw")
+        (let [switched? (h.wait-until #(= (cwd nvim) main) 5000)
+              dir (cwd nvim)]
+          (h.stop nvim)
+          (h.check switched? (.. "cwd is " (vim.inspect dir))))))]
+
    ["the terminal title names the worktree, and follows a switch"
     (fn []
       (let [(main worktrees) (h.repo-with-worktrees [:a.txt] [:feature])
