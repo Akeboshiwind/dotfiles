@@ -12,6 +12,8 @@
 
 (defmethod a/requires :syn/exclusive [_] nil)
 
+(defmethod a/label :syn/exclusive [_ manager _opts] (subs (str manager) 1))
+
 (defn- declared-set
   []
   (let [entries (m/load-manifest)

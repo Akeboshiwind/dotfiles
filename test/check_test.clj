@@ -6,8 +6,10 @@
             [actions :as a]
             [actions.claude :as claude]
             [cache :as c]
+            [graph :as g]
             [outcome :as o]
             [registry]
+            [status :as s]
             [support]))
 
 ;; =============================================================================
@@ -293,6 +295,16 @@
       (let [result (a/check :pkg/mas 1295203466 "Windows App" facts)]
         (is (o/drift? result))
         (is (= :missing (:kind result)))))))
+
+(deftest mas-plan-label-test
+  (testing "a mas app reads by its name in the plan, not its id"
+    (let [ag (-> (g/build-action-graph {:pkg/script {:mas {:dep/provides #{:pkg/mas}}}
+                                        :pkg/mas {1295203466 "Windows App"}})
+                 (assoc-in [:nodes [:pkg/mas 1295203466] :check] (o/drift :missing))
+                 (assoc-in [:nodes [:pkg/script :mas] :check] o/satisfied))
+          out (with-out-str (s/show-plan ag))]
+      (is (re-find #"Windows App" out))
+      (is (not (re-find #"1295203466" out))))))
 
 (deftest mas-check-old-shape-test
   (testing "an app declared {name id} is an error, not a missing app"

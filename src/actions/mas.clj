@@ -24,6 +24,8 @@
   (case what
     :installed (installed-map)))
 
+(defmethod a/label :pkg/mas [_ _app-id app-name] app-name)
+
 (defmethod a/manifest :pkg/mas [_] {:syn/exclusive {:pkg/mas {}}})
 
 (defmethod a/extras-queries :pkg/mas [_] #{[:command "mas"] [:mas :installed]})
