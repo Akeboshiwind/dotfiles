@@ -1,2 +1,2 @@
 {:pkg/brew {"cameroncooke/axe/axe" {:trust true}}
- :pkg/mas {"Xcode" 497799835}}
+ :pkg/mas {497799835 "Xcode"}}

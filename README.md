@@ -61,7 +61,7 @@ syn --dry-run    # Preview without executing
 |--------|-------------|---------|
 | `:pkg/brew` | Homebrew packages | `:head`, `:cask` |
 | `:pkg/mise` | mise version manager | `:version` (required), `:global` |
-| `:pkg/mas` | Mac App Store | `{app-name app-id}` |
+| `:pkg/mas` | Mac App Store | `{app-id app-name}` |
 | `:pkg/bbin` | Babashka binaries | `:url`, `:local`, `:as`, `:git/tag`, `:git/sha`, `:main-opts` |
 | `:pkg/npm` | npm global packages | - |
 | `:pkg/script` | Run shell scripts | `:path` or `:src` |
@@ -71,7 +71,7 @@ syn --dry-run    # Preview without executing
             :neovim {:head true}
             :rectangle {:cask true}}
  :pkg/mise {:node {:version "22" :global true}}
- :pkg/mas {"Tailscale" 1475387142}
+ :pkg/mas {1475387142 "Tailscale"}
  :pkg/bbin {:neil {:url "https://github.com/babashka/neil"}}}
 ```
 

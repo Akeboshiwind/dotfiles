@@ -21,7 +21,7 @@
      :id (sp/manifest-identity entries cache)
      :types (into {}
                   (for [[type items] (dissoc merged :syn/exclusive)]
-                    [type (into #{} (map (fn [[k opts]] (a/declared-identity type k opts))) items)]))}))
+                    [type (into #{} (map (fn [[k _]] (if (keyword? k) (name k) (str k)))) items)]))}))
 
 (defmethod a/run-query :manifest [[_ what]]
   (case what :declared (declared-set)))

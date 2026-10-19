@@ -15,28 +15,28 @@
             :font-ia-writer-duo {}
             :font-ia-writer-quattro {}}
 
- :pkg/mas {;"Timelines" 1112433234 # MAS thinks it's uninstalled because it's an iPad app I think
-           "Bitwarden" 1352778147
-           "Wipr 2" 1662217862
-           "Data Jar" 1453273600
-           "Collections Database" 1568395334
-           "Logger for Shortcuts" 1611554653
-           "Drafts" 1435957248
-           "Uplock" 6469049274
-           "Todoist" 585829637
-           "Obsidian Web Clipper" 6720708363
-           "Save to Matter" 1548677272
+ :pkg/mas {;1112433234 "Timelines" # MAS thinks it's uninstalled because it's an iPad app I think
+           1352778147 "Bitwarden"
+           1662217862 "Wipr 2"
+           1453273600 "Data Jar"
+           1568395334 "Collections Database"
+           1611554653 "Logger for Shortcuts"
+           1435957248 "Drafts"
+           6469049274 "Uplock"
+           585829637 "Todoist"
+           6720708363 "Obsidian Web Clipper"
+           1548677272 "Save to Matter"
            ;; Apple
-           "iMovie" 408981434
-           "Keynote" 409183694
-           "Pages" 409201541
-           "Numbers" 409203825
-           "GarageBand" 682658836
-           "Mercury Weather" 1621800675
-           "Currents Reader" 6758530974
-           "Things 3" 904280696
-           "Amphetamine" 937984704
-           "NaviBeat" 6763518834}
+           408981434 "iMovie"
+           409183694 "Keynote"
+           409201541 "Pages"
+           409203825 "Numbers"
+           682658836 "GarageBand"
+           1621800675 "Mercury Weather"
+           6758530974 "Currents Reader"
+           904280696 "Things 3"
+           937984704 "Amphetamine"
+           6763518834 "NaviBeat"}
  :fs/symlink-folder {"~/.config" "./.config"}
  :fs/symlink {"~/.hushlogin" "./.hushlogin"}
 

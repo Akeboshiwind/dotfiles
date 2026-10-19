@@ -283,17 +283,22 @@
 ;; =============================================================================
 
 (deftest mas-check-installed-test
-  (testing "installed app → satisfied, for both id and {:id ...} declaration forms"
+  (testing "installed app → satisfied"
     (let [facts (support/facts-of {[:mas :installed] {1295203466 "Windows App"}})]
-      (is (o/satisfied? (a/check :pkg/mas "Windows App" 1295203466 facts)))
-      (is (o/satisfied? (a/check :pkg/mas "Windows App" {:id 1295203466} facts))))))
+      (is (o/satisfied? (a/check :pkg/mas 1295203466 "Windows App" facts))))))
 
 (deftest mas-check-missing-test
   (testing "app not installed → drift(:missing)"
     (let [facts (support/facts-of {[:mas :installed] {}})]
-      (let [result (a/check :pkg/mas "Windows App" 1295203466 facts)]
+      (let [result (a/check :pkg/mas 1295203466 "Windows App" facts)]
         (is (o/drift? result))
         (is (= :missing (:kind result)))))))
+
+(deftest mas-check-old-shape-test
+  (testing "an app declared {name id} is an error, not a missing app"
+    (let [result (a/check :pkg/mas "Windows App" 1295203466 (support/facts-of {[:mas :installed] {}}))]
+      (is (o/error? result))
+      (is (re-find #"\{app-id name\}" (:message result))))))
 
 ;; =============================================================================
 ;; :git/clone check
