@@ -35,7 +35,8 @@
            "Mercury Weather" 1621800675
            "Currents Reader" 6758530974
            "Things 3" 904280696
-           "Amphetamine" 937984704}
+           "Amphetamine" 937984704
+           "NaviBeat" 6763518834}
  :fs/symlink-folder {"~/.config" "./.config"}
  :fs/symlink {"~/.hushlogin" "./.hushlogin"}
 
