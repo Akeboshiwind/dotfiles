@@ -126,6 +126,17 @@ end
 set -q wt_root; or set -g wt_root .claude/worktrees
 
 function wt --description 'Create or switch to a git worktree'
+    # Standing in a removed worktree: git can't run from here, so climb out first
+    set -l stranded
+    if not test -d $PWD
+        set stranded true
+        set -l dir $PWD
+        while not test -d $dir
+            set dir (path dirname -- $dir)
+        end
+        cd $dir
+    end
+
     set -l info (git rev-parse --path-format=absolute --show-toplevel --git-dir --git-common-dir 2>/dev/null)
     if test (count $info) -ne 3
         echo "Not in a git repository"
@@ -144,7 +155,7 @@ function wt --description 'Create or switch to a git worktree'
 
     # No args: leave a worktree, otherwise list
     if test (count $argv) -eq 0
-        if set -q linked[1]
+        if set -q linked[1]; or set -q stranded[1]
             cd $main_root
         else
             __wt_list
