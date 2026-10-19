@@ -1,5 +1,6 @@
 (ns manifest
-  (:require [clojure.edn :as edn]
+  (:require [actions :as a]
+            [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [babashka.fs :as fs]))
@@ -95,9 +96,27 @@
   [entry]
   (resolve-entry' read-edn-file entry))
 
+(defn root
+  "The directory syn reads its manifest from."
+  []
+  (str (fs/canonicalize ".")))
+
+(defn plugin-entries
+  "One entry per action plugin that contributes a manifest fragment, marked
+   with the plugin's type: [{:step map :source nil :plugin type} ...]."
+  []
+  ((requiring-resolve 'registry/ensure-loaded!))
+  (->> (keys (methods a/manifest))
+       (remove #{:default})
+       (sort-by str)
+       (keep (fn [t] (when-let [fragment (a/manifest t)]
+                       {:step fragment :source nil :plugin t})))
+       vec))
+
 (defn load-manifest
-  "Load plan from manifest.edn, resolving all entries.
-   Returns [{:step map :source string-or-nil} ...]."
+  "Load plan from manifest.edn, resolving all entries, followed by the
+   plugins' fragments. Returns [{:step map :source string-or-nil} ...], with
+   :plugin on the plugin entries."
   []
   (let [{:keys [plan]} (edn/read-string {:readers edn-readers} (slurp "manifest.edn"))]
-    (mapv resolve-entry plan)))
+    (into (mapv resolve-entry plan) (plugin-entries))))

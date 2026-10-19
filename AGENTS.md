@@ -6,7 +6,7 @@ Babashka-based dotfile manager. Installs packages and symlinks config files via 
 
 - **`syn` is plan-only by default.** It reports what would change and stores that plan; nothing is installed without `--apply`. A bare `syn` that prints a tidy plan has done **nothing**. `syn --help` covers `--apply`, `--fresh`, `--show` and the stored-plan model. (`syn` is a shell wrapper for `bb -m main`.)
 - **`syn.allium` is the behavioural spec.** `src/main.clj` docstrings cite its rule names (`ApplyGate`, `ReplayStoredPlan`, `SpendStoredPlanOnApply`, …). Read the spec before changing plan/apply semantics.
-- **Action types are auto-discovered**, not registered. `registry.clj` globs `src/actions/*.clj` and requires each at load time. To add an action type, add a namespace there implementing the `actions.clj` multimethods — `install!`, `check`, `requires`, `orphans`. There is no central list to update.
+- **Action types are auto-discovered**, not registered. `registry.clj` globs `src/actions/*.clj` and requires each at load time. To add an action type, add a namespace there implementing the `actions.clj` multimethods — `install!`, `check`, `queries`, `requires`. A package manager that should remove what the manifest doesn't declare also implements `extras` and `remove-extras!`, and declares itself exclusive through `a/manifest`. There is no central list to update.
 - **`bb nrepl`** starts an nREPL on port 1339 and writes `.nrepl-port`.
 
 ## Ghostty

@@ -151,16 +151,6 @@
         (is (= :missing (:kind result)))))))
 
 ;; =============================================================================
-;; :pkg/brew-uninstall check
-;; =============================================================================
-
-(deftest brew-uninstall-check-test
-  (testing "orphan to uninstall → drift(:orphan)"
-    (let [result (a/check :pkg/brew-uninstall :wget {} {})]
-      (is (o/drift? result))
-      (is (= :orphan (:kind result))))))
-
-;; =============================================================================
 ;; :assert check
 ;; =============================================================================
 

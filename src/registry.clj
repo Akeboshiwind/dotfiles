@@ -4,17 +4,20 @@
   (:require [babashka.fs :as fs]
             [clojure.string :as str]))
 
+(def ^:private actions-dir
+  (fs/path (fs/parent (fs/absolutize *file*)) "actions"))
+
 (defn- discover-action-namespaces
-  "Find all .clj files in src/actions/ and return their namespace symbols."
+  "Find all .clj files in the actions/ directory beside this file and return
+   their namespace symbols."
   []
-  (let [src-dir (str (fs/absolutize "src/actions"))]
-    (->> (fs/glob src-dir "*.clj")
-         (map (fn [path]
-                (-> (str (fs/file-name path))
-                    (str/replace #"\.clj$" "")
-                    (str/replace "_" "-")
-                    (->> (str "actions."))
-                    symbol))))))
+  (->> (fs/glob actions-dir "*.clj")
+       (map (fn [path]
+              (-> (str (fs/file-name path))
+                  (str/replace #"\.clj$" "")
+                  (str/replace "_" "-")
+                  (->> (str "actions."))
+                  symbol)))))
 
 ;; Load all action namespaces at require time
 (doseq [ns-sym (discover-action-namespaces)]

@@ -35,7 +35,6 @@
                              :when (seq reqs)]
                          [action reqs]))]
     {:actions (set actions)
-     :action-types (set (keys plan))
      :providers (->> by-cap
                      (map (fn [[cap [[_ action]]]] [cap action]))
                      (into {}))
@@ -58,14 +57,12 @@
     :else req))
 
 (defn- find-missing
-  "Find requirements with no provider."
-  [{:keys [action-types providers requires]}]
+  "Find capability requirements with no provider. [:complete type] is never
+   missing: with nothing of that type declared, it requires nothing."
+  [{:keys [providers requires]}]
   (for [[action reqs] requires
         req reqs
-        :when (cond
-                (keyword? req) (not (contains? providers req))
-                (complete-cap? req) (not (contains? action-types (second req)))
-                :else false)]
+        :when (and (keyword? req) (not (contains? providers req)))]
     {:action action :missing-capability req}))
 
 (defn- actions-of-type
@@ -154,19 +151,14 @@
           (recur (into needed deps)
                  (into (pop queue) deps)))))))
 
-(defn scope-types
-  "The action types a scope on action-type targets: the type and its uninstall
-   variant."
-  [action-type]
-  #{action-type (a/uninstall-type action-type)})
-
 (defn filter-order
-  "Filter execution order to only include actions of the scope-types of
-   action-type, plus any actions they transitively depend on.
+  "Filter execution order to only include actions of the given type and its
+   :syn/exclusive node, plus any actions they transitively depend on.
    Returns actions in dependency order (dependencies first)."
   [plan order action-type]
-  (let [types (scope-types action-type)
-        targets (filterv #(contains? types (first %)) order)
+  (let [targets (filterv #(or (= action-type (first %))
+                              (= % [:syn/exclusive action-type]))
+                         order)
         needed (transitive-deps plan (set targets))]
     (filterv needed order)))
 
@@ -196,6 +188,15 @@
     {:nodes nodes
      :order order
      :parsed parsed}))
+
+(defn with-origin
+  "Mark each node a plugin contributed with :origin, the plugin's type."
+  [action-graph origin]
+  (reduce-kv (fn [ag ref plugin]
+               (cond-> ag
+                 (get-in ag [:nodes ref]) (assoc-in [:nodes ref :origin] plugin)))
+             action-graph
+             origin))
 
 (defn dependents-of
   "Return set of actions that directly or transitively depend on the given action."

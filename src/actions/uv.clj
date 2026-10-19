@@ -24,27 +24,18 @@
            set)
       #{})))
 
-(defn orphans
-  "Find uv tools installed but not declared."
-  [installed-names declared-items]
-  (let [declared (into #{} (map (comp name key)) declared-items)]
-    (->> installed-names
-         (remove declared)
-         (map (fn [n] [(keyword n) {}]))
-         (into {}))))
-
 (defmethod a/run-query :uv [[_ what]]
   (case what
     :installed (installed-set)))
 
-(defmethod a/orphan-queries :uv/tool [_ _]
-  #{[:command "uv"] [:uv :installed]})
+(defmethod a/manifest :uv/tool [_] {:syn/exclusive {:uv/tool {}}})
 
-(defmethod a/orphans :uv/tool [_ declared facts]
-  (when (f/value facts [:command "uv"])
-    (let [result (orphans (f/value facts [:uv :installed]) declared)]
-      (when (seq result)
-        {:uv/tool-uninstall result}))))
+(defmethod a/extras-queries :uv/tool [_] #{[:command "uv"] [:uv :installed]})
+
+(defmethod a/extras :uv/tool [_ declared facts]
+  (if (f/value facts [:command "uv"])
+    (->> (f/value facts [:uv :installed]) (remove declared) sort (mapv (fn [n] {:name n})))
+    []))
 
 (defmethod a/queries :uv/tool [_ _] #{[:uv :installed]})
 
@@ -53,9 +44,6 @@
     (if (contains? installed (name key))
       o/satisfied
       (o/drift :missing))))
-
-(defmethod a/check :uv/tool-uninstall [_ _key _opts _facts]
-  (o/drift :orphan))
 
 (defmethod a/install! :uv/tool [type opts items _facts]
   (a/simple-install type opts "Installing uv tools"
@@ -66,11 +54,7 @@
           (:with item-opts) (into ["--with" (:with item-opts)]))))
     items))
 
-;; -- Uninstall orphans
-
-(defmethod a/requires :uv/tool-uninstall [_] [:complete :uv/tool])
-
-(defmethod a/install! :uv/tool-uninstall [type opts items _facts]
-  (a/simple-install type opts "Uninstalling uv tool orphans"
-    (fn [pkg _] ["uv" "tool" "uninstall" (name pkg)])
-    items))
+(defmethod a/remove-extras! :uv/tool [type opts extras _facts]
+  (a/simple-install type opts "Uninstalling uv tools"
+    (fn [pkg _] ["uv" "tool" "uninstall" pkg])
+    (into {} (map (fn [{n :name}] [n {}])) extras)))

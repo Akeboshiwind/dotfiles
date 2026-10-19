@@ -169,84 +169,49 @@
           (a/install! :pkg/brew {} {:neovim {:trust true}} facts)))
       (is (= [["brew" "install" "neovim"]] @calls)))))
 
-;; =============================================================================
-;; Uninstall revokes the orphan's grant
-;; =============================================================================
+(deftest brew-remove-extras-revokes-trust-test
+  (testing "removing a trusted tap-qualified extra also untrusts it"
+    (let [calls (atom [])
+          facts (support/facts-of {[:brew :trusted] {:formulae #{"babashka/brew/bbin"} :taps #{}}})]
+      (with-redefs [a/exec! (mock-exec! calls)]
+        (with-out-str (a/remove-extras! :pkg/brew {} [{:name "babashka/brew/bbin"}] facts)))
+      (is (= [["brew" "untrust" "--formula" "babashka/brew/bbin"]
+              ["brew" "uninstall" "babashka/brew/bbin"]
+              ["brew" "autoremove"]]
+             @calls))))
 
-(deftest brew-uninstall-revokes-trust-test
-  (testing "uninstalling a trusted tap-qualified orphan also untrusts it"
-    (let [calls (atom [])]
-      (let [facts (support/facts-of {[:brew :trusted] {:formulae #{"babashka/brew/bbin"} :taps #{}}})]
-        (with-redefs [a/exec! (mock-exec! calls)]
-          (a/install! :pkg/brew-uninstall {} {"babashka/brew/bbin" {}} facts)))
-      (is (nat-int? (.indexOf @calls ["brew" "untrust" "--formula" "babashka/brew/bbin"])))
-      (is (nat-int? (.indexOf @calls ["brew" "uninstall" "babashka/brew/bbin"])))))
-
-  (testing "untrusted orphans uninstall without trust commands"
-    (let [calls (atom [])]
-      (let [facts (support/facts-of {[:brew :trusted] @no-trust})]
-        (with-redefs [a/exec! (mock-exec! calls)]
-          (a/install! :pkg/brew-uninstall {} {"wget" {}} facts)))
-      (is (not-any? #(= "untrust" (second %)) @calls)))))
-
-;; =============================================================================
-;; ScheduleOrphanSourceRemovals / SourceRemovalAction (:brew/untap)
-;; =============================================================================
-
-(deftest orphan-taps-test
-  (testing "installed tap not implied by any declared package is orphaned"
-    (is (= {"oven-sh/bun" {}}
-           (brew/orphan-taps #{"babashka/brew" "oven-sh/bun"}
-                             {"babashka/brew/bbin" {} :neovim {}}))))
-
-  (testing "taps implied by declared packages are kept"
-    (is (empty? (brew/orphan-taps #{"borkdude/brew"}
-                                  {"borkdude/brew/babashka" {} "borkdude/brew/clj-kondo" {}}))))
-
-  (testing "no installed taps, no orphans"
-    (is (empty? (brew/orphan-taps #{} {"babashka/brew/bbin" {}})))))
-
-(deftest brew-untap-check-test
-  (testing "orphaned tap → drift(:orphan)"
-    (let [result (a/check :brew/untap "oven-sh/bun" {} {})]
-      (is (o/drift? result))
-      (is (= :orphan (:kind result))))))
-
-(deftest brew-untap-action-test
-  (testing ":brew/untap removes the tap"
+  (testing "untrusted extras uninstall without trust commands"
     (let [calls (atom [])]
       (with-redefs [a/exec! (mock-exec! calls)]
-        (a/install! :brew/untap {} {"oven-sh/bun" {}} {}))
-      (is (some #(= ["brew" "untap" "oven-sh/bun"] %) @calls))))
+        (with-out-str (a/remove-extras! :pkg/brew {} [{:name "wget"}]
+                                        (support/facts-of {[:brew :trusted] @no-trust}))))
+      (is (not-any? #(= "untrust" (second %)) @calls)))))
 
-  (testing ":brew/untap orders within the brew family"
-    (is (= [:complete :pkg/brew] (a/requires :brew/untap)))))
+(deftest extra-taps-test
+  (testing "an installed tap no declared package comes from is extra"
+    (is (= #{"oven-sh/bun"}
+           (brew/extra-taps #{"babashka/brew" "oven-sh/bun"} #{"babashka/brew/bbin" "neovim"}))))
 
-(deftest brew-orphans-includes-untap-test
-  (testing "a/orphans :pkg/brew reports orphan taps alongside package orphans"
-    (let [result (a/orphans :pkg/brew {:neovim {}}
-                            (support/facts-of {[:command "brew"] true
-                                               [:brew :leaves] #{"wget"}
-                                               [:brew :casks-full] #{}
-                                               [:brew :taps] #{"oven-sh/bun"}}))]
-      (is (= {"wget" {}} (:pkg/brew-uninstall result)))
-      (is (= {"oven-sh/bun" {}} (:brew/untap result))))))
+  (testing "taps declared packages come from are kept"
+    (is (empty? (brew/extra-taps #{"borkdude/brew"} #{"borkdude/brew/babashka" "borkdude/brew/clj-kondo"}))))
 
-(deftest calculate-orphans-preserves-untap-test
-  (testing "untap orphans survive plan merging (base-type injection must not clobber them)"
-    (with-redefs [u/command-exists? (fn [cmd] (= cmd "brew"))
-                  brew/leaves-set (fn [] #{})
-                  brew/installed-set-full (fn [_] #{})
-                  brew/installed-taps (fn [] #{"oven-sh/bun"})]
-      (let [result (support/orphans-live {:pkg/brew {:neovim {}}})]
-        (is (= {"oven-sh/bun" {}} (:brew/untap result))))))
+  (testing "no installed taps, no extras"
+    (is (empty? (brew/extra-taps #{} #{"babashka/brew/bbin"})))))
 
-  (testing "orphans for types absent from the plan still get their graph dependency injected"
-    (with-redefs [u/command-exists? (fn [cmd] (= cmd "brew"))
-                  brew/leaves-set (fn [] #{"wget"})
-                  brew/installed-set-full (fn [_] #{})
-                  brew/installed-taps (fn [] #{"oven-sh/bun"})]
-      (let [result (support/orphans-live {})]
-        (is (= {"wget" {}} (:pkg/brew-uninstall result)))
-        (is (= {"oven-sh/bun" {}} (:brew/untap result)))
-        (is (= {} (:pkg/brew result)) ":pkg/brew injected so [:complete :pkg/brew] resolves")))))
+(deftest brew-extras-include-taps-test
+  (testing "extra taps are listed after extra packages, marked as taps"
+    (is (= [{:name "wget"} {:name "oven-sh/bun" :tap true}]
+           (a/extras :pkg/brew #{"neovim"}
+                     (support/facts-of {[:command "brew"] true
+                                        [:brew :leaves] #{"neovim" "wget"}
+                                        [:brew :casks-full] #{}
+                                        [:brew :taps] #{"oven-sh/bun"}}))))))
+
+(deftest brew-remove-extras-untaps-after-uninstalls-test
+  (testing "packages are uninstalled before their taps are removed"
+    (let [calls (atom [])]
+      (with-redefs [a/exec! (mock-exec! calls)]
+        (with-out-str (a/remove-extras! :pkg/brew {} [{:name "wget"} {:name "oven-sh/bun" :tap true}]
+                                        (support/facts-of {[:brew :trusted] @no-trust}))))
+      (is (= [["brew" "uninstall" "wget"] ["brew" "autoremove"] ["brew" "untap" "oven-sh/bun"]]
+             @calls)))))

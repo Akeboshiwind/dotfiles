@@ -66,13 +66,19 @@
 
 (defn- node->result
   "The display shape of one checked node."
-  [{:keys [ref check]}]
-  (let [[_ key] ref]
-    {:label (if (keyword? key) (name key) (str key))
+  [{:keys [ref check origin]}]
+  (let [[type key] ref]
+    {:label (cond
+              (= :syn/exclusive type) (subs (str key) 1)
+              (keyword? key) (name key)
+              :else (str key))
      :state (outcome->state check)
      :action ref
      :detail (when (:message check)
                (:message check))
+     :origin origin
+     :extras (:extras check)
+     :source (:source check)
      :from (:from check)
      :to (:to check)
      :instructions (:detail check)}))
@@ -93,6 +99,20 @@
                                            (nil? (:detail %)))
                                      results)}))))))
 
+(defn manifest-lines
+  "The merged manifest as display lines: each type, then its keys, marked
+   with the plugin that contributed them. Only :syn/exclusive shows its
+   options, since other options may hold secrets. Pure."
+  [merged origin]
+  (for [[type items] (sort-by (comp str key) merged)
+        line (cons (subs (str type) 1)
+                   (for [[k opts] (sort-by (comp str key) items)
+                         :let [plugin (get origin [type k])]]
+                     (str "  " (pr-str k)
+                          (when (= :syn/exclusive type) (str " " (pr-str (dissoc opts :dep/requires))))
+                          (when plugin (str " ; from plugin " (subs (str plugin) 1))))))]
+    line))
+
 (defn show-plan
   "Show the status of all actions in the ActionGraph.
    Displays everything except satisfied (installed) items, grouped by type."
@@ -110,5 +130,15 @@
           jumps (frequencies (keep (fn [{:keys [state from to]}]
                                      (when (and (= :outdated state) from to)
                                        (v/severity from to)))
-                                   all-states))]
-      (d/plan-summary freq jumps))))
+                                   all-states))
+          exclusive (->> (:order action-graph)
+                         (filter #(= :syn/exclusive (first %)))
+                         (map #(node->result (get (:nodes action-graph) %))))
+          clean (->> exclusive (filter #(= :installed (:state %))) (map :label))
+          source (some :source exclusive)]
+      (d/plan-summary freq jumps)
+      (when (seq clean)
+        (println (d/gray (str "exclusive, nothing extra: " (str/join ", " clean)))))
+      (when (:at source)
+        (println (d/gray (str "declared set read from " (:root source) " "
+                              (fmt-duration (- (System/currentTimeMillis) (:at source))) " ago")))))))

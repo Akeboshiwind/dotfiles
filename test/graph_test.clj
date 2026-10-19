@@ -272,3 +272,9 @@
     (is (= [[:fs/symlink "~/.gitconfig"]
             [:fs/symlink "~/.zshrc"]]
            (g/filter-order simple-plan (g/topological-sort simple-plan) :fs/symlink)))))
+
+(deftest complete-requirement-over-undeclared-type-test
+  (testing "[:complete T] with nothing of T declared requires nothing"
+    (let [plan {:pkg/script {:after-npm {:dep/requires #{[:complete :pkg/npm]}}}}]
+      (is (nil? (g/validate plan)))
+      (is (= [[:pkg/script :after-npm]] (g/topological-sort plan))))))

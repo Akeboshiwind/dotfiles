@@ -38,6 +38,7 @@
   (println "  --plan      Show what's installed, missing, and outdated (default)")
   (println "  --fresh     With --apply: ignore the stored plan and check live")
   (println "  --show      Re-display the last stored plan and its status (no checks)")
+  (println "  --manifest  Print the merged manifest, marking what plugins contribute")
   (println "  --help      Show this help message")
   (println "")
   (println "Examples:")
@@ -59,9 +60,10 @@
               (= arg "--apply") (assoc acc :apply-mode true)
               (= arg "--fresh") (assoc acc :fresh true)
               (= arg "--show") (assoc acc :show true)
+              (= arg "--manifest") (assoc acc :manifest true)
               (str/starts-with? arg ":") (assoc acc :action (keyword (subs arg 1)))
               :else acc))
-          {:action nil :plan-mode false :apply-mode false :fresh false :show false :help false}
+          {:action nil :plan-mode false :apply-mode false :fresh false :show false :manifest false :help false}
           args))
 
 (defn- filter-action-graph
@@ -78,15 +80,15 @@
   "Build the plan, filter by scope, and run the live check phase. Returns
    {:checked ActionGraph :symlinks map :errors seq-or-nil}. Exits if a scoped
    run resolves to no actions. This is the expensive path — it queries package
-   managers for orphans and for each action's live state."
+   managers for each action's live state."
   [entries cache action]
-  (let [{:keys [plan symlinks errors facts]} (p/build! entries cache action)
-        ag (g/build-action-graph plan)
+  (let [{:keys [plan origin symlinks errors]} (p/build! entries cache)
+        ag (g/with-origin (g/build-action-graph plan) origin)
         ag (if action (filter-action-graph ag plan action) ag)]
     (when (and action (empty? (:order ag)))
       (println "No actions found for action" action)
       (System/exit 1))
-    {:checked (chk/run-checks ag (f/gather facts (chk/queries ag)))
+    {:checked (chk/run-checks ag (f/gather {} (chk/queries ag)))
      :symlinks symlinks
      :errors (seq (concat (m/validate-secrets) errors))}))
 
@@ -98,6 +100,7 @@
   [pre-cache executed symlinks]
   (c/save-cache!
     (-> @a/*cache*
+        (update :pinned-root #(or % (m/root)))
         (assoc :symlinks (e/recordable-symlinks executed symlinks (get pre-cache :symlinks {})))
         (update :stored-plan #(when % (sp/spend %))))))
 
@@ -195,7 +198,7 @@
    valid stored plan or checking live under --fresh), or shows-and-stores a fresh
    plan (plan mode, the default)."
   [& args]
-  (let [{:keys [action apply-mode fresh show help]} (parse-args args)]
+  (let [{:keys [action apply-mode fresh show manifest help]} (parse-args args)]
     (when help
       (print-help)
       (System/exit 0))
@@ -207,9 +210,11 @@
           (run-show! cache)
           ;; Plan and apply need the manifest; a broken one aborts here (caught below).
           (let [entries (m/load-manifest)]
-            (if apply-mode
-              (run-apply! entries cache action fresh)
-              (run-plan! entries cache action (sp/manifest-identity entries cache))))))
+            (cond
+              manifest (let [{:keys [merged origin]} (p/assemble entries cache)]
+                         (run! println (s/manifest-lines merged origin)))
+              apply-mode (run-apply! entries cache action fresh)
+              :else (run-plan! entries cache action (sp/manifest-identity entries cache))))))
       (catch clojure.lang.ExceptionInfo e
         (let [data (ex-data e)]
           (cond

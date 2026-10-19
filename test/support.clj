@@ -2,7 +2,6 @@
   (:require [actions :as a]
             [check :as chk]
             [facts :as f]
-            [plan :as p]
             [registry]))
 
 (defn facts-of
@@ -19,8 +18,3 @@
   "Gather what an ActionGraph's checks read, then run them. For tmp-dir fixtures."
   [ag]
   (chk/run-checks ag (f/gather {} (chk/queries ag))))
-
-(defn orphans-live
-  [plan]
-  (let [types (p/orphan-types-for nil)]
-    (p/calculate-orphans plan types (f/gather {} (p/orphan-queries plan types)))))

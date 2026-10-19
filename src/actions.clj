@@ -70,13 +70,6 @@
                :message err}))
           items))))
 
-(defn uninstall-type
-  "The action type that removes a type's orphans, by naming convention.
-   e.g. :pkg/brew -> :pkg/brew-uninstall, :uv/tool -> :uv/tool-uninstall"
-  [action-type]
-  (keyword (namespace action-type)
-           (str (name action-type) "-uninstall")))
-
 ;; =============================================================================
 ;; Multimethods
 ;; =============================================================================
@@ -97,18 +90,44 @@
 
 (defmethod queries :default [_ _] #{})
 
-(defmulti orphan-queries
-  "The set of query keys `orphans` reads for this type's declared items. Pure."
-  (fn [type _declared] type))
-
-(defmethod orphan-queries :default [_ _] #{})
-
-(defmulti orphan-outputs
-  "The action types this type's `orphans` can put in a plan fragment. Pure.
-   Default: its uninstall-type."
+(defmulti manifest
+  "A manifest fragment this plugin contributes beneath the user's manifest, or
+   nil. The fragment is shaped like a manifest step and may name any type; the
+   user's own declaration of the same [type key] replaces it."
   identity)
 
-(defmethod orphan-outputs :default [type] #{(uninstall-type type)})
+(defmethod manifest :default [_] nil)
+
+(defmulti declared-identity
+  "What a declared item is installed as, to compare with what its manager
+   reports installed. Pure. Default: the key's name."
+  (fn [type _key _opts] type))
+
+(defmethod declared-identity :default [_ key _opts]
+  (if (keyword? key) (name key) (str key)))
+
+(defmulti extras-queries
+  "The set of query keys `extras` reads for an exclusive manager. Pure."
+  identity)
+
+(defmulti extras
+  "What an exclusive manager has installed that `declared`, the set of names
+   the manifest declares for it, does not include: a sorted vector of
+   {:name string} maps. Pure. A manager can only be declared exclusive if it
+   defines this."
+  (fn [manager _declared _facts] manager))
+
+(defmulti removal-queries
+  "The set of query keys `remove-extras!` reads for a manager, gathered at
+   apply time. Pure."
+  identity)
+
+(defmethod removal-queries :default [_] #{})
+
+(defmulti remove-extras!
+  "Remove extras (as returned by `extras`) from a manager. Returns install!
+   result maps."
+  (fn [manager _opts _extras _facts] manager))
 
 (defmulti run-query
   "Ask the machine the question a query key names, and return the answer.
@@ -124,15 +143,6 @@
 
 (defmethod check :default [_ _ _ _]
   o/unknown)
-
-(defmulti orphans
-  "Compare declared items against facts to find orphans. `facts` holds the
-   answers to the queries `orphan-queries` declared for this type.
-   Returns a plan fragment to merge (e.g. {:pkg/brew-uninstall {:wget {} ...}}), or nil.
-   Default returns nil (no orphan detection for this action type)."
-  (fn [type _declared _facts] type))
-
-(defmethod orphans :default [_ _ _] nil)
 
 (defmulti install-queries
   "The set of query keys `install!` reads for these items of a type, gathered

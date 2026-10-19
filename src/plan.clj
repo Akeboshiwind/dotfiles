@@ -2,9 +2,6 @@
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
             [clojure.set :as set]
-            [actions :as a]
-            [facts :as f]
-            [graph :as g]
             [utils :as u]))
 
 ;; >> Resolve symlinks to root of repo
@@ -33,11 +30,10 @@
     step))
 
 (defn- resolve-symlink-paths! [entries]
-  (mapv (fn [{:keys [step source]}]
-          {:step (-> step
-                     (resolve-paths-in-action! source :fs/symlink)
-                     (resolve-paths-in-action! source :fs/symlink-folder))
-           :source source})
+  (mapv (fn [{:keys [source] :as entry}]
+          (update entry :step #(-> %
+                                   (resolve-paths-in-action! source :fs/symlink)
+                                   (resolve-paths-in-action! source :fs/symlink-folder))))
         entries))
 
 ;; >> Breakdown :fs/symlink-folders into individual :fs/symlinks
@@ -72,12 +68,12 @@
     step))
 
 (defn- expand-symlink-folders! [entries]
-  (mapv (fn [{:keys [step source]}]
-          {:step (expand-symlink-folder! step)
-           :source source})
-        entries))
+  (mapv #(update % :step expand-symlink-folder!) entries))
 
 ;; >> Validate and merge steps
+
+(defn- source-label [{:keys [source plugin]}]
+  (if plugin (str "plugin " (subs (str plugin) 1)) source))
 
 (defn find-duplicate-keys
   "Find keys that appear in multiple entries within the same action type.
@@ -88,9 +84,9 @@
     (for [action-type action-types
           :let [;; Collect [key source] pairs for this action type
                 key-sources (->> entries
-                                 (mapcat (fn [{:keys [step source]}]
+                                 (mapcat (fn [{:keys [step] :as entry}]
                                            (for [k (keys (get step action-type))]
-                                             [k source])))
+                                             [k (source-label entry)])))
                                  (group-by first))
                 ;; Find keys with multiple sources
                 duplicates (->> key-sources
@@ -105,7 +101,42 @@
 (defn- merge-steps
   "Merge all step maps into a single map, combining same action types"
   [entries]
-  (apply merge-with merge (map :step entries)))
+  (apply merge-with merge {} (map :step entries)))
+
+(defn- expand-exclusive
+  "Turn the merged :syn/exclusive map {manager opts-or-false} into one node per
+   manager that runs after all of that manager's installs. false opts a
+   manager out."
+  [merged]
+  (let [declared (:syn/exclusive merged)
+        nodes (into {}
+                    (keep (fn [[manager opts]]
+                            (cond
+                              (false? opts) nil
+                              (map? opts) [manager (assoc opts :dep/requires #{[:complete manager]})]
+                              :else (throw (ex-info ":syn/exclusive values must be a map or false"
+                                                    {:manager manager :value opts})))))
+                    declared)]
+    (if (seq nodes)
+      (assoc merged :syn/exclusive nodes)
+      (dissoc merged :syn/exclusive))))
+
+(defn merge-layers
+  "Merge plugin entries beneath the user's: a user declaration of a
+   [type key] replaces a plugin's. Duplicates within a layer are errors.
+   Returns {:merged plan-map :errors [...] :origin {[type key] plugin}}, where
+   :origin names the plugin behind each declaration the user didn't replace."
+  [entries]
+  (let [{plugin true user false} (group-by (comp some? :plugin) entries)
+        user-merged (merge-steps user)]
+    {:merged (expand-exclusive (merge-with merge (merge-steps plugin) user-merged))
+     :errors (concat (find-duplicate-keys user) (find-duplicate-keys plugin))
+     :origin (into {}
+                   (for [{:keys [plugin step]} plugin
+                         [type items] step
+                         [k _] items
+                         :when (not (contains? (get user-merged type) k))]
+                     [[type k] plugin]))}))
 
 ;; >> Calculate stale symlinks to unlink
 
@@ -120,48 +151,6 @@
     {:unlinks (select-keys cached stale-keys)
      :symlinks current}))
 
-;; >> Calculate package orphans
-
-(defn- orphan-types
-  "Return all action types that have a non-default orphans implementation."
-  []
-  (->> (methods a/orphans)
-       keys
-       (remove #{:default})))
-
-(defn orphan-types-for
-  "The orphan types whose actions a run scoped to scope can contain: those whose
-   orphan-outputs meet its scope-types. Every orphan type when scope is nil."
-  [scope]
-  (cond->> (orphan-types)
-    scope (filter #(seq (set/intersection (g/scope-types scope) (a/orphan-outputs %))))))
-
-(defn orphan-queries
-  "The set of query keys `calculate-orphans` reads for plan over types. Pure."
-  [plan types]
-  (into #{} (mapcat #(a/orphan-queries % (get plan % {}))) types))
-
-(defn calculate-orphans
-  "Compute orphan removal actions from facts for the given orphan types, whether
-   or not the plan declares anything for them.
-   Each a/orphans impl returns a plan fragment or nil, possibly spanning
-   several orphan action types (e.g. {:pkg/brew-uninstall {...} :brew/untap {...}}).
-   When an orphan type requires [:complete base] and the base type is absent
-   from the plan, the base is injected as an empty entry so the dependency
-   graph resolves."
-  [plan types facts]
-  (let [merged (->> types
-                    (keep #(a/orphans % (get plan % {}) facts))
-                    (apply merge {}))
-        missing-bases (->> (keys merged)
-                           (keep (fn [orphan-type]
-                                   (let [req (a/requires orphan-type)]
-                                     (when (and (vector? req) (= :complete (first req)))
-                                       (second req)))))
-                           (remove #(or (contains? plan %)
-                                        (contains? merged %))))]
-    (reduce (fn [acc base] (assoc acc base {})) merged missing-bases)))
-
 ;; >> Plan builder
 
 (defn assemble
@@ -171,35 +160,28 @@
    {:merged plan-map :symlinks {...} :unlinks {...} :errors [...]}.
    This is the part of a build that depends only on the repository and the
    cache, so it is safe to run on the fast apply path (e.g. to hash the
-   manifest's identity) without paying for orphan detection."
+   manifest's identity)."
   [entries cache]
   (let [processed (->> entries
                        resolve-symlink-paths!
                        expand-symlink-folders!)
-        duplicate-errors (find-duplicate-keys processed)
-        merged (merge-steps processed)
+        {:keys [merged origin] duplicate-errors :errors} (merge-layers processed)
         {:keys [unlinks symlinks]} (calculate-unlinks cache merged)]
     {:merged merged
+     :origin origin
      :symlinks symlinks
      :unlinks unlinks
      :errors duplicate-errors}))
 
 (defn build!
   "Build plan from entries. Takes [{:step map :source string} ...].
-   Orphans are detected only for (orphan-types-for scope); scope is nil for an
-   unscoped run.
-   Returns {:plan map :symlinks map :errors [...] :facts snapshot}, where facts
-   holds the orphan queries' answers for the check phase to reuse.
-   Impure: reads filesystem for path canonicalization, directory listing, and package queries."
-  [entries cache scope]
-  (let [{:keys [merged symlinks unlinks errors]} (assemble entries cache)
-        types (orphan-types-for scope)
-        facts (f/gather {} (orphan-queries merged types))
-        orphans (calculate-orphans merged types facts)
+   Returns {:plan map :origin {[type key] plugin} :symlinks map :errors [...]}.
+   Impure: reads the filesystem for path canonicalization and directory listing."
+  [entries cache]
+  (let [{:keys [merged origin symlinks unlinks errors]} (assemble entries cache)
         plan (cond-> merged
-               (seq unlinks) (assoc :fs/unlink unlinks)
-               (seq orphans) (merge orphans))]
+               (seq unlinks) (assoc :fs/unlink unlinks))]
     {:plan plan
+     :origin origin
      :symlinks symlinks
-     :errors errors
-     :facts facts}))
+     :errors errors}))
