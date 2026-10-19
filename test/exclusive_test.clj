@@ -54,9 +54,7 @@
       (is (= [["mise" "uninstall" "python"]] @calls)))))
 
 (deftest mas-extras-test
-  (testing "apps are compared by id, since mas keys are display names"
-    (is (= "1295203466" (a/declared-identity :pkg/mas "Windows App" 1295203466)))
-    (is (= "1295203466" (a/declared-identity :pkg/mas "Windows App" {:id 1295203466})))
+  (testing "installed apps not declared by id are extras"
     (is (= [{:name "497799835" :label "Xcode"}]
            (a/extras :pkg/mas #{"904280696"}
                      (support/facts-of {[:command "mas"] true

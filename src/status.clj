@@ -1,6 +1,7 @@
 (ns status
   "Orchestrates --plan: shows what's installed, missing, outdated."
-  (:require [clojure.string :as str]
+  (:require [actions :as a]
+            [clojure.string :as str]
             [display :as d]
             [outcome :as o]
             [registry]
@@ -66,12 +67,9 @@
 
 (defn- node->result
   "The display shape of one checked node."
-  [{:keys [ref check origin]}]
+  [{:keys [ref opts check origin]}]
   (let [[type key] ref]
-    {:label (cond
-              (= :syn/exclusive type) (subs (str key) 1)
-              (keyword? key) (name key)
-              :else (str key))
+    {:label (a/label type key opts)
      :state (outcome->state check)
      :action ref
      :detail (when (:message check)

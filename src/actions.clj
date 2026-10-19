@@ -90,6 +90,13 @@
 
 (defmethod queries :default [_ _] #{})
 
+(defmulti label
+  "How a declared item reads in the plan. Default: the key's name."
+  (fn [type _key _opts] type))
+
+(defmethod label :default [_ key _opts]
+  (if (keyword? key) (name key) (str key)))
+
 (defmulti manifest
   "A manifest fragment this plugin contributes beneath the user's manifest, or
    nil. The fragment is shaped like a manifest step and may name any type; the
@@ -97,14 +104,6 @@
   identity)
 
 (defmethod manifest :default [_] nil)
-
-(defmulti declared-identity
-  "What a declared item is installed as, to compare with what its manager
-   reports installed. Pure. Default: the key's name."
-  (fn [type _key _opts] type))
-
-(defmethod declared-identity :default [_ key _opts]
-  (if (keyword? key) (name key) (str key)))
 
 (defmulti extras-queries
   "The set of query keys `extras` reads for an exclusive manager. Pure."

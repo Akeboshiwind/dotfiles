@@ -24,11 +24,7 @@
   (case what
     :installed (installed-map)))
 
-(defn- app-id [opts]
-  (if (map? opts) (:id opts) opts))
-
-(defmethod a/declared-identity :pkg/mas [_ _key opts]
-  (str (app-id opts)))
+(defmethod a/label :pkg/mas [_ _app-id app-name] app-name)
 
 (defmethod a/manifest :pkg/mas [_] {:syn/exclusive {:pkg/mas {}}})
 
@@ -44,17 +40,22 @@
 
 (defmethod a/queries :pkg/mas [_ _] #{[:mas :installed]})
 
-(defmethod a/check :pkg/mas [_ _key opts facts]
-  (let [installed (f/value facts [:mas :installed])]
-    (if (contains? installed (app-id opts))
-      o/satisfied
-      (o/drift :missing))))
+(defmethod a/check :pkg/mas [_ app-id _app-name facts]
+  (cond
+    (not (int? app-id))
+    (o/error (str "mas apps are declared {app-id name}, got key " (pr-str app-id)))
+
+    (contains? (f/value facts [:mas :installed]) app-id)
+    o/satisfied
+
+    :else
+    (o/drift :missing)))
 
 (defmethod a/install! :pkg/mas [type opts items _facts]
   (a/simple-install type opts "Installing Mac App Store apps"
-    (fn [app-name _] (name app-name))
-    (fn [_app-name app-opts]
-      ["mas" "install" (str (app-id app-opts))])
+    (fn [_app-id app-name] app-name)
+    (fn [app-id _app-name]
+      ["mas" "install" (str app-id)])
     items))
 
 (defmethod a/remove-extras! :pkg/mas [type opts extras _facts]
