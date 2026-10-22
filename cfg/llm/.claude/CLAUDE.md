@@ -5,7 +5,8 @@
   - A **typed ID** prefixes the subject line — `D1` decision, `Q1` question, `I1` idea, `D2.1` a child. IDs are stable for the conversation: never renumbered, never reused.
   - A **tag** prefixes it where that sharpens it — `goal:`, `pro:`, `con:`, `idea:`, `assumption:`, `check:`.
   - Cite an ID **with its subject line**, never bare.
-- In designs, load `chalk:goal-tree` and shape the design as one. Label each decision a **one-way door** (hard to reverse) or a **two-way door** (cheap to undo) — decide two-way doors fast; take care over one-way doors.
+- In designs, load `chalk:goal-tree` and shape the design as one.
+- In designs, label each decision a **one-way door** (hard to reverse) or a **two-way door** (cheap to undo) — decide two-way doors fast; take care over one-way doors.
 
 ## Writing
 
