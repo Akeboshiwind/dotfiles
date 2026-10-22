@@ -1,6 +1,7 @@
 ## Working with me
 
 - When asked for a linear walkthrough, use `uvx showboat --help`.
+- Decide **two-way doors** fast; take care over **one-way doors**.
 
 ## Writing
 
@@ -15,6 +16,7 @@
 - We develop using 'tidy-first' methodology — endeavouring to separate 'equivalence' changes (changes which do not affect runtime behaviour, changes which increase our options) from changes that advance behaviour.
 - We practise **red-green** development.
 - Make illegal states **unrepresentable**.
+- **Parse**, don't validate.
 - **Obviously no bugs** over *no obvious bugs*.
 - **Simple** (not braided) over easy (near at hand)
 - Write **below** the limit of your cleverness — code written at that limit is beyond your ability to debug.
