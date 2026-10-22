@@ -1,7 +1,7 @@
 ## Working with me
 
 - When asked for a linear walkthrough, use `uvx showboat --help`.
-- Decide **two-way doors** fast; take care over **one-way doors**.
+- In designs, label each decision a **one-way door** (hard to reverse) or a **two-way door** (cheap to undo) — decide two-way doors fast; take care over one-way doors.
 
 ## Writing
 
