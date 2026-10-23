@@ -1,6 +1,7 @@
 (ns actions.mise
   (:require [actions :as a]
             [cheshire.core :as json]
+            [clojure.string :as str]
             [display :as d]
             [facts :as f]
             [outcome :as o]
@@ -45,39 +46,70 @@
     (->> (keys (f/value facts [:mise :installed])) (remove declared) sort (mapv (fn [n] {:name n})))
     []))
 
+(defn- global-version
+  [{:keys [version global]}]
+  (when global version))
+
+(defn- install-versions
+  [{:keys [version global]}]
+  (if (and version (not global)) #{version} #{}))
+
+(defn- declared-versions [opts]
+  (cond-> (install-versions opts)
+    (global-version opts) (conj (global-version opts))))
+
 (defmethod a/queries :pkg/mise [_ declared]
   (cond-> #{[:mise :installed]}
-    (some (fn [[_ opts]] (= "latest" (:version opts))) declared) (conj [:mise :outdated])))
+    (some (fn [[_ opts]] (contains? (declared-versions opts) "latest")) declared) (conj [:mise :outdated])))
 
 (defmethod a/check :pkg/mise [_ key opts facts]
-  (if-not (:version opts)
-    (o/error "Version required")
-    (let [tool-name (name key)
-          versions  (get (f/value facts [:mise :installed]) tool-name)]
-      (cond
-        (nil? versions)
-        (o/drift :missing)
+  (let [declared (declared-versions opts)]
+    (if (empty? declared)
+      (o/error "Version required")
+      (let [tool-name (name key)
+            versions  (get (f/value facts [:mise :installed]) tool-name)
+            missing   (->> declared (remove #{"latest"}) (remove #(contains? versions %)) sort first)]
+        (cond
+          (nil? versions)
+          (o/drift :missing)
 
-        (= "latest" (:version opts))
-        (if-let [{:keys [current latest]} (get (f/value facts [:mise :outdated]) tool-name)]
-          (o/version-drift current latest)
-          o/satisfied)
+          missing
+          (o/version-drift (last (sort versions)) missing)
 
-        (contains? versions (:version opts))
-        o/satisfied
+          (contains? declared "latest")
+          (if-let [{:keys [current latest]} (get (f/value facts [:mise :outdated]) tool-name)]
+            (o/version-drift current latest)
+            o/satisfied)
 
-        :else
-        (o/version-drift (last (sort versions)) (:version opts))))))
+          :else
+          o/satisfied)))))
+
+(defn- install-commands [tool opts]
+  (let [spec #(str (name tool) "@" %)]
+    (cond-> []
+      (global-version opts)
+      (conj ["mise" "use" "--global" (spec (global-version opts))])
+
+      (seq (install-versions opts))
+      (conj (into ["mise" "install"] (map spec) (sort (install-versions opts)))))))
+
+(defn- exec-all!
+  [opts cmds]
+  (or (some (fn [cmd]
+              (let [result (a/exec! opts cmd)]
+                (when-not (zero? (:exit result)) result)))
+            cmds)
+      {:exit 0}))
 
 (defmethod a/install! :pkg/mise [type opts items _facts]
-  (a/simple-install type opts "Installing mise tools"
-    (fn [tool item-opts] (str (name tool) "@" (:version item-opts)))
-    (fn [tool {:keys [version global]}]
-      (let [tool-str (str (name tool) "@" version)]
-        (if global
-          ["mise" "use" "--global" tool-str]
-          ["mise" "install" tool-str])))
-    items))
+  (d/section "Installing mise tools"
+    (map (fn [[tool item-opts]]
+           (let [{:keys [exit err]} (exec-all! opts (install-commands tool item-opts))]
+             {:action [type tool]
+              :label (str/join " " (map #(str (name tool) "@" %) (sort (declared-versions item-opts))))
+              :status (if (zero? exit) :ok :error)
+              :message err}))
+         items)))
 
 (defmethod a/remove-extras! :pkg/mise [type opts extras _facts]
   (a/simple-install type opts "Uninstalling mise tools"
