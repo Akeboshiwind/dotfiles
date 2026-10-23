@@ -119,12 +119,29 @@
             nvim (h.start main)]
         (vim.fn.delete worktrees.gone :rf)
         (let [items (h.exec-lua nvim "return require('config.worktree').list(...)"
-                                {worktrees.feature "Fix the thing"})]
+                                {worktrees.feature "Fix the thing"})
+              by-path (collect [_ item (ipairs items)] (values item.path item))]
           (h.stop nvim)
-          (h.check (vim.deep_equal (vim.tbl_map #(. $1 :path) items) [main worktrees.feature])
+          (h.check (and (= 2 (length items)) (. by-path main) (. by-path worktrees.feature))
                    (.. "expected main and feature, got " (vim.inspect items)))
-          (h.check (= (. items 2 :agent) "Fix the thing")
+          (h.check (= (. by-path worktrees.feature :agent) "Fix the thing")
                    (.. "feature lost its agent: " (vim.inspect items))))))]
+
+   ["list puts the most recently touched worktree first"
+    (fn []
+      (let [(main worktrees) (h.repo-with-worktrees [:a.txt] [:old :new])
+            now (os.time)
+            touch (fn [git-dir age]
+                    (vim.uv.fs_utime (.. git-dir "/index") (- now age) (- now age)))]
+        (touch (.. main "/.git") 100)
+        (touch (.. main "/.git/worktrees/old") 200)
+        (touch (.. main "/.git/worktrees/new") -100)
+        (let [nvim (h.start main)
+              items (h.exec-lua nvim "return require('config.worktree').list(...)" {})]
+          (h.stop nvim)
+          (h.check (vim.deep_equal (vim.tbl_map #(. $1 :path) items)
+                                   [worktrees.new main worktrees.old])
+                   (.. "expected new, main, old; got " (vim.inspect items))))))]
 
    ["<leader>gw switches to the picked worktree"
     (fn []

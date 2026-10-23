@@ -51,9 +51,22 @@
           :prunable (set item.prunable true))))
     item))
 
+(fn git-dir [path]
+  (let [dot-git (.. path "/.git")]
+    (if (= :directory (?. (vim.uv.fs_stat dot-git) :type))
+        dot-git
+        (case (io.open dot-git)
+          file (let [line (file:read :*l)]
+                 (file:close)
+                 (line:match "^gitdir: (.+)$"))))))
+
+(fn touched [path]
+  "When git last wrote the worktree's index, which commits, stages and checkouts all do."
+  (or (?. (vim.uv.fs_stat (.. (or (git-dir path) path) "/index")) :mtime :sec) 0))
+
 (fn list [?agents]
-  "The worktrees of the cwd's repository, main checkout first, without prunable ones.
-  Each is {:path :name :branch :agent :current?}.
+  "The worktrees of the cwd's repository, most recently touched first, without prunable ones.
+  Each is {:path :name :branch :agent :current? :touched}, `touched` in epoch seconds.
   `?agents` maps worktree paths to agent names; it defaults to the running Claude agents."
   (let [agents (or ?agents (live-agents))
         cwd (realpath (vim.fn.getcwd))
@@ -62,13 +75,15 @@
                  (: (vim.system [:git :worktree :list :--porcelain] {:text true :cwd repo}) :wait))]
     (if (or (= nil result) (not= 0 result.code))
         []
-        (icollect [_ block (ipairs (vim.split result.stdout "\n\n" {:trimempty true}))]
-          (let [item (parse-worktree block)]
-            (when (not item.prunable)
-              (doto item
-                (tset :name (vim.fs.basename item.path))
-                (tset :agent (. agents item.path))
-                (tset :current? (= item.path cwd)))))))))
+        (doto (icollect [_ block (ipairs (vim.split result.stdout "\n\n" {:trimempty true}))]
+                (let [item (parse-worktree block)]
+                  (when (not item.prunable)
+                    (doto item
+                      (tset :name (vim.fs.basename item.path))
+                      (tset :agent (. agents item.path))
+                      (tset :current? (= item.path cwd))
+                      (tset :touched (touched item.path))))))
+          (table.sort #(> $1.touched $2.touched))))))
 
 (fn format-item [item]
   (.. (if item.current? "* " "  ")
