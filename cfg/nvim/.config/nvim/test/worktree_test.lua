@@ -99,74 +99,102 @@ local function _9_()
   local nvim = h.start(main)
   vim.fn.delete(worktrees.gone, "rf")
   local items = h["exec-lua"](nvim, "return require('config.worktree').list(...)", {[worktrees.feature] = "Fix the thing"})
-  h.stop(nvim)
-  local function _10_(_241)
-    return _241.path
+  local by_path
+  do
+    local tbl_21_ = {}
+    for _, item in ipairs(items) do
+      local k_22_, v_23_ = item.path, item
+      if ((k_22_ ~= nil) and (v_23_ ~= nil)) then
+        tbl_21_[k_22_] = v_23_
+      else
+      end
+    end
+    by_path = tbl_21_
   end
-  h.check(vim.deep_equal(vim.tbl_map(_10_, items), {main, worktrees.feature}), ("expected main and feature, got " .. vim.inspect(items)))
-  return h.check((items[2].agent == "Fix the thing"), ("feature lost its agent: " .. vim.inspect(items)))
+  h.stop(nvim)
+  h.check(((2 == #items) and by_path[main] and by_path[worktrees.feature]), ("expected main and feature, got " .. vim.inspect(items)))
+  return h.check((by_path[worktrees.feature].agent == "Fix the thing"), ("feature lost its agent: " .. vim.inspect(items)))
 end
 local function _11_()
+  local main, worktrees = h["repo-with-worktrees"]({"a.txt"}, {"old", "new"})
+  local now = os.time()
+  local touch
+  local function _12_(git_dir, age)
+    return vim.uv.fs_utime((git_dir .. "/index"), (now - age), (now - age))
+  end
+  touch = _12_
+  touch((main .. "/.git"), 100)
+  touch((main .. "/.git/worktrees/old"), 200)
+  touch((main .. "/.git/worktrees/new"), -100)
+  local nvim = h.start(main)
+  local items = h["exec-lua"](nvim, "return require('config.worktree').list(...)", {})
+  h.stop(nvim)
+  local function _13_(_241)
+    return _241.path
+  end
+  return h.check(vim.deep_equal(vim.tbl_map(_13_, items), {worktrees.new, main, worktrees.old}), ("expected new, main, old; got " .. vim.inspect(items)))
+end
+local function _14_()
   local main, worktrees = h["repo-with-worktrees"]({"a.txt"}, {"feature"})
   local nvim = h.start(main, {"a.txt"})
   pick_worktree(nvim, worktrees.feature)
   h.press(nvim, "<Esc> gw")
   local switched_3f
-  local function _12_()
-    return (cwd(nvim) == worktrees.feature)
-  end
-  switched_3f = h["wait-until"](_12_, 5000)
-  local dir = cwd(nvim)
-  h.stop(nvim)
-  return h.check(switched_3f, ("cwd is " .. dir))
-end
-local function _13_()
-  local main, worktrees = h["repo-with-worktrees"]({"a.txt"}, {"feature"})
-  local nvim = h.start(worktrees.feature, {"a.txt"})
-  local function _14_()
-    return statusline_label(nvim, "feature")
-  end
-  h.check(h["wait-until"](_14_, 5000), "statusline never named feature")
-  vim.fn.delete(worktrees.feature, "rf")
-  pick_worktree(nvim, main)
-  h.press(nvim, "<Esc> gw")
-  local switched_3f
   local function _15_()
-    return (cwd(nvim) == main)
+    return (cwd(nvim) == worktrees.feature)
   end
   switched_3f = h["wait-until"](_15_, 5000)
   local dir = cwd(nvim)
   h.stop(nvim)
-  return h.check(switched_3f, ("cwd is " .. vim.inspect(dir)))
+  return h.check(switched_3f, ("cwd is " .. dir))
 end
 local function _16_()
   local main, worktrees = h["repo-with-worktrees"]({"a.txt"}, {"feature"})
+  local nvim = h.start(worktrees.feature, {"a.txt"})
+  local function _17_()
+    return statusline_label(nvim, "feature")
+  end
+  h.check(h["wait-until"](_17_, 5000), "statusline never named feature")
+  vim.fn.delete(worktrees.feature, "rf")
+  pick_worktree(nvim, main)
+  h.press(nvim, "<Esc> gw")
+  local switched_3f
+  local function _18_()
+    return (cwd(nvim) == main)
+  end
+  switched_3f = h["wait-until"](_18_, 5000)
+  local dir = cwd(nvim)
+  h.stop(nvim)
+  return h.check(switched_3f, ("cwd is " .. vim.inspect(dir)))
+end
+local function _19_()
+  local main, worktrees = h["repo-with-worktrees"]({"a.txt"}, {"feature"})
   local nvim = h.start(main, {"a.txt"})
   local title
-  local function _17_()
+  local function _20_()
     return h["exec-lua"](nvim, "return vim.o.title and vim.api.nvim_eval_statusline(vim.o.titlestring, {}).str")
   end
-  title = _17_
+  title = _20_
   local before = title()
   switch(nvim, worktrees.feature)
   local after = title()
   h.stop(nvim)
   return h.check(((before == "repo") and (after == "feature")), ("titles were " .. vim.inspect({before, after})))
 end
-local function _18_()
+local function _21_()
   local main, worktrees = h["repo-with-worktrees"]({"a.txt"}, {"feature"})
   local nvim = h.start(main, {"a.txt"})
   local _
-  local function _19_()
+  local function _22_()
     return statusline_label(nvim, "repo")
   end
-  _ = h["wait-until"](_19_, 5000)
+  _ = h["wait-until"](_22_, 5000)
   local in_main = statusline_label(nvim, "repo")
   switch(nvim, worktrees.feature)
-  local function _20_()
+  local function _23_()
     return statusline_label(nvim, "feature")
   end
-  h["wait-until"](_20_, 5000)
+  h["wait-until"](_23_, 5000)
   local in_feature = statusline_label(nvim, "feature")
   local warn = h["exec-lua"](nvim, "return vim.api.nvim_get_hl(0, {name = 'DiagnosticWarn', link = false}).fg")
   h.stop(nvim)
@@ -175,14 +203,14 @@ local function _18_()
   h.check(in_feature, "linked worktree's name missing")
   return h.check((warn == in_feature.bg), "linked worktree's name is quiet")
 end
-local function _21_()
+local function _24_()
   local main, worktrees = h["repo-with-worktrees"]({"a.txt"}, {"feature"})
   local in_main = h.start(main)
   local in_feature = h.start(worktrees.feature)
-  local function _22_()
+  local function _25_()
     return (dashboard_label(in_main, "repo") and dashboard_label(in_feature, "feature"))
   end
-  h["wait-until"](_22_, 5000)
+  h["wait-until"](_25_, 5000)
   local main_hl = dashboard_label(in_main, "repo")
   local feature_hl = dashboard_label(in_feature, "feature")
   h.stop(in_main)
@@ -191,21 +219,21 @@ local function _21_()
   h.check((main_hl == "Comment"), ("main checkout's name is " .. vim.inspect(main_hl)))
   return h.check((feature_hl == "DiagnosticWarn"), ("linked worktree's name is " .. vim.inspect(feature_hl)))
 end
-local function _23_()
+local function _26_()
   local main, worktrees = h["repo-with-worktrees"]({"a.txt"}, {"feature"})
   local nvim = h.start(main, {"a.txt"})
   pick_worktree(nvim, worktrees.feature)
   h["exec-lua"](nvim, "LazyVim.pick.open = function(command, opts) vim.g.picked = {command, opts.cwd} end")
   h.press(nvim, "<Esc> fw")
   local picked_3f
-  local function _24_()
+  local function _27_()
     return h["exec-lua"](nvim, "return vim.g.picked ~= nil")
   end
-  picked_3f = h["wait-until"](_24_, 5000)
+  picked_3f = h["wait-until"](_27_, 5000)
   local picked = h["exec-lua"](nvim, "return vim.g.picked")
   local dir = cwd(nvim)
   h.stop(nvim)
   h.check((picked_3f and vim.deep_equal(picked, {"files", worktrees.feature})), ("picker opened with " .. vim.inspect(picked)))
   return h.check((dir == main), ("switched anyway, cwd is " .. dir))
 end
-return h.run({{"switch saves this worktree's session and restores the target's", _2_}, {"switch to a worktree without a session opens nothing", _5_}, {"switch refuses while a buffer has unsaved changes", _6_}, {"switch stops LSP clients and announces WorktreeSwitched", _7_}, {"list shows each live worktree, with its agent's name", _9_}, {"<leader>gw switches to the picked worktree", _11_}, {"<leader>gw switches away from a worktree that has been deleted", _13_}, {"the terminal title names the worktree, and follows a switch", _16_}, {"the statusline names the worktree, loud only in a linked one", _18_}, {"the dashboard names the worktree, loud only in a linked one", _21_}, {"<leader>fw finds files in the picked worktree without switching", _23_}})
+return h.run({{"switch saves this worktree's session and restores the target's", _2_}, {"switch to a worktree without a session opens nothing", _5_}, {"switch refuses while a buffer has unsaved changes", _6_}, {"switch stops LSP clients and announces WorktreeSwitched", _7_}, {"list shows each live worktree, with its agent's name", _9_}, {"list puts the most recently touched worktree first", _11_}, {"<leader>gw switches to the picked worktree", _14_}, {"<leader>gw switches away from a worktree that has been deleted", _16_}, {"the terminal title names the worktree, and follows a switch", _19_}, {"the statusline names the worktree, loud only in a linked one", _21_}, {"the dashboard names the worktree, loud only in a linked one", _24_}, {"<leader>fw finds files in the picked worktree without switching", _26_}})

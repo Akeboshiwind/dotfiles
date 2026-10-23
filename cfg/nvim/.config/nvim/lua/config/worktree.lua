@@ -84,17 +84,58 @@ local function parse_worktree(block)
   end
   return item
 end
+local function git_dir(path)
+  local dot_git = (path .. "/.git")
+  local _13_
+  do
+    local t_12_ = vim.uv.fs_stat(dot_git)
+    if (nil ~= t_12_) then
+      t_12_ = t_12_.type
+    else
+    end
+    _13_ = t_12_
+  end
+  if ("directory" == _13_) then
+    return dot_git
+  else
+    local case_15_ = io.open(dot_git)
+    if (nil ~= case_15_) then
+      local file = case_15_
+      local line = file:read("*l")
+      file:close()
+      return line:match("^gitdir: (.+)$")
+    else
+      return nil
+    end
+  end
+end
+local function touched(path)
+  local _19_
+  do
+    local t_18_ = vim.uv.fs_stat(((git_dir(path) or path) .. "/index"))
+    if (nil ~= t_18_) then
+      t_18_ = t_18_.mtime
+    else
+    end
+    if (nil ~= t_18_) then
+      t_18_ = t_18_.sec
+    else
+    end
+    _19_ = t_18_
+  end
+  return (_19_ or 0)
+end
 local function list(_3fagents)
   local agents = (_3fagents or live_agents())
   local cwd = realpath(vim.fn.getcwd())
   local repo
   do
-    local t_12_ = info()
-    if (nil ~= t_12_) then
-      t_12_ = t_12_.repo
+    local t_22_ = info()
+    if (nil ~= t_22_) then
+      t_22_ = t_22_.repo
     else
     end
-    repo = t_12_
+    repo = t_22_
   end
   local result
   if repo then
@@ -105,60 +146,69 @@ local function list(_3fagents)
   if ((nil == result) or (0 ~= result.code)) then
     return {}
   else
-    local tbl_26_ = {}
-    local i_27_ = 0
-    for _, block in ipairs(vim.split(result.stdout, "\n\n", {trimempty = true})) do
-      local val_28_
-      do
-        local item = parse_worktree(block)
-        if not item.prunable then
-          item["name"] = vim.fs.basename(item.path)
-          item["agent"] = agents[item.path]
-          item["current?"] = (item.path == cwd)
-          val_28_ = item
+    local tmp_9_
+    do
+      local tbl_26_ = {}
+      local i_27_ = 0
+      for _, block in ipairs(vim.split(result.stdout, "\n\n", {trimempty = true})) do
+        local val_28_
+        do
+          local item = parse_worktree(block)
+          if not item.prunable then
+            item["name"] = vim.fs.basename(item.path)
+            item["agent"] = agents[item.path]
+            item["current?"] = (item.path == cwd)
+            item["touched"] = touched(item.path)
+            val_28_ = item
+          else
+            val_28_ = nil
+          end
+        end
+        if (nil ~= val_28_) then
+          i_27_ = (i_27_ + 1)
+          tbl_26_[i_27_] = val_28_
         else
-          val_28_ = nil
         end
       end
-      if (nil ~= val_28_) then
-        i_27_ = (i_27_ + 1)
-        tbl_26_[i_27_] = val_28_
-      else
-      end
+      tmp_9_ = tbl_26_
     end
-    return tbl_26_
+    local function _27_(_241, _242)
+      return (_241.touched > _242.touched)
+    end
+    table.sort(tmp_9_, _27_)
+    return tmp_9_
   end
 end
 local function format_item(item)
-  local _18_
+  local _29_
   if item["current?"] then
-    _18_ = "* "
+    _29_ = "* "
   else
-    _18_ = "  "
+    _29_ = "  "
   end
-  local _20_
+  local _31_
   if item.branch then
-    _20_ = ("  [" .. item.branch .. "]")
+    _31_ = ("  [" .. item.branch .. "]")
   else
-    _20_ = ""
+    _31_ = ""
   end
-  local _22_
+  local _33_
   if item.agent then
-    _22_ = ("  " .. item.agent)
+    _33_ = ("  " .. item.agent)
   else
-    _22_ = ""
+    _33_ = ""
   end
-  return (_18_ .. item.name .. _20_ .. _22_)
+  return (_29_ .. item.name .. _31_ .. _33_)
 end
 local function pick(prompt, on_choice)
-  local function _24_(_241)
+  local function _35_(_241)
     if _241 then
       return on_choice(_241.path)
     else
       return nil
     end
   end
-  return vim.ui.select(list(), {prompt = prompt, format_item = format_item}, _24_)
+  return vim.ui.select(list(), {prompt = prompt, format_item = format_item}, _35_)
 end
 local function switch(dir)
   local from = realpath(vim.fn.getcwd())
