@@ -46,13 +46,18 @@
     (->> (keys (f/value facts [:mise :installed])) (remove declared) sort (mapv (fn [n] {:name n})))
     []))
 
-(defn- global-version
-  [{:keys [version global]}]
-  (when global version))
+(defn- global-version [opts]
+  (:global opts))
 
-(defn- install-versions
-  [{:keys [version global]}]
-  (if (and version (not global)) #{version} #{}))
+(defn- install-versions [{:keys [global install]}]
+  (disj (set install) global))
+
+(defn- shape-error
+  [{:keys [global install] :as opts}]
+  (cond
+    (contains? opts :version) ":version is replaced by :global and :install"
+    (not (or (nil? global) (string? global))) ":global must be one version string"
+    (not (or (nil? install) (set? install))) ":install must be a set of version strings"))
 
 (defn- declared-versions [opts]
   (cond-> (install-versions opts)
@@ -64,8 +69,14 @@
 
 (defmethod a/check :pkg/mise [_ key opts facts]
   (let [declared (declared-versions opts)]
-    (if (empty? declared)
-      (o/error "Version required")
+    (cond
+      (shape-error opts)
+      (o/error (shape-error opts))
+
+      (empty? declared)
+      (o/error "Version required: declare :global or :install")
+
+      :else
       (let [tool-name (name key)
             versions  (get (f/value facts [:mise :installed]) tool-name)
             missing   (->> declared (remove #{"latest"}) (remove #(contains? versions %)) sort first)]

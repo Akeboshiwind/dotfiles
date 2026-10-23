@@ -60,7 +60,7 @@ syn --dry-run    # Preview without executing
 | Action | Description | Options |
 |--------|-------------|---------|
 | `:pkg/brew` | Homebrew packages | `:head`, `:cask` |
-| `:pkg/mise` | mise version manager | `:version` (required), `:global` |
+| `:pkg/mise` | mise version manager | `:global` (one version, selected with `mise use --global`), `:install` (a set of versions, installed only); at least one |
 | `:pkg/mas` | Mac App Store | `{app-id app-name}` |
 | `:pkg/bbin` | Babashka binaries | `:url`, `:local`, `:as`, `:git/tag`, `:git/sha`, `:main-opts` |
 | `:pkg/npm` | npm global packages | - |
@@ -70,7 +70,8 @@ syn --dry-run    # Preview without executing
 {:pkg/brew {:ripgrep {}
             :neovim {:head true}
             :rectangle {:cask true}}
- :pkg/mise {:node {:version "22" :global true}}
+ :pkg/mise {:node {:global "22"}
+            :java {:global "25" :install #{"21"}}}
  :pkg/mas {1475387142 "Tailscale"}
  :pkg/bbin {:neil {:url "https://github.com/babashka/neil"}}}
 ```
@@ -126,7 +127,7 @@ Actions can declare dependencies using `:dep/provides` and `:dep/requires`:
 {:pkg/brew {:mise {:dep/provides #{:pkg/mise}}}}
 
 ;; Later: node installation requires mise to be installed first
-{:pkg/mise {:node {:version "22"
+{:pkg/mise {:node {:global "22"
                    :dep/requires #{:pkg/mise}}}}
 
 ;; Depend on a specific action (not just capability)

@@ -1,1 +1,1 @@
-{:pkg/mise {:terraform {:version "1.5.7" :global true}}}
+{:pkg/mise {:terraform {:global "1.5.7"}}}
