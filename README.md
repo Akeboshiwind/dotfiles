@@ -20,9 +20,7 @@ Babashka-based dotfile manager. Installs packages and symlinks config files via 
 4. Unlock secrets with the symmetric key — the repo has no GPG users, so a bare `git-crypt unlock` fails:
    ```sh
    git-crypt unlock /path/to/dotfiles.key   # export one from an unlocked clone: git-crypt export-key <path>
-   rm secrets.edn && git checkout -- secrets.edn
    ```
-   The re-checkout is needed when `secrets.edn` stays encrypted after `unlock`: git sees the encrypted file as unchanged and never runs the smudge filter.
    `syn --apply` then points the git-crypt filters at the shared key so git worktrees can use it; `unlock` resets them, so re-run `syn --apply` after any later unlock.
 5. Run `~/dotfiles/cfg/bin/bin/syn`
 
