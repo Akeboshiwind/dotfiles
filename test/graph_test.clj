@@ -23,7 +23,7 @@
    :pkg/brew {:neovim {:head true}
               :ripgrep {}
               :mise {:dep/provides #{:pkg/mise}}}
-   :pkg/mise {:node {:version "20" :global true}}})
+   :pkg/mise {:node {:global "20"}}})
 
 (def full-plan
   "Complete plan with multiple dependency chains"
@@ -38,7 +38,7 @@
               :bbin {:dep/provides #{:pkg/bbin}}
               :neovim {:head true}
               :claude-code {:dep/provides #{:claude/marketplace :claude/plugin}}}
-   :pkg/mise {:node {:version "20"}}
+   :pkg/mise {:node {:install #{"20"}}}
    :pkg/mas {:things3 {:id 904280696}}
    :pkg/bbin {:jet {:lib "io.github.borkdude/jet"}}
    :claude/marketplace {:glittercowboy/taches-cc-resources {}}
@@ -51,7 +51,7 @@
 
 (def missing-provider-plan
   "Plan with a missing provider"
-  {:pkg/mise {:node {:version "20"}}})
+  {:pkg/mise {:node {:install #{"20"}}}})
 
 (def duplicate-provider-plan
   "Plan with duplicate providers for same capability"

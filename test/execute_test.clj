@@ -82,7 +82,7 @@
           plan {:pkg/script {:bootstrap {:src "exit 1"
                                          :dep/provides #{:pkg/brew}}}
                 :pkg/brew {:mise {:dep/provides #{:pkg/mise}}}
-                :pkg/mise {:node {:version "20"}}}
+                :pkg/mise {:node {:install #{"20"}}}}
           ag (build-and-check plan)]
       (with-redefs [a/exec! (mock-exec! calls #(= (last %) "exit 1"))]
         (e/execute-plan ag))
@@ -112,7 +112,7 @@
           plan {:pkg/script {:bootstrap {:src "echo ok"
                                          :dep/provides #{:pkg/brew}}}
                 :pkg/brew {:mise {:dep/provides #{:pkg/mise}}}
-                :pkg/mise {:node {:version "20"
+                :pkg/mise {:node {:install #{"20"}
                                   :dep/provides #{:pkg/npm}}}
                 :pkg/npm {:neovim {}}}
           ag (build-and-check plan)]

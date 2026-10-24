@@ -1,5 +1,6 @@
 {; TODO: https://mise.jdx.dev/lang/java.html#macos-java-home-integration ?
- :pkg/mise {:java {:version "temurin-25.0.4+101.0.LTS" :global true}}
+ :pkg/mise {:java {:global "temurin-25.0.4+101.0.LTS"
+                   :install #{"temurin-21.0.12+101.0.LTS"}}}
  :pkg/brew {:clojure {}
             "borkdude/brew/babashka" {:trust true}
             "borkdude/brew/clj-kondo" {:trust true}}
