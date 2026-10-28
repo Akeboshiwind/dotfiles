@@ -35,6 +35,14 @@ def updated:
   (.updatedAt | if . then sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601 else null end)
   // ((.startedAt // 0) / 1000);
 
+def heading($target; $title): "\($target)\t\u001b[1m\($title)\u001b[0m";
+
+def row($w):
+  (.state | status) as [$colour, $label]
+  # fzf's pointer and scrollbar take 3 columns; the rest is "✻ name  label · summary  age"
+  | ($cols - 3 - (2 + $w + 2) - ($label | length) - 3 - (2 + 3)) as $room
+  | "\(.cwd)\t\(.id | marker) \(.name | pad($w))  \u001b[\($colour)m\($label)\u001b[0m · \(.detail // "" | oneline | fit($room))  \u001b[2m\(.age | lpad(3))\u001b[0m";
+
 [.[]
  | . + ($jobs[.id] // {})
  # `claude agents` gives a paused agent the directory it started in, not its worktree
@@ -45,9 +53,4 @@ def updated:
  | .age = (now - updated | age)]
 | (map(.name | length) | max) as $w
 | group_by(.root)[]
-| (.[0].root | "\(.)\t\u001b[1m\(tilde)\u001b[0m"),
-  (.[]
-   | (.state | status) as [$colour, $label]
-   # fzf's pointer and scrollbar take 3 columns; the rest is "✻ name  label · summary  age"
-   | ($cols - 3 - (2 + $w + 2) - ($label | length) - 3 - (2 + 3)) as $room
-   | "\(.cwd)\t\(.id | marker) \(.name | pad($w))  \u001b[\($colour)m\($label)\u001b[0m · \(.detail // "" | oneline | fit($room))  \u001b[2m\(.age | lpad(3))\u001b[0m")
+| (.[0].root | heading(.; tilde)), (.[] | row($w))
