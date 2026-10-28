@@ -45,11 +45,17 @@ local function pick(prompt, on_choice)
   local fzf = ("agent-rows " .. vim.api.nvim_win_get_width(win) .. " | fzf --ansi --delimiter '\t' --with-nth 2 --no-sort --layout reverse" .. " --select-1 --exit-0 --prompt " .. vim.fn.shellescape((prompt .. "> ")) .. " > " .. vim.fn.shellescape(chosen))
   local function _5_(_, code)
     vim.api.nvim_win_close(win, true)
-    if (code == 0) then
-      on_choice(vim.split(vim.fn.readfile(chosen)[1], "\t")[1])
-    elseif (code == 1) then
-      vim.notify("No Claude agents", vim.log.levels.WARN)
-    else
+    do
+      local dir = vim.split((vim.fn.readfile(chosen)[1] or ""), "\t")[1]
+      if (code == 0) then
+        if ("" ~= dir) then
+          on_choice(dir)
+        else
+        end
+      elseif (code == 1) then
+        vim.notify("No Claude agents", vim.log.levels.WARN)
+      else
+      end
     end
     return vim.fn.delete(chosen)
   end

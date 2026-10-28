@@ -1,9 +1,11 @@
 # Input: `claude agents --json --all`.
 # $ARGS.positional: the cwds that still exist. $jobs: id → {detail, updatedAt, worktreePath} from ~/.claude/jobs.
 # $running: the ids `claude agents --json` lists without --all; the rest are paused.
+# $pins: the ids pinned in the agent view, from ~/.claude/jobs/pins.json; they head the list, out of their repositories.
 # $home: abbreviated to ~ in the repository headings.
 # $cols: the terminal width; summaries are cut so the age lands at the right edge.
-# Output: one fzf row per repository and per agent, as "<cd target>\t<display>".
+# Output: one fzf row per heading (Pinned, then each repository) and per agent, as "<cd target>\t<display>".
+# The Pinned heading's cd target is empty.
 
 def age:
   if . < 60 then "\(floor)s"
@@ -52,5 +54,10 @@ def row($w):
  | .root = (.cwd | sub("/\\.claude/worktrees/[^/]+(/.*)?$"; ""))
  | .age = (now - updated | age)]
 | (map(.name | length) | max) as $w
-| group_by(.root)[]
-| (.[0].root | heading(.; tilde)), (.[] | row($w))
+| (map(select(.id | IN($pins[])))
+   | sort_by(.id as $id | $pins | index($id))
+   | select(length > 0)
+   | heading(""; "Pinned"), (.[] | row($w))),
+  (map(select(.id | IN($pins[]) | not))
+   | group_by(.root)[]
+   | (.[0].root | heading(.; tilde)), (.[] | row($w)))

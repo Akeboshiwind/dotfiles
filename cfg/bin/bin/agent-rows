@@ -22,6 +22,10 @@ if test (count $live) -eq 0
     exit 1
 end
 
+set -l pins '[]'
+test -f ~/.claude/jobs/pins.json
+and set pins (cat ~/.claude/jobs/pins.json | string collect)
+
 set -l program (path dirname -- (path resolve -- (status filename)))/agent-rows.jq
 printf '%s' $agents \
-    | jq -r --arg home $HOME --argjson jobs $jobs --argjson running $running --argjson cols $argv[1] -f $program --args $live
+    | jq -r --arg home $HOME --argjson jobs $jobs --argjson running $running --argjson pins $pins --argjson cols $argv[1] -f $program --args $live

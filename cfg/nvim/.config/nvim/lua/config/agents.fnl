@@ -35,10 +35,12 @@
                      {:term true
                       :on_exit (fn [_ code]
                                  (vim.api.nvim_win_close win true)
-                                 (case code
-                                   0 (on-choice (-> (vim.fn.readfile chosen) (. 1) (vim.split "\t") (. 1)))
-                                   ;; fzf --exit-0 on an empty list
-                                   1 (vim.notify "No Claude agents" vim.log.levels.WARN))
+                                 (let [dir (-> (vim.fn.readfile chosen) (. 1) (or "") (vim.split "\t") (. 1))]
+                                   (case code
+                                     ;; A heading without a directory, like Pinned
+                                     0 (when (not= "" dir) (on-choice dir))
+                                     ;; fzf --exit-0 on an empty list
+                                     1 (vim.notify "No Claude agents" vim.log.levels.WARN)))
                                  (vim.fn.delete chosen))})
     (vim.cmd.startinsert)))
 
