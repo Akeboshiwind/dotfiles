@@ -1,0 +1,27 @@
+#!/usr/bin/env fish
+# Usage: agent-rows WIDTH
+# One fzf row per repository and per Claude agent, laid out like the agent view, as "<cd target>\t<display>".
+
+set -l agents (claude agents --json --all | string collect)
+set -l running (claude agents --json | jq -c 'map(.id)')
+
+set -l live
+for dir in (printf '%s' $agents | jq -r '.[].cwd')
+    # A merged worktree is deleted while its agent lives on
+    test -d $dir; and set -a live $dir
+end
+
+if test (count $live) -eq 0
+    echo "No Claude agents" >&2
+    exit 1
+end
+
+# Summaries and update times live only in each job's state file
+set -l jobs '{}'
+set -l states ~/.claude/jobs/*/state.json
+set -q states[1]
+and set jobs (jq -s 'map(select(.daemonShort) | {key: .daemonShort, value: {detail, updatedAt}}) | from_entries' $states | string collect)
+
+set -l program (path dirname -- (path resolve -- (status filename)))/agent-rows.jq
+printf '%s' $agents \
+    | jq -r --arg home $HOME --argjson jobs $jobs --argjson running $running --argjson cols $argv[1] -f $program --args $live
