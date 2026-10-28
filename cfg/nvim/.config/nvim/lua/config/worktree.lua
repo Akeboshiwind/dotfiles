@@ -1,45 +1,31 @@
 -- [nfnl] lua/config/worktree.fnl
+local agents = require("config.agents")
 local session = require("config.session")
 local function realpath(path)
   return (vim.uv.fs_realpath(path) or path)
 end
 local function live_agents()
-  local ran_3f, result
-  local function _1_()
-    return vim.system({"claude", "agents", "--json"}, {text = true}):wait(2000)
-  end
-  ran_3f, result = pcall(_1_)
-  local parsed_3f, rows
-  if (ran_3f and (0 == result.code)) then
-    parsed_3f, rows = pcall(vim.json.decode, result.stdout)
-  else
-    parsed_3f, rows = false
-  end
-  if parsed_3f then
-    local tbl_21_ = {}
-    for _, row in ipairs(rows) do
-      local k_22_, v_23_ = realpath(row.cwd), row.name
-      if ((k_22_ ~= nil) and (v_23_ ~= nil)) then
-        tbl_21_[k_22_] = v_23_
-      else
-      end
+  local tbl_21_ = {}
+  for _, agent in ipairs(agents.list()) do
+    local k_22_, v_23_ = agent.cwd, agent.name
+    if ((k_22_ ~= nil) and (v_23_ ~= nil)) then
+      tbl_21_[k_22_] = v_23_
+    else
     end
-    return tbl_21_
-  else
-    return {}
   end
+  return tbl_21_
 end
 local function read_info(dir)
   local ran_3f, result
-  local function _5_()
+  local function _2_()
     return vim.system({"git", "rev-parse", "--path-format=absolute", "--show-toplevel", "--git-dir", "--git-common-dir"}, {text = true, cwd = dir}):wait()
   end
-  ran_3f, result = pcall(_5_)
+  ran_3f, result = pcall(_2_)
   if (ran_3f and (0 == result.code)) then
-    local _let_6_ = vim.split(result.stdout, "\n", {trimempty = true})
-    local top = _let_6_[1]
-    local git_dir = _let_6_[2]
-    local common_dir = _let_6_[3]
+    local _let_3_ = vim.split(result.stdout, "\n", {trimempty = true})
+    local top = _let_3_[1]
+    local git_dir = _let_3_[2]
+    local common_dir = _let_3_[3]
     return {name = vim.fs.basename(top), ["linked?"] = (git_dir ~= common_dir), repo = common_dir}
   else
     return false
@@ -50,11 +36,11 @@ local last_cwd = ""
 local function info()
   local cwd
   do
-    local case_8_ = vim.fn.getcwd()
-    if (case_8_ == "") then
+    local case_5_ = vim.fn.getcwd()
+    if (case_5_ == "") then
       cwd = last_cwd
-    elseif (nil ~= case_8_) then
-      local dir = case_8_
+    elseif (nil ~= case_5_) then
+      local dir = case_5_
       last_cwd = dir
       cwd = dir
     else
@@ -86,21 +72,21 @@ local function parse_worktree(block)
 end
 local function git_dir(path)
   local dot_git = (path .. "/.git")
-  local _13_
+  local _10_
   do
-    local t_12_ = vim.uv.fs_stat(dot_git)
-    if (nil ~= t_12_) then
-      t_12_ = t_12_.type
+    local t_9_ = vim.uv.fs_stat(dot_git)
+    if (nil ~= t_9_) then
+      t_9_ = t_9_.type
     else
     end
-    _13_ = t_12_
+    _10_ = t_9_
   end
-  if ("directory" == _13_) then
+  if ("directory" == _10_) then
     return dot_git
   else
-    local case_15_ = io.open(dot_git)
-    if (nil ~= case_15_) then
-      local file = case_15_
+    local case_12_ = io.open(dot_git)
+    if (nil ~= case_12_) then
+      local file = case_12_
       local line = file:read("*l")
       file:close()
       return line:match("^gitdir: (.+)$")
@@ -110,32 +96,32 @@ local function git_dir(path)
   end
 end
 local function touched(path)
-  local _19_
+  local _16_
   do
-    local t_18_ = vim.uv.fs_stat(((git_dir(path) or path) .. "/index"))
-    if (nil ~= t_18_) then
-      t_18_ = t_18_.mtime
+    local t_15_ = vim.uv.fs_stat(((git_dir(path) or path) .. "/index"))
+    if (nil ~= t_15_) then
+      t_15_ = t_15_.mtime
     else
     end
-    if (nil ~= t_18_) then
-      t_18_ = t_18_.sec
+    if (nil ~= t_15_) then
+      t_15_ = t_15_.sec
     else
     end
-    _19_ = t_18_
+    _16_ = t_15_
   end
-  return (_19_ or 0)
+  return (_16_ or 0)
 end
 local function list(_3fagents)
-  local agents = (_3fagents or live_agents())
+  local agents0 = (_3fagents or live_agents())
   local cwd = realpath(vim.fn.getcwd())
   local repo
   do
-    local t_22_ = info()
-    if (nil ~= t_22_) then
-      t_22_ = t_22_.repo
+    local t_19_ = info()
+    if (nil ~= t_19_) then
+      t_19_ = t_19_.repo
     else
     end
-    repo = t_22_
+    repo = t_19_
   end
   local result
   if repo then
@@ -156,7 +142,7 @@ local function list(_3fagents)
           local item = parse_worktree(block)
           if not item.prunable then
             item["name"] = vim.fs.basename(item.path)
-            item["agent"] = agents[item.path]
+            item["agent"] = agents0[item.path]
             item["current?"] = (item.path == cwd)
             item["touched"] = touched(item.path)
             val_28_ = item
@@ -172,43 +158,43 @@ local function list(_3fagents)
       end
       tmp_9_ = tbl_26_
     end
-    local function _27_(_241, _242)
+    local function _24_(_241, _242)
       return (_241.touched > _242.touched)
     end
-    table.sort(tmp_9_, _27_)
+    table.sort(tmp_9_, _24_)
     return tmp_9_
   end
 end
 local function format_item(item)
-  local _29_
+  local _26_
   if item["current?"] then
-    _29_ = "* "
+    _26_ = "* "
   else
-    _29_ = "  "
+    _26_ = "  "
   end
-  local _31_
+  local _28_
   if item.branch then
-    _31_ = ("  [" .. item.branch .. "]")
+    _28_ = ("  [" .. item.branch .. "]")
   else
-    _31_ = ""
+    _28_ = ""
   end
-  local _33_
+  local _30_
   if item.agent then
-    _33_ = ("  " .. item.agent)
+    _30_ = ("  " .. item.agent)
   else
-    _33_ = ""
+    _30_ = ""
   end
-  return (_29_ .. item.name .. _31_ .. _33_)
+  return (_26_ .. item.name .. _28_ .. _30_)
 end
 local function pick(prompt, on_choice)
-  local function _35_(_241)
+  local function _32_(_241)
     if _241 then
       return on_choice(_241.path)
     else
       return nil
     end
   end
-  return vim.ui.select(list(), {prompt = prompt, format_item = format_item}, _35_)
+  return vim.ui.select(list(), {prompt = prompt, format_item = format_item}, _32_)
 end
 local function switch(dir)
   local from = realpath(vim.fn.getcwd())

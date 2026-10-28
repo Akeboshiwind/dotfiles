@@ -1,17 +1,12 @@
+(local agents (require :config.agents))
 (local session (require :config.session))
 
 (fn realpath [path]
   (or (vim.uv.fs_realpath path) path))
 
 (fn live-agents []
-  (let [(ran? result) (pcall #(: (vim.system [:claude :agents :--json] {:text true}) :wait 2000))
-        (parsed? rows) (if (and ran? (= 0 result.code))
-                           (pcall vim.json.decode result.stdout)
-                           false)]
-    (if parsed?
-        (collect [_ row (ipairs rows)]
-          (values (realpath row.cwd) row.name))
-        {})))
+  (collect [_ agent (ipairs (agents.list))]
+    (values agent.cwd agent.name)))
 
 (fn read-info [dir]
   (let [(ran? result) (pcall #(: (vim.system [:git :rev-parse :--path-format=absolute
