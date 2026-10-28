@@ -5,8 +5,14 @@
 set -l agents (claude agents --json --all | string collect)
 set -l running (claude agents --json | jq -c 'map(.id)')
 
+# Summaries, update times and worktrees live only in each job's state file
+set -l jobs '{}'
+set -l states ~/.claude/jobs/*/state.json
+set -q states[1]
+and set jobs (jq -s 'map(select(.daemonShort) | {key: .daemonShort, value: {detail, updatedAt, worktreePath}}) | from_entries' $states | string collect)
+
 set -l live
-for dir in (printf '%s' $agents | jq -r '.[].cwd')
+for dir in (printf '%s' $agents | jq -r --argjson jobs $jobs '.[] | $jobs[.id].worktreePath // .cwd')
     # A merged worktree is deleted while its agent lives on
     test -d $dir; and set -a live $dir
 end
@@ -15,12 +21,6 @@ if test (count $live) -eq 0
     echo "No Claude agents" >&2
     exit 1
 end
-
-# Summaries and update times live only in each job's state file
-set -l jobs '{}'
-set -l states ~/.claude/jobs/*/state.json
-set -q states[1]
-and set jobs (jq -s 'map(select(.daemonShort) | {key: .daemonShort, value: {detail, updatedAt}}) | from_entries' $states | string collect)
 
 set -l program (path dirname -- (path resolve -- (status filename)))/agent-rows.jq
 printf '%s' $agents \

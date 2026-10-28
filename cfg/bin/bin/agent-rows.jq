@@ -1,5 +1,5 @@
 # Input: `claude agents --json --all`.
-# $ARGS.positional: the cwds that still exist. $jobs: id → {detail, updatedAt} from ~/.claude/jobs.
+# $ARGS.positional: the cwds that still exist. $jobs: id → {detail, updatedAt, worktreePath} from ~/.claude/jobs.
 # $running: the ids `claude agents --json` lists without --all; the rest are paused.
 # $home: abbreviated to ~ in the repository headings.
 # $cols: the terminal width; summaries are cut so the age lands at the right edge.
@@ -36,8 +36,10 @@ def updated:
   // ((.startedAt // 0) / 1000);
 
 [.[]
- | select(.cwd | IN($ARGS.positional[]))
  | . + ($jobs[.id] // {})
+ # `claude agents` gives a paused agent the directory it started in, not its worktree
+ | .cwd = (.worktreePath // .cwd)
+ | select(.cwd | IN($ARGS.positional[]))
  | .name |= oneline
  | .root = (.cwd | sub("/\\.claude/worktrees/[^/]+(/.*)?$"; ""))
  | .age = (now - updated | age)]
