@@ -21,7 +21,7 @@ function wa --description 'cd to a Claude agent\'s workspace, or to its reposito
 
     set -l program (path dirname -- (functions --details wa))/wa.jq
     set -l choice (printf '%s' $agents \
-        | jq -r --arg home $HOME --argjson jobs $jobs --argjson running $running -f $program --args $live \
+        | jq -r --arg home $HOME --argjson jobs $jobs --argjson running $running --argjson cols $COLUMNS -f $program --args $live \
         | fzf --ansi --delimiter \t --with-nth 2 --no-sort --layout reverse \
             --select-1 --exit-0 --query "$argv")
     or return

@@ -2,6 +2,7 @@
 # $ARGS.positional: the cwds that still exist. $jobs: id → {detail, updatedAt} from ~/.claude/jobs.
 # $running: the ids `claude agents --json` lists without --all; the rest are paused.
 # $home: abbreviated to ~ in the repository headings.
+# $cols: the terminal width; summaries are cut so the age lands at the right edge.
 # Output: one fzf row per repository and per agent, as "<cd target>\t<display>".
 
 def age:
@@ -13,16 +14,20 @@ def age:
 
 def pad($w): . + (" " * ($w - length));
 
+def lpad($w): (" " * ($w - length)) + .;
+
+def fit($w): if length > $w then .[:([$w - 1, 0] | max)] + "…" else pad($w) end;
+
 def tilde: if startswith($home) then "~" + .[($home | length):] else . end;
 
 def oneline: gsub("[\t\n]+"; " ");
 
-def status_label:
-  {blocked: "\u001b[33mNeeds input",
-   done: "\u001b[32mDone",
-   working: "\u001b[36mWorking",
-   failed: "\u001b[31mFailed"}[.]
-  // "\u001b[2m\(.)";
+def status:
+  {blocked: ["33", "Needs input"],
+   done: ["32", "Done"],
+   working: ["36", "Working"],
+   failed: ["31", "Failed"]}[.]
+  // ["2", .];
 
 def marker: if IN($running[]) then "\u001b[33m✻\u001b[0m" else "\u001b[2m·\u001b[0m" end;
 
@@ -39,4 +44,8 @@ def updated:
 | (map(.name | length) | max) as $w
 | group_by(.root)[]
 | (.[0].root | "\(.)\t\u001b[1m\(tilde)\u001b[0m"),
-  (.[] | "\(.cwd)\t\(.id | marker) \(.name | pad($w))  \(.age | pad(3))  \(.state | status_label)\u001b[0m · \(.detail // "" | oneline)")
+  (.[]
+   | (.state | status) as [$colour, $label]
+   # fzf's pointer and scrollbar take 3 columns; the rest is "✻ name  label · summary  age"
+   | ($cols - 3 - (2 + $w + 2) - ($label | length) - 3 - (2 + 3)) as $room
+   | "\(.cwd)\t\(.id | marker) \(.name | pad($w))  \u001b[\($colour)m\($label)\u001b[0m · \(.detail // "" | oneline | fit($room))  \u001b[2m\(.age | lpad(3))\u001b[0m")
