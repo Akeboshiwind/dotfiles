@@ -1,16 +1,28 @@
-function wa --description 'cd to a live Claude agent\'s workspace'
-    set -l rows
-    for row in (claude agents --json | jq -r '.[] | [.state, .name, .cwd] | @tsv')
+function wa --description 'cd to a live Claude agent\'s workspace, or to its repository'
+    set -l agents (claude agents --json | string collect)
+
+    set -l live
+    for dir in (printf '%s' $agents | jq -r '.[].cwd')
         # A merged worktree is deleted while its agent lives on
-        test -d (string split \t -- $row)[3]; and set -a rows $row
+        test -d $dir; and set -a live $dir
     end
 
-    if test (count $rows) -eq 0
+    if test (count $live) -eq 0
         echo "No live Claude agents"
         return 1
     end
 
-    set -l choice (printf '%s\n' $rows | fzf --delimiter \t --select-1 --exit-0 --query "$argv")
+    # Summaries and update times live only in each job's state file
+    set -l jobs '{}'
+    set -l states ~/.claude/jobs/*/state.json
+    set -q states[1]
+    and set jobs (jq -s 'map(select(.daemonShort) | {key: .daemonShort, value: {detail, updatedAt}}) | from_entries' $states | string collect)
+
+    set -l program (path dirname -- (functions --details wa))/wa.jq
+    set -l choice (printf '%s' $agents \
+        | jq -r --arg home $HOME --argjson jobs $jobs -f $program --args $live \
+        | fzf --ansi --delimiter \t --with-nth 2 --no-sort --layout reverse \
+            --select-1 --exit-0 --query "$argv")
     or return
-    cd (string split \t -- $choice)[3]
+    cd (string split \t -- $choice)[1]
 end
