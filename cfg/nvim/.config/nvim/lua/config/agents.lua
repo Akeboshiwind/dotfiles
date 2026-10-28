@@ -34,36 +34,26 @@ local function list()
     return {}
   end
 end
-local function format_item(agent)
-  return ((agent.state or "") .. "  " .. agent.name .. "  " .. vim.fn.fnamemodify(agent.cwd, ":~"))
+local function open_float()
+  local width = math.floor((vim.o.columns * 0.9))
+  local height = math.floor((vim.o.lines * 0.8))
+  return vim.api.nvim_open_win(vim.api.nvim_create_buf(false, true), true, {relative = "editor", style = "minimal", border = "rounded", width = width, height = height, row = math.floor(((vim.o.lines - height) / 2)), col = math.floor(((vim.o.columns - width) / 2))})
 end
 local function pick(prompt, on_choice)
-  local _5_
-  do
-    local tbl_26_ = {}
-    local i_27_ = 0
-    for _, agent in ipairs(list()) do
-      local val_28_
-      if vim.uv.fs_stat(agent.cwd) then
-        val_28_ = agent
-      else
-        val_28_ = nil
-      end
-      if (nil ~= val_28_) then
-        i_27_ = (i_27_ + 1)
-        tbl_26_[i_27_] = val_28_
-      else
-      end
-    end
-    _5_ = tbl_26_
-  end
-  local function _8_(_241)
-    if _241 then
-      return on_choice(_241.cwd)
+  local win = open_float()
+  local chosen = vim.fn.tempname()
+  local fzf = ("agent-rows " .. vim.api.nvim_win_get_width(win) .. " | fzf --ansi --delimiter '\t' --with-nth 2 --no-sort --layout reverse" .. " --select-1 --exit-0 --prompt " .. vim.fn.shellescape((prompt .. "> ")) .. " > " .. vim.fn.shellescape(chosen))
+  local function _5_(_, code)
+    vim.api.nvim_win_close(win, true)
+    if (code == 0) then
+      on_choice(vim.split(vim.fn.readfile(chosen)[1], "\t")[1])
+    elseif (code == 1) then
+      vim.notify("No Claude agents", vim.log.levels.WARN)
     else
-      return nil
     end
+    return vim.fn.delete(chosen)
   end
-  return vim.ui.select(_5_, {prompt = prompt, format_item = format_item}, _8_)
+  vim.fn.jobstart({"sh", "-c", fzf}, {term = true, on_exit = _5_})
+  return vim.cmd.startinsert()
 end
 return {list = list, pick = pick}
