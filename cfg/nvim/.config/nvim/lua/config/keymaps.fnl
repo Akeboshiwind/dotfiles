@@ -16,6 +16,17 @@
               (worktree.pick "Find files in worktree" worktree.find-files)))
      {:desc "Find files (other worktree)"})
 
+(map :n :<leader>ga
+     (fn [] (let [agents (require :config.agents)
+                  worktree (require :config.worktree)]
+              (agents.pick "Go to agent" worktree.switch)))
+     {:desc "Go to agent"})
+(map :n :<leader>fa
+     (fn [] (let [agents (require :config.agents)
+                  worktree (require :config.worktree)]
+              (agents.pick "Find files in agent" worktree.find-files)))
+     {:desc "Find files (agent)"})
+
 ;;; Git hunks -----------------------------------------------------------------
 
 (fn selected-lines []

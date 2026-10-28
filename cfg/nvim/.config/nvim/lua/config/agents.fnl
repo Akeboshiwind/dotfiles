@@ -13,4 +13,15 @@
           (doto row (tset :cwd (realpath row.cwd))))
         [])))
 
-{: list}
+(fn format-item [agent]
+  (.. (or agent.state "") "  " agent.name "  " (vim.fn.fnamemodify agent.cwd ":~")))
+
+(fn pick [prompt on-choice]
+  "Asks for a live Claude agent and calls `on-choice` with its cwd.
+  Agents whose cwd is gone, like a merged worktree, are left out."
+  (vim.ui.select (icollect [_ agent (ipairs (list))]
+                   (when (vim.uv.fs_stat agent.cwd) agent))
+                 {: prompt :format_item format-item}
+                 #(when $1 (on-choice $1.cwd))))
+
+{: list : pick}

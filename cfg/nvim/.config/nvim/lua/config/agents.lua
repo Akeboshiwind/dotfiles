@@ -34,4 +34,36 @@ local function list()
     return {}
   end
 end
-return {list = list}
+local function format_item(agent)
+  return ((agent.state or "") .. "  " .. agent.name .. "  " .. vim.fn.fnamemodify(agent.cwd, ":~"))
+end
+local function pick(prompt, on_choice)
+  local _5_
+  do
+    local tbl_26_ = {}
+    local i_27_ = 0
+    for _, agent in ipairs(list()) do
+      local val_28_
+      if vim.uv.fs_stat(agent.cwd) then
+        val_28_ = agent
+      else
+        val_28_ = nil
+      end
+      if (nil ~= val_28_) then
+        i_27_ = (i_27_ + 1)
+        tbl_26_[i_27_] = val_28_
+      else
+      end
+    end
+    _5_ = tbl_26_
+  end
+  local function _8_(_241)
+    if _241 then
+      return on_choice(_241.cwd)
+    else
+      return nil
+    end
+  end
+  return vim.ui.select(_5_, {prompt = prompt, format_item = format_item}, _8_)
+end
+return {list = list, pick = pick}
