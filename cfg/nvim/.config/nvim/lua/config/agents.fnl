@@ -23,7 +23,7 @@
                             :col (math.floor (/ (- vim.o.columns width) 2))})))
 
 (fn pick [prompt on-choice]
-  "Asks for a Claude agent, or the repository it works in, as fish's `wa` does,
+  "Asks for a Claude agent, or the repository it works in, as fish's `ga` does,
   and calls `on-choice` with the chosen directory."
   (let [win (open-float)
         chosen (vim.fn.tempname)
