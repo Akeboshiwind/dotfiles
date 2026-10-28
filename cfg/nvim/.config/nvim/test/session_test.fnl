@@ -37,6 +37,19 @@
           (h.check (not (h.has-buffer? names :/a.txt))
                    (.. "session leaked into an explicit start: " (vim.inspect names))))))]
 
+   ["a file closed after starting with it as an argument stays closed in the session"
+    (fn []
+      (let [dir (h.project [:a.txt :b.txt])
+            nvim (h.start dir [:b.txt])]
+        (h.exec-lua nvim "vim.cmd('edit a.txt | bdelete b.txt')")
+        (h.stop nvim)
+        (let [nvim (h.start dir)
+              _ (h.wait-until #(h.ends-with? (. (h.current nvim) :name) :/a.txt))
+              listed (h.exec-lua nvim "return vim.tbl_map(vim.api.nvim_buf_get_name, vim.tbl_filter(function(b) return vim.bo[b].buflisted end, vim.api.nvim_list_bufs()))")]
+          (h.stop nvim)
+          (h.check (not (h.has-buffer? listed :/b.txt))
+                   (.. "the closed file came back: " (vim.inspect listed))))))]
+
    ["a headless start leaves the session alone"
     (fn []
       (let [dir (h.project [:a.txt])]
