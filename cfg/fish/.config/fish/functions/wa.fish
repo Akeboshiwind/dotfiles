@@ -1,5 +1,6 @@
-function wa --description 'cd to a live Claude agent\'s workspace, or to its repository'
-    set -l agents (claude agents --json | string collect)
+function wa --description 'cd to a Claude agent\'s workspace, or to its repository'
+    set -l agents (claude agents --json --all | string collect)
+    set -l running (claude agents --json | jq -c 'map(.id)')
 
     set -l live
     for dir in (printf '%s' $agents | jq -r '.[].cwd')
@@ -8,7 +9,7 @@ function wa --description 'cd to a live Claude agent\'s workspace, or to its rep
     end
 
     if test (count $live) -eq 0
-        echo "No live Claude agents"
+        echo "No Claude agents"
         return 1
     end
 
@@ -20,7 +21,7 @@ function wa --description 'cd to a live Claude agent\'s workspace, or to its rep
 
     set -l program (path dirname -- (functions --details wa))/wa.jq
     set -l choice (printf '%s' $agents \
-        | jq -r --arg home $HOME --argjson jobs $jobs -f $program --args $live \
+        | jq -r --arg home $HOME --argjson jobs $jobs --argjson running $running -f $program --args $live \
         | fzf --ansi --delimiter \t --with-nth 2 --no-sort --layout reverse \
             --select-1 --exit-0 --query "$argv")
     or return

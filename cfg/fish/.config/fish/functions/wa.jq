@@ -1,5 +1,6 @@
-# Input: `claude agents --json`.
+# Input: `claude agents --json --all`.
 # $ARGS.positional: the cwds that still exist. $jobs: id → {detail, updatedAt} from ~/.claude/jobs.
+# $running: the ids `claude agents --json` lists without --all; the rest are paused.
 # $home: abbreviated to ~ in the repository headings.
 # Output: one fzf row per repository and per agent, as "<cd target>\t<display>".
 
@@ -23,6 +24,8 @@ def status_label:
    failed: "\u001b[31mFailed"}[.]
   // "\u001b[2m\(.)";
 
+def marker: if IN($running[]) then "\u001b[33m✻\u001b[0m" else "\u001b[2m·\u001b[0m" end;
+
 def updated:
   (.updatedAt | if . then sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601 else null end)
   // ((.startedAt // 0) / 1000);
@@ -36,4 +39,4 @@ def updated:
 | (map(.name | length) | max) as $w
 | group_by(.root)[]
 | (.[0].root | "\(.)\t\u001b[1m\(tilde)\u001b[0m"),
-  (.[] | "\(.cwd)\t  \(.name | pad($w))  \(.age | pad(3))  \(.state | status_label)\u001b[0m · \(.detail // "" | oneline)")
+  (.[] | "\(.cwd)\t\(.id | marker) \(.name | pad($w))  \(.age | pad(3))  \(.state | status_label)\u001b[0m · \(.detail // "" | oneline)")
