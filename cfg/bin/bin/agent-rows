@@ -12,7 +12,7 @@ set -q states[1]
 and set jobs (jq -s 'map(select(.daemonShort) | {key: .daemonShort, value: {detail, updatedAt, worktreePath}}) | from_entries' $states | string collect)
 
 set -l live
-for dir in (printf '%s' $agents | jq -r --argjson jobs $jobs '.[] | $jobs[.id].worktreePath // .cwd')
+for dir in (printf '%s' $agents | jq -r --argjson jobs $jobs '.[] | $jobs[.id // ""].worktreePath // .cwd')
     # A merged worktree is deleted while its agent lives on
     test -d $dir; and set -a live $dir
 end
