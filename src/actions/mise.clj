@@ -74,7 +74,7 @@
 
 (defmethod a/queries :pkg/mise [_ declared]
   (cond-> (into #{[:mise :installed]}
-                (keep (fn [[k opts]] (when (global-version opts) [:mise :global (name k)])))
+                (map (fn [[k _]] [:mise :global (name k)]))
                 declared)
     (some (fn [[_ opts]] (contains? (declared-versions opts) "latest")) declared) (conj [:mise :outdated])))
 
@@ -101,10 +101,9 @@
           missing
           (o/version-drift (last (sort versions)) missing)
 
-          (and (global-version opts)
-               (not= (global-version opts) (f/value facts [:mise :global tool-name])))
+          (not= (global-version opts) (f/value facts [:mise :global tool-name]))
           (o/version-drift (request-label (f/value facts [:mise :global tool-name]))
-                           (global-version opts))
+                           (request-label (global-version opts)))
 
           (contains? declared "latest")
           (if-let [{:keys [current latest]} (get (f/value facts [:mise :outdated]) tool-name)]
@@ -119,6 +118,10 @@
     (cond-> []
       (global-version opts)
       (conj ["mise" "use" "--global" (spec (global-version opts))])
+
+      ;; --no-prune: without it, mise also uninstalls versions no config requests, :install's among them
+      (not (global-version opts))
+      (conj ["mise" "unuse" "--global" "--no-prune" (name tool)])
 
       (seq (install-versions opts))
       (conj (into ["mise" "install"] (map spec) (sort (install-versions opts)))))))

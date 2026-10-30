@@ -17,8 +17,9 @@
     (is (= [["mise" "use" "--global" "node@20"]]
            (install-calls {:node {:global "20"}}))))
 
-  (testing "an :install version is installed without being selected"
-    (is (= [["mise" "install" "node@20"]]
+  (testing "an :install version is installed, and any global request for the tool removed"
+    (is (= [["mise" "unuse" "--global" "--no-prune" "node"]
+            ["mise" "install" "node@20"]]
            (install-calls {:node {:install #{"20"}}}))))
 
   (testing "a global and :install versions run both, global first"
@@ -48,7 +49,7 @@
            (a/queries :pkg/mise {:bun {:global "latest"}}))))
 
   (testing "a latest :install version also asks what is outdated"
-    (is (= #{[:mise :installed] [:mise :outdated]}
+    (is (= #{[:mise :installed] [:mise :outdated] [:mise :global "bun"]}
            (a/queries :pkg/mise {:bun {:install #{"latest"}}}))))
 
   (testing "a :global entry also asks what the global config requests for its tool"
@@ -76,7 +77,15 @@
       (is (= "unset → 25" (:message result)))))
 
   (testing "a request that isn't one version string → drift"
-    (is (o/drift? (check {:global "24"} {"java" #{"24"}} "[\"24\", \"22\"]")))))
+    (is (o/drift? (check {:global "24"} {"java" #{"24"}} "[\"24\", \"22\"]"))))
+
+  (testing "no :global and no global request → satisfied"
+    (is (o/satisfied? (check {:install #{"21"}} {"java" #{"21"}} nil))))
+
+  (testing "no :global, but the global config requests the tool → drift from it to unset"
+    (let [result (check {:install #{"21"}} {"java" #{"21"}} "21")]
+      (is (o/drift? result))
+      (is (= "21 → unset" (:message result))))))
 
 (deftest mise-check-multi-version-test
   (testing "every declared version installed → satisfied"

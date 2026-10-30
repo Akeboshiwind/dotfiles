@@ -229,7 +229,7 @@
 
 (deftest mise-check-outdated-test
   (testing "outdated tool → drift(:outdated) with version message"
-    (let [facts (support/facts-of {[:mise :installed] {"node" #{"18.0.0" "20.0.0"}}})]
+    (let [facts (support/facts-of {[:mise :global "node"] nil [:mise :installed] {"node" #{"18.0.0" "20.0.0"}}})]
       (let [result (a/check :pkg/mise :node {:install #{"22.0.0"}} facts)]
         (is (o/drift? result))
         (is (= :outdated (:kind result)))
@@ -241,24 +241,24 @@
 
 (deftest mise-check-pinned-satisfied-test
   (testing "pinned version installed → satisfied"
-    (let [facts (support/facts-of {[:mise :installed] {"node" #{"20.0.0"}}})]
+    (let [facts (support/facts-of {[:mise :global "node"] nil [:mise :installed] {"node" #{"20.0.0"}}})]
       (is (o/satisfied? (a/check :pkg/mise :node {:install #{"20.0.0"}} facts))))))
 
 (deftest mise-check-missing-test
   (testing "tool not installed → drift(:missing)"
-    (let [facts (support/facts-of {[:mise :installed] {}})]
+    (let [facts (support/facts-of {[:mise :global "node"] nil [:mise :installed] {}})]
       (let [result (a/check :pkg/mise :node {:install #{"20.0.0"}} facts)]
         (is (o/drift? result))
         (is (= :missing (:kind result)))))))
 
 (deftest mise-check-latest-current-test
   (testing "latest requested, no upgrade available → satisfied"
-    (let [facts (support/facts-of {[:mise :installed] {"node" #{"20.0.0"}} [:mise :outdated] {}})]
+    (let [facts (support/facts-of {[:mise :global "node"] nil [:mise :installed] {"node" #{"20.0.0"}} [:mise :outdated] {}})]
       (is (o/satisfied? (a/check :pkg/mise :node {:install #{"latest"}} facts))))))
 
 (deftest mise-check-latest-outdated-test
   (testing "latest requested, upgrade available → drift(:outdated) with version message"
-    (let [facts (support/facts-of {[:mise :installed] {"node" #{"20.0.0"}} [:mise :outdated] {"node" {:current "20.0.0" :latest "22.0.0"}}})]
+    (let [facts (support/facts-of {[:mise :global "node"] nil [:mise :installed] {"node" #{"20.0.0"}} [:mise :outdated] {"node" {:current "20.0.0" :latest "22.0.0"}}})]
       (let [result (a/check :pkg/mise :node {:install #{"latest"}} facts)]
         (is (o/drift? result))
         (is (= :outdated (:kind result)))
