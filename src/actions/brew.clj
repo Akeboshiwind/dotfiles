@@ -236,10 +236,12 @@
 
 (defmethod a/extras :pkg/brew [_ declared facts]
   (if (f/value facts [:command "brew"])
-    (into (mapv (fn [n] {:name n})
-                (extra-packages {:formulae (f/value facts [:brew :leaves])
-                                 :casks (f/value facts [:brew :casks-full])}
-                                declared))
+    (into (let [formulae (extra-packages {:formulae (f/value facts [:brew :leaves])} declared)
+                casks (remove formulae (extra-packages {:casks (f/value facts [:brew :casks-full])} declared))]
+            (->> (concat (map (fn [n] {:name n}) formulae)
+                         (map (fn [n] {:name n :cask true}) casks))
+                 (sort-by :name)
+                 vec))
           (map (fn [t] {:name t :tap true}))
           (extra-taps (f/value facts [:brew :taps]) declared))
     []))

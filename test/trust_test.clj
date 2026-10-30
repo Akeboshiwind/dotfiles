@@ -205,7 +205,15 @@
                      (support/facts-of {[:command "brew"] true
                                         [:brew :leaves] #{"neovim" "wget"}
                                         [:brew :casks-full] #{}
-                                        [:brew :taps] #{"oven-sh/bun"}}))))))
+                                        [:brew :taps] #{"oven-sh/bun"}})))))
+
+  (testing "an extra cask is marked as one, packages still in name order"
+    (is (= [{:name "slack" :cask true} {:name "wget"}]
+           (a/extras :pkg/brew #{"neovim"}
+                     (support/facts-of {[:command "brew"] true
+                                        [:brew :leaves] #{"neovim" "wget"}
+                                        [:brew :casks-full] #{"slack"}
+                                        [:brew :taps] #{}}))))))
 
 (deftest brew-remove-extras-untaps-after-uninstalls-test
   (testing "packages are uninstalled before their taps are removed"
