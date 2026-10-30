@@ -63,7 +63,7 @@ syn --dry-run    # Preview without executing
 | Action | Description | Options |
 |--------|-------------|---------|
 | `:pkg/brew` | Homebrew packages | `:head`, `:cask` |
-| `:pkg/mise` | mise version manager | `:global` (one version, selected with `mise use --global`), `:install` (a set of versions, installed only); at least one |
+| `:pkg/mise` | mise version manager; the global config is kept to exactly the `:global` versions | `:global` (one version, selected with `mise use --global`), `:install` (a set of versions, installed only); at least one |
 | `:pkg/mas` | Mac App Store | `{app-id app-name}` |
 | `:pkg/bbin` | Babashka binaries | `:url`, `:local`, `:as`, `:git/tag`, `:git/sha`, `:main-opts` |
 | `:pkg/npm` | npm global packages | - |

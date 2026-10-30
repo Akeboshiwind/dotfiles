@@ -65,8 +65,8 @@
   "The extras an apply may remove: those the plan showed that are still extra
    on facts gathered for this apply. Pure."
   [shown fresh]
-  (let [still (set (map :name fresh))]
-    (filterv #(contains? still (:name %)) shown)))
+  (let [shown-names (set (map :name shown))]
+    (filterv #(contains? shown-names (:name %)) fresh)))
 
 (defn- remove-from [type manager opts facts]
   (let [ref [type manager]
