@@ -7,10 +7,10 @@
 ;; >> Resolve symlinks to root of repo
 
 (defn- resolve-path! [base-dir path]
-  (if (or (str/starts-with? path "/")    ; absolute
-          (str/starts-with? path "~"))   ; home
-    path
-    ;; Relative path - resolve against base-dir
+  (cond
+    (str/starts-with? path "/") path
+    (str/starts-with? path "~") (u/expand-tilde path)
+    :else
     (let [resolved (io/file base-dir path)
           canonical (.getCanonicalPath resolved)
           base-canonical (.getCanonicalPath (io/file base-dir))]
