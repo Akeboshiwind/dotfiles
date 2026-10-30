@@ -44,19 +44,39 @@
 
 (deftest mise-queries-test
   (testing "a latest global also asks what is outdated"
-    (is (= #{[:mise :installed] [:mise :outdated]}
+    (is (= #{[:mise :installed] [:mise :outdated] [:mise :global "bun"]}
            (a/queries :pkg/mise {:bun {:global "latest"}}))))
 
   (testing "a latest :install version also asks what is outdated"
     (is (= #{[:mise :installed] [:mise :outdated]}
            (a/queries :pkg/mise {:bun {:install #{"latest"}}}))))
 
-  (testing "pinned versions only ask what is installed"
-    (is (= #{[:mise :installed]}
+  (testing "a :global entry also asks what the global config requests for its tool"
+    (is (= #{[:mise :installed] [:mise :global "node"]}
            (a/queries :pkg/mise {:node {:global "20" :install #{"18"}}})))))
 
-(defn- check [opts installed]
-  (a/check :pkg/mise :java opts (support/facts-of {[:mise :installed] installed})))
+(defn- check
+  ([opts installed] (check opts installed (:global opts)))
+  ([opts installed global-request]
+   (a/check :pkg/mise :java opts (support/facts-of {[:mise :installed] installed
+                                                    [:mise :global "java"] global-request}))))
+
+(deftest mise-check-global-request-test
+  (testing "the global config requesting the :global version → satisfied"
+    (is (o/satisfied? (check {:global "25"} {"java" #{"25"}} "25"))))
+
+  (testing "the global config requesting something else → drift from it to :global"
+    (let [result (check {:global "24.14.0"} {"java" #{"24.14.0"}} "lts")]
+      (is (o/drift? result))
+      (is (= "lts → 24.14.0" (:message result)))))
+
+  (testing "no global request for a :global tool → drift"
+    (let [result (check {:global "25"} {"java" #{"25"}} nil)]
+      (is (o/drift? result))
+      (is (= "unset → 25" (:message result)))))
+
+  (testing "a request that isn't one version string → drift"
+    (is (o/drift? (check {:global "24"} {"java" #{"24"}} "[\"24\", \"22\"]")))))
 
 (deftest mise-check-multi-version-test
   (testing "every declared version installed → satisfied"

@@ -32,10 +32,19 @@
                     [(name tool) {:current current :latest latest}]))
           raw)))
 
-(defmethod a/run-query :mise [[_ what]]
+(defn global-request
+  "What mise's global config requests for `tool`, as `mise config get` prints
+   it: a version for a plain request, TOML otherwise. nil when it has no entry."
+  [tool]
+  (let [{:keys [exit out]} (sh/query! `global-request {:continue true}
+                                      ["mise" "config" "get" "--global" (str "tools." tool)])]
+    (when (zero? exit) (str/trim out))))
+
+(defmethod a/run-query :mise [[_ what tool]]
   (case what
     :installed (installed-map)
-    :outdated (outdated-map)))
+    :outdated (outdated-map)
+    :global (global-request tool)))
 
 (defmethod a/manifest :pkg/mise [_] {:syn/exclusive {:pkg/mise {}}})
 
@@ -64,8 +73,13 @@
     (global-version opts) (conj (global-version opts))))
 
 (defmethod a/queries :pkg/mise [_ declared]
-  (cond-> #{[:mise :installed]}
+  (cond-> (into #{[:mise :installed]}
+                (keep (fn [[k opts]] (when (global-version opts) [:mise :global (name k)])))
+                declared)
     (some (fn [[_ opts]] (contains? (declared-versions opts) "latest")) declared) (conj [:mise :outdated])))
+
+(defn- request-label [request]
+  (if request (str/replace request #"\s*\n\s*" " ") "unset"))
 
 (defmethod a/check :pkg/mise [_ key opts facts]
   (let [declared (declared-versions opts)]
@@ -86,6 +100,11 @@
 
           missing
           (o/version-drift (last (sort versions)) missing)
+
+          (and (global-version opts)
+               (not= (global-version opts) (f/value facts [:mise :global tool-name])))
+          (o/version-drift (request-label (f/value facts [:mise :global tool-name]))
+                           (global-version opts))
 
           (contains? declared "latest")
           (if-let [{:keys [current latest]} (get (f/value facts [:mise :outdated]) tool-name)]
