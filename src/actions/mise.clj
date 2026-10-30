@@ -9,16 +9,20 @@
 
 (defmethod a/requires :pkg/mise [_] :pkg/mise)
 
+(defn- versions-by-tool
+  "{tool-name #{version ...}} from the JSON `mise ls --json` prints."
+  [out]
+  (into {} (map (fn [[tool versions]]
+                  [(name tool) (into #{} (map :version) versions)]))
+        (json/parse-string out true)))
+
 (defn installed-map
   "Return {tool-name #{version ...}} of installed mise tools."
   []
-  (let [raw (-> (d/with-spinner "Listing mise tools"
-                  (sh/query! `installed-map ["mise" "ls" "--installed" "--json"]))
-                :out
-                (json/parse-string true))]
-    (into {} (map (fn [[tool versions]]
-                    [(name tool) (into #{} (map :version) versions)]))
-          raw)))
+  (-> (d/with-spinner "Listing mise tools"
+        (sh/query! `installed-map ["mise" "ls" "--installed" "--json"]))
+      :out
+      versions-by-tool))
 
 (defn outdated-map
   "Return {tool-name {:current ... :latest ...}} from `mise outdated`.
