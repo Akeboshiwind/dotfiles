@@ -11,11 +11,12 @@ installs="${JAVA_INSTALLS_DIR:-${MISE_DATA_DIR:-$HOME/.local/share/mise}/install
 vms="${JAVA_VM_DIR:-$HOME/Library/Java/JavaVirtualMachines}"
 state="${DOTFILES_SCRIPT_STATE:?run by syn, which provides the state file}"
 
+is_real_install() { [ -d "$1/Contents" ] && [ ! -L "$1" ]; }
+
 installed() {
   local dir
   for dir in "$installs"/*; do
-    # mise's version aliases (temurin-21, latest, ...) are symlinks to real installs
-    if [ -d "$dir/Contents" ] && [ ! -L "$dir" ]; then basename "$dir"; fi
+    if is_real_install "$dir"; then basename "$dir"; fi
   done
 }
 
