@@ -41,11 +41,21 @@
                      (support/facts-of {[:command "npm"] true
                                         [:npm :installed] #{"prettier" "left-pad" "npm" "corepack"}}))))))
 
+(defn- mise-facts [entries installed global-tools prunable]
+  (support/facts-of {[:command "mise"] true
+                     [:mise :installed] installed
+                     [:mise :global-tools] global-tools
+                     [:mise :prunable] prunable
+                     [:manifest :declared] {:entries {:pkg/mise entries}}}))
+
 (defn- mise-extras [installed global-tools]
   (a/extras :pkg/mise #{"node"}
-            (support/facts-of {[:command "mise"] true
-                               [:mise :installed] installed
-                               [:mise :global-tools] global-tools})))
+            (mise-facts {"node" {:global "20"}} installed global-tools {})))
+
+(defn- mise-version-extras [entries prunable]
+  (let [tools (set (keys entries))]
+    (a/extras :pkg/mise tools
+              (mise-facts entries (zipmap tools (repeat #{})) tools prunable))))
 
 (defn- mise-removal-calls [extras]
   (let [calls (atom [])]
@@ -76,8 +86,40 @@
             ["mise" "uninstall" "--all" "python"]]
            (mise-removal-calls [{:name "python" :installed? true :requested? true}])))))
 
+(deftest mise-version-extras-test
+  (testing "a version no config selects that the entry doesn't declare is an extra"
+    (is (= [{:name "bun@1.4.3" :tool "bun" :version "1.4.3"}]
+           (mise-version-extras {"bun" {:global "latest"}} {"bun" #{"1.4.3"}}))))
+
+  (testing "an :install version survives, though no config selects it"
+    (is (= [{:name "java@21.0.12" :tool "java" :version "21.0.12"}]
+           (mise-version-extras {"java" {:global "25.0.5" :install #{"21.0.13"}}}
+                                {"java" #{"21.0.12" "21.0.13"}}))))
+
+  (testing "a version some config selects is not prunable, so not an extra"
+    (is (= [] (mise-version-extras {"java" {:global "25.0.5"}} {}))))
+
+  (testing "an undeclared tool's versions are left to the tool's own removal"
+    (is (= [{:name "python" :installed? true :requested? false}]
+           (a/extras :pkg/mise #{"node"}
+                     (mise-facts {"node" {:global "20"}} {"node" #{"20"} "python" #{"3.12"}} #{"node"}
+                                 {"python" #{"3.12"}})))))
+
+  (testing "removing a version extra uninstalls that version alone"
+    (is (= [["mise" "uninstall" "bun@1.4.3"]]
+           (mise-removal-calls [{:name "bun@1.4.3" :tool "bun" :version "1.4.3"}])))))
+
+(deftest declared-entries-test
+  (testing "the declared fact carries each item's opts by name, beside the name sets"
+    (with-redefs [m/load-manifest (fn [] [{:step {:pkg/mise {:java {:global "25.0.5" :install #{"21.0.13"}}}}
+                                           :source nil}])]
+      (let [{:keys [entries types]} (a/run-query [:manifest :declared])]
+        (is (= {:global "25.0.5" :install #{"21.0.13"}} (get-in entries [:pkg/mise "java"])))
+        (is (= #{"java"} (get types :pkg/mise)))))))
+
 (deftest mise-extras-queries-test
-  (is (contains? (a/extras-queries :pkg/mise) [:mise :global-tools])))
+  (is (contains? (a/extras-queries :pkg/mise) [:mise :global-tools]))
+  (is (contains? (a/extras-queries :pkg/mise) [:mise :prunable])))
 
 (deftest mas-extras-test
   (testing "installed apps not declared by id are extras"

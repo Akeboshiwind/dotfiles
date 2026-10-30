@@ -41,6 +41,9 @@ external entity PackageManager {
     explicitly_installed: Set<String>     -- user-requested items only, not transitive dependencies
     third_party_sources: Set<String>      -- installed sources outside the manager's
                                           -- official registry (e.g. brew taps)
+    undeclared_versions: Set<String>      -- installed versions of a declared item that
+                                          -- the item doesn't declare and no config the
+                                          -- manager tracks selects (mise only)
 }
 
 external entity SourceFile {
@@ -284,7 +287,8 @@ variant ExclusiveAction : Action {
     declared: Set<String>                 -- every item the manifest declares for it,
                                           -- read from the manifest files
     extras: manager.explicitly_installed - declared   -- plus any third-party source no
-                                                        -- declared item comes from
+                                                        -- declared item comes from, plus
+                                                        -- manager.undeclared_versions
 }
 
 variant ScriptAction : Action {

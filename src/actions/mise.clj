@@ -24,6 +24,15 @@
       :out
       versions-by-tool))
 
+(defn prunable-map
+  "Return {tool-name #{version ...}} of installed versions no tracked mise
+   config selects."
+  []
+  (-> (d/with-spinner "Listing prunable mise versions"
+        (sh/query! `prunable-map ["mise" "ls" "--prunable" "--json"]))
+      :out
+      versions-by-tool))
+
 (defn outdated-map
   "Return {tool-name {:current ... :latest ...}} from `mise outdated`.
    Only includes tools that have an upgrade available."
@@ -58,6 +67,7 @@
 (defmethod a/run-query :mise [[_ what tool]]
   (case what
     :installed (installed-map)
+    :prunable (prunable-map)
     :outdated (outdated-map)
     :global (global-request tool)
     :global-tools (global-tools)))
@@ -75,7 +85,7 @@
 (defmethod a/manifest :pkg/mise [_] {:syn/exclusive {:pkg/mise {}}})
 
 (defmethod a/extras-queries :pkg/mise [_]
-  #{[:command "mise"] [:mise :installed] [:mise :global-tools]})
+  #{[:command "mise"] [:mise :installed] [:mise :global-tools] [:mise :prunable] [:manifest :declared]})
 
 (defn- tool-extras [declared facts]
   (let [installed (f/value facts [:mise :installed])
@@ -87,9 +97,16 @@
                        :installed? (contains? installed n)
                        :requested? (contains? requested n)})))))
 
+(defn- version-extras [facts]
+  (let [entries (get-in (f/value facts [:manifest :declared]) [:entries :pkg/mise])
+        prunable (f/value facts [:mise :prunable])]
+    (for [[tool opts] (sort entries)
+          version (sort (remove (declared-versions opts) (get prunable tool)))]
+      {:name (str tool "@" version) :tool tool :version version})))
+
 (defmethod a/extras :pkg/mise [_ declared facts]
   (if (f/value facts [:command "mise"])
-    (vec (tool-extras declared facts))
+    (into (vec (tool-extras declared facts)) (version-extras facts))
     []))
 
 (defn- shape-error
@@ -171,10 +188,12 @@
               :message err}))
          items)))
 
-(defn- removal-commands [{tool :name :keys [installed? requested?]}]
-  (cond-> []
-    requested? (conj ["mise" "unuse" "--global" "--no-prune" tool])
-    installed? (conj ["mise" "uninstall" "--all" tool])))
+(defn- removal-commands [{:keys [name version installed? requested?]}]
+  (if version
+    [["mise" "uninstall" name]]
+    (cond-> []
+      requested? (conj ["mise" "unuse" "--global" "--no-prune" name])
+      installed? (conj ["mise" "uninstall" "--all" name]))))
 
 (defmethod a/remove-extras! :pkg/mise [type opts extras _facts]
   (d/section "Removing undeclared mise tools"

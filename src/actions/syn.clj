@@ -24,6 +24,7 @@
                         [type (into {} (map (fn [[k opts]] [(if (keyword? k) (name k) (str k)) opts])) items)]))]
     {:root (m/root)
      :id (sp/manifest-identity entries cache)
+     :entries by-name
      :types (update-vals by-name (comp set keys))}))
 
 (defmethod a/run-query :manifest [[_ what]]
