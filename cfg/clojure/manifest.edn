@@ -2,7 +2,7 @@
                    :install #{"temurin-21.0.13+9.0.LTS"}}}
  :pkg/script {:java-home {:path "cfg/clojure/java-home.sh"
                           :check "bash cfg/clojure/java-home.sh --check"
-                          :dep/requires #{[:complete :pkg/mise]}}}
+                          :dep/requires #{[:complete :pkg/mise] [:syn/exclusive :pkg/mise]}}}
  :pkg/brew {:clojure {}
             "borkdude/brew/babashka" {:trust true}
             "borkdude/brew/clj-kondo" {:trust true}}

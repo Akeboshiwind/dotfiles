@@ -13,12 +13,14 @@
             [stored-plan :as sp]))
 
 (defn- format-graph-errors [errors]
-  (let [{:keys [cycles missing duplicates]} errors]
+  (let [{:keys [cycles missing undeclared duplicates]} errors]
     (str "Dependency graph errors:\n"
          (when (seq cycles)
            (str "  Cycles: " (pr-str cycles) "\n"))
          (when (seq missing)
            (str "  Missing providers: " (pr-str missing) "\n"))
+         (when (seq undeclared)
+           (str "  Undeclared dependencies: " (pr-str undeclared) "\n"))
          (when (seq duplicates)
            (str "  Duplicate providers: " (pr-str duplicates) "\n")))))
 
@@ -218,7 +220,7 @@
       (catch clojure.lang.ExceptionInfo e
         (let [data (ex-data e)]
           (cond
-            (or (:missing data) (:cycles data) (:duplicates data))
+            (or (:missing data) (:undeclared data) (:cycles data) (:duplicates data))
             (println (format-graph-errors data))
 
             (str/includes? (ex-message e) "Path escapes")

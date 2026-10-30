@@ -65,6 +65,14 @@
         :when (and (keyword? req) (not (contains? providers req)))]
     {:action action :missing-capability req}))
 
+(defn- find-undeclared
+  "Find [type key] requirements naming an action the plan doesn't declare."
+  [{:keys [actions requires]}]
+  (for [[action reqs] requires
+        req reqs
+        :when (and (vector? req) (not (complete-cap? req)) (not (contains? actions req)))]
+    {:action action :undeclared req}))
+
 (defn- actions-of-type
   "Return all actions of the given type."
   [actions type]
@@ -95,11 +103,12 @@
 (defn validate
   "Validate the plan's dependency graph.
    Returns nil if valid, or a map of errors:
-   {:cycles [...] :missing [...] :duplicates [...]}"
+   {:cycles [...] :missing [...] :undeclared [...] :duplicates [...]}"
   [plan]
   (let [{:keys [duplicates] :as parsed} (parse-plan plan)
         missing (seq (find-missing parsed))
-        cycle-error (when-not (or (seq duplicates) missing)
+        undeclared (seq (find-undeclared parsed))
+        cycle-error (when-not (or (seq duplicates) missing undeclared)
                       (try
                         (build-graph parsed)
                         nil
@@ -107,9 +116,10 @@
                           (when (= :weavejester.dependency/circular-dependency
                                    (:reason (ex-data e)))
                             (select-keys (ex-data e) [:node :dependency])))))]
-    (when (or missing (seq duplicates) cycle-error)
+    (when (or missing undeclared (seq duplicates) cycle-error)
       (cond-> {}
         missing (assoc :missing (vec missing))
+        undeclared (assoc :undeclared (vec undeclared))
         (seq duplicates) (assoc :duplicates (vec duplicates))
         cycle-error (assoc :cycles [cycle-error])))))
 
