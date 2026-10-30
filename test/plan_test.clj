@@ -89,11 +89,11 @@
       (is (= "/etc/some/config"
              (get-in result [:plan :fs/symlink "~/.config/app"])))))
 
-  (testing "home paths pass through unchanged"
+  (testing "home paths resolve under the home directory, not the base directory"
     (let [entries [{:step {:fs/symlink {"~/.config/app" "~/some/config"}}
                     :source "/Users/test/dotfiles/cfg/app"}]
           result (p/build! entries {})]
-      (is (= "~/some/config"
+      (is (= (str (System/getProperty "user.home") "/some/config")
              (get-in result [:plan :fs/symlink "~/.config/app"]))))))
 
 ;; =============================================================================
