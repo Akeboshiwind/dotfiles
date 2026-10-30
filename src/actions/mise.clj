@@ -58,6 +58,16 @@
     :global (global-request tool)
     :global-tools (global-tools)))
 
+(defn- global-version [opts]
+  (:global opts))
+
+(defn- install-versions [{:keys [global install]}]
+  (disj (set install) global))
+
+(defn- declared-versions [opts]
+  (cond-> (install-versions opts)
+    (global-version opts) (conj (global-version opts))))
+
 (defmethod a/manifest :pkg/mise [_] {:syn/exclusive {:pkg/mise {}}})
 
 (defmethod a/extras-queries :pkg/mise [_]
@@ -75,22 +85,12 @@
                           :requested? (contains? requested n)}))))
     []))
 
-(defn- global-version [opts]
-  (:global opts))
-
-(defn- install-versions [{:keys [global install]}]
-  (disj (set install) global))
-
 (defn- shape-error
   [{:keys [global install] :as opts}]
   (cond
     (contains? opts :version) ":version is replaced by :global and :install"
     (not (or (nil? global) (string? global))) ":global must be one version string"
     (not (or (nil? install) (set? install))) ":install must be a set of version strings"))
-
-(defn- declared-versions [opts]
-  (cond-> (install-versions opts)
-    (global-version opts) (conj (global-version opts))))
 
 (defmethod a/queries :pkg/mise [_ declared]
   (cond-> (into #{[:mise :installed]}
