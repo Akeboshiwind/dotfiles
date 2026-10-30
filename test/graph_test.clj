@@ -165,6 +165,11 @@
 ;; =============================================================================
 
 (deftest edge-cases-test
+  (testing "a dependency on an action the plan doesn't declare is an error, not a node"
+    (let [plan {:fs/symlink {"~/.foo" {:dep/requires #{[:syn/exclusive :pkg/mise]}}}}]
+      (is (= {:undeclared [{:action [:fs/symlink "~/.foo"] :undeclared [:syn/exclusive :pkg/mise]}]}
+             (g/validate plan)))))
+
   (testing "unknown action types require their capability"
     (let [plan {:my/custom {:foo {}}}
           errors (g/validate plan)]

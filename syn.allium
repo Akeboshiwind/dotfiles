@@ -185,8 +185,9 @@ entity Run {
                                           -- null on the live-check path
 
     graph_errors: Boolean                 -- the capability graph has a cycle, a required
-                                          -- capability with no provider, or a capability
-                                          -- with more than one provider
+                                          -- capability with no provider, a dependency on
+                                          -- an action the manifest doesn't declare, or a
+                                          -- capability with more than one provider
 
     actions: Action with run = this
     validation_errors: ValidationError with run = this
