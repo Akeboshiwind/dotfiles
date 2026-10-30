@@ -77,16 +77,19 @@
 (defmethod a/extras-queries :pkg/mise [_]
   #{[:command "mise"] [:mise :installed] [:mise :global-tools]})
 
+(defn- tool-extras [declared facts]
+  (let [installed (f/value facts [:mise :installed])
+        requested (f/value facts [:mise :global-tools])]
+    (->> (into (set (keys installed)) requested)
+         (remove declared)
+         sort
+         (map (fn [n] {:name n
+                       :installed? (contains? installed n)
+                       :requested? (contains? requested n)})))))
+
 (defmethod a/extras :pkg/mise [_ declared facts]
   (if (f/value facts [:command "mise"])
-    (let [installed (f/value facts [:mise :installed])
-          requested (f/value facts [:mise :global-tools])]
-      (->> (into (set (keys installed)) requested)
-           (remove declared)
-           sort
-           (mapv (fn [n] {:name n
-                          :installed? (contains? installed n)
-                          :requested? (contains? requested n)}))))
+    (vec (tool-extras declared facts))
     []))
 
 (defn- shape-error
