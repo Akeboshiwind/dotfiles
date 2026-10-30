@@ -28,6 +28,7 @@ nvim -c ':TSUpdate'
 
 ## Landing work
 
+- **Picking up a card assigns its issue to the user.** There is no board or status field to move.
 - **One feature branch per card**, `worktree-<slug>`, off `main`.
 - **Tidies and advances both land on the feature branch**, as separate commits — `tidy(…)` for structure, `feat(…)`/`fix(…)` for behaviour — each with its tests passing first. Push the branch as commits land.
 - **The branch lands on `main` by PR** (`/show` or `/ask`).
