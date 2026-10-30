@@ -41,17 +41,43 @@
                      (support/facts-of {[:command "npm"] true
                                         [:npm :installed] #{"prettier" "left-pad" "npm" "corepack"}}))))))
 
+(defn- mise-extras [installed global-tools]
+  (a/extras :pkg/mise #{"node"}
+            (support/facts-of {[:command "mise"] true
+                               [:mise :installed] installed
+                               [:mise :global-tools] global-tools})))
+
+(defn- mise-removal-calls [extras]
+  (let [calls (atom [])]
+    (with-redefs [a/exec! (fn [_ args] (swap! calls conj args) {:exit 0 :err nil})]
+      (with-out-str (doall (a/remove-extras! :pkg/mise {} extras {}))))
+    @calls))
+
 (deftest mise-extras-test
   (testing "installed but undeclared mise tools are extras"
-    (is (= [{:name "python"}]
-           (a/extras :pkg/mise #{"node"}
-                     (support/facts-of {[:command "mise"] true
-                                        [:mise :installed] {"node" #{"20"} "python" #{"3.12"}}})))))
-  (testing "removing them runs mise uninstall for each"
-    (let [calls (atom [])]
-      (with-redefs [a/exec! (fn [_ args] (swap! calls conj args) {:exit 0 :err nil})]
-        (with-out-str (a/remove-extras! :pkg/mise {} [{:name "python"}] {})))
-      (is (= [["mise" "uninstall" "python"]] @calls)))))
+    (is (= [{:name "python" :installed? true :requested? false}]
+           (mise-extras {"node" #{"20"} "python" #{"3.12"}} #{"node"}))))
+
+  (testing "a tool the global config requests but the manifest doesn't declare is an extra, installed or not"
+    (is (= [{:name "deno" :installed? false :requested? true}
+            {:name "python" :installed? true :requested? true}]
+           (mise-extras {"node" #{"20"} "python" #{"3.12"}} #{"node" "python" "deno"}))))
+
+  (testing "an installed extra is uninstalled"
+    (is (= [["mise" "uninstall" "python"]]
+           (mise-removal-calls [{:name "python" :installed? true :requested? false}]))))
+
+  (testing "a requested extra loses its global request, keeping installs for the uninstall to decide"
+    (is (= [["mise" "unuse" "--global" "--no-prune" "deno"]]
+           (mise-removal-calls [{:name "deno" :installed? false :requested? true}]))))
+
+  (testing "an extra that is both loses its request, then is uninstalled"
+    (is (= [["mise" "unuse" "--global" "--no-prune" "python"]
+            ["mise" "uninstall" "python"]]
+           (mise-removal-calls [{:name "python" :installed? true :requested? true}])))))
+
+(deftest mise-extras-queries-test
+  (is (contains? (a/extras-queries :pkg/mise) [:mise :global-tools])))
 
 (deftest mas-extras-test
   (testing "installed apps not declared by id are extras"

@@ -40,19 +40,39 @@
                                       ["mise" "config" "get" "--global" (str "tools." tool)])]
     (when (zero? exit) (str/trim out))))
 
+(defn global-tools
+  "The set of tools mise's global config requests."
+  []
+  ;; Run from /, where no project config loads, so the highest-precedence file is the global one
+  (-> (sh/query! `global-tools ["mise" "-C" "/" "config" "ls" "--json"])
+      :out
+      (json/parse-string true)
+      last
+      :tools
+      set))
+
 (defmethod a/run-query :mise [[_ what tool]]
   (case what
     :installed (installed-map)
     :outdated (outdated-map)
-    :global (global-request tool)))
+    :global (global-request tool)
+    :global-tools (global-tools)))
 
 (defmethod a/manifest :pkg/mise [_] {:syn/exclusive {:pkg/mise {}}})
 
-(defmethod a/extras-queries :pkg/mise [_] #{[:command "mise"] [:mise :installed]})
+(defmethod a/extras-queries :pkg/mise [_]
+  #{[:command "mise"] [:mise :installed] [:mise :global-tools]})
 
 (defmethod a/extras :pkg/mise [_ declared facts]
   (if (f/value facts [:command "mise"])
-    (->> (keys (f/value facts [:mise :installed])) (remove declared) sort (mapv (fn [n] {:name n})))
+    (let [installed (f/value facts [:mise :installed])
+          requested (f/value facts [:mise :global-tools])]
+      (->> (into (set (keys installed)) requested)
+           (remove declared)
+           sort
+           (mapv (fn [n] {:name n
+                          :installed? (contains? installed n)
+                          :requested? (contains? requested n)}))))
     []))
 
 (defn- global-version [opts]
@@ -144,7 +164,17 @@
               :message err}))
          items)))
 
+(defn- removal-commands [{tool :name :keys [installed? requested?]}]
+  (cond-> []
+    requested? (conj ["mise" "unuse" "--global" "--no-prune" tool])
+    installed? (conj ["mise" "uninstall" tool])))
+
 (defmethod a/remove-extras! :pkg/mise [type opts extras _facts]
-  (a/simple-install type opts "Uninstalling mise tools"
-    (fn [tool _] ["mise" "uninstall" tool])
-    (into {} (map (fn [{n :name}] [n {}])) extras)))
+  (d/section "Removing undeclared mise tools"
+    (map (fn [{tool :name :as extra}]
+           (let [{:keys [exit err]} (exec-all! opts (removal-commands extra))]
+             {:action [type tool]
+              :label tool
+              :status (if (zero? exit) :ok :error)
+              :message err}))
+         extras)))
