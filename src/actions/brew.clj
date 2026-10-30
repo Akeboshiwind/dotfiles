@@ -292,12 +292,13 @@
               :message err}))
          items)))
 
-(defn- remove-package! [type opts facts pkg-name]
+(defn- remove-package! [type opts facts {pkg-name :name :keys [cask]}]
   (let [cmds (cond-> []
                ;; no grant outlives the package it was made for
                (and (tap-of pkg-name) (trusted? (f/value facts [:brew :trusted]) pkg-name))
                (conj ["brew" "untrust" "--formula" pkg-name])
-               true (conj ["brew" "uninstall" pkg-name]))
+               ;; --force on a formula removes every installed version; on a cask it ignores errors
+               true (conj ["brew" "uninstall" (if cask "--cask" "--force") pkg-name]))
         {:keys [exit err]} (run-commands! opts cmds)]
     {:action [type pkg-name]
      :label pkg-name
@@ -307,7 +308,7 @@
 (defmethod a/remove-extras! :pkg/brew [type opts extras facts]
   (let [{taps true pkgs false} (group-by (comp boolean :tap) extras)
         removed (d/section "Uninstalling brew packages"
-                  (map (fn [{n :name}] (remove-package! type opts facts n)) pkgs))]
+                  (map (fn [pkg] (remove-package! type opts facts pkg)) pkgs))]
     (when (seq pkgs)
       (a/exec! opts ["brew" "autoremove"]))
     (into removed

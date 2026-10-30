@@ -97,5 +97,12 @@
       (with-redefs [a/exec! (mock-exec! calls)]
         (with-out-str (a/remove-extras! :pkg/brew {} [{:name "curl"} {:name "wget"}]
                                         (support/facts-of {[:brew :trusted] {:formulae #{} :taps #{}}}))))
-      (is (= [["brew" "uninstall" "curl"] ["brew" "uninstall" "wget"] ["brew" "autoremove"]] @calls)))))
+      (is (= [["brew" "uninstall" "--force" "curl"] ["brew" "uninstall" "--force" "wget"] ["brew" "autoremove"]] @calls))))
+
+  (testing "a cask is uninstalled as a cask, without --force"
+    (let [calls (atom [])]
+      (with-redefs [a/exec! (mock-exec! calls)]
+        (with-out-str (a/remove-extras! :pkg/brew {} [{:name "slack" :cask true}]
+                                        (support/facts-of {[:brew :trusted] {:formulae #{} :taps #{}}}))))
+      (is (= [["brew" "uninstall" "--cask" "slack"] ["brew" "autoremove"]] @calls)))))
 

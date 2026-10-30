@@ -176,7 +176,7 @@
       (with-redefs [a/exec! (mock-exec! calls)]
         (with-out-str (a/remove-extras! :pkg/brew {} [{:name "babashka/brew/bbin"}] facts)))
       (is (= [["brew" "untrust" "--formula" "babashka/brew/bbin"]
-              ["brew" "uninstall" "babashka/brew/bbin"]
+              ["brew" "uninstall" "--force" "babashka/brew/bbin"]
               ["brew" "autoremove"]]
              @calls))))
 
@@ -221,5 +221,5 @@
       (with-redefs [a/exec! (mock-exec! calls)]
         (with-out-str (a/remove-extras! :pkg/brew {} [{:name "wget"} {:name "oven-sh/bun" :tap true}]
                                         (support/facts-of {[:brew :trusted] @no-trust}))))
-      (is (= [["brew" "uninstall" "wget"] ["brew" "autoremove"] ["brew" "untap" "oven-sh/bun"]]
+      (is (= [["brew" "uninstall" "--force" "wget"] ["brew" "autoremove"] ["brew" "untap" "oven-sh/bun"]]
              @calls)))))
