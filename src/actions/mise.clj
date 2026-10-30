@@ -167,7 +167,7 @@
 (defn- removal-commands [{tool :name :keys [installed? requested?]}]
   (cond-> []
     requested? (conj ["mise" "unuse" "--global" "--no-prune" tool])
-    installed? (conj ["mise" "uninstall" tool])))
+    installed? (conj ["mise" "uninstall" "--all" tool])))
 
 (defmethod a/remove-extras! :pkg/mise [type opts extras _facts]
   (d/section "Removing undeclared mise tools"
