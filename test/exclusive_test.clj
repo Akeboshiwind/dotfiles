@@ -64,7 +64,7 @@
            (mise-extras {"node" #{"20"} "python" #{"3.12"}} #{"node" "python" "deno"}))))
 
   (testing "an installed extra is uninstalled"
-    (is (= [["mise" "uninstall" "python"]]
+    (is (= [["mise" "uninstall" "--all" "python"]]
            (mise-removal-calls [{:name "python" :installed? true :requested? false}]))))
 
   (testing "a requested extra loses its global request, keeping installs for the uninstall to decide"
@@ -73,7 +73,7 @@
 
   (testing "an extra that is both loses its request, then is uninstalled"
     (is (= [["mise" "unuse" "--global" "--no-prune" "python"]
-            ["mise" "uninstall" "python"]]
+            ["mise" "uninstall" "--all" "python"]]
            (mise-removal-calls [{:name "python" :installed? true :requested? true}])))))
 
 (deftest mise-extras-queries-test
