@@ -14,14 +14,14 @@
 
 (deftest script-record-test
   (testing "builds record with timestamp and hash"
-    (let [rec (c/script-record "echo ok")]
+    (let [rec (c/script-record "echo ok" [])]
       (is (instance? java.util.Date (:timestamp rec)))
       (is (string? (:content-hash rec)))
       (is (= (c/content-hash "echo ok") (:content-hash rec))))))
 
 (deftest get-put-script-test
   (testing "put and get round-trip"
-    (let [rec (c/script-record "echo ok")
+    (let [rec (c/script-record "echo ok" [])
           cache (c/put-script {} "my-script" rec)]
       (is (= rec (c/get-script cache "my-script")))))
 

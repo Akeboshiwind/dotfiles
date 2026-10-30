@@ -40,10 +40,12 @@
     (apply str (map #(format "%02x" %) bytes))))
 
 (defn script-record
-  "Build a script cache record from content string."
-  [content]
+  "Build a script cache record from content string and the state the run left,
+   a vector of strings."
+  [content state]
   {:timestamp (java.util.Date.)
-   :content-hash (content-hash content)})
+   :content-hash (content-hash content)
+   :state state})
 
 (defn get-script
   "Get cached script record by name. Returns nil if not cached."
