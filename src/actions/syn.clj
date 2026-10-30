@@ -18,12 +18,13 @@
   []
   (let [entries (m/load-manifest)
         cache @a/*cache*
-        merged (:merged (p/assemble entries cache))]
+        merged (:merged (p/assemble entries cache))
+        by-name (into {}
+                      (for [[type items] (dissoc merged :syn/exclusive)]
+                        [type (into {} (map (fn [[k opts]] [(if (keyword? k) (name k) (str k)) opts])) items)]))]
     {:root (m/root)
      :id (sp/manifest-identity entries cache)
-     :types (into {}
-                  (for [[type items] (dissoc merged :syn/exclusive)]
-                    [type (into #{} (map (fn [[k _]] (if (keyword? k) (name k) (str k)))) items)]))}))
+     :types (update-vals by-name (comp set keys))}))
 
 (defmethod a/run-query :manifest [[_ what]]
   (case what :declared (declared-set)))
