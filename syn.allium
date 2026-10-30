@@ -128,6 +128,7 @@ entity ScriptRecord {
     cache: StateCache
     script_name: String
     content_hash: String                  -- identity of the script content that last ran successfully
+    state: List<String>                   -- what that run left in its state file; opaque to syn
 }
 
 entity StoredPlan {
@@ -670,7 +671,9 @@ rule CheckScripts {
         -- The check command is told whether the script content has changed
         -- since its last successful run (via an environment flag), so a check
         -- can force a re-run on content change. A script with no check
-        -- command runs on every apply.
+        -- command runs on every apply. The check also reads the state the
+        -- last successful run recorded (see RecordScriptRun); anything it
+        -- writes there is discarded.
 }
 
 rule CheckAssertions {
@@ -894,13 +897,17 @@ rule FailedActionBlocksDependents {
 
 rule RecordScriptRun {
     -- A successful script run records the identity of the content that ran,
-    -- so future checks can detect content changes.
+    -- so future checks can detect content changes, and the state it left, so
+    -- the next run and check start from it. A run is handed the previous
+    -- state in a file it may rewrite; a failed run records nothing, so the
+    -- previous state stands.
     when: action: Action.result becomes applied
     requires: action.kind = ScriptAction
     ensures: ScriptRecord.created(
         cache: cache,
         script_name: action.key,
-        content_hash: action.content
+        content_hash: action.content,
+        state: action.reported_state
     )
 }
 

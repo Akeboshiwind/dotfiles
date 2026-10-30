@@ -196,7 +196,7 @@
 
   (testing "DOTFILES_CONTENT_CHANGED=false when content unchanged"
     (let [content "echo ok"
-          record (c/script-record content)]
+          record (c/script-record content [])]
       (reset! a/*cache* {:scripts {"test-script" record}})
       (is (o/satisfied?
             (support/check-live :pkg/script :test-script
@@ -204,7 +204,7 @@
                       :check {:src "test \"$DOTFILES_CONTENT_CHANGED\" = \"false\""}})))))
 
   (testing "DOTFILES_CONTENT_CHANGED=true when content changed"
-    (let [old-record (c/script-record "old content")]
+    (let [old-record (c/script-record "old content" [])]
       (reset! a/*cache* {:scripts {"test-script" old-record}})
       (is (o/satisfied?
             (support/check-live :pkg/script :test-script
