@@ -2,6 +2,8 @@
 # $ARGS.positional: the cwds that still exist. $jobs: id → {detail, updatedAt, worktreePath} from ~/.claude/jobs.
 # $running: the ids `claude agents --json` lists without --all; the rest are paused.
 # $pins: the ids pinned in the agent view, from ~/.claude/jobs/pins.json; they head the list, out of their repositories.
+# $order: id → the agent view's sort key, from ~/.claude/jobs/<id>/order, written when pins are reordered there.
+#   A pin without one follows those with one, in pins.json order.
 # $home: abbreviated to ~ in the repository headings.
 # $cols: the terminal width; summaries are cut so the age lands at the right edge.
 # Output: one fzf row per heading (Pinned, then each repository) and per agent, as "<cd target>\t<display>".
@@ -55,7 +57,7 @@ def row($w):
  | .age = (now - updated | age)]
 | (map(.name | length) | max) as $w
 | (map(select(.id | IN($pins[])))
-   | sort_by(.id as $id | $pins | index($id))
+   | sort_by(.id as $id | [$order[$id] == null, $order[$id], ($pins | index($id))])
    | select(length > 0)
    | heading(""; "Pinned"), (.[] | row($w))),
   (map(select(.id | IN($pins[]) | not))

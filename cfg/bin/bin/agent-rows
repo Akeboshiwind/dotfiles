@@ -26,6 +26,13 @@ set -l pins '[]'
 test -f ~/.claude/jobs/pins.json
 and set pins (cat ~/.claude/jobs/pins.json | string collect)
 
+set -l order '{}'
+set -l orders ~/.claude/jobs/*/order
+set -q orders[1]
+# Each holds a bare number with no trailing newline, so jq can't read them as one stream
+and set order (for f in $orders; printf '%s\t%s\n' (path basename (path dirname $f)) (cat $f); end \
+    | jq -nR '[inputs | split("\t") | {key: .[0], value: (.[1] | tonumber? // empty)}] | from_entries' | string collect)
+
 set -l program (path dirname -- (path resolve -- (status filename)))/agent-rows.jq
 printf '%s' $agents \
-    | jq -r --arg home $HOME --argjson jobs $jobs --argjson running $running --argjson pins $pins --argjson cols $argv[1] -f $program --args $live
+    | jq -r --arg home $HOME --argjson jobs $jobs --argjson running $running --argjson pins $pins --argjson order $order --argjson cols $argv[1] -f $program --args $live
