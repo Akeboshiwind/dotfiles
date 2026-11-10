@@ -1,9 +1,9 @@
 # Input: `claude agents --json --all`.
-# $ARGS.positional: the cwds that still exist. $jobs: id → {detail, updatedAt, worktreePath} from ~/.claude/jobs.
+# $ARGS.positional: the cwds that still exist. $jobs: id → {detail, createdAt, updatedAt, worktreePath} from ~/.claude/jobs.
 # $running: the ids `claude agents --json` lists without --all; the rest are paused.
 # $pins: the ids pinned in the agent view, from ~/.claude/jobs/pins.json; they head the list, out of their repositories.
-# $order: id → the agent view's sort key, from ~/.claude/jobs/<id>/order, written when pins are reordered there.
-#   A pin without one follows those with one, in pins.json order.
+# $order: id → the agent view's sort key, from ~/.claude/jobs/<id>/order, written when agents are reordered there.
+#   Without one, the agent view sorts an agent by when it was created; within Pinned and each repository, so does this.
 # $home: abbreviated to ~ in the repository headings.
 # $cols: the terminal width; summaries are cut so the age lands at the right edge.
 # Output: one fzf row per heading (Pinned, then each repository) and per agent, as "<cd target>\t<display>".
@@ -39,6 +39,11 @@ def updated:
   (.updatedAt | if . then sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601 else null end)
   // ((.startedAt // 0) / 1000);
 
+def millis: capture("^(?<s>[^.]+?)(\\.(?<f>[0-9]+))?Z$")
+  | (.s + "Z" | fromdateiso8601) * 1000 + ((.f // "") + "000" | .[:3] | tonumber);
+
+def sortkey: $order[.id] // (.createdAt | if . then millis else null end) // .startedAt // 0;
+
 def heading($target; $title): "\($target)\t\u001b[1m\($title)\u001b[0m";
 
 def row($w):
@@ -55,9 +60,9 @@ def row($w):
  | .name |= oneline
  | .root = (.cwd | sub("/\\.claude/worktrees/[^/]+(/.*)?$"; ""))
  | .age = (now - updated | age)]
+| sort_by(sortkey)
 | (map(.name | length) | max) as $w
 | (map(select(.id | IN($pins[])))
-   | sort_by(.id as $id | [$order[$id] == null, $order[$id], ($pins | index($id))])
    | select(length > 0)
    | heading(""; "Pinned"), (.[] | row($w))),
   (map(select(.id | IN($pins[]) | not))

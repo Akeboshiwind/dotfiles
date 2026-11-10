@@ -9,7 +9,7 @@ set -l running (claude agents --json | jq -c 'map(.id)')
 set -l jobs '{}'
 set -l states ~/.claude/jobs/*/state.json
 set -q states[1]
-and set jobs (jq -s 'map(select(.daemonShort) | {key: .daemonShort, value: {detail, updatedAt, worktreePath}}) | from_entries' $states | string collect)
+and set jobs (jq -s 'map(select(.daemonShort) | {key: .daemonShort, value: {detail, createdAt, updatedAt, worktreePath}}) | from_entries' $states | string collect)
 
 set -l live
 for dir in (printf '%s' $agents | jq -r --argjson jobs $jobs '.[] | $jobs[.id // ""].worktreePath // .cwd')
