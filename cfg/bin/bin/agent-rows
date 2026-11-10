@@ -1,6 +1,12 @@
 #!/usr/bin/env fish
-# Usage: agent-rows WIDTH
+# Usage: agent-rows [WIDTH]
 # One fzf row per repository and per Claude agent, laid out like the agent view, as "<cd target>\t<display>".
+# On a terminal, only the display, and WIDTH defaults to the terminal's.
+
+set -l cols $argv[1]
+set -q cols[1]; or set cols (tput cols)
+set -l emit cat
+isatty stdout; and set emit cut -f2
 
 set -l agents (claude agents --json --all | string collect)
 set -l running (claude agents --json | jq -c 'map(.id)')
@@ -35,4 +41,5 @@ and set order (for f in $orders; printf '%s\t%s\n' (path basename (path dirname 
 
 set -l program (path dirname -- (path resolve -- (status filename)))/agent-rows.jq
 printf '%s' $agents \
-    | jq -r --arg home $HOME --argjson jobs $jobs --argjson running $running --argjson pins $pins --argjson order $order --argjson cols $argv[1] -f $program --args $live
+    | jq -r --arg home $HOME --argjson jobs $jobs --argjson running $running --argjson pins $pins --argjson order $order --argjson cols $cols -f $program --args $live \
+    | $emit
