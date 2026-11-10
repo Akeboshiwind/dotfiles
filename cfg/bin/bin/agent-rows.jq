@@ -27,13 +27,13 @@ def tilde: if startswith($home) then "~" + .[($home | length):] else . end;
 def oneline: gsub("[\t\n]+"; " ");
 
 def status:
-  {blocked: ["33", "Needs input"],
-   done: ["32", "Done"],
-   working: ["36", "Working"],
-   failed: ["31", "Failed"]}[.]
-  // ["2", .];
+  {blocked: ["33", "Needs input", "38;5;208"],
+   done: ["32", "Done", "32"],
+   working: ["36", "Working", "90"],
+   failed: ["31", "Failed", "31"]}[.]
+  // ["2", ., "90"];
 
-def marker: if IN($running[]) then "\u001b[33m✻\u001b[0m" else "\u001b[2m·\u001b[0m" end;
+def marker($colour): if .id | IN($running[]) then "\u001b[\($colour)m✻\u001b[0m" else "\u001b[2m·\u001b[0m" end;
 
 def updated:
   (.updatedAt | if . then sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601 else null end)
@@ -47,10 +47,10 @@ def sortkey: $order[.id] // (.createdAt | if . then millis else null end) // .st
 def heading($target; $title): "\($target)\t\u001b[1m\($title)\u001b[0m";
 
 def row($w):
-  (.state // .status | status) as [$colour, $label]
+  (.state // .status | status) as [$colour, $label, $star]
   # fzf's pointer and scrollbar take 3 columns; the rest is "✻ name  label · summary  age"
   | ($cols - 3 - (2 + $w + 2) - ($label | length) - 3 - (2 + 3)) as $room
-  | "\(.cwd)\t\(.id | marker) \(.name | pad($w))  \u001b[\($colour)m\($label)\u001b[0m · \(.detail // "" | oneline | fit($room))  \u001b[2m\(.age | lpad(3))\u001b[0m";
+  | "\(.cwd)\t\(marker($star)) \(.name | pad($w))  \u001b[\($colour)m\($label)\u001b[0m · \(.detail // "" | oneline | fit($room))  \u001b[2m\(.age | lpad(3))\u001b[0m";
 
 [.[]
  | . + ($jobs[.id // ""] // {})
