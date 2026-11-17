@@ -42,7 +42,7 @@ def updated:
 def millis: capture("^(?<s>[^.]+?)(\\.(?<f>[0-9]+))?Z$")
   | (.s + "Z" | fromdateiso8601) * 1000 + ((.f // "") + "000" | .[:3] | tonumber);
 
-def sortkey: $order[.id] // (.createdAt | if . then millis else null end) // .startedAt // 0;
+def sortkey: $order[.id // ""] // (.createdAt | if . then millis else null end) // .startedAt // 0;
 
 def heading($target; $title): "\($target)\t\u001b[1m\($title)\u001b[0m";
 
