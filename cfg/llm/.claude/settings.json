@@ -51,7 +51,23 @@
     "chill@juxt-plugins": true,
     "gradle-tests@xtdb-plugins": true,
     "swift-lsp@claude-plugins-official": true,
-    "a-star@juxt-plugins": true
+    "a-star@juxt-plugins": true,
+    "gd-verity-toolbox@synced": false,
+    "gd-cto-toolbox@synced": false,
+    "gd-manager-assistant-toolbox@synced": false,
+    "gd-risk-toolbox@synced": false,
+    "gd-n8n-toolbox@synced": false,
+    "gd-people-ops-toolbox@synced": false,
+    "gd-tools-toolbox@synced": false,
+    "gd-dev-tools-toolbox@synced": false,
+    "gd-content-toolbox@synced": false,
+    "gd-adr-toolbox@synced": false,
+    "gd-sales-analytics-toolbox@synced": false,
+    "gd-pursuit-toolbox@synced": false,
+    "gd-ir-toolbox@synced": false,
+    "gd-account-toolbox@synced": false,
+    "gd-dm-toolbox@synced": false,
+    "grid@synced": false
   },
   "extraKnownMarketplaces": {
     "juxt-plugins": {
