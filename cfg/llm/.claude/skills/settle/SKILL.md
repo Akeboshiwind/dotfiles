@@ -16,11 +16,28 @@ The session is finished with. Leave nothing behind, then close the chat.
 
    Already on `<base>` with nothing of its own: there is no branch to clean up, so skip to step 3.
 
-2. **Clean up the workspace.**
-   Leave the worktree first: `ExitWorktree` with `action: "remove"` if this session entered it, else `cd` to the main checkout and `git worktree remove <path>` — `t3_worktree_status` names both.
-   The isolation guard refuses `git -C <main checkout>` from inside a worktree, so the rest runs in the main checkout.
-   On the base with a clean tree, `git pull --ff-only <remote> <base>`; otherwise report that it was not pulled, and why.
-   If the branch still exists, `git branch -d <branch>` — `-d`, never `-D`: a refusal means step 1 missed something.
+2. **Clean up the workspace.** `t3_worktree_status` names this thread's `worktreePath` and `projectWorkspaceRoot`.
+
+   **Do not reach for `ExitWorktree`.** It only touches worktrees `EnterWorktree` made in this session; T3 bound this one at thread launch, so it is a silent no-op that reports success while the worktree stays on disk.
+
+   Run the cleanup as a **single shell invocation**, in this order:
+
+   ```bash
+   cd <projectWorkspaceRoot> \
+     && git pull --ff-only <remote> <base> \
+     && git worktree remove <worktreePath> \
+     && git branch -d <branch>
+   ```
+
+   The order is forced, and so is the single invocation:
+   - the session's cwd is inside the worktree, so `cd` must come first — once the directory is gone, a later shell cannot start in it;
+   - `git branch -d` refuses while the branch is checked out in a worktree, so the branch goes after the worktree;
+   - `-d`, never `-D`: a refusal means step 1 missed something.
+
+   If the pull cannot fast-forward, drop it from the chain and report why; the rest still runs.
+
+   T3's storage sweep removes abandoned worktrees but **never deletes branches**, so this step is the only thing standing between the project and an endless list of `t3/*` refs.
+
    Leave the stash alone. The stack is shared with every other worktree, so an entry this session did not push is not its to drop.
 
 3. **Release what this session is holding.** Each is a no-op if there is nothing to release:
