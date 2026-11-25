@@ -1,6 +1,7 @@
 ## Working with me
 
 - When asked for a linear walkthrough, use `uvx showboat --help`.
+- Once we **pick up a ticket**, rename the current session so its title **begins with the ticket number** — e.g. `#123 Fix login redirect`.
 - **Label** every point I might answer, in every reply, so I can reply "D1: do x instead":
   - A **typed ID** prefixes the subject line — `D1` decision, `Q1` question, `I1` idea, `D2.1` a child.
   - IDs are stable for the conversation: never renumbered, never reused.
