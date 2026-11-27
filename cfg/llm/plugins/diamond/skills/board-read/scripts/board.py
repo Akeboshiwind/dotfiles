@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """Read what the user drew on an Obsidian Excalidraw board.
 
-usage: board.py {inventory,text,clusters,since,render} BOARD [options]
+usage: board.py {inventory,text,clusters,snapshot,since,render} BOARD [options]
 """
-import argparse, collections, json, math, os, subprocess, sys, tempfile
+import argparse, collections, datetime, json, math, os, subprocess, sys, tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from boardlib import Board, bbox, parse_time, slug, stamp, union
+from boardlib import SUFFIX, Board, bbox, parse_time, slug, stamp, union
 
 GAP = 150
 TILE = 3200
 OVERLAP = 150
 MAP_WIDTH = 800
+NUDGE = 0.5  # canvas units an element can shift before it counts as moved
 FONTS = [os.environ.get("BOARD_FONT_BODY"), "/System/Library/Fonts/Hiragino Sans GB.ttc",
          "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"]
 
@@ -78,11 +79,20 @@ def clusters(b, a):
 
 
 def since(b, a):
+    if a.time is None:
+        since_snapshot(b, a)
+    elif a.snapshot:
+        sys.exit("board-read: give a time or --snapshot, not both")
+    else:
+        since_time(b, a)
+
+
+def since_time(b, a):
     changed = [e for e in b.live if e["updated"] > a.time]
     others = [e for e in changed if e["type"] != "freedraw"]
     deleted = sum(1 for e in b.all if e.get("isDeleted") and e["updated"] > a.time)
-    print(f"since {stamp(a.time)}: {len(changed)} live elements updated, {len(others)} of them not strokes; "
-          f"{deleted} deleted (ignored)")
+    print(f"since {stamp(a.time)}, by `updated` (a dragged card counts): {len(changed)} live elements updated, "
+          f"{len(others)} of them not strokes; {deleted} deleted (ignored)")
     for e in others:
         what = (repr(e["text"][:80]) if e["type"] == "text" else
                 b.image_target(e).name if e["type"] == "image" else
@@ -94,6 +104,121 @@ def since(b, a):
         n = sum(1 for s in c.strokes if s["id"] in new)
         if n:
             print(f"  {cid} {label(c)} {n}/{len(c.strokes)} new")
+
+
+def state_dir(a):
+    root = a.state_dir or os.environ.get("DIAMOND_STATE_DIR") or os.path.expanduser("~/.local/state/diamond")
+    return os.path.join(root, os.path.basename(a.board)[:-len(SUFFIX)])
+
+
+def what(b, e):
+    if e["type"] == "image":
+        return str(b.image_target(e))
+    if e["type"] == "text":
+        return f"text {e['text'][:60]!r}"
+    if e["type"] == "rectangle":
+        return str(b.themes[e["id"]]) if e["id"] in b.themes else f"rectangle {b.rect_name(e)}"
+    if e["type"] == "frame":
+        return f"frame {e.get('name') or 'untitled'}"
+    return e["type"]
+
+
+def take(b, found):
+    """What a later `since` compares against: no `updated` times, which move when a card is only dragged."""
+    return dict(
+        elements={e["id"]: dict(what=what(b, e), x=e["x"], y=e["y"], width=e["width"], height=e["height"],
+                                text=e.get("text"), file=b.files.get(e.get("fileId")))
+                  for e in b.live if e["type"] != "freedraw"},
+        strokes={s["id"]: [s["x"], s["y"]] for s in b.strokes},
+        clusters=[dict(id=cid, what=label(c), stroke_ids=[s["id"] for s in c.strokes]) for cid, c in found.items()])
+
+
+def snapshot(b, a):
+    folder = state_dir(a)
+    os.makedirs(folder, exist_ok=True)
+    path = os.path.join(folder, datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S") + ".json")
+    taken = take(b, b.clusters(a.gap))
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(taken, f)
+    print(f"snapshot {path}: {len(taken['elements'])} elements, {len(taken['strokes'])} strokes")
+
+
+def latest_snapshot(a):
+    folder, prefix = state_dir(a), (a.snapshot or "").replace(":", "-")
+    names = os.listdir(folder) if os.path.isdir(folder) else []
+    found = sorted(n for n in names if n.endswith(".json") and n.startswith(prefix))
+    if not found:
+        sys.exit(f"board-read: no snapshot named {prefix}* in {folder}; run `snapshot` after a read, or give a time")
+    return os.path.join(folder, found[-1])
+
+
+def shifted(p, q):
+    return abs(p - q) > NUDGE
+
+
+def element_changes(old, new):
+    for eid, e in new.items():
+        o = old.get(eid)
+        if o is None:
+            yield f"ADDED {e['what']} at [{round(e['x'])},{round(e['y'])}]"
+            continue
+        if shifted(o["x"], e["x"]) or shifted(o["y"], e["y"]):
+            yield f"MOVED {e['what']} by ({round(e['x'] - o['x'])},{round(e['y'] - o['y'])})"
+        if shifted(o["width"], e["width"]) or shifted(o["height"], e["height"]):
+            yield (f"RESIZED {e['what']} {round(o['width'])}x{round(o['height'])} -> "
+                   f"{round(e['width'])}x{round(e['height'])}")
+        if o["text"] != e["text"]:
+            yield f"TEXT {e['what']} was {o['text'][:60]!r}"
+        if o["file"] != e["file"]:
+            yield f"FILE {e['what']} was {o['file']}"
+    for eid, o in old.items():
+        if eid not in new:
+            yield f"REMOVED {o['what']} at [{round(o['x'])},{round(o['y'])}]"
+
+
+def stroke_changes(old, new, found):
+    """Each change counted under the current cluster that holds it, keyed on stroke ids, never on a cluster's ID.
+
+    A removed stroke counts under the current cluster holding most of what is left of its cluster at the snapshot.
+    """
+    added = new["strokes"].keys() - old["strokes"].keys()
+    removed = old["strokes"].keys() - new["strokes"].keys()
+    moved = {i for i in new["strokes"].keys() & old["strokes"].keys()
+             if any(map(shifted, old["strokes"][i], new["strokes"][i]))}
+    yield f"strokes: {len(added)} added, {len(removed)} removed, {len(moved)} moved"
+    owner = {s["id"]: cid for cid, c in found.items() for s in c.strokes}
+    counts = collections.defaultdict(collections.Counter)
+    for i in added:
+        counts[owner[i]]["added"] += 1
+    for i in moved:
+        counts[owner[i]]["moved"] += 1
+    orphans = []
+    for c in old["clusters"]:
+        lost = sum(1 for i in c["stroke_ids"] if i in removed)
+        heirs = collections.Counter(owner[i] for i in c["stroke_ids"] if i in owner)
+        if lost and heirs:
+            counts[min(heirs, key=lambda cid: (-heirs[cid], cid))]["removed"] += lost
+        elif lost:
+            orphans.append(f"  {lost} removed with all of {c['id']} {c['what']} (its ID at the snapshot)")
+    for cid, c in found.items():
+        if cid in counts:
+            n = counts[cid]
+            yield (f"  {cid} {label(c)}: " + ", ".join(f"{n[k]} {k}" for k in ("added", "removed", "moved") if n[k])
+                   + f" (of {len(c.strokes)} now)")
+    yield from orphans
+
+
+def since_snapshot(b, a):
+    path = latest_snapshot(a)
+    with open(path, encoding="utf-8") as f:
+        old = json.load(f)
+    found = b.clusters(a.gap)
+    new = take(b, found)
+    print(f"since snapshot {os.path.basename(path)[:-len('.json')]}, by position, size, text and file "
+          "(a dragged card is MOVED, not a note):")
+    print("\n".join(f"  {line}" for line in element_changes(old["elements"], new["elements"]))
+          or "  no element changes")
+    print("\n".join(stroke_changes(old, new, found)))
 
 
 def mvg_string(s):
@@ -239,17 +364,23 @@ def time_arg(s):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    commands = dict(inventory=inventory, text=text, clusters=clusters, since=since, render=render)
+    commands = dict(inventory=inventory, text=text, clusters=clusters, snapshot=snapshot, since=since,
+                    render=render)
     for name in commands:
         p = sub.add_parser(name)
         p.add_argument("board")
         p.add_argument("--cards", help="the card images' folder (default: '<board name> cards' beside the board)")
-        if name in ("clusters", "since", "render"):
+        if name in ("clusters", "snapshot", "since", "render"):
             p.add_argument("--gap", type=float, default=GAP, help=f"canvas units between strokes of one cluster ({GAP})")
         if name == "clusters":
             p.add_argument("--out", help="also write the clusters as JSON to this file")
+        if name in ("snapshot", "since"):
+            p.add_argument("--state-dir",
+                           help="snapshots' root (default: $DIAMOND_STATE_DIR, else ~/.local/state/diamond)")
         if name == "since":
-            p.add_argument("time", type=time_arg, help="local time 'YYYY-MM-DD HH:MM', or epoch milliseconds")
+            p.add_argument("time", nargs="?", type=time_arg,
+                           help="local time 'YYYY-MM-DD HH:MM', or epoch milliseconds: compares `updated` instead")
+            p.add_argument("--snapshot", metavar="PREFIX", help="the latest snapshot whose name starts so (default: latest)")
         if name == "render":
             p.add_argument("--out", required=True, help="folder for the PNGs")
             p.add_argument("--width", type=int, default=1600, help="widest crop, in pixels (1600)")

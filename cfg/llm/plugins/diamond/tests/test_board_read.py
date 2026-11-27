@@ -56,9 +56,31 @@ class BoardRead(unittest.TestCase):
         self.write()
         return boardlib.Board(self.board)
 
-    def run_board(self, *args):
+    def run_board(self, *args, env=None):
         return subprocess.run([sys.executable, "-I", os.path.join(SCRIPTS, "board.py"), *args],
-                              capture_output=True, text=True)
+                              capture_output=True, text=True, env=env)
+
+    def snapshot(self, name=None):
+        self.write()
+        done = self.run_board("snapshot", self.board, "--state-dir", self.state)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        if name:
+            folder = os.path.join(self.state, "Prior art")
+            (taken,) = (f for f in os.listdir(folder) if not f.startswith("2000-"))
+            os.rename(os.path.join(folder, taken), os.path.join(folder, name))
+
+    def since_snapshot(self, *args):
+        self.write()
+        done = self.run_board("since", self.board, "--state-dir", self.state, *args)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        return done.stdout
+
+    @property
+    def state(self):
+        return os.path.join(self.dir, "state")
+
+    def element(self, eid):
+        return next(e for e in self.elements if e["id"] == eid)
 
     def test_reads_a_compressed_board_and_rejoins_emoji(self):
         self.write(compressed=COMPRESSED)
@@ -249,6 +271,107 @@ class BoardRead(unittest.TestCase):
         self.assertIn("100% note", done.stdout)
         self.assertIn("M1@320,0 card:M1 1/2 new", done.stdout)
         self.assertNotIn("Theme_one@", done.stdout)
+
+    def test_since_by_time_says_it_goes_by_updated(self):
+        self.write()
+        done = self.run_board("since", self.board, str(EARLIER))
+        self.assertIn("by `updated`", done.stdout)
+
+    def test_snapshot_is_kept_under_the_boards_file_name(self):
+        self.write()
+        done = self.run_board("snapshot", self.board, "--state-dir", self.state)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        (taken,) = os.listdir(os.path.join(self.state, "Prior art"))
+        self.assertRegex(taken, r"^\d{4}-\d\d-\d\dT\d\d-\d\d-\d\d\.json$")
+        with open(os.path.join(self.state, "Prior art", taken), encoding="utf-8") as f:
+            kept = json.load(f)
+        self.assertEqual(kept["elements"]["card"], dict(what="card:M1", x=0, y=0, width=300, height=200, text=None,
+                                                        file="m1.jpg"))
+        self.assertEqual(kept["strokes"], {"s1": [320, 0], "s2": [400, 0], "far": [1500, 0]})
+        self.assertEqual([c["stroke_ids"] for c in kept["clusters"]], [["s1", "s2"], ["far"]])
+
+    def test_snapshot_goes_to_the_state_dir_in_the_environment(self):
+        self.write()
+        env = dict(os.environ, DIAMOND_STATE_DIR=self.state)
+        done = self.run_board("snapshot", self.board, env=env)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertEqual(len(os.listdir(os.path.join(self.state, "Prior art"))), 1)
+
+    def test_since_without_a_snapshot_says_how_to_take_one(self):
+        self.write()
+        done = self.run_board("since", self.board, "--state-dir", self.state)
+        self.assertNotEqual(done.returncode, 0)
+        self.assertIn("run `snapshot`", done.stderr)
+
+    def test_since_an_unchanged_board_has_no_changes(self):
+        self.snapshot()
+        out = self.since_snapshot()
+        self.assertIn("  no element changes\nstrokes: 0 added, 0 removed, 0 moved\n", out)
+
+    def test_a_dragged_card_is_moved_and_nothing_else(self):
+        self.snapshot()
+        self.element("card").update(x=300, updated=LATER)
+        self.assertIn("  MOVED card:M1 by (300,0)\nstrokes: 0 added", self.since_snapshot())
+
+    def test_since_names_each_element_change(self):
+        self.snapshot()
+        self.element("theme").update(width=500)
+        self.element("note").update(text="it's a new note")
+        self.element("card").update(fileId=USER_FILE)
+        self.files.append((USER_FILE, "m2.jpg"))
+        self.elements.remove(self.element("title"))
+        self.elements.append(dict(id="typed", type="text", text="typed", x=5, y=6, width=50, height=20, fontSize=20,
+                                  updated=LATER))
+        out = self.since_snapshot()
+        self.assertIn("  RESIZED theme:Untitled theme 400x200 -> 500x200\n", out)
+        self.assertIn("  TEXT text \"it's a new note\" was \"it's a \\\\ 100% note\"\n", out)
+        self.assertIn("  FILE image:m2.jpg was m1.jpg\n", out)
+        self.assertIn("  REMOVED text 'Theme one\\nits body' at [2010,10]\n", out)
+        self.assertIn("  ADDED text 'typed' at [5,6]\n", out)
+
+    def test_new_strokes_beside_a_card_count_under_their_current_cluster(self):
+        self.snapshot()
+        self.elements += [stroke("n1", 310, 150, [[0, 0], [40, 20]], updated=LATER),
+                          stroke("n2", 380, 150, [[0, 0], [40, 20]], updated=LATER)]
+        out = self.since_snapshot()
+        self.assertIn("strokes: 2 added, 0 removed, 0 moved\n  M1@310,0 card:M1: 2 added (of 4 now)\n", out)
+
+    def test_new_strokes_on_their_own_are_a_new_cluster(self):
+        self.snapshot()
+        self.elements.append(stroke("n1", 0, -300, [[0, 0], [40, 20]], updated=LATER))
+        self.assertIn("  M1@0,-300 card:M1: 1 added (of 1 now)\n", self.since_snapshot())
+
+    def test_a_removed_stroke_counts_under_what_is_left_of_its_cluster(self):
+        self.snapshot()
+        self.elements.remove(self.element("s1"))
+        self.assertIn("  M1@400,0 card:M1: 1 removed (of 1 now)\n", self.since_snapshot())
+
+    def test_a_cluster_removed_whole_is_named_as_it_was(self):
+        self.snapshot()
+        self.elements.remove(self.element("far"))
+        self.assertIn("  1 removed with all of Theme_one@1500,0 theme:Theme one (its ID at the snapshot)\n",
+                      self.since_snapshot())
+
+    def test_a_moved_stroke_counts_under_the_cluster_it_is_in_now(self):
+        self.snapshot()
+        self.element("far").update(x=2100, y=50)
+        self.assertIn("strokes: 0 added, 0 removed, 1 moved\n  Theme_one@2100,50 theme:Theme one: 1 moved (of 1 now)\n",
+                      self.since_snapshot())
+
+    def test_since_a_named_snapshot(self):
+        self.snapshot("2000-01-01T00-00-00.json")
+        self.element("card").update(x=300)
+        self.snapshot()
+        self.assertIn("no element changes", self.since_snapshot())
+        out = self.since_snapshot("--snapshot", "2000-01-01T00:00")
+        self.assertIn("since snapshot 2000-01-01T00-00-00,", out)
+        self.assertIn("MOVED card:M1 by (300,0)", out)
+
+    def test_since_a_time_and_a_snapshot_is_refused(self):
+        self.write()
+        done = self.run_board("since", self.board, str(EARLIER), "--snapshot", "2000", "--state-dir", self.state)
+        self.assertNotEqual(done.returncode, 0)
+        self.assertIn("not both", done.stderr)
 
     def test_since_reads_a_local_time(self):
         self.assertEqual(boardlib.parse_time("1700000000000"), 1700000000000)

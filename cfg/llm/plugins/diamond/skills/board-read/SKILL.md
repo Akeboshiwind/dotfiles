@@ -1,6 +1,6 @@
 ---
 name: board-read
-description: Read back what the user hand-wrote on an Obsidian Excalidraw board that diamond's board-write built — its typed text, its handwriting grouped into clusters by the card or theme they sit beside, readable crops of each, and what changed since a time. Loaded by the agent that runs diamond:review.
+description: Read back what the user hand-wrote on an Obsidian Excalidraw board that diamond's board-write built — its typed text, its handwriting grouped into clusters by the card or theme they sit beside, readable crops of each, and what changed since the last read. Loaded by the agent that runs diamond:review.
 user-invocable: false
 ---
 
@@ -21,7 +21,9 @@ python3 -I $B inventory BOARD                     # elements by type, how many c
 python3 -I $B text BOARD                          # typed text, images, and arrows with what they join
 python3 -I $B clusters BOARD [--gap 150] [--out clusters.json]
 python3 -I $B render BOARD --out DIR [--gap 150] [--width 1600] [--tile 3200] [--only K5@10100,29680 ...]
-python3 -I $B since BOARD "2026-11-20 19:03" [--gap 150]   # a local time, or epoch milliseconds
+python3 -I $B snapshot BOARD [--state-dir DIR] [--gap 150]   # after each read, so the next one can ask `since`
+python3 -I $B since BOARD [--snapshot PREFIX] [--state-dir DIR] [--gap 150]
+python3 -I $B since BOARD "2026-11-20 19:03" [--gap 150]   # by `updated`: a local time, or epoch milliseconds
 ```
 
 - **clusters** groups the handwriting: strokes join a cluster when their boxes lie within `--gap` canvas units of each other, and files each cluster where it belongs:
@@ -37,7 +39,12 @@ python3 -I $B since BOARD "2026-11-20 19:03" [--gap 150]   # a local time, or ep
   - `overview.png` — the whole board, only for finding your way: it is too small to read.
 
   **Read the cluster crops**, and a tiled cluster's tiles **in order**, tile 1 first, carrying a line that runs off one tile's edge on to the next. `--only` re-renders a few clusters.
-- **since** lists the elements whose `updated` time is after the time given: the cards, text and arrows, then the clusters holding new strokes and how many of their strokes are new. Deleted elements are left out. A card's time moves when it is dragged or restyled, so a changed card isn't a note.
+- **snapshot** keeps what `since` compares against: every element's position, size, text and file, and every stroke's id, position and cluster. It writes `<state>/<board file name>/<time>.json`, the state being `--state-dir`, else `$DIAMOND_STATE_DIR`, else `~/.local/state/diamond`. **Snapshots are found by the board's file name**, so a scratch copy must keep the board's name: `Prior art.excalidraw.md` is `<state>/Prior art/`.
+- **since** compares the board with its latest snapshot, or the latest whose name starts with `--snapshot`, say `2026-11-20`:
+  - `ADDED`, `REMOVED`, `MOVED` (by how far), `RESIZED`, `TEXT` (with what it was) and `FILE` (with what it was) for the cards, text, themes and arrows. **A dragged card is `MOVED`, never a note**;
+  - how many strokes were added, removed and moved, then each cluster that changed, by its ID now, with how many of its strokes were added, removed and moved. A removed stroke counts under the cluster holding the rest of its cluster; where none of it is left, it is named by its ID at the snapshot. **Transcribe the clusters with added strokes**: they are the new notes.
+
+  Given a time instead, it lists the elements whose `updated` time is after it — the cards, text and arrows, then the clusters holding new strokes and how many of their strokes are new — leaving deleted elements out. A card's `updated` moves when it is dragged or restyled, so a changed card there isn't a note: **prefer a snapshot**.
 
 ## Reading discipline
 
