@@ -7,7 +7,7 @@
  "sections": [{"id": "M", "title": "Media-library apps", "note": "optional, shown after the title",
    "items": [
      {"id": "M7", "name": "Castro", "kind": "podcast app", "link": "https://…", "sig": "…", "use": "…",
-      "images": [{"file": "images/m07-1.jpg", "caption": "…", "source": "https://…"}]}]}]}
+      "images": [{"file": "img/m7-1.jpg", "caption": "…", "source": "https://…"}]}]}]}
 ```
 
 | field | required | notes |
