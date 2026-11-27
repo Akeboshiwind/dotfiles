@@ -6,7 +6,7 @@ from typing import NamedTuple, Optional
 SUFFIX = ".excalidraw.md"
 BASE64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 THEME_MIN_WIDTH = 300  # board-write's theme cards are wider than any other rectangle it draws
-ROW = 1500             # canvas units per reading row when ordering clusters
+ROW = 1500             # canvas units per reading row when ordering themes
 
 
 def lz_decompress_base64(text):
@@ -134,11 +134,10 @@ class Board:
                 [Target("theme", self.theme_title(r), bbox(r)) for r in self.themes])
 
     def clusters(self, gap):
-        """id -> Cluster, in reading order: strokes whose boxes lie within `gap` of each other, by nearest target."""
+        """id -> Cluster, largest first: strokes whose boxes lie within `gap` of each other, by nearest target."""
         targets = self.targets()
-        made = [attribute(group, targets) for group in group_strokes(self.strokes, gap)]
-        made.sort(key=lambda c: (c.bbox[1] // ROW, c.bbox[0]))
-        return {f"c{n:02d}": c for n, c in enumerate(made, 1)}
+        named = name_clusters(attribute(group, targets) for group in group_strokes(self.strokes, gap))
+        return dict(sorted(named.items(), key=lambda item: (-len(item[1].strokes), item[0])))
 
 
 def group_strokes(strokes, gap):
@@ -173,6 +172,26 @@ def attribute(strokes, targets):
         return Cluster(strokes, box, None, None, [])
     (d, _, nearest), rest = ranked[0], ranked[1:3]
     return Cluster(strokes, box, nearest, d, [(d, t) for d, _, t in rest])
+
+
+def name_clusters(clusters):
+    """id -> Cluster, an id such as `K5@10100,29680`: what it is filed under, and its box's corner rounded to 10.
+
+    Clusters sharing a name are numbered `.2`, `.3`… by their lowest stroke id, never by the order strokes are read in.
+    """
+    by_name = {}
+    for c in clusters:
+        name = f"{slug(c.target.name) if c.target else 'none'}@{int(round(c.bbox[0], -1))},{int(round(c.bbox[1], -1))}"
+        by_name.setdefault(name, []).append(c)
+    named = {}
+    for name, same in by_name.items():
+        same.sort(key=lambda c: min(s["id"] for s in c.strokes))
+        named.update((name if n == 1 else f"{name}.{n}", c) for n, c in enumerate(same, 1))
+    return named
+
+
+def slug(name):
+    return "".join(ch if ch.isalnum() else "_" for ch in name)[:40]
 
 
 def bbox(e):

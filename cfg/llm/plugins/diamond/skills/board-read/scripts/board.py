@@ -6,7 +6,7 @@ usage: board.py {inventory,text,clusters,since,render} BOARD [options]
 import argparse, collections, json, os, subprocess, sys, tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from boardlib import Board, ROW, bbox, parse_time, stamp, union
+from boardlib import Board, ROW, bbox, parse_time, slug, stamp, union
 
 GAP = 150
 FONTS = [os.environ.get("BOARD_FONT_BODY"), "/System/Library/Fonts/Hiragino Sans GB.ttc",
@@ -160,10 +160,6 @@ def pad(box, m):
     return (box[0] - m, box[1] - m, box[2] + m, box[3] + m)
 
 
-def safe(name):
-    return "".join(ch if ch.isalnum() else "_" for ch in name)[:40]
-
-
 def render(b, a):
     # ImageMagick draws no text at all without a font file
     font = next((f for f in FONTS if f and os.path.isfile(f)), None)
@@ -182,15 +178,14 @@ def render(b, a):
         if c.target:
             box = union(box, pad(c.target.bbox, 40))
         width = min(a.width, max(600, box[2] - box[0]))
-        name = safe(c.target.name) if c.target else "none"
-        done.append(Canvas(b, font, box, width, c.strokes).save(os.path.join(a.out, f"cluster_{cid}_{name}.png")))
+        done.append(Canvas(b, font, box, width, c.strokes).save(os.path.join(a.out, f"cluster_{cid}.png")))
     if not a.only:
         for r in b.themes:
             title = b.theme_title(r)
             mine = [c for c in found.values() if c.target and c.target.kind == "theme" and c.target.name == title]
             box = pad(union(bbox(r), *(c.bbox for c in mine)), 40)
             strokes = [s for c in mine for s in c.strokes]
-            done.append(Canvas(b, font, box, a.width, strokes).save(os.path.join(a.out, f"theme_{safe(title)}.png")))
+            done.append(Canvas(b, font, box, a.width, strokes).save(os.path.join(a.out, f"theme_{slug(title)}.png")))
         everything = [bbox(e) for e in b.live]
         if everything:
             done.append(Canvas(b, font, pad(union(*everything), 40), 2400, b.strokes, cards=False, stroke_scale=3)
@@ -222,7 +217,7 @@ def main():
         if name == "render":
             p.add_argument("--out", required=True, help="folder for the PNGs")
             p.add_argument("--width", type=int, default=1600, help="widest crop, in pixels (1600)")
-            p.add_argument("--only", nargs="+", metavar="ID", help="render only these clusters (c01 ...)")
+            p.add_argument("--only", nargs="+", metavar="ID", help="render only these clusters (M7@1200,-340 ...)")
     a = ap.parse_args()
     try:
         b = Board(a.board, a.cards)

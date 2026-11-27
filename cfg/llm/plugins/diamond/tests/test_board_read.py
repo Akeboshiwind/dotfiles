@@ -75,10 +75,43 @@ class BoardRead(unittest.TestCase):
     def test_strokes_within_the_gap_share_a_cluster(self):
         found = self.load().clusters(150)
         self.assertEqual([[s["id"] for s in c.strokes] for c in found.values()], [["s1", "s2"], ["far"]])
-        self.assertEqual(list(found), ["c01", "c02"])
 
     def test_a_smaller_gap_splits_a_cluster(self):
         self.assertEqual(len(self.load().clusters(20)), 3)
+
+    def test_a_cluster_is_named_by_what_it_is_filed_under_and_its_corner(self):
+        self.assertEqual(list(self.load().clusters(150)), ["M1@320,0", "Theme_one@1500,0"])
+
+    def test_a_clusters_corner_is_rounded_to_10(self):
+        self.elements[6] = stroke("far", 1504, -26, [[0, 0], [50, 50]])
+        self.assertIn("Theme_one@1500,-30", self.load().clusters(150))
+        self.elements[6] = stroke("far", 1500, -3.5, [[0, 0], [50, 50]])
+        self.assertIn("Theme_one@1500,0", self.load().clusters(150))
+
+    def test_a_cluster_keeps_its_id_whatever_the_gap_or_the_order_of_strokes(self):
+        wide = self.load().clusters(150)
+        self.elements.reverse()
+        narrow = self.load().clusters(20)
+        self.assertEqual(len(narrow), 3)
+        self.assertEqual(narrow["Theme_one@1500,0"].strokes, wide["Theme_one@1500,0"].strokes)
+
+    def test_a_cluster_drawn_on_changes_its_id(self):
+        self.elements.append(stroke("more", 1450, 0, [[0, 0], [20, 20]]))
+        self.assertIn("Theme_one@1450,0", self.load().clusters(150))
+
+    def test_clusters_are_largest_first(self):
+        self.elements += [stroke("far2", 1560, 0, [[0, 0], [20, 20]]), stroke("far3", 1590, 0, [[0, 0], [20, 20]])]
+        self.assertEqual(list(self.load().clusters(150)), ["Theme_one@1500,0", "M1@320,0"])
+
+    def test_clusters_with_one_name_are_told_apart_by_their_strokes(self):
+        ell = [stroke("a1", 500, 1100, [[0, 0], [600, 0]]), stroke("a2", 1100, 500, [[0, 0], [0, 600]])]
+        dot = [stroke("b", 500, 500, [[0, 0], [20, 20]])]
+        self.elements[4:] = ell + dot
+        first = {cid: [s["id"] for s in c.strokes] for cid, c in self.load().clusters(150).items()}
+        self.assertEqual(first, {"M1@500,500": ["a1", "a2"], "M1@500,500.2": ["b"]})
+        self.elements[4:] = dot + ell[::-1]
+        again = {cid: sorted(s["id"] for s in c.strokes) for cid, c in self.load().clusters(150).items()}
+        self.assertEqual(again, first)
 
     def test_a_cluster_is_filed_under_its_nearest_card_or_theme(self):
         near, far = self.load().clusters(150).values()
@@ -104,7 +137,8 @@ class BoardRead(unittest.TestCase):
         self.elements = [stroke("s1", 0, 0, [[0, 0], [5, 5]])]
         (only,) = self.load().clusters(150).values()
         self.assertIsNone(only.target)
-        self.assertIsNone(only.as_json("c01")["attributed_to"])
+        self.assertIsNone(only.as_json("none@0,0")["attributed_to"])
+        self.assertEqual(list(self.load().clusters(150)), ["none@0,0"])
 
     def test_clusters_out_creates_its_folder(self):
         self.write()
@@ -121,8 +155,8 @@ class BoardRead(unittest.TestCase):
         self.assertEqual(done.returncode, 0, done.stderr)
         self.assertIn("2 live elements updated, 1 of them not strokes; 1 deleted", done.stdout)
         self.assertIn("100% note", done.stdout)
-        self.assertIn("c01 card:M1 1/2 new", done.stdout)
-        self.assertNotIn("c02", done.stdout)
+        self.assertIn("M1@320,0 card:M1 1/2 new", done.stdout)
+        self.assertNotIn("Theme_one@", done.stdout)
 
     def test_since_reads_a_local_time(self):
         self.assertEqual(boardlib.parse_time("1700000000000"), 1700000000000)
@@ -142,15 +176,15 @@ class BoardRead(unittest.TestCase):
         out = os.path.join(self.dir, "crops")
         done = self.run_board("render", self.board, "--out", out)
         self.assertEqual(done.returncode, 0, done.stderr)
-        self.assertEqual(sorted(os.listdir(out)), ["cluster_c01_M1.png", "cluster_c02_Theme_one.png",
+        self.assertEqual(sorted(os.listdir(out)), ["cluster_M1@320,0.png", "cluster_Theme_one@1500,0.png",
                                                    "overview.png", "theme_Theme_one.png"])
 
     def test_render_only_an_unknown_cluster_writes_nothing(self):
         self.write()
         out = os.path.join(self.dir, "crops")
-        done = self.run_board("render", self.board, "--out", out, "--only", "c09")
+        done = self.run_board("render", self.board, "--out", out, "--only", "M1@0,0")
         self.assertNotEqual(done.returncode, 0)
-        self.assertIn("c09", done.stderr)
+        self.assertIn("M1@0,0", done.stderr)
         self.assertFalse(os.path.exists(out))
 
     def test_a_file_that_is_not_a_board_is_refused(self):
