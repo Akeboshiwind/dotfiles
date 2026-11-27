@@ -6,7 +6,7 @@ usage: board.py {inventory,text,clusters,since,render} BOARD [options]
 import argparse, collections, json, math, os, subprocess, sys, tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from boardlib import Board, ROW, bbox, parse_time, slug, stamp, union
+from boardlib import Board, bbox, parse_time, slug, stamp, union
 
 GAP = 150
 TILE = 3200
@@ -21,7 +21,7 @@ def at(e):
 
 
 def label(c):
-    return f"{c.target.kind}:{c.target.name}" if c.target else "nothing to attribute to"
+    return str(c.target) if c.target else "nothing to attribute to"
 
 
 def inventory(b, a):
@@ -30,8 +30,9 @@ def inventory(b, a):
     cards = sum(1 for i in b.images if b.card_path(i))
     print(f"images: {len(b.images)}, of which {cards} are cards found in {b.cards_dir}")
     print("themes:")
-    for r in sorted(b.themes, key=lambda r: (r["y"] // ROW, r["x"])):
-        print(f"  {at(r)} {round(r['width'])}x{round(r['height'])} {b.theme_title(r)}")
+    for t in b.themes.values():
+        x0, y0, x1, y1 = t.bbox
+        print(f"  [{round(x0)},{round(y0)}] {round(x1 - x0)}x{round(y1 - y0)} {t.name}")
 
 
 def text(b, a):
@@ -51,7 +52,7 @@ def text(b, a):
         if other["type"] == "text":
             return repr(other["text"][:30])
         if other["type"] == "rectangle":
-            return b.theme_title(other)
+            return b.rect_name(other)
         return other["type"]
 
     for e in b.live:
@@ -69,8 +70,11 @@ def clusters(b, a):
     print(f"{len(b.strokes)} strokes in {len(found)} clusters (gap {a.gap:g})")
     for cid, c in found.items():
         j = c.as_json(cid)
-        print(f"{cid} {j['strokes']:>4} strokes {label(c)} distance {j['distance']} bbox {j['bbox']} "
-              f"last {j['last_updated']} also {j['runners_up']}")
+        print(f"{cid} {j['strokes']:>4} strokes {label(c)} distance {j['distance']} section {j['section']!r} "
+              f"bbox {j['bbox']} last {j['last_updated']} also {j['runners_up']}")
+    for cid, c in found.items():
+        if c.flags:
+            print(f"AMBIGUOUS {cid}: {'; '.join(map(str, c.flags))}")
 
 
 def since(b, a):
@@ -82,7 +86,7 @@ def since(b, a):
     for e in others:
         what = (repr(e["text"][:80]) if e["type"] == "text" else
                 b.image_target(e).name if e["type"] == "image" else
-                b.theme_title(e) if e["type"] == "rectangle" else "")
+                b.rect_name(e) if e["type"] == "rectangle" else "")
         print(f"  {e['type']} {at(e)} {stamp(e['updated'])} {what}")
     new = {e["id"] for e in changed}
     print("clusters holding new strokes:")
@@ -107,8 +111,7 @@ class Canvas:
         self.size = (round(width), max(1, round((box[3] - box[1]) * self.s)))
 
     def shows(self, e):
-        x0, y0, x1, y1 = bbox(e)
-        return x0 < self.box[2] and x1 > self.box[0] and y0 < self.box[3] and y1 > self.box[1]
+        return overlaps(bbox(e), self.box)
 
     def p(self, x, y):
         return f"{(x - self.box[0]) * self.s:.1f},{(y - self.box[1]) * self.s:.1f}"
@@ -164,6 +167,10 @@ class Canvas:
         return path
 
 
+def overlaps(a, b):
+    return a[0] < b[2] and a[2] > b[0] and a[1] < b[3] and a[3] > b[1]
+
+
 def pad(box, m):
     return (box[0] - m, box[1] - m, box[2] + m, box[3] + m)
 
@@ -197,12 +204,12 @@ def render(b, a):
         if a.only and cid not in a.only:
             continue
         box = pad(c.bbox, 80)
-        if c.target:
+        if c.target and not c.far:
             box = union(box, pad(c.target.bbox, 40))
-        parts = tiles(box, a.tile)
+        parts = [t for t in tiles(box, a.tile) if any(overlaps(bbox(s), t) for s in c.strokes)]
         name = os.path.join(a.out, f"cluster_{cid}")
         if len(parts) == 1:
-            done.append(Canvas(b, font, box, crop_width(box, a.width), c.strokes).save(name + ".png"))
+            done.append(Canvas(b, font, parts[0], crop_width(parts[0], a.width), c.strokes).save(name + ".png"))
             continue
         done.append(Canvas(b, font, box, MAP_WIDTH, c.strokes, cards=False, stroke_scale=3, tiles=parts)
                     .save(name + "_map.png"))
@@ -210,12 +217,11 @@ def render(b, a):
             done.append(Canvas(b, font, t, crop_width(t, a.width), c.strokes)
                         .save(f"{name}_tile{k}of{len(parts)}.png"))
     if not a.only:
-        for r in b.themes:
-            title = b.theme_title(r)
-            mine = [c for c in found.values() if c.target and c.target.kind == "theme" and c.target.name == title]
-            box = pad(union(bbox(r), *(c.bbox for c in mine)), 40)
+        for theme in b.themes.values():
+            mine = [c for c in found.values() if c.target == theme and not c.far]
+            box = pad(union(theme.bbox, *(c.bbox for c in mine)), 40)
             strokes = [s for c in mine for s in c.strokes]
-            done.append(Canvas(b, font, box, a.width, strokes).save(os.path.join(a.out, f"theme_{slug(title)}.png")))
+            done.append(Canvas(b, font, box, a.width, strokes).save(os.path.join(a.out, f"theme_{slug(theme.name)}.png")))
         everything = [bbox(e) for e in b.live]
         if everything:
             done.append(Canvas(b, font, pad(union(*everything), 40), 2400, b.strokes, cards=False, stroke_scale=3)

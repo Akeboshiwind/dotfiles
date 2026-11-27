@@ -141,6 +141,97 @@ class BoardRead(unittest.TestCase):
         self.assertIsNone(only.as_json("none@0,0")["attributed_to"])
         self.assertEqual(list(self.load().clusters(150)), ["none@0,0"])
 
+    def frame(self, name, y, height):
+        return dict(id=name, type="frame", name=name, x=0, y=y, width=1000, height=height, updated=EARLIER)
+
+    def test_a_card_or_theme_holding_most_of_a_cluster_wins_over_a_nearer_one(self):
+        inside = [stroke(f"in{k}", 2050 + 100 * k, 50, [[0, 0], [40, 40]]) for k in range(3)]
+        self.elements[4:] = [stroke("reach", 290, 100, [[0, 0], [1720, 0]]), *inside]
+        (only,) = self.load().clusters(150).values()
+        self.assertEqual((only.target.kind, only.target.name, only.flags), ("theme", "Theme one", ()))
+
+    def test_a_card_or_theme_holding_too_few_of_a_cluster_is_a_split(self):
+        inside = [stroke(f"in{k}", 2050 + 100 * k, 50, [[0, 0], [40, 40]]) for k in range(2)]
+        self.elements[4:] = [stroke("reach", 290, 100, [[0, 0], [1720, 0]]), *inside]
+        (only,) = self.load().clusters(150).values()
+        self.assertEqual(only.target.name, "Theme one")
+        self.assertEqual([f.reason for f in only.flags], ["split"])
+
+    def test_a_cluster_far_from_any_card_is_filed_under_its_section(self):
+        self.elements[4:] = [self.frame("Paper", -500, 1000), stroke("lone", 5000, 0, [[0, 0], [50, 50]])]
+        (only,) = self.load().clusters(150).values()
+        self.assertEqual((only.target.kind, only.target.name, only.section.name), ("section", "Paper", "Paper"))
+        self.assertEqual([f.reason for f in only.flags], ["far"])
+        self.assertTrue(only.far)
+
+    def test_a_cluster_far_from_any_card_and_outside_every_section_keeps_its_nearest(self):
+        self.elements[4:] = [stroke("lone", 5000, 0, [[0, 0], [50, 50]])]
+        (only,) = self.load().clusters(150).values()
+        self.assertEqual((only.target.name, only.section), ("Theme one", None))
+        self.assertEqual([f.reason for f in only.flags], ["far"])
+
+    def test_a_cluster_whose_median_stroke_is_far_is_far_however_near_its_edge(self):
+        crowd = [stroke(f"c{k}", 4000 + 60 * k, 300, [[0, 0], [40, 40]]) for k in range(3)]
+        self.elements[4:] = [stroke("reach", 290, 300, [[0, 0], [3700, 0]]), *crowd]
+        (only,) = self.load().clusters(150).values()
+        self.assertEqual((only.target.name, only.distance), ("M1", 100))
+        self.assertEqual([f.reason for f in only.flags], ["far"])
+
+    def test_a_cluster_spread_wide_of_a_large_target_is_spread(self):
+        self.elements[1].update(width=1000)
+        crowd = [stroke(f"c{k}", 4700 + 60 * k, 0, [[0, 0], [40, 40]]) for k in range(3)]
+        self.elements[4:] = [stroke("reach", 3010, 0, [[0, 0], [1700, 0]]), *crowd]
+        (only,) = self.load().clusters(150).values()
+        self.assertEqual(only.target.name, "Theme one")
+        self.assertEqual([f.reason for f in only.flags], ["spread"])
+        self.assertFalse(only.far)
+
+    def test_a_cluster_about_as_near_another_target_is_crowded(self):
+        self.elements[4:] = [stroke("mid", 1100, 0, [[0, 0], [50, 50]])]
+        (only,) = self.load().clusters(150).values()
+        self.assertEqual(only.target.name, "M1")
+        self.assertEqual([str(f) for f in only.flags], ["crowded (also near theme:Theme one)"])
+
+    def test_a_cluster_across_two_sections_spans_them(self):
+        self.elements[4:] = [self.frame("Top", -100, 200), self.frame("Bottom", 150, 300),
+                             stroke("a", 320, 0, [[0, 0], [40, 40]]), stroke("b", 320, 160, [[0, 0], [40, 40]])]
+        (only,) = self.load().clusters(150).values()
+        self.assertEqual(only.target.name, "M1")
+        self.assertEqual([f.reason for f in only.flags], ["spans sections"])
+
+    def test_an_untitled_theme_is_named_and_flagged(self):
+        del self.elements[2]
+        self.elements[3:] = [stroke("in", 2050, 50, [[0, 0], [40, 40]])]
+        (cid, only), = self.load().clusters(150).items()
+        self.assertEqual((cid, only.target.name), ("Untitled_theme@2050,50", "Untitled theme"))
+        self.assertEqual([f.reason for f in only.flags], ["untitled theme rectangle"])
+
+    def test_themes_with_one_title_are_told_apart(self):
+        self.elements[4:] = [dict(self.elements[1], id="theme2", y=1000),
+                             dict(self.elements[2], id="title2", y=1010),
+                             stroke("a", 2050, 50, [[0, 0], [40, 40]]), stroke("b", 2050, 1050, [[0, 0], [40, 40]])]
+        b = self.load()
+        self.assertEqual([t.name for t in b.targets() if t.kind == "theme"], ["Theme one", "Theme one 2"])
+        self.write()
+        out = os.path.join(self.dir, "crops")
+        done = self.run_board("render", self.board, "--out", out)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertEqual(sorted(f for f in os.listdir(out) if f.startswith("theme_")),
+                         ["theme_Theme_one.png", "theme_Theme_one_2.png"])
+
+    def test_clusters_prints_each_doubtful_call_and_every_section(self):
+        self.elements += [self.frame("Paper", -500, 1000), stroke("lone", 5000, 0, [[0, 0], [50, 50]])]
+        self.write()
+        out = os.path.join(self.dir, "clusters.json")
+        done = self.run_board("clusters", self.board, "--out", out)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertIn("AMBIGUOUS Paper@5000,0: far (", done.stdout)
+        self.assertEqual(done.stdout.count("AMBIGUOUS"), 1)
+        with open(out, encoding="utf-8") as f:
+            found = json.load(f)
+        self.assertEqual([(c["section"], c["ambiguous"] != []) for c in found],
+                         [("Paper", False), ("Paper", True), ("Paper", False)])
+
     def test_clusters_out_creates_its_folder(self):
         self.write()
         out = os.path.join(self.dir, "new", "clusters.json")
@@ -181,12 +272,28 @@ class BoardRead(unittest.TestCase):
                                                    "overview.png", "theme_Theme_one.png"])
 
     def test_render_tiles_a_cluster_wider_than_a_tile_and_maps_them(self):
+        self.elements[6] = stroke("far", 1500, 0, [[0, 0], [900, 50]])
         self.write()
         out = os.path.join(self.dir, "crops")
         done = self.run_board("render", self.board, "--out", out, "--tile", "400", "--only", "Theme_one@1500,0")
         self.assertEqual(done.returncode, 0, done.stderr)
         self.assertEqual(sorted(os.listdir(out)), ["cluster_Theme_one@1500,0_map.png",
                                                    *(f"cluster_Theme_one@1500,0_tile{k}of3.png" for k in (1, 2, 3))])
+
+    def test_render_skips_a_tile_that_holds_no_strokes(self):
+        self.write()
+        out = os.path.join(self.dir, "crops")
+        done = self.run_board("render", self.board, "--out", out, "--tile", "400", "--only", "Theme_one@1500,0")
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertEqual(os.listdir(out), ["cluster_Theme_one@1500,0.png"])
+
+    def test_render_leaves_a_far_target_out_of_the_crop(self):
+        self.elements[4:] = [stroke("lone", 5000, 0, [[0, 0], [50, 50]])]
+        self.write()
+        out = os.path.join(self.dir, "crops")
+        done = self.run_board("render", self.board, "--out", out, "--tile", "400")
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertIn("cluster_Theme_one@5000,0.png", os.listdir(out))
 
     def test_a_box_that_fits_one_tile_is_one_tile(self):
         self.assertEqual(tiles((10, 20, 3210, 1020), 3200), [(10, 20, 3210, 1020)])
