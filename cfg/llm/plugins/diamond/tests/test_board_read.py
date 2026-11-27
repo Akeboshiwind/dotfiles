@@ -4,6 +4,7 @@ import json, os, subprocess, sys, tempfile, unittest
 SCRIPTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "skills", "board-read", "scripts")
 sys.path.insert(0, SCRIPTS)
 import boardlib
+from board import tiles
 
 CARD_FILE = "0af3093ec0928ceff5220d79d1675a063eff4657"
 USER_FILE = "92addca07c326b3774cec4644d334f1470c14ad3"
@@ -178,6 +179,25 @@ class BoardRead(unittest.TestCase):
         self.assertEqual(done.returncode, 0, done.stderr)
         self.assertEqual(sorted(os.listdir(out)), ["cluster_M1@320,0.png", "cluster_Theme_one@1500,0.png",
                                                    "overview.png", "theme_Theme_one.png"])
+
+    def test_render_tiles_a_cluster_wider_than_a_tile_and_maps_them(self):
+        self.write()
+        out = os.path.join(self.dir, "crops")
+        done = self.run_board("render", self.board, "--out", out, "--tile", "400", "--only", "Theme_one@1500,0")
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertEqual(sorted(os.listdir(out)), ["cluster_Theme_one@1500,0_map.png",
+                                                   *(f"cluster_Theme_one@1500,0_tile{k}of3.png" for k in (1, 2, 3))])
+
+    def test_a_box_that_fits_one_tile_is_one_tile(self):
+        self.assertEqual(tiles((10, 20, 3210, 1020), 3200), [(10, 20, 3210, 1020)])
+
+    def test_a_wide_box_is_cut_into_equal_tiles_that_overlap(self):
+        self.assertEqual(tiles((0, 0, 9000, 1000), 3200, overlap=150),
+                         [(0, 0, 3075, 1000), (2925, 0, 6075, 1000), (5925, 0, 9000, 1000)])
+
+    def test_tiles_run_row_by_row(self):
+        self.assertEqual(tiles((0, 0, 4000, 4000), 3200, overlap=0),
+                         [(0, 0, 2000, 2000), (2000, 0, 4000, 2000), (0, 2000, 2000, 4000), (2000, 2000, 4000, 4000)])
 
     def test_render_only_an_unknown_cluster_writes_nothing(self):
         self.write()

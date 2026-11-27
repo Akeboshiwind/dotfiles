@@ -3,12 +3,15 @@
 
 usage: board.py {inventory,text,clusters,since,render} BOARD [options]
 """
-import argparse, collections, json, os, subprocess, sys, tempfile
+import argparse, collections, json, math, os, subprocess, sys, tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from boardlib import Board, ROW, bbox, parse_time, slug, stamp, union
 
 GAP = 150
+TILE = 3200
+OVERLAP = 150
+MAP_WIDTH = 800
 FONTS = [os.environ.get("BOARD_FONT_BODY"), "/System/Library/Fonts/Hiragino Sans GB.ttc",
          "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"]
 
@@ -96,8 +99,10 @@ def mvg_string(s):
 class Canvas:
     """A crop of the board, `box` in canvas units, drawn `width` pixels wide with ImageMagick's MVG."""
 
-    def __init__(self, b, font, box, width, strokes, cards=True, stroke_scale=1.5):
-        self.b, self.font, self.box, self.strokes, self.cards, self.stroke_scale = b, font, box, strokes, cards, stroke_scale
+    def __init__(self, b, font, box, width, strokes, cards=True, stroke_scale=1.5, tiles=()):
+        self.b, self.font, self.box, self.cards, self.stroke_scale = b, font, box, cards, stroke_scale
+        self.strokes = [e for e in strokes if self.shows(e)]
+        self.tiles = tiles
         self.s = width / (box[2] - box[0])
         self.size = (round(width), max(1, round((box[3] - box[1]) * self.s)))
 
@@ -143,6 +148,9 @@ class Canvas:
             width = max(1.4, e.get("strokeWidth", 2) * self.stroke_scale * s)
             out.append(f"stroke '#000' stroke-width {width:.1f} fill none stroke-linecap round stroke-linejoin round "
                        "polyline " + " ".join(self.p(e["x"] + x, e["y"] + y) for x, y in e["points"]))
+        for k, t in enumerate(self.tiles, 1):
+            out.append(f"stroke '#c01c28' stroke-width 3 fill none rectangle {self.p(t[0], t[1])} {self.p(t[2], t[3])}")
+            out.append(self.words(t[0] + 10 / self.s, t[1] + 40 / self.s, 32, "#c01c28", f"{k}"))
         return "\n".join(out)
 
     def save(self, path):
@@ -158,6 +166,20 @@ class Canvas:
 
 def pad(box, m):
     return (box[0] - m, box[1] - m, box[2] + m, box[3] + m)
+
+
+def tiles(box, size, overlap=OVERLAP):
+    """`box` cut into equal tiles at most `size` across, row by row; neighbours overlap by `overlap`."""
+    x0, y0, x1, y1 = box
+    cols, rows = math.ceil((x1 - x0) / size), math.ceil((y1 - y0) / size)
+    w, h, half = (x1 - x0) / cols, (y1 - y0) / rows, overlap / 2
+    return [(max(x0, x0 + c * w - half), max(y0, y0 + r * h - half),
+             min(x1, x0 + (c + 1) * w + half), min(y1, y0 + (r + 1) * h + half))
+            for r in range(rows) for c in range(cols)]
+
+
+def crop_width(box, width):
+    return min(width, max(600, box[2] - box[0]))
 
 
 def render(b, a):
@@ -177,8 +199,16 @@ def render(b, a):
         box = pad(c.bbox, 80)
         if c.target:
             box = union(box, pad(c.target.bbox, 40))
-        width = min(a.width, max(600, box[2] - box[0]))
-        done.append(Canvas(b, font, box, width, c.strokes).save(os.path.join(a.out, f"cluster_{cid}.png")))
+        parts = tiles(box, a.tile)
+        name = os.path.join(a.out, f"cluster_{cid}")
+        if len(parts) == 1:
+            done.append(Canvas(b, font, box, crop_width(box, a.width), c.strokes).save(name + ".png"))
+            continue
+        done.append(Canvas(b, font, box, MAP_WIDTH, c.strokes, cards=False, stroke_scale=3, tiles=parts)
+                    .save(name + "_map.png"))
+        for k, t in enumerate(parts, 1):
+            done.append(Canvas(b, font, t, crop_width(t, a.width), c.strokes)
+                        .save(f"{name}_tile{k}of{len(parts)}.png"))
     if not a.only:
         for r in b.themes:
             title = b.theme_title(r)
@@ -217,6 +247,8 @@ def main():
         if name == "render":
             p.add_argument("--out", required=True, help="folder for the PNGs")
             p.add_argument("--width", type=int, default=1600, help="widest crop, in pixels (1600)")
+            p.add_argument("--tile", type=float, default=TILE,
+                           help=f"canvas units across a crop before a cluster is cut into tiles ({TILE})")
             p.add_argument("--only", nargs="+", metavar="ID", help="render only these clusters (M7@1200,-340 ...)")
     a = ap.parse_args()
     try:
