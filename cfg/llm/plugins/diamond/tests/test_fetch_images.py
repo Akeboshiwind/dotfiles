@@ -34,9 +34,9 @@ class Keep(Temp):
         self.out = os.path.join(self.tmp, "out")
         self.raw = image(os.path.join(self.tmp, "shot.png"), "1200x2400")
 
-    def keep(self, item="M1", raw=None, caption="Castro's Inbox", source="https://example.com/castro"):
-        return subprocess.run([sys.executable, "-I", os.path.join(SCRIPTS, "keep.py"), self.out, item, raw or self.raw,
-                               caption, source], capture_output=True, text=True)
+    def keep(self, item="M1", raw=None, caption="Castro's Inbox", source="https://example.com/castro", crop=None):
+        return subprocess.run([sys.executable, "-I", os.path.join(SCRIPTS, "keep.py"), *(["--crop", crop] if crop else []),
+                               self.out, item, raw or self.raw, caption, source], capture_output=True, text=True)
 
     def record(self, item="M1"):
         with open(os.path.join(self.out, "images", f"{item}.json"), encoding="utf-8") as f:
@@ -65,6 +65,41 @@ class Keep(Temp):
     def test_a_small_image_is_not_enlarged(self):
         self.keep(raw=image(os.path.join(self.tmp, "small.webp"), "300x200"))
         self.assertEqual(sips_size(os.path.join(self.out, "img", "m1-1.jpg")), (300, 200))
+
+    def halves(self):
+        path = os.path.join(self.tmp, "wide.png")
+        subprocess.run(["magick", "-size", "1000x1000", "xc:red", "-size", "1000x1000", "xc:blue", "+append", path],
+                       check=True)
+        return path
+
+    def colours(self, *points):
+        path = os.path.join(self.out, "img", "m1-1.jpg")
+        fmt = " ".join(f"%[fx:p{{{x},{y}}}.r>0.5?1:0]%[fx:p{{{x},{y}}}.b>0.5?1:0]" for x, y in points)
+        return subprocess.run(["magick", path, "-format", fmt, "info:"], capture_output=True, text=True,
+                               check=True).stdout.split()
+
+    def test_a_crop_keeps_that_part_in_source_pixels(self):
+        self.assertEqual(self.keep(raw=self.halves(), crop="400x300+800+100").returncode, 0)
+        self.assertEqual(sips_size(os.path.join(self.out, "img", "m1-1.jpg")), (400, 300))
+        self.assertEqual(self.colours((10, 150), (190, 150), (210, 150), (390, 150)), ["10", "10", "01", "01"])
+
+    def test_a_crop_on_the_left_edge_reaching_the_bottom_is_where_it_says(self):
+        self.keep(raw=self.halves(), crop="1100x300+0+700")
+        self.assertEqual(sips_size(os.path.join(self.out, "img", "m1-1.jpg")), (900, 245))
+        self.assertEqual(self.colours((10, 100), (800, 100), (830, 100)), ["10", "10", "01"])
+
+    def test_a_crop_is_taken_before_the_shrink(self):
+        self.keep(raw=self.halves(), crop="1200x1000+0+0")
+        self.assertEqual(sips_size(os.path.join(self.out, "img", "m1-1.jpg")), (900, 750))
+        self.assertEqual(self.colours((10, 10), (740, 10), (760, 10)), ["10", "10", "01"])
+
+    def test_refuses_a_bad_crop(self):
+        for crop in ["400x300", "0x300+0+0", "400x300+-1+0", "400x300+0+0+0", "400 x300+0+0"]:
+            self.assertRefused("crop", raw=self.halves(), crop=crop)
+
+    def test_refuses_a_crop_outside_the_image(self):
+        for crop in ["400x300+1601+0", "400x300+0+701", "2001x1+0+0"]:
+            self.assertRefused("outside", raw=self.halves(), crop=crop)
 
     def test_refuses_a_fifth_image(self):
         for _ in range(4):

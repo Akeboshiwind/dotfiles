@@ -41,7 +41,7 @@ They are in `${CLAUDE_SKILL_DIR}/scripts/`; call them by that absolute path, wit
 | `wikimedia.py urls TITLE …` | per title, a 1200px rendition's URL and its Commons page, tab-separated |
 | `dl.sh RAWDIR NAME=URL …` | downloads each URL to `RAWDIR/NAME.<ext>`, the extension from the file's real type; prints `ok PATH` or `FAIL NAME: why`. It retries a 429 or 5xx, waiting as `Retry-After` asks, and fails anything that isn't an image. A `NAME` is letters, digits, `_` and `-`. |
 | `sheet.sh RAWDIR SHEETDIR [COLS]` | contact sheets of 20 labelled thumbnails, `SHEETDIR/sheet-<n>.jpg`; prints their paths. Labels need a font: on macOS it uses Hiragino Sans GB, or set `BOARD_FONT_BODY` to a `.ttf` or `.ttc` file. |
-| `keep.py OUT ID RAWFILE CAPTION SOURCE` | converts one keeper and records it; prints its `file`. It refuses a 5th image for an item, an empty caption, a `SOURCE` that isn't an http(s) URL, and an id that isn't letters then digits. A refusal writes nothing. |
+| `keep.py [--crop WxH+X+Y] OUT ID RAWFILE CAPTION SOURCE` | converts one keeper and records it; prints its `file`. `--crop` keeps only the `W`×`H` pixels of `RAWFILE` whose top-left corner is `X`,`Y`, before the shrink to 900px, e.g. `--crop 800x600+0+120`. It refuses a 5th image for an item, an empty caption, a `SOURCE` that isn't an http(s) URL, an id that isn't letters then digits, and a crop reaching outside the image. A refusal writes nothing. |
 
 `SOURCE` is the **page the image came from** — the App Store page (`itunes.sh`'s `page` line), the article, the Commons page — not the image's own URL, unless there is no page.
 
@@ -51,7 +51,7 @@ They are in `${CLAUDE_SKILL_DIR}/scripts/`; call them by that absolute path, wit
 2. **Download:** `dl.sh RAW/<id> a1=<url> a2=<url> …`.
 3. **Triage:** `sheet.sh RAW/<id> RAW/<id>-sheets`, Read each sheet, and shortlist.
 4. **Read each shortlisted file in full**, and keep what `pick-images` says to keep.
-5. **Keep each:** `keep.py OUT <id> RAW/<id>/<file> "<caption>" <source>`.
+5. **Keep each:** `keep.py OUT <id> RAW/<id>/<file> "<caption>" <source>`, adding `--crop` first when `pick-images` says to keep part of it. Measure the crop in the file's own pixels, from its size in `sips -g pixelWidth -g pixelHeight`.
 
 When nothing qualifies, keep nothing for that item.
 

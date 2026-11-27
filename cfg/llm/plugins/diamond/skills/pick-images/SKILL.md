@@ -9,9 +9,9 @@ Each catalogue item names **one distinctive idea**: a feature, a view, a place. 
 ## What to keep
 
 - **The screen, view or feature the idea is about.** Castro's item is "Inbox and Queue": keep the Inbox screen and the Queue screen, not the player or the settings. A bookshop whose idea is shelves organised by country wants the country signs on the shelves, not the shopfront.
-- **1–4 per item, each a different view.** Two near-duplicates are one image. Stop at what the idea needs; one is fine.
+- **1–4 per item, each a different view.** Two near-duplicates are one image. Stop at what the idea needs; one is fine. A crop of an image you keep is a different view only if it makes legible something the full image doesn't.
 - **Real screenshots and photos over marketing composites.** Reject device-frame mockups, headlines over a phone, stock-style hero art, logos and icons. A marketing slide is acceptable only when it is the sole place the view appears and its UI is legible.
-- **Legible.** The text and structure that show the idea read at the size the image is kept. Reject tiny, blurry or heavily cropped images.
+- **Legible.** The text and structure that show the idea read at the size the image is kept. Reject tiny, blurry or heavily cropped images. When the detail is legible only in part of a wide image, keep a crop of that part.
 - **The right product.** Check it is the app or place named, not a lookalike or an unrelated one with the same name.
 
 **Keeping nothing is a valid result.** When nothing shows the idea, keep nothing and say why: an empty item is better than a wrong image.
