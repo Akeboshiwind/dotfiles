@@ -34,7 +34,7 @@ Spawn one agent, briefed with `READ`, the cards' folder, the mode, and the rules
 
 - **First read:** `text`, `clusters`, `render`; read every cluster.
 - **Re-read:** `since` first. Transcribe **only the clusters with added strokes**, and `render --only` those. Quote typed text that is added or changed. Each `MOVED` card is one line. Leave out everything else.
-  - **A dragged card can refile the notes near it**: a cluster's ID and what it is filed under can change with no stroke of it added, and `since` doesn't say so. For each `MOVED` card, compare the clusters near its old and new places with the snapshot's `clusters`, which keeps each one's ID and stroke ids: the same strokes under a new ID are the same note, refiled. Say so in a line, never as a new note, and don't transcribe it again.
+  - **Each `REFILED` cluster is one line**, with both its IDs: the same note, now filed under something else. Never transcribe it again, nor report it as a new note.
 - **One `## <cluster ID>` section per cluster**, the ID exactly as `clusters` prints it and first on the heading line, under `#` headings grouping them by theme and card. Under each:
   - the **user's own words**, spelling included, and `[?]` for each word it can't read, never a guess;
   - their **structure**: a nested list for what branches from what, sub-points, and what is circled, underlined or arrowed to another card;

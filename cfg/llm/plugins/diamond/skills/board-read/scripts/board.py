@@ -208,6 +208,14 @@ def stroke_changes(old, new, found):
     yield from orphans
 
 
+def refilings(old, found):
+    now = {frozenset(s["id"] for s in c.strokes): (cid, c) for cid, c in found.items()}
+    for o in old["clusters"]:
+        cid, c = now.get(frozenset(o["stroke_ids"]), (None, None))
+        if c and label(c) != o["what"]:
+            yield f"  REFILED {o['id']} -> {cid}"
+
+
 def since_snapshot(b, a):
     path = latest_snapshot(a)
     with open(path, encoding="utf-8") as f:
@@ -218,7 +226,7 @@ def since_snapshot(b, a):
           "(a dragged card is MOVED, not a note):")
     print("\n".join(f"  {line}" for line in element_changes(old["elements"], new["elements"]))
           or "  no element changes")
-    print("\n".join(stroke_changes(old, new, found)))
+    print("\n".join([*stroke_changes(old, new, found), *refilings(old, found)]))
 
 
 def mvg_string(s):

@@ -313,6 +313,13 @@ class BoardRead(unittest.TestCase):
         self.element("card").update(x=300, updated=LATER)
         self.assertIn("  MOVED card:M1 by (300,0)\nstrokes: 0 added", self.since_snapshot())
 
+    def test_a_dragged_card_that_refiles_a_cluster_says_so(self):
+        self.snapshot()
+        self.element("card").update(x=1200, updated=LATER)
+        out = self.since_snapshot()
+        self.assertIn("strokes: 0 added, 0 removed, 0 moved\n  REFILED Theme_one@1500,0 -> M1@1500,0\n", out)
+        self.assertNotIn("REFILED M1", out)
+
     def test_since_names_each_element_change(self):
         self.snapshot()
         self.element("theme").update(width=500)
