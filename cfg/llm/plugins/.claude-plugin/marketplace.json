@@ -3,6 +3,6 @@
   "owner": {"name": "osm"},
   "description": "Plugins kept in osm's dotfiles",
   "plugins": [
-    {"name": "diamond", "source": "./diamond", "description": "Diamond workflow skills"}
+    {"name": "diamond", "source": "./diamond", "description": "The first diamond of the Double Diamond: discover prior art on an Excalidraw board, review what you marked on it, and define (not yet designed)"}
   ]
 }

@@ -1,6 +1,6 @@
 {
   "name": "diamond",
   "version": "0.1.0",
-  "description": "Diamond workflow skills",
+  "description": "The first diamond of the Double Diamond: discover prior art on an Excalidraw board, review what you marked on it, and define (not yet designed)",
   "author": {"name": "osm"}
 }
