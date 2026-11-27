@@ -5,3 +5,4 @@
 .claude/worktrees
 
 .allium-loop/
+cfg/llm/plugins/diamond/**/__pycache__/
