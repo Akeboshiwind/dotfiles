@@ -81,14 +81,14 @@ A third agent, with no images: give it the corrected transcript, the catalogue, 
 1. **Threads, 3 to 6, as `T1`, `T2` …** — each a line saying what the user keeps coming back to, citing cluster and card IDs and quoting their words. Not every note belongs in a thread: list the leftovers.
 2. **Suggestions, as `S<thread>.<n>`**, such as `S2.1`:
    - **2 to 4 catalogue items a thread, in all**, those testing its assumptions included, as `<ID> <name>`, **preferring items the user hasn't cited, and from sections other than the thread's**;
-   - plus a few **leads outside the catalogue**: named things to search for, **each its own ID**, so the user can answer one.
+   - plus a few **leads outside the catalogue**: named things to search for, **one lead per ID**, never several listed under one, so the user can answer each.
 3. **Each suggestion is labelled one of:**
    - `unsure` — where the user doubted or asked;
    - `excited` — where they lit up: emphasis, stars, "yes", long writing. Cover these as fully as the doubts;
    - `assumption` — what they seem to take for granted. **Name it first**, as `A1: you seem to assume …`, with the quote it comes from, then the items that would test it.
 4. A line of why for each. **No ranking, and no decisions** for the user.
 
-**IDs are stable across reviews**: never renumber or reuse one. On a re-read, the report is **only the delta**: which existing threads the new notes extend, new threads numbered on from the last report's, and new suggestions and assumptions numbered on likewise. Leave unchanged threads out.
+**IDs are stable across reviews**: never renumber or reuse one. On a re-read, the report is **only the delta**: which existing threads the new notes extend, new threads numbered on from the last report's, and new suggestions and assumptions numbered on likewise. **The cap holds in the delta**: at most 4 new catalogue items a thread, whether it extends the thread or opens it. Leave unchanged threads out.
 
 Save the report as `STATE/<snapshot>.md`, named after the snapshot just taken.
 
