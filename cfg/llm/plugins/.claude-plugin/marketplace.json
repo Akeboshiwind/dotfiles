@@ -1,0 +1,8 @@
+{
+  "name": "dotfiles",
+  "owner": {"name": "osm"},
+  "description": "Plugins kept in osm's dotfiles",
+  "plugins": [
+    {"name": "diamond", "source": "./diamond", "description": "Diamond workflow skills"}
+  ]
+}
