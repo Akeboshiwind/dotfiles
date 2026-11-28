@@ -88,7 +88,7 @@ A third agent, with no images: give it the corrected transcript, the catalogue, 
    - `assumption` — what they seem to take for granted. **Name it first**, as `A1: you seem to assume …`, with the quote it comes from, then the items that would test it.
 4. A line of why for each. **No ranking, and no decisions** for the user.
 
-**IDs are stable across reviews**: never renumber or reuse one. On a re-read, the report is **only the delta**: which existing threads the new notes extend, new threads numbered on from the last report's, and new suggestions and assumptions numbered on likewise. **The cap holds in the delta**: at most 4 new catalogue items a thread, whether it extends the thread or opens it. Leave unchanged threads out.
+**IDs are stable across reviews**: never renumber or reuse one. On a re-read, the report is **only the delta**: which existing threads the new notes extend, new threads numbered on from the last report's, and new suggestions and assumptions numbered on likewise. **The cap holds in the delta**: a new thread gets 2 to 4 catalogue items; an extended thread gets 0 to 4 new ones, so a lone note isn't padded out with weaker items. Leave unchanged threads out.
 
 Save the report as `STATE/<snapshot>.md`, named after the snapshot just taken.
 
