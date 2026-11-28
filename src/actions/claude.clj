@@ -7,6 +7,7 @@
             [display :as d]
             [facts :as f]
             [outcome :as o]
+            [utils :as u]
             [utils.sh :as sh]))
 
 (defmethod a/requires :claude/marketplace [_] :claude/marketplace)
@@ -20,6 +21,9 @@
 
 (defn- installed-plugins []
   (or (:plugins (read-json "/.claude/plugins/installed_plugins.json")) {}))
+
+(defn- known-marketplaces []
+  (or (read-json "/.claude/plugins/known_marketplaces.json") {}))
 
 (defmethod a/queries :claude/mcp [_ _] #{[:claude :mcp]})
 
@@ -35,9 +39,15 @@
 
 (defmethod a/queries :claude/marketplace [_ _] #{[:claude :marketplaces]})
 
+(defn- registered-from?
+  "A GitHub marketplace records its repo; a local directory one, its absolute path."
+  [declared-source {:keys [repo path]}]
+  (or (= declared-source repo)
+      (= (u/expand-tilde declared-source) path)))
+
 (defmethod a/check :claude/marketplace [_ key opts facts]
   (let [source (or (:source opts) (name key))]
-    (if (some (fn [[_k v]] (= source (get-in v [:source :repo]))) (f/value facts [:claude :marketplaces]))
+    (if (some (fn [[_k v]] (registered-from? source (:source v))) (f/value facts [:claude :marketplaces]))
       o/satisfied
       (o/drift :missing))))
 
@@ -50,22 +60,23 @@
                       ["claude" "plugin" "marketplace" "update"]))))
 
 (defn catalogue-version
-  "Version of a plugin in the local marketplace checkout, or nil when the
-   catalogue does not record one (e.g. remote plugin sources)."
+  "Version of a plugin in the catalogue at the marketplace's recorded install
+   location, or nil when the marketplace isn't known or its catalogue records
+   no version (e.g. remote plugin sources)."
   [marketplace plugin-name]
-  (let [base (str (System/getProperty "user.home") "/.claude/plugins/marketplaces/" marketplace)
-        mp-file (io/file base ".claude-plugin/marketplace.json")]
-    (when (fs/exists? mp-file)
-      (let [entry (->> (json/parse-string (slurp mp-file) true)
-                       :plugins
-                       (filter #(= plugin-name (:name %)))
-                       first)]
-        (or (:version entry)
-            (when-let [src (:source entry)]
-              (when (string? src)
-                (let [pf (io/file base src ".claude-plugin/plugin.json")]
-                  (when (fs/exists? pf)
-                    (:version (json/parse-string (slurp pf) true)))))))))))
+  (when-let [base (get-in (known-marketplaces) [(keyword marketplace) :installLocation])]
+    (let [mp-file (io/file base ".claude-plugin/marketplace.json")]
+      (when (fs/exists? mp-file)
+        (let [entry (->> (json/parse-string (slurp mp-file) true)
+                         :plugins
+                         (filter #(= plugin-name (:name %)))
+                         first)]
+          (or (:version entry)
+              (when-let [src (:source entry)]
+                (when (string? src)
+                  (let [pf (io/file base src ".claude-plugin/plugin.json")]
+                    (when (fs/exists? pf)
+                      (:version (json/parse-string (slurp pf) true))))))))))))
 
 (defn- installed-plugin-entry
   "Find [plugin-id records] in the plugin cache for a plugin name."
@@ -82,7 +93,7 @@
 (defmethod a/run-query :claude [[_ what n]]
   (case what
     :mcp (or (:mcpServers (read-json "/.claude.json")) {})
-    :marketplaces (or (read-json "/.claude/plugins/known_marketplaces.json") {})
+    :marketplaces (known-marketplaces)
     :plugins (installed-plugins)
     :catalogue (when-let [[plugin-id _] (installed-plugin-entry (installed-plugins) n)]
                  (refreshed-catalogue-version (second (str/split plugin-id #"@" 2)) n))))

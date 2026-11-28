@@ -756,10 +756,15 @@ rule CheckClaudeResources {
         -- Missing registration is drift/missing; a stale version is
         -- drift/outdated. A present, current resource is satisfied and is
         -- not re-registered.
+        -- A marketplace is present when one is registered from its declared
+        -- source: a GitHub repo by name, a local directory by its absolute
+        -- path (a declared ~ is expanded before comparing).
         -- Version discovery for plugins refreshes the marketplace catalogues
         -- from their sources once per run (a network read) and then compares
-        -- the installed version against the catalogue; a plugin whose
-        -- catalogue records no version cannot drift by version. Outdated
+        -- the installed version against the catalogue, read where the
+        -- marketplace is installed (a local directory marketplace is read in
+        -- place); a plugin whose catalogue records no version cannot drift
+        -- by version. Outdated
         -- plugins are remedied by an update, not a reinstall.
         -- MCP servers are managed at user (machine-global) scope only —
         -- presence is read from the user-scope registry. Declaring a

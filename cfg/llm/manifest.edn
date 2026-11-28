@@ -12,13 +12,20 @@
             "clj-nrepl-eval" {:url "https://github.com/bhauman/clojure-mcp-light.git"
                               :git/tag "v0.2.0"
                               :main-opts "[\"-m\" \"clojure-mcp-light.nrepl-eval\"]"}}
+ :assert {:dotfiles-checkout {:src "test -d ~/dotfiles/cfg/llm/plugins"
+                               :message "No dotfiles checkout at ~/dotfiles, which the dotfiles Claude marketplace is read from"
+                               :instructions ["Clone the dotfiles repo to ~/dotfiles"
+                                              "Or change the :dotfiles marketplace's :source in cfg/llm/manifest.edn, and this assert, to where it is"]}}
  :claude/marketplace {:official {:source "anthropics/claude-plugins-official"}
                       :juxt {:source "juxt/claude-plugins"}
-                      :xtdb {:source "xtdb/claude-plugins"}}
+                      :xtdb {:source "xtdb/claude-plugins"}
+                      :dotfiles {:source "~/dotfiles/cfg/llm/plugins"
+                                 :dep/requires #{[:assert :dotfiles-checkout]}}}
  :claude/plugin {:playground {:dep/requires #{[:claude/marketplace :official]}}
                  :a-star {:dep/requires #{[:claude/marketplace :juxt]}}
                  :allium {:dep/requires #{[:claude/marketplace :juxt]}}
                  :chalk {:dep/requires #{[:claude/marketplace :juxt]}}
                  :chill {:dep/requires #{[:claude/marketplace :juxt]}}
+                 :diamond {:dep/requires #{[:claude/marketplace :dotfiles]}}
                  :gradle-tests {:dep/requires #{[:claude/marketplace :xtdb]}}}
  :fs/symlink-folder {"~/.claude" "./.claude"}}

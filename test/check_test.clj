@@ -361,7 +361,14 @@
   (testing "registered marketplace → satisfied; unregistered → drift"
     (let [facts (support/facts-of {[:claude :marketplaces] {:jx {:source {:repo "juxt/plugins"}}}})]
       (is (o/satisfied? (a/check :claude/marketplace :plugins {:source "juxt/plugins"} facts)))
-      (is (o/drift? (a/check :claude/marketplace :other {:source "acme/other"} facts))))))
+      (is (o/drift? (a/check :claude/marketplace :other {:source "acme/other"} facts)))))
+
+  (testing "local directory marketplace, recorded by absolute path, matches its ~-declared source"
+    (let [home (System/getProperty "user.home")
+          facts (support/facts-of {[:claude :marketplaces]
+                                   {:dotfiles {:source {:source "directory" :path (str home "/dotfiles/cfg/llm/plugins")}}}})]
+      (is (o/satisfied? (a/check :claude/marketplace :dotfiles {:source "~/dotfiles/cfg/llm/plugins"} facts)))
+      (is (o/drift? (a/check :claude/marketplace :other {:source "~/elsewhere"} facts))))))
 
 (deftest claude-plugin-check-test
   (testing "installed and current plugin → satisfied; missing → drift"
@@ -389,6 +396,20 @@
           (is (zero? @refreshed) "no installed plugin, no network refresh")
           (is (= "0.12.0" (a/run-query [:claude :catalogue "chalk"])))
           (is (= 1 @refreshed)))))))
+
+(deftest claude-catalogue-version-test
+  (testing "the catalogue is read where the marketplace is installed, wherever that is"
+    (let [catalogue (str *tmp* "/plugins")]
+      (fs/create-dirs (str catalogue "/.claude-plugin"))
+      (fs/create-dirs (str catalogue "/diamond/.claude-plugin"))
+      (spit (str catalogue "/.claude-plugin/marketplace.json")
+            "{\"plugins\": [{\"name\": \"chalk\", \"version\": \"0.12.0\"}, {\"name\": \"diamond\", \"source\": \"./diamond\"}]}")
+      (spit (str catalogue "/diamond/.claude-plugin/plugin.json") "{\"version\": \"0.1.0\"}")
+      (with-redefs [claude/known-marketplaces (fn [] {:dotfiles {:source {:source "directory" :path catalogue}
+                                                                 :installLocation catalogue}})]
+        (is (= "0.12.0" (claude/catalogue-version "dotfiles" "chalk")) "version recorded in the catalogue")
+        (is (= "0.1.0" (claude/catalogue-version "dotfiles" "diamond")) "version recorded by the plugin")
+        (is (nil? (claude/catalogue-version "unknown" "chalk")) "unknown marketplace")))))
 
 (deftest claude-mcp-check-test
   (testing "user-scope server present → satisfied; absent → drift(:missing)"
